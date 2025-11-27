@@ -1,0 +1,302 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String
+  password      String?   // For email/password auth
+  image         String?
+  role          Role      @default(ATHLETE)
+
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id])
+
+  athlete       Athlete?
+  coach         Coach?
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([schoolId])
+}
+
+enum Role {
+  ATHLETE
+  COACH
+  ADMIN
+}
+
+model School {
+  id            String   @id @default(cuid())
+  name          String
+  division      String   // D1, D2, D3
+  customConfig  Json?    // Custom persona settings, resources
+  users         User[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+}
+
+// ============================================
+// ATHLETE DATA
+// ============================================
+
+model Athlete {
+  userId        String        @id
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sport         String
+  year          String        // Freshman, Sophomore, Junior, Senior
+  teamPosition  String?
+
+  sessions      ChatSession[]
+  moodLogs      MoodLog[]
+  goals         Goal[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([sport])
+}
+
+// ============================================
+// COACH DATA
+// ============================================
+
+model Coach {
+  userId        String      @id
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sport         String
+  title         String?     // Head Coach, Assistant Coach, etc.
+
+  notes         CoachNote[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model CoachNote {
+  id            String      @id @default(cuid())
+  coachId       String
+  coach         Coach       @relation(fields: [coachId], references: [userId])
+
+  athleteId     String      // Reference to User.id where role=ATHLETE
+  content       String      @db.Text
+  isPrivate     Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([coachId])
+  @@index([athleteId])
+}
+
+// ============================================
+// CHAT & AI SESSIONS
+// ============================================
+
+model ChatSession {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+
+  messages      Message[]
+
+  summary       String?     @db.Text
+  topic         String?     // anxiety, focus, recovery, confidence, etc.
+  sentiment     String?     // positive, neutral, negative
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([athleteId])
+  @@index([createdAt])
+}
+
+model Message {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  role          MessageRole // user, assistant, system
+  content       String      @db.Text
+
+  // For RAG - vector embedding stored as JSON array
+  embedding     Json?
+
+  createdAt     DateTime    @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+}
+
+// ============================================
+// MENTAL PERFORMANCE TRACKING
+// ============================================
+
+model MoodLog {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+
+  mood          Int         // 1-10 scale
+  confidence    Int         // 1-10 scale
+  stress        Int         // 1-10 scale
+  energy        Int?        // 1-10 scale
+  sleep         Int?        // Hours of sleep
+
+  notes         String?     @db.Text
+  tags          String[]    // ["pre-game", "post-practice", "exam-week"]
+
+  createdAt     DateTime    @default(now())
+
+  @@index([athleteId])
+  @@index([createdAt])
+}
+
+model Goal {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+
+  title         String
+  description   String?     @db.Text
+  category      GoalCategory
+  status        GoalStatus  @default(IN_PROGRESS)
+
+  targetDate    DateTime?
+  completedAt   DateTime?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([athleteId])
+  @@index([status])
+}
+
+enum GoalCategory {
+  PERFORMANCE     // Physical performance goals
+  MENTAL          // Mental skills goals
+  ACADEMIC        // Academic goals
+  PERSONAL        // Personal development
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+// ============================================
+// KNOWLEDGE BASE (for RAG)
+// ============================================
+
+model KnowledgeBase {
+  id            String      @id @default(cuid())
+
+  title         String
+  content       String      @db.Text
+  source        String      // "CBT Handbook", "Flow State Research", etc.
+  sourceUrl     String?
+
+  // Vector embedding stored as JSON array for similarity search
+  embedding     Json?
+
+  category      KnowledgeCategory
+  tags          String[]
+
+  isActive      Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+enum KnowledgeCategory {
+  ANXIETY
+  CONFIDENCE
+  FOCUS
+  RECOVERY
+  GOAL_SETTING
+  MOTIVATION
+  TEAM_DYNAMICS
+  STRESS_MANAGEMENT
+  PERFORMANCE_ANXIETY
+  FLOW_STATE
+  SELF_TALK
+  VISUALIZATION
+  MINDFULNESS
+  BURNOUT
+}
+
+// ============================================
+// NEXTAUTH MODELS
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

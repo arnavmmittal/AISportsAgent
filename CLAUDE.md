@@ -1,0 +1,291 @@
+# AI Sports Agent - Project Context
+
+This file provides Claude with essential context about the AI Sports Agent project.
+
+## Project Overview
+
+AI Sports Agent is an evidence-based virtual sports psychology assistant for collegiate athletes. The platform provides 24/7 mental performance support through AI-powered conversations, mood tracking, and goal management.
+
+### Core Purpose
+- **Athletes**: Get immediate access to evidence-based mental performance guidance
+- **Coaches**: Monitor team mental health trends through anonymized insights
+- **Institutions**: Extend sports psychology resources beyond traditional capacity
+
+## Project Structure
+
+```
+SportsAgent/
+├── ai-sports-agent/        # Next.js frontend application
+├── ai-sports-mcp/          # Python MCP server with agent orchestration
+└── GETTING_STARTED.md      # Setup guide
+```
+
+## ai-sports-agent (Next.js Application)
+
+### Tech Stack
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: PostgreSQL (via Supabase)
+- **ORM**: Prisma
+- **Auth**: NextAuth.js v5
+- **AI**: OpenAI GPT-4 + Vercel AI SDK
+- **State**: Zustand
+- **Forms**: React Hook Form + Zod
+- **Deployment**: Vercel
+
+### Key Features
+1. **Athlete Chat Interface**: Real-time AI conversations with streaming responses
+2. **Mood Tracking**: Daily logging of mood, confidence, stress, sleep
+3. **Goal Management**: Set and track performance, mental, academic, personal goals
+4. **Session History**: Review past conversations and progress
+5. **Coach Dashboard**: View aggregated athlete data (with consent)
+
+### Database Schema (Prisma)
+- **User**: Base user model (athletes, coaches, admins)
+- **Athlete**: Sport-specific data (sport, year, team, stats)
+- **Coach**: Coach-specific data (team info)
+- **ChatSession**: Conversation sessions
+- **Message**: Individual chat messages
+- **MoodLog**: Daily mood and confidence tracking
+- **Goal**: Performance and personal goals
+- **KnowledgeBase**: Sports psychology research for RAG
+
+### Important Files
+- `prisma/schema.prisma` - Complete database schema (DONE)
+- `src/lib/prisma.ts` - Prisma client singleton
+- `src/lib/openai.ts` - OpenAI setup with sports psych system prompt
+- `src/types/index.ts` - TypeScript type definitions
+- `.env.example` - Environment variable template
+
+### Development Commands
+```bash
+npm run dev              # Start dev server
+npm run build            # Production build
+npm run lint             # ESLint
+npm run type-check       # TypeScript checking
+npm run prisma:generate  # Generate Prisma client
+npm run prisma:migrate   # Run migrations
+npm run prisma:studio    # Database GUI
+```
+
+### Current Status
+✅ **Completed**:
+- Project initialization and configuration
+- Complete Prisma schema with all models
+- TypeScript type definitions
+- OpenAI utility functions
+- Environment variable templates
+- Comprehensive documentation
+
+⏳ **To be implemented**:
+- NextAuth authentication (login/signup)
+- Chat interface UI
+- Chat API endpoint with OpenAI streaming
+- Session management
+- Athlete dashboard
+- Coach dashboard
+- Mood tracking visualizations
+- Goal setting features
+
+## ai-sports-mcp (MCP Server Platform)
+
+### Tech Stack
+- **Framework**: FastAPI (Python)
+- **Database**: PostgreSQL with pgvector extension
+- **Cache**: Redis
+- **Auth**: Firebase
+- **AI**: OpenAI GPT-4
+- **Vector DB**: ChromaDB or Pinecone
+- **ORM**: SQLAlchemy
+
+### MCP Agent Architecture
+
+Four specialized agents work together:
+
+1. **AthleteAgent** - Discovery-First conversation protocol
+   - 5-step protocol: Discovery → Understanding → Framework → Action → Follow-up
+   - Sport-specific interventions (CBT, mindfulness, flow state)
+   - Tools: `ask_discovery_question()`, `retrieve_framework()`, `apply_cbt()`
+
+2. **CoachAgent** - Team analytics and insights
+   - Anonymizes athlete data
+   - Generates weekly/monthly reports
+   - Identifies patterns across athletes
+   - Tools: `anonymize_data()`, `generate_summary()`, `detect_patterns()`
+
+3. **GovernanceAgent** - Crisis detection and safety
+   - Monitors for self-harm, depression, abuse disclosures
+   - Immediate escalation and resource provision
+   - Audit logging for compliance
+   - Tools: `detect_crisis_language()`, `escalate_alert()`, `flag_session()`
+
+4. **KnowledgeAgent** - RAG knowledge base management
+   - Ingests sports psychology research PDFs
+   - Semantic search with metadata filtering
+   - Auto-tags content (sport, framework, phase)
+   - Tools: Vector search, chunk retrieval
+
+### API Endpoints
+```
+POST   /v1/chat              # Main chat (streaming)
+POST   /v1/kb/query          # Knowledge base search
+GET    /v1/report/weekly     # Coach summaries
+POST   /v1/experiments       # Athlete journals
+POST   /v1/auth/login        # Firebase auth
+GET    /v1/sessions          # Session history
+```
+
+### Important Files
+- `server/app/main.py` - FastAPI application
+- `server/app/agents/` - MCP agent implementations
+- `server/app/core/config.py` - Configuration
+- `server/app/core/security.py` - Auth and encryption
+- `server/requirements.txt` - Python dependencies
+- `ARCHITECTURE.md` - Detailed architecture docs
+- `IMPLEMENTATION_GUIDE.md` - Code samples
+
+## Development Workflow
+
+### Prerequisites
+- **Node.js** >= 20.9.0 (current system has v18.16.0 - NEEDS UPGRADE)
+- **Python** >= 3.11
+- **PostgreSQL** >= 15 with pgvector
+- **Redis** >= 7.0
+
+### Environment Variables
+
+**ai-sports-agent** (.env.local):
+```
+DATABASE_URL="postgresql://..."
+NEXTAUTH_SECRET="..."
+NEXTAUTH_URL="http://localhost:3000"
+OPENAI_API_KEY="sk-..."
+OPENAI_MODEL="gpt-4-turbo-preview"
+```
+
+**ai-sports-mcp** (.env):
+```
+DATABASE_URL="postgresql://..."
+OPENAI_API_KEY="sk-..."
+FIREBASE_CREDENTIALS_PATH="..."
+REDIS_URL="redis://..."
+```
+
+## Security & Compliance
+
+### HIPAA/FERPA Considerations
+- Encryption at rest (Supabase/PostgreSQL)
+- TLS for data in transit
+- Role-based access control (RBAC)
+- Audit logs for all data access
+- Athlete consent required for coach access
+- No PHI stored without consent
+
+### Multi-Tenancy
+- Row-level security by `school_id`
+- Separate vector collections per institution
+- Custom frameworks per school
+- Configurable data retention policies
+
+## Coding Conventions
+
+### TypeScript/Next.js
+- Use TypeScript for all files
+- Prefer functional components with hooks
+- Use server components by default, client components when needed
+- Keep components small and focused
+- Use Prisma for all database operations
+- Follow Next.js App Router patterns
+
+### Python/FastAPI
+- Type hints for all functions
+- Async/await for I/O operations
+- SQLAlchemy for database models
+- Pydantic for request/response validation
+- Follow PEP 8 style guide
+
+### General Principles
+- **No over-engineering**: Keep solutions simple and focused
+- **Security-first**: Validate inputs, sanitize outputs, prevent injection
+- **Privacy-focused**: Minimize data collection, anonymize where possible
+- **Evidence-based**: Ground all psychology content in research
+
+## Important Context
+
+### Node.js Version Issue
+The current system has Node.js v18.16.0, but the project requires >= 20.9.0. This must be upgraded before npm install will work in ai-sports-agent.
+
+### Phase-Based Development
+The project is planned in phases:
+- **Phase 1 (MVP)**: Authentication, chat interface, basic dashboards
+- **Phase 2**: RAG knowledge base, advanced analytics, mood tracking
+- **Phase 3**: Voice input, email notifications, HIPAA compliance audit
+
+### Two Architecture Options
+The project has TWO separate implementations:
+1. **ai-sports-agent**: Simpler Next.js-only approach (good for MVP)
+2. **ai-sports-mcp**: Advanced MCP agent platform (full-featured)
+
+Choose which to develop based on requirements. They can coexist or one can be selected.
+
+## Git Repository
+
+- **Remote**: https://github.com/arnavmmittal/AISportsAgent.git
+- **Current Branch**: setup
+- **Status**: Initial codebase pushed to setup branch
+
+## When Working on This Project
+
+### For Features
+1. Read relevant files first before suggesting changes
+2. Follow existing patterns and conventions
+3. Don't add features beyond what's requested
+4. Keep security and privacy as top priorities
+5. Write evidence-based content for psychology features
+
+### For Database Changes
+1. Always update `prisma/schema.prisma` first
+2. Run `prisma:generate` after schema changes
+3. Create migrations with `prisma:migrate`
+4. Never manually edit migration files
+
+### For API Development
+1. Use Next.js API routes in `src/app/api/`
+2. Implement proper error handling
+3. Add rate limiting for production
+4. Validate all inputs with Zod
+5. Use streaming for chat endpoints
+
+### For Testing
+1. Write tests for critical paths (auth, chat, crisis detection)
+2. Test with realistic athlete scenarios
+3. Verify FERPA compliance for coach access
+4. Test crisis detection thoroughly
+
+## Key Priorities
+
+1. **Safety First**: Crisis detection must work perfectly
+2. **Privacy**: Athlete data is sacred - never expose without consent
+3. **Evidence-Based**: All psychological content must cite research
+4. **User Experience**: Athletes need simple, fast, supportive interface
+5. **Coach Value**: Provide actionable insights without compromising privacy
+
+## Resources
+
+- **Main Docs**: `GETTING_STARTED.md`, `README.md` files in each directory
+- **Setup Guide**: `ai-sports-agent/SETUP.md`
+- **Architecture**: `ai-sports-mcp/ARCHITECTURE.md`
+- **Implementation**: `ai-sports-mcp/IMPLEMENTATION_GUIDE.md`
+
+## Notes
+
+- This is a university research project for UW-Madison
+- Target users: collegiate student-athletes and coaching staff
+- Goal: Extend sports psychology resources beyond traditional capacity
+- Built with mental health and performance outcomes as primary metrics
+
+---
+
+**Last Updated**: 2025-11-27
+**Version**: 1.0.0
