@@ -1,26 +1,18 @@
 """
 AI Sports Agent - FastAPI Backend
-Main application entry point with MCP agent orchestration
+Main application entry point
 """
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-import logging
-from loguru import logger
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.db.database import engine, Base
-from app.api import chat, knowledge, reports, auth, experiments
+from app.api.routes import chat, coach
 
-# Import agents for initialization
-from app.agents.athlete_agent import AthleteAgent
-from app.agents.coach_agent import CoachAgent
-from app.agents.governance_agent import GovernanceAgent
-from app.agents.knowledge_agent import KnowledgeAgent
+logger = setup_logging()
 
 
 @asynccontextmanager
@@ -30,37 +22,24 @@ async def lifespan(app: FastAPI):
     Handles startup and shutdown events
     """
     # Startup
-    logger.info("=€ Starting AI Sports Agent API")
-
-    # Initialize database
-    logger.info("Initializing database...")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    # Initialize MCP Agents
-    logger.info("Initializing MCP Agents...")
-    app.state.athlete_agent = AthleteAgent()
-    app.state.coach_agent = CoachAgent()
-    app.state.governance_agent = GovernanceAgent()
-    app.state.knowledge_agent = KnowledgeAgent()
-
-    logger.info(" All agents initialized")
+    logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
+    logger.info(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(f"Debug mode: {settings.DEBUG}")
 
     yield
 
     # Shutdown
-    logger.info("=Ñ Shutting down AI Sports Agent API")
-    await engine.dispose()
+    logger.info(f"Shutting down {settings.APP_NAME}")
 
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="AI Sports Agent API",
-    description="MCP-based sports psychology platform for collegiate athletes",
-    version=settings.API_VERSION,
+    title=settings.APP_NAME,
+    description="AI-powered sports psychology platform for collegiate athletes",
+    version=settings.APP_VERSION,
     lifespan=lifespan,
-    docs_url=f"/{settings.API_VERSION}/docs",
-    redoc_url=f"/{settings.API_VERSION}/redoc",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # Setup logging
@@ -69,18 +48,11 @@ setup_logging()
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Trusted Host Middleware (security)
-if not settings.DEBUG:
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=settings.ALLOWED_HOSTS
-    )
 
 
 # Global exception handler
@@ -102,40 +74,22 @@ async def health_check():
     """Health check endpoint for monitoring"""
     return {
         "status": "healthy",
-        "version": settings.API_VERSION,
+        "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT
     }
 
 
 # API Routes
 app.include_router(
-    auth.router,
-    prefix=f"/{settings.API_VERSION}/auth",
-    tags=["Authentication"]
-)
-
-app.include_router(
     chat.router,
-    prefix=f"/{settings.API_VERSION}/chat",
-    tags=["Chat & MCP Agents"]
+    prefix="/api",
+    tags=["Chat & Athlete Agent"]
 )
 
 app.include_router(
-    knowledge.router,
-    prefix=f"/{settings.API_VERSION}/kb",
-    tags=["Knowledge Base"]
-)
-
-app.include_router(
-    reports.router,
-    prefix=f"/{settings.API_VERSION}/report",
-    tags=["Coach Reports"]
-)
-
-app.include_router(
-    experiments.router,
-    prefix=f"/{settings.API_VERSION}/experiments",
-    tags=["Experiments & Logs"]
+    coach.router,
+    prefix="/api",
+    tags=["Coach Analytics"]
 )
 
 
@@ -144,9 +98,10 @@ app.include_router(
 async def root():
     """API root endpoint"""
     return {
-        "message": "AI Sports Agent API",
-        "version": settings.API_VERSION,
-        "docs": f"/{settings.API_VERSION}/docs",
+        "name": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "status": "running",
+        "docs": "/docs",
         "health": "/health"
     }
 
@@ -156,8 +111,8 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "app.main:app",
-        host=settings.API_HOST,
-        port=settings.API_PORT,
-        reload=settings.DEBUG,
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.RELOAD,
         log_level=settings.LOG_LEVEL.lower()
     )
