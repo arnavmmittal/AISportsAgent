@@ -1,0 +1,53 @@
+{
+  "name": "ai-sports-agent",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "db:push": "prisma db push",
+    "db:reset": "prisma migrate reset",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "next": "16.0.1",
+    "@prisma/client": "^6.0.0",
+    "next-auth": "5.0.0-beta.25",
+    "@auth/prisma-adapter": "^2.0.0",
+    "openai": "^4.80.0",
+    "ai": "^4.1.0",
+    "zod": "^3.24.0",
+    "zustand": "^5.0.0",
+    "react-hook-form": "^7.54.0",
+    "@hookform/resolvers": "^3.9.0",
+    "bcryptjs": "^2.4.3",
+    "date-fns": "^4.1.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/bcryptjs": "^2.4.6",
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.1",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=20.9.0",
+    "npm": ">=10.0.0"
+  }
+}
