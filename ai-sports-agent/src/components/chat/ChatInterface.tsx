@@ -1,13 +1,7 @@
 'use client';
 
-/**
- * Chat interface component for athlete conversations with AI agent
- */
-
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { apiClient } from '@/lib/api-client';
-import type { ChatMessage } from '@/types';
 
 interface Message {
   id: string;
@@ -52,6 +46,7 @@ export function ChatInterface() {
       timestamp: new Date(),
     };
 
+    const userInput = inputValue;
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
@@ -70,49 +65,89 @@ export function ChatInterface() {
         },
       ]);
 
-      // Stream the response
-      await apiClient.streamChatMessage(
-        {
+      // Stream the response from our API
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           session_id: sessionId,
-          message: inputValue,
+          message: userInput,
           athlete_id: session.user.id,
-        },
-        // On chunk received
-        (chunk: string) => {
-          setMessages((prev) => {
-            const updated = [...prev];
-            const lastMsg = updated[updated.length - 1];
-            if (lastMsg && lastMsg.role === 'assistant') {
-              lastMsg.content += chunk;
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Use stream: true to handle partial UTF-8 sequences correctly
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+
+        // Process complete lines
+        const lines = buffer.split('\n');
+        // Keep the last incomplete line in the buffer
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+
+            if (data === '[DONE]') {
+              break;
             }
-            return updated;
-          });
-        },
-        // On crisis check
-        (crisisCheck: any) => {
-          if (crisisCheck.final_risk_level !== 'LOW') {
-            setCrisisAlert({
-              final_risk_level: crisisCheck.final_risk_level,
-              message:
-                crisisCheck.final_risk_level === 'CRITICAL' ||
-                crisisCheck.final_risk_level === 'HIGH'
-                  ? 'We noticed your message may indicate distress. Professional support is available 24/7 at the National Suicide Prevention Lifeline: 988'
-                  : undefined,
-            });
+
+            if (!data) continue;
+
+            try {
+              const parsed = JSON.parse(data);
+
+              if (parsed.type === 'crisis_check') {
+                setCrisisAlert({
+                  final_risk_level: parsed.data.final_risk_level || 'HIGH',
+                  message: 'We noticed your message may indicate distress. Professional support is available 24/7 at the National Suicide Prevention Lifeline: 988'
+                });
+              } else if (parsed.type === 'content') {
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastMsg = updated[updated.length - 1];
+                  if (lastMsg && lastMsg.role === 'assistant') {
+                    lastMsg.content += parsed.data;
+                  }
+                  return updated;
+                });
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete JSON
+            }
           }
         }
-      );
+      }
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `msg_${Date.now()}_error`,
-          role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
-          timestamp: new Date(),
-        },
-      ]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content === '') {
+          lastMsg.content = 'Sorry, I encountered an error. Please try again.';
+        }
+        return updated;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -134,50 +169,23 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-gradient-to-b from-gray-50 to-white rounded-lg shadow-xl overflow-hidden">
       {/* Crisis Alert Banner */}
       {crisisAlert && (
-        <div
-          className={`p-4 border-b ${
-            crisisAlert.final_risk_level === 'CRITICAL' || crisisAlert.final_risk_level === 'HIGH'
-              ? 'bg-red-50 border-red-200'
-              : 'bg-yellow-50 border-yellow-200'
-          }`}
-        >
-          <div className="flex items-start gap-3">
+        <div className="bg-red-50 border-b-2 border-red-200 p-4 animate-in fade-in duration-300">
+          <div className="flex items-start gap-3 max-w-4xl mx-auto">
             <div className="flex-shrink-0">
-              <svg
-                className={`w-5 h-5 ${
-                  crisisAlert.final_risk_level === 'CRITICAL' ||
-                  crisisAlert.final_risk_level === 'HIGH'
-                    ? 'text-red-600'
-                    : 'text-yellow-600'
-                }`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
+              <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">
-                {crisisAlert.message || 'Your wellbeing is important to us'}
-              </p>
+              <p className="text-sm font-semibold text-red-900 mb-1">Support Available</p>
+              <p className="text-sm text-red-800">{crisisAlert.message}</p>
             </div>
-            <button
-              onClick={() => setCrisisAlert(null)}
-              className="flex-shrink-0 text-gray-400 hover:text-gray-600"
-            >
+            <button onClick={() => setCrisisAlert(null)} className="text-red-400 hover:text-red-600 transition-colors">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
           </div>
@@ -185,50 +193,79 @@ export function ChatInterface() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            <h3 className="text-lg font-medium mb-2">Welcome to your AI Mental Performance Coach</h3>
-            <p className="text-sm">
-              I'm here to help you with mental skills, stress management, confidence, and more.
-              <br />
-              What's on your mind today?
+          <div className="text-center py-12 px-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-6">
+              <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Welcome to Your AI Mental Coach</h3>
+            <p className="text-gray-600 max-w-md mx-auto mb-6">
+              I'm here to help you with mental skills, stress management, confidence building, and more.
             </p>
+            <div className="grid sm:grid-cols-2 gap-3 max-w-lg mx-auto text-left">
+              <div className="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+                <p className="text-sm font-medium text-gray-900">🎯 Performance anxiety</p>
+                <p className="text-xs text-gray-500 mt-1">Managing pre-competition nerves</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+                <p className="text-sm font-medium text-gray-900">💪 Building confidence</p>
+                <p className="text-xs text-gray-500 mt-1">Developing mental strength</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+                <p className="text-sm font-medium text-gray-900">🧘 Stress management</p>
+                <p className="text-xs text-gray-500 mt-1">Balancing athletics and life</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+                <p className="text-sm font-medium text-gray-900">🎓 Focus techniques</p>
+                <p className="text-xs text-gray-500 mt-1">Improving concentration</p>
+              </div>
+            </div>
           </div>
         ) : (
           messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                <p className="text-xs mt-1 opacity-70">
-                  {message.timestamp.toLocaleTimeString()}
-                </p>
+            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+              <div className={`flex gap-3 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.role === 'user' ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                  {message.role === 'user' ? (
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                      <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                    </svg>
+                  )}
+                </div>
+                <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`rounded-2xl px-4 py-3 shadow-sm ${message.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-900 border border-gray-200 rounded-tl-none'}`}>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content || '...'}</p>
+                  </div>
+                  <p className={`text-xs mt-1 px-1 ${message.role === 'user' ? 'text-gray-500' : 'text-gray-400'}`}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
             </div>
           ))
         )}
         {isLoading && messages[messages.length - 1]?.content === '' && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.1s' }}
-                ></div>
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.2s' }}
-                ></div>
+          <div className="flex justify-start animate-in fade-in duration-300">
+            <div className="flex gap-3 max-w-[85%]">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                </svg>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
+                <div className="flex space-x-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
               </div>
             </div>
           </div>
@@ -237,22 +274,25 @@ export function ChatInterface() {
       </div>
 
       {/* Input */}
-      <div className="border-t p-4">
-        <div className="flex gap-2">
+      <div className="border-t bg-white p-4">
+        <div className="max-w-4xl mx-auto flex gap-3">
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
-            className="flex-1 resize-none border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 resize-none border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
             rows={2}
             disabled={isLoading}
           />
           <button
             onClick={sendMessage}
             disabled={isLoading || !inputValue.trim()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="px-6 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-medium shadow-sm hover:shadow-md disabled:shadow-none flex items-center justify-center gap-2"
           >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
             Send
           </button>
         </div>

@@ -15,12 +15,12 @@ declare module 'next-auth' {
         userId: string;
         sport: string;
         year: string;
-        teamPosition?: string;
+        teamPosition?: string | null;
       } | null;
       coach?: {
         userId: string;
         sport: string;
-        title?: string;
+        title?: string | null;
       } | null;
     } & DefaultSession['user'];
   }
@@ -35,31 +35,31 @@ declare module 'next-auth' {
       userId: string;
       sport: string;
       year: string;
-      teamPosition?: string;
+      teamPosition?: string | null;
     } | null;
     coach?: {
       userId: string;
       sport: string;
-      title?: string;
+      title?: string | null;
     } | null;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    id: string;
-    role: Role;
-    schoolId: string;
+    id?: string;
+    role?: Role;
+    schoolId?: string;
     athlete?: {
       userId: string;
       sport: string;
       year: string;
-      teamPosition?: string;
+      teamPosition?: string | null;
     } | null;
     coach?: {
       userId: string;
       sport: string;
-      title?: string;
+      title?: string | null;
     } | null;
   }
 }
