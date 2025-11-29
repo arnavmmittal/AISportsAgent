@@ -69,14 +69,22 @@ model Athlete {
   year          String        // Freshman, Sophomore, Junior, Senior
   teamPosition  String?
 
+  // Coach analytics permissions and risk assessment
+  consentCoachView Boolean    @default(false)  // Athlete consent for coach to view details
+  riskLevel        RiskLevel  @default(LOW)
+  lastRiskUpdate   DateTime?
+
   sessions      ChatSession[]
   moodLogs      MoodLog[]
   goals         Goal[]
+  crisisAlerts  CrisisAlert[]
+  insights      ConversationInsight[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   @@index([sport])
+  @@index([riskLevel])
 }
 
 // ============================================
@@ -122,6 +130,8 @@ model ChatSession {
   athlete       Athlete     @relation(fields: [athleteId], references: [userId])
 
   messages      Message[]
+  crisisAlerts  CrisisAlert[]
+  insights      ConversationInsight[]
 
   summary       String?     @db.Text
   topic         String?     // anxiety, focus, recovery, confidence, etc.
@@ -145,6 +155,8 @@ model Message {
   // For RAG - vector embedding stored as JSON array
   embedding     Json?
 
+  crisisAlerts  CrisisAlert[]
+
   createdAt     DateTime    @default(now())
 
   @@index([sessionId])
@@ -155,6 +167,65 @@ enum MessageRole {
   user
   assistant
   system
+}
+
+// ============================================
+// CRISIS DETECTION & COACH ANALYTICS
+// ============================================
+
+model CrisisAlert {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id])
+  messageId     String
+  message       Message     @relation(fields: [messageId], references: [id])
+
+  severity      Severity
+  detectedAt    DateTime    @default(now())
+
+  reviewed      Boolean     @default(false)
+  reviewedBy    String?     // User ID of coach who reviewed
+  reviewedAt    DateTime?
+
+  escalated     Boolean     @default(false)
+  escalatedTo   String?     // Contact info or service escalated to
+  notes         String?     @db.Text
+
+  @@index([athleteId, detectedAt])
+  @@index([severity, reviewed])
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model ConversationInsight {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id])
+
+  themes        Json        // Array of detected themes
+  sentiment     Float       // -1.0 to 1.0
+  emotions      Json?       // Emotion scores from voice analysis
+  discoveryPhase String?    // EXPLORE, CLARIFY, COLLABORATE, EXPERIMENT, ITERATE
+
+  extractedAt   DateTime    @default(now())
+
+  @@index([athleteId, extractedAt])
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
 // ============================================
