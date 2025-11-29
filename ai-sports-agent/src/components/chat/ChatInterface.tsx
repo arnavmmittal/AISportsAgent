@@ -357,7 +357,7 @@ export function ChatInterface() {
                 setVoiceMode(!voiceMode);
                 toggleVoice();
               }}
-              disabled={isLoading}
+              disabled={isLoading || !sessionId || !session?.user?.id}
             />
 
             <button

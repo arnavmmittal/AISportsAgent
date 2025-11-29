@@ -207,11 +207,21 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
         throw new Error('VoiceManager not initialized');
       }
 
+      // Validate sessionId and athleteId
+      if (!sessionId || !athleteId) {
+        throw new Error('Session ID and Athlete ID are required for voice chat');
+      }
+
       // Connect WebSocket if not already connected
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
         connectWebSocket();
-        // Wait for connection
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Wait for connection to establish
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      // Check if connection succeeded
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        throw new Error('Failed to establish WebSocket connection');
       }
 
       // Start recording
@@ -223,7 +233,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       setError(error);
       onError?.(error);
     }
-  }, [connectWebSocket, onError]);
+  }, [connectWebSocket, onError, sessionId, athleteId]);
 
   /**
    * Stop voice input
