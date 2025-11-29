@@ -153,6 +153,41 @@ GET    /v1/sessions          # Session history
 - **PostgreSQL** >= 15 with pgvector
 - **Redis** >= 7.0
 
+### Git Workflow & Branching Strategy
+
+**IMPORTANT: Always create/switch to a feature branch before starting new work.**
+
+**Branch Naming Convention:**
+- `feature/[feature-name]` - New features (e.g., `feature/voice-integration`, `feature/coach-dashboard`)
+- `fix/[bug-description]` - Bug fixes (e.g., `fix/auth-redirect-loop`)
+- `refactor/[component-name]` - Code refactoring (e.g., `refactor/prisma-models`)
+- `docs/[doc-name]` - Documentation updates
+
+**Workflow:**
+1. **Before starting new work:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **During development:**
+   - Make small, focused commits with clear messages
+   - Push to remote regularly: `git push -u origin feature/your-feature-name`
+
+3. **When feature is complete:**
+   - Ensure all tests pass and code is reviewed
+   - Create pull request to `main` branch
+   - Include summary of changes and testing notes
+
+4. **After PR merge:**
+   - Delete local branch: `git branch -d feature/your-feature-name`
+   - Delete remote branch: `git push origin --delete feature/your-feature-name`
+
+**Current Branches:**
+- `main` - Production-ready code (MVP with basic chat + MCP integration)
+- `feature/mcp-agent-integration` - Full MCP agent orchestration + knowledge base
+
 ### Environment Variables
 
 **ai-sports-agent** (.env.local):
@@ -280,8 +315,8 @@ Choose which to develop based on requirements. They can coexist or one can be se
 
 ## Notes
 
-- This is a university research project for UW-Madison
-- Target users: collegiate student-athletes and coaching staff
+- This is a university research project for University of Washington
+- Target users: collegiate student-athletes and coaching staff and eventually across all universities
 - Goal: Extend sports psychology resources beyond traditional capacity
 - Built with mental health and performance outcomes as primary metrics
 
