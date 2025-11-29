@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { VoiceButton, AudioVisualizer } from '@/components/voice/VoiceButton';
 
 interface Message {
   id: string;
@@ -22,7 +24,46 @@ export function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const [crisisAlert, setCrisisAlert] = useState<CrisisAlert | null>(null);
+  const [voiceMode, setVoiceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Voice integration
+  const {
+    voiceState,
+    isListening,
+    volume,
+    transcript,
+    error: voiceError,
+    toggleVoice,
+  } = useVoiceChat({
+    sessionId,
+    athleteId: session?.user?.id || '',
+    onTranscript: (text, isFinal) => {
+      if (isFinal) {
+        // Voice transcript is final - add as user message
+        const userMessage: Message = {
+          id: `msg_${Date.now()}`,
+          role: 'user',
+          content: text,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, userMessage]);
+      }
+    },
+    onResponse: (text) => {
+      // AI response from voice - add as assistant message
+      const assistantMessage: Message = {
+        id: `msg_${Date.now()}_assistant`,
+        role: 'assistant',
+        content: text,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    },
+    onError: (error) => {
+      console.error('Voice error:', error);
+    },
+  });
 
   // Initialize session ID
   useEffect(() => {
@@ -275,26 +316,68 @@ export function ChatInterface() {
 
       {/* Input */}
       <div className="border-t bg-white p-4">
-        <div className="max-w-4xl mx-auto flex gap-3">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
-            className="flex-1 resize-none border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-            rows={2}
-            disabled={isLoading}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={isLoading || !inputValue.trim()}
-            className="px-6 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-medium shadow-sm hover:shadow-md disabled:shadow-none flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            Send
-          </button>
+        <div className="max-w-4xl mx-auto">
+          {/* Audio visualizer when listening */}
+          {isListening && (
+            <div className="mb-4 flex justify-center">
+              <AudioVisualizer
+                volume={volume}
+                isActive={isListening}
+                bars={16}
+                className="w-full max-w-md"
+              />
+            </div>
+          )}
+
+          {/* Live transcript display */}
+          {transcript && voiceMode && (
+            <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-900">
+                <span className="font-semibold">You said:</span> {transcript}
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={voiceMode ? "Voice mode active - click mic to speak" : "Type your message..."}
+              className="flex-1 resize-none border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-gray-50"
+              rows={2}
+              disabled={isLoading || voiceMode}
+            />
+
+            {/* Voice Button */}
+            <VoiceButton
+              voiceState={voiceState}
+              volume={volume}
+              onToggle={() => {
+                setVoiceMode(!voiceMode);
+                toggleVoice();
+              }}
+              disabled={isLoading}
+            />
+
+            <button
+              onClick={sendMessage}
+              disabled={isLoading || !inputValue.trim() || voiceMode}
+              className="px-6 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-medium shadow-sm hover:shadow-md disabled:shadow-none flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              <span className="hidden sm:inline">Send</span>
+            </button>
+          </div>
+
+          {/* Voice error display */}
+          {voiceError && (
+            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+              Voice error: {voiceError.message}
+            </div>
+          )}
         </div>
       </div>
     </div>

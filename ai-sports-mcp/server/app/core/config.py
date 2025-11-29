@@ -186,17 +186,14 @@ class Settings(BaseSettings):
     # ============================================================================
     # CORS Configuration
     # ============================================================================
-    CORS_ORIGINS: Union[str, list[str]] = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: Any) -> list[str]:
-        """Parse CORS_ORIGINS from comma-separated string or list."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        if isinstance(v, list):
-            return v
-        return ["http://localhost:3000", "http://127.0.0.1:3000"]
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS_ORIGINS from comma-separated string to list."""
+        if not self.CORS_ORIGINS:
+            return ["http://localhost:3000", "http://127.0.0.1:3000"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     # ============================================================================
     # Logging Configuration
