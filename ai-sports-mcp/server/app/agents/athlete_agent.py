@@ -108,7 +108,7 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
 
     def _get_athlete_context(self, athlete_id: str) -> Dict[str, Any]:
         """
-        Get athlete context from database.
+        Get athlete context from database (optional - works without database).
 
         Args:
             athlete_id: Athlete user ID
@@ -116,25 +116,29 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
         Returns:
             Dictionary with athlete context
         """
-        athlete = self.db.query(models.Athlete).filter(
-            models.Athlete.userId == athlete_id
-        ).first()
+        try:
+            athlete = self.db.query(models.Athlete).filter(
+                models.Athlete.userId == athlete_id
+            ).first()
 
-        if not athlete:
-            return {}
+            if not athlete:
+                return {"name": "Athlete", "sport": "general"}
 
-        user = athlete.user
-        school = user.school if user else None
+            user = athlete.user
+            school = user.school if user else None
 
-        context = {
-            "name": user.name if user else "Athlete",
-            "sport": athlete.sport,
-            "year": athlete.year,
-            "position": athlete.teamPosition,
-            "school": school.name if school else None
-        }
+            context = {
+                "name": user.name if user else "Athlete",
+                "sport": athlete.sport,
+                "year": athlete.year,
+                "position": athlete.teamPosition,
+                "school": school.name if school else None
+            }
 
-        return context
+            return context
+        except Exception as e:
+            logger.warning(f"Failed to get athlete context from database: {e}")
+            return {"name": "Athlete", "sport": "general"}
 
     def _retrieve_knowledge_context(
         self,
@@ -327,25 +331,30 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
         """
         logger.info(f"Processing streaming chat for session {session_id}")
 
-        # Get or create session
-        session = self.db.query(models.ChatSession).filter(
-            models.ChatSession.id == session_id
-        ).first()
+        # Get or create session (optional - works without database)
+        messages = []
+        try:
+            session = self.db.query(models.ChatSession).filter(
+                models.ChatSession.id == session_id
+            ).first()
 
-        if not session:
-            session = models.ChatSession(
-                id=session_id,
-                athleteId=athlete_id,
-                createdAt=datetime.utcnow(),
-                updatedAt=datetime.utcnow()
-            )
-            self.db.add(session)
-            self.db.commit()
+            if not session:
+                session = models.ChatSession(
+                    id=session_id,
+                    athleteId=athlete_id,
+                    createdAt=datetime.utcnow(),
+                    updatedAt=datetime.utcnow()
+                )
+                self.db.add(session)
+                self.db.commit()
 
-        # Get existing messages
-        messages = self.db.query(models.Message).filter(
-            models.Message.sessionId == session_id
-        ).order_by(models.Message.createdAt).all()
+            # Get existing messages
+            messages = self.db.query(models.Message).filter(
+                models.Message.sessionId == session_id
+            ).order_by(models.Message.createdAt).all()
+        except Exception as e:
+            logger.warning(f"Database unavailable, running in stateless mode: {e}")
+            messages = []
 
         # Get athlete context
         athlete_context = self._get_athlete_context(athlete_id)
@@ -389,26 +398,29 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
                 full_response += content
                 yield content
 
-        # Save messages after streaming completes
-        user_msg = models.Message(
-            id=f"msg_{datetime.utcnow().timestamp()}_{athlete_id}_user",
-            sessionId=session_id,
-            role=models.MessageRole.user,
-            content=user_message,
-            createdAt=datetime.utcnow()
-        )
-        self.db.add(user_msg)
+        # Save messages after streaming completes (optional - works without database)
+        try:
+            user_msg = models.Message(
+                id=f"msg_{datetime.utcnow().timestamp()}_{athlete_id}_user",
+                sessionId=session_id,
+                role=models.MessageRole.user,
+                content=user_message,
+                createdAt=datetime.utcnow()
+            )
+            self.db.add(user_msg)
 
-        assistant_msg = models.Message(
-            id=f"msg_{datetime.utcnow().timestamp()}_{athlete_id}_assistant",
-            sessionId=session_id,
-            role=models.MessageRole.assistant,
-            content=full_response,
-            createdAt=datetime.utcnow()
-        )
-        self.db.add(assistant_msg)
+            assistant_msg = models.Message(
+                id=f"msg_{datetime.utcnow().timestamp()}_{athlete_id}_assistant",
+                sessionId=session_id,
+                role=models.MessageRole.assistant,
+                content=full_response,
+                createdAt=datetime.utcnow()
+            )
+            self.db.add(assistant_msg)
 
-        session.updatedAt = datetime.utcnow()
-        self.db.commit()
+            session.updatedAt = datetime.utcnow()
+            self.db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to save messages to database: {e}")
 
         logger.info(f"Streaming chat complete for session {session_id}")
