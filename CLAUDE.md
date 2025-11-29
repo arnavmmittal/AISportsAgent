@@ -6,10 +6,23 @@ This file provides Claude with essential context about the AI Sports Agent proje
 
 AI Sports Agent is an evidence-based virtual sports psychology assistant for collegiate athletes. The platform provides 24/7 mental performance support through AI-powered conversations, mood tracking, and goal management.
 
+### PRIMARY USE CASE - Critical Context
+
+**The Problem**: Each sports psychology coach is responsible for 150+ student athletes, making it impossible to provide individual Zoom meetings or one-on-one sessions with adequate frequency and quality.
+
+**The Solution**: The AI chat interface **replaces and improves traditional Zoom meetings** by providing:
+- **24/7 Availability**: Athletes get immediate support whenever they need it (pre-game anxiety, performance slumps, academic stress)
+- **Voice + Text**: Natural conversation via voice (like ChatGPT/Claude voice mode) or typing - more convenient than scheduling Zoom calls
+- **Consistent Quality**: Evidence-based sports psychology frameworks (CBT, mindfulness, flow state) applied consistently
+- **Scalability**: One coach can monitor 150+ athletes through aggregated insights, crisis alerts, and trends
+- **Privacy**: Athletes feel more comfortable discussing sensitive topics with AI than in group settings
+
+**Chat Interface is the Core**: The chat page (`/chat`) is the primary interface where athletes spend most of their time. This is what replaces the traditional coach-athlete Zoom meeting.
+
 ### Core Purpose
-- **Athletes**: Get immediate access to evidence-based mental performance guidance
-- **Coaches**: Monitor team mental health trends through anonymized insights
-- **Institutions**: Extend sports psychology resources beyond traditional capacity
+- **Athletes**: Get immediate access to evidence-based mental performance guidance through voice/text chat (replacing scheduled Zoom meetings)
+- **Coaches**: Monitor team mental health trends through anonymized insights and focus on crisis cases (150+ athletes per coach)
+- **Institutions**: Extend sports psychology resources beyond traditional capacity constraints
 
 ## Project Structure
 
