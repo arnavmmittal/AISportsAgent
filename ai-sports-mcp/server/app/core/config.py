@@ -103,6 +103,21 @@ class Settings(BaseSettings):
         return v
 
     # ============================================================================
+    # Voice Integration (Cartesia.ai + Whisper)
+    # ============================================================================
+    CARTESIA_API_KEY: Optional[str] = None  # Optional - falls back to OpenAI TTS
+    CARTESIA_VOICE_ID: str = "voice-id-supportive"  # Default voice for athlete support
+    WHISPER_MODEL: str = "whisper-1"  # OpenAI Whisper model for STT
+
+    @field_validator("CARTESIA_API_KEY", mode="before")
+    @classmethod
+    def parse_cartesia_key(cls, v: Any) -> Optional[str]:
+        """Parse Cartesia API key (optional)."""
+        if v == "" or v is None:
+            return None
+        return v
+
+    # ============================================================================
     # Vector Database (ChromaDB) Configuration
     # ============================================================================
     CHROMA_HOST: Optional[str] = None

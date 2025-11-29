@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api.routes import chat, coach
+from app.api.routes import chat, coach, voice
 
 logger = setup_logging()
 
@@ -90,6 +90,12 @@ app.include_router(
     coach.router,
     prefix="/api",
     tags=["Coach Analytics"]
+)
+
+app.include_router(
+    voice.router,
+    prefix="/api",
+    tags=["Voice & Speech"]
 )
 
 
