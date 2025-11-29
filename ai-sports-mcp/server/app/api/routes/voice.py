@@ -219,13 +219,18 @@ async def voice_stream(websocket: WebSocket):
                 logger.info(f"WebSocket disconnected: {connection_id}")
                 break
 
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected early: {connection_id}")
     except Exception as e:
         logger.error(f"Voice WebSocket error: {e}", exc_info=True)
-        if websocket.client_state.CONNECTED:
-            await websocket.send_json({
-                "type": "error",
-                "message": str(e),
-            })
+        try:
+            if websocket.application_state.value == 1:  # CONNECTED state
+                await websocket.send_json({
+                    "type": "error",
+                    "message": str(e),
+                })
+        except Exception:
+            pass  # Connection already closed
 
     finally:
         # Cleanup
@@ -235,8 +240,11 @@ async def voice_stream(websocket: WebSocket):
         if connection_id and connection_id in active_connections:
             del active_connections[connection_id]
 
-        if websocket.client_state.CONNECTED:
-            await websocket.close()
+        try:
+            if websocket.application_state.value == 1:  # CONNECTED state
+                await websocket.close()
+        except Exception:
+            pass  # Connection already closed
 
         logger.info(f"Voice session ended: {connection_id}")
 
