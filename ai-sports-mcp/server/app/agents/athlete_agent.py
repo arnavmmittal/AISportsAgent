@@ -424,3 +424,51 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             logger.warning(f"Failed to save messages to database: {e}")
 
         logger.info(f"Streaming chat complete for session {session_id}")
+
+    async def generate_response(
+        self,
+        message: str,
+        conversation_history: List[Dict],
+        knowledge_context: str,
+        session_id: str,
+    ) -> str:
+        """
+        Generate a response for voice chat (simplified version of chat).
+
+        Args:
+            message: User's message (transcribed from voice)
+            conversation_history: List of previous messages
+            knowledge_context: RAG context from KnowledgeAgent
+            session_id: Chat session ID
+
+        Returns:
+            AI response text
+        """
+        logger.info(f"Generating response for session {session_id}")
+
+        # Get athlete context (if available)
+        athlete_id = session_id.split(':')[0] if ':' in session_id else "unknown"
+        athlete_context = self._get_athlete_context(athlete_id)
+
+        # Build system message
+        system_message = self._build_system_message(athlete_context, knowledge_context)
+
+        # Build messages for OpenAI
+        openai_messages = [
+            {"role": "system", "content": system_message}
+        ] + conversation_history + [
+            {"role": "user", "content": message}
+        ]
+
+        # Call OpenAI
+        response = self.openai_client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=openai_messages,
+            temperature=settings.OPENAI_TEMPERATURE,
+            max_tokens=settings.OPENAI_MAX_TOKENS
+        )
+
+        assistant_message = response.choices[0].message.content
+        logger.info(f"Response generated for session {session_id}")
+
+        return assistant_message

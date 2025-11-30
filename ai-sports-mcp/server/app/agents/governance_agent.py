@@ -351,3 +351,42 @@ Message to analyze: """
             logger.warning(f"HIGH RISK mood pattern detected for athlete {athlete_id}")
 
         return analysis
+
+    async def detect_crisis(
+        self,
+        message: str
+    ) -> tuple[bool, str, Dict[str, Any]]:
+        """
+        Async wrapper for crisis detection (called from voice route).
+
+        Args:
+            message: User's message to analyze
+
+        Returns:
+            Tuple of (crisis_detected, severity, crisis_info)
+        """
+        # Quick keyword scan
+        keyword_result = self._keyword_scan(message)
+
+        crisis_detected = keyword_result["flagged"]
+        severity = keyword_result["level"]
+
+        # If critical keywords found, run AI analysis for confirmation
+        if crisis_detected and severity == "CRITICAL":
+            ai_result = self._ai_analysis(message)
+            severity = ai_result.get("risk_level", "UNKNOWN")
+            crisis_info = {
+                'keywords_matched': keyword_result.get("matched_keywords", []),
+                'analysis': ai_result.get("reasoning", ""),
+                'categories': ai_result.get("categories", []),
+                'recommended_actions': ai_result.get("recommended_action", "")
+            }
+        else:
+            crisis_info = {
+                'keywords_matched': keyword_result.get("matched_keywords", []),
+                'analysis': 'Keyword-based detection',
+                'categories': [],
+                'recommended_actions': 'Monitor' if crisis_detected else 'None'
+            }
+
+        return crisis_detected, severity, crisis_info
