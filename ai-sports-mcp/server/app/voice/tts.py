@@ -87,18 +87,16 @@ async def synthesize_speech(
 
 async def synthesize_speech_stream(
     text: str,
-    voice_id: str = DEFAULT_VOICE_ID,
-    emotion: str = "supportive",
+    voice: str = "alloy",
     speed: float = 1.0,
 ) -> AsyncGenerator[bytes, None]:
     """
-    Synthesize speech with streaming for low-latency playback
+    Synthesize speech with streaming using OpenAI TTS API.
 
     Args:
         text: Text to convert to speech
-        voice_id: Cartesia voice ID
-        emotion: Emotion/tone
-        speed: Speech rate
+        voice: OpenAI voice (alloy, echo, fable, onyx, nova, shimmer)
+        speed: Speech rate (0.25 to 4.0)
 
     Yields:
         Audio chunks as they're generated
@@ -106,41 +104,32 @@ async def synthesize_speech_stream(
     Raises:
         Exception: If synthesis fails
     """
-    if not CARTESIA_API_KEY:
-        raise Exception("CARTESIA_API_KEY not configured")
+    from openai import AsyncOpenAI
+    from app.core.logging import setup_logging
+
+    logger = setup_logging()
+    logger.info(f"Synthesizing speech: {len(text)} characters")
 
     try:
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                "Authorization": f"Bearer {CARTESIA_API_KEY}",
-                "Content-Type": "application/json",
-            }
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
-            payload = {
-                "text": text,
-                "voice_id": voice_id,
-                "output_format": "mp3",
-                "language": "en",
-                "speed": speed,
-                "emotion": emotion,
-                "stream": True,  # Enable streaming
-            }
+        # OpenAI TTS API with streaming
+        async with client.audio.speech.with_streaming_response.create(
+            model="tts-1",  # or "tts-1-hd" for higher quality
+            voice=voice,
+            input=text,
+            response_format="opus",  # Low latency format (or "mp3")
+            speed=speed,
+        ) as response:
+            # Stream audio chunks as they arrive
+            async for chunk in response.iter_bytes(chunk_size=4096):
+                if chunk:
+                    yield chunk
 
-            async with session.post(
-                f"{CARTESIA_API_URL}/synthesize/stream",
-                headers=headers,
-                json=payload,
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"Cartesia API error: {error_text}")
-
-                # Stream audio chunks as they arrive
-                async for chunk in response.content.iter_chunked(4096):
-                    if chunk:
-                        yield chunk
+        logger.info("Speech synthesis complete")
 
     except Exception as e:
+        logger.error(f"TTS error: {e}")
         raise Exception(f"Speech synthesis streaming failed: {str(e)}")
 
 

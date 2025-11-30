@@ -12,12 +12,18 @@ from ..core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Create SQLAlchemy engine
+# Create SQLAlchemy engine with enhanced connection pooling
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
+    pool_size=getattr(settings, 'DATABASE_POOL_SIZE', 5),
+    max_overflow=getattr(settings, 'DATABASE_MAX_OVERFLOW', 10),
+    pool_pre_ping=True,  # Verify connections before use (prevents stale connections)
+    pool_recycle=3600,   # Recycle connections every hour (prevents timeout)
     echo=settings.DEBUG,  # Log SQL queries in debug mode
+    connect_args={
+        "connect_timeout": 10,  # 10 second connection timeout
+        "options": "-c timezone=utc"  # Set timezone to UTC
+    }
 )
 
 # Create SessionLocal class

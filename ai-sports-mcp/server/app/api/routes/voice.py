@@ -13,8 +13,10 @@ Flow:
 import asyncio
 import json
 from typing import Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends
+from sqlalchemy.orm import Session
 from app.core.logging import setup_logging
+from app.db.database import get_db
 from app.voice import transcribe_audio, synthesize_speech_stream
 from app.agents.athlete_agent import AthleteAgent
 from app.agents.knowledge_agent import KnowledgeAgent
@@ -30,18 +32,19 @@ active_connections: dict[str, WebSocket] = {}
 class VoiceSession:
     """Manages a voice chat session"""
 
-    def __init__(self, session_id: str, athlete_id: str, websocket: WebSocket):
+    def __init__(self, session_id: str, athlete_id: str, websocket: WebSocket, db: Session):
         self.session_id = session_id
         self.athlete_id = athlete_id
         self.websocket = websocket
+        self.db = db
         self.audio_chunks: list[bytes] = []
         self.conversation_history: list[dict] = []
         self.is_active = True
 
-        # Initialize agents
-        self.athlete_agent = AthleteAgent()
+        # Initialize agents WITH database session
+        self.athlete_agent = AthleteAgent(db=db)
         self.knowledge_agent = KnowledgeAgent()
-        self.governance_agent = GovernanceAgent()
+        self.governance_agent = GovernanceAgent(db=db)
 
     async def process_audio_chunk(self, audio_data: bytes):
         """Process incoming audio chunk"""
@@ -136,7 +139,7 @@ class VoiceSession:
 
 
 @router.websocket("/voice/stream")
-async def voice_stream(websocket: WebSocket):
+async def voice_stream(websocket: WebSocket, db: Session = Depends(get_db)):
     """
     WebSocket endpoint for bidirectional voice streaming
 
@@ -179,8 +182,8 @@ async def voice_stream(websocket: WebSocket):
             await websocket.close()
             return
 
-        # Create session
-        session = VoiceSession(session_id, athlete_id, websocket)
+        # Create session with database
+        session = VoiceSession(session_id, athlete_id, websocket, db)
         connection_id = f"{athlete_id}:{session_id}"
         active_connections[connection_id] = websocket
 
