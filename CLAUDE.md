@@ -176,6 +176,11 @@ GET    /v1/sessions          # Session history
 - `refactor/[component-name]` - Code refactoring (e.g., `refactor/prisma-models`)
 - `docs/[doc-name]` - Documentation updates
 
+**IMPORTANT: Use Descriptive Branch Names**
+- ❌ **Avoid generic names**: `develop`, `dev`, `integration`, `testing`, `wip`
+- ✅ **Use specific names**: `feature/mvp-chat-interface`, `fix/voice-websocket-disconnect`, `refactor/agent-singletons`
+- **Why**: Descriptive names make it clear what work is happening on each branch, especially when multiple features are in development simultaneously
+
 **Workflow:**
 1. **Before starting new work:**
    ```bash
