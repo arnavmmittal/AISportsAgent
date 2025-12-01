@@ -247,6 +247,25 @@ class KnowledgeAgent:
         logger.info(f"Found {len(formatted_results)} results")
         return formatted_results
 
+    async def retrieve_context(
+        self,
+        query: str,
+        athlete_sport: str = "general",
+        max_chunks: int = 3
+    ) -> str:
+        """
+        Async wrapper for retrieving context (used by voice chat).
+
+        Args:
+            query: Search query
+            athlete_sport: Athlete's sport (default: "general")
+            max_chunks: Maximum chunks to include
+
+        Returns:
+            Formatted context string for RAG
+        """
+        return self.get_context_for_athlete(query, athlete_sport, max_chunks)
+
     def get_context_for_athlete(
         self,
         query: str,
