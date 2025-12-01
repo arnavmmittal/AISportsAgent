@@ -34,32 +34,44 @@ async def transcribe_audio(
     Raises:
         Exception: If transcription fails
     """
-    try:
-        # Whisper prompt for better sports psychology terminology
-        default_prompt = (
-            "Sports psychology conversation about mental performance, "
-            "anxiety, confidence, focus, mindfulness, pre-game preparation, "
-            "team dynamics, goal setting, visualization, and recovery."
-        )
+    import io
 
-        # Create temporary file-like object from bytes
-        import io
-        audio_file = io.BytesIO(audio_data)
-        audio_file.name = "audio.webm"  # Required for API
+    # Whisper prompt for better sports psychology terminology
+    default_prompt = (
+        "Sports psychology conversation about mental performance, "
+        "anxiety, confidence, focus, mindfulness, pre-game preparation, "
+        "team dynamics, goal setting, visualization, and recovery."
+    )
 
-        # Transcribe with Whisper
-        response = await client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file,
-            language=language,
-            prompt=prompt or default_prompt,
-            response_format="json",
-        )
+    # Try different audio format extensions
+    # Whisper determines format from extension, so we try common MediaRecorder formats
+    formats_to_try = ["webm", "ogg", "mp3", "m4a", "wav"]
 
-        return response.text
+    last_error = None
+    for audio_format in formats_to_try:
+        try:
+            # Create temporary file-like object from bytes
+            audio_file = io.BytesIO(audio_data)
+            audio_file.name = f"audio.{audio_format}"  # Required for API
 
-    except Exception as e:
-        raise Exception(f"Transcription failed: {str(e)}")
+            # Transcribe with Whisper
+            response = await client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                language=language,
+                prompt=prompt or default_prompt,
+                response_format="json",
+            )
+
+            return response.text
+
+        except Exception as e:
+            last_error = e
+            # If this format failed, try the next one
+            continue
+
+    # All formats failed
+    raise Exception(f"Transcription failed with all formats. Last error: {str(last_error)}")
 
 
 async def transcribe_audio_stream(

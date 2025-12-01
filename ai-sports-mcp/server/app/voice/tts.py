@@ -118,7 +118,7 @@ async def synthesize_speech_stream(
             model="tts-1",  # or "tts-1-hd" for higher quality
             voice=voice,
             input=text,
-            response_format="opus",  # Low latency format (or "mp3")
+            response_format="mp3",  # MP3 for better browser compatibility
             speed=speed,
         ) as response:
             # Stream audio chunks as they arrive

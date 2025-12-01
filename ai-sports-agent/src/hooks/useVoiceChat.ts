@@ -59,6 +59,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
 
   const voiceManagerRef = useRef<VoiceManager | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const audioChunkCountRef = useRef<number>(0);
 
   // Initialize VoiceManager
   useEffect(() => {
@@ -77,9 +78,16 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       console.log('VoiceManager state changed to:', state);
       setVoiceState(state);
 
-      // When transitioning to processing, send utterance_end signal
+      // When transitioning to processing, send utterance_end signal (only if we have audio)
       if (state === 'processing' && wsRef.current?.readyState === WebSocket.OPEN) {
-        console.log('State changed to processing, sending utterance_end signal');
+        console.log('State changed to processing, audio chunks captured:', audioChunkCountRef.current);
+
+        // Only send utterance_end if we have audio chunks
+        if (audioChunkCountRef.current === 0) {
+          console.warn('No audio chunks captured, skipping utterance_end signal from stateChange');
+          return;
+        }
+
         wsRef.current.send(JSON.stringify({
           type: 'utterance_end',
           sessionId,
@@ -106,9 +114,10 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
     vm.on('audioChunk', (chunk) => {
       // Send audio chunk to backend via WebSocket
       console.log('Audio chunk received from VoiceManager, size:', chunk.data.size);
+      audioChunkCountRef.current += 1;
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         sendAudioChunk(chunk);
-        console.log('Audio chunk sent to backend');
+        console.log('Audio chunk sent to backend, total chunks:', audioChunkCountRef.current);
       } else {
         console.warn('WebSocket not open, cannot send audio chunk');
       }
@@ -116,7 +125,14 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
 
     vm.on('silenceDetected', () => {
       // User stopped speaking - signal backend that utterance is complete
-      console.log('Silence detected, sending utterance_end signal');
+      console.log('Silence detected, audio chunks captured:', audioChunkCountRef.current);
+
+      // Only send utterance_end if we have audio chunks
+      if (audioChunkCountRef.current === 0) {
+        console.warn('No audio chunks captured, skipping utterance_end signal');
+        return;
+      }
+
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: 'utterance_end',
@@ -280,6 +296,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
 
       // Start recording
       console.log('Starting recording with VoiceManager...');
+      audioChunkCountRef.current = 0; // Reset chunk counter for new recording
       await voiceManagerRef.current.startRecording();
       console.log('Recording started successfully');
       setTranscript('');
