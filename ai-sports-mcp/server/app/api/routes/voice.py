@@ -161,9 +161,12 @@ async def voice_stream(websocket: WebSocket, db: Session = Depends(get_db)):
         logger.info("Voice WebSocket connection established")
 
         # Wait for initial handshake
+        logger.info("Waiting for handshake message...")
         data = await websocket.receive_json()
+        logger.info(f"Received handshake data: {data}")
 
         if data.get("type") != "start":
+            logger.error(f"Invalid handshake type: {data.get('type')}")
             await websocket.send_json({
                 "type": "error",
                 "message": "Expected 'start' message",
@@ -174,7 +177,10 @@ async def voice_stream(websocket: WebSocket, db: Session = Depends(get_db)):
         session_id = data.get("sessionId")
         athlete_id = data.get("athleteId")
 
+        logger.info(f"Session ID: {session_id}, Athlete ID: {athlete_id}")
+
         if not session_id or not athlete_id:
+            logger.error("Missing sessionId or athleteId in handshake")
             await websocket.send_json({
                 "type": "error",
                 "message": "Missing sessionId or athleteId",
@@ -190,10 +196,15 @@ async def voice_stream(websocket: WebSocket, db: Session = Depends(get_db)):
         logger.info(f"Voice session started: {connection_id}")
 
         # Send acknowledgment
-        await websocket.send_json({
-            "type": "started",
-            "sessionId": session_id,
-        })
+        logger.info("Sending 'started' acknowledgment to client...")
+        try:
+            await websocket.send_json({
+                "type": "started",
+                "sessionId": session_id,
+            })
+            logger.info("'started' acknowledgment sent successfully")
+        except Exception as e:
+            logger.error(f"Failed to send 'started' acknowledgment: {e}", exc_info=True)
 
         # Main loop: receive audio chunks or control messages
         while session.is_active:

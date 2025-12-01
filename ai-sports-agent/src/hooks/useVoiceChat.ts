@@ -66,15 +66,27 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       sampleRate: 16000,
       channelCount: 1,
       chunkDurationMs: 1000,
-      silenceThresholdMs: 2000,
-      silenceThreshold: 0.01,
+      silenceThresholdMs: 10500,  // 1.5 seconds of silence before triggering
+      silenceThreshold: 0.5,    // Increased from 0.01 to be less sensitive
     });
 
     const vm = voiceManagerRef.current;
 
     // Register callbacks
     vm.on('stateChange', (state) => {
+      console.log('VoiceManager state changed to:', state);
       setVoiceState(state);
+
+      // When transitioning to processing, send utterance_end signal
+      if (state === 'processing' && wsRef.current?.readyState === WebSocket.OPEN) {
+        console.log('State changed to processing, sending utterance_end signal');
+        wsRef.current.send(JSON.stringify({
+          type: 'utterance_end',
+          sessionId,
+          athleteId,
+        }));
+        console.log('utterance_end signal sent from stateChange handler');
+      }
     });
 
     vm.on('volumeChange', (vol) => {
@@ -93,19 +105,27 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
 
     vm.on('audioChunk', (chunk) => {
       // Send audio chunk to backend via WebSocket
+      console.log('Audio chunk received from VoiceManager, size:', chunk.data.size);
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         sendAudioChunk(chunk);
+        console.log('Audio chunk sent to backend');
+      } else {
+        console.warn('WebSocket not open, cannot send audio chunk');
       }
     });
 
     vm.on('silenceDetected', () => {
       // User stopped speaking - signal backend that utterance is complete
+      console.log('Silence detected, sending utterance_end signal');
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: 'utterance_end',
           sessionId,
           athleteId,
         }));
+        console.log('utterance_end signal sent to backend');
+      } else {
+        console.warn('WebSocket not open, cannot send utterance_end');
       }
     });
 
@@ -113,7 +133,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       vm.destroy();
       wsRef.current?.close();
     };
-  }, [sessionId, athleteId, onTranscript, onError]);
+  }, []); // Empty deps - only run once on mount
 
   /**
    * Send audio chunk to backend via WebSocket
@@ -141,17 +161,35 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
     // Convert http(s) to ws(s)
     const wsUrl = backendUrl.replace(/^http/, 'ws') + '/api/voice/stream';
 
+    console.log('Connecting to WebSocket:', wsUrl);
+    console.log('Session ID:', sessionId);
+    console.log('Athlete ID:', athleteId);
+
+    // Close existing connection if any
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.close();
+    }
+
     wsRef.current = new WebSocket(wsUrl);
 
     wsRef.current.onopen = () => {
       console.log('Voice WebSocket connected');
 
+      // Validate before sending handshake
+      if (!sessionId || !athleteId) {
+        console.error('Cannot send handshake - missing sessionId or athleteId');
+        wsRef.current?.close();
+        return;
+      }
+
       // Send initial handshake
-      wsRef.current?.send(JSON.stringify({
+      const handshake = {
         type: 'start',
         sessionId,
         athleteId,
-      }));
+      };
+      console.log('Sending handshake:', handshake);
+      wsRef.current?.send(JSON.stringify(handshake));
     };
 
     wsRef.current.onmessage = async (event) => {
@@ -161,6 +199,11 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
           const data = JSON.parse(event.data);
 
           switch (data.type) {
+            case 'started':
+              // WebSocket session successfully started
+              console.log('Voice session started:', data.sessionId);
+              break;
+
             case 'transcript':
               // Partial transcript from Whisper
               setTranscript(data.text);
@@ -224,8 +267,21 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
         throw new Error('Failed to establish WebSocket connection');
       }
 
+      // Check microphone permission first
+      console.log('Checking microphone permission...');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Microphone permission granted, tracks:', stream.getTracks().length);
+        stream.getTracks().forEach(track => track.stop()); // Stop the test stream
+      } catch (permError) {
+        console.error('Microphone permission denied:', permError);
+        throw new Error('Microphone access denied. Please grant microphone permission and try again.');
+      }
+
       // Start recording
+      console.log('Starting recording with VoiceManager...');
       await voiceManagerRef.current.startRecording();
+      console.log('Recording started successfully');
       setTranscript('');
       setError(null);
     } catch (err) {
