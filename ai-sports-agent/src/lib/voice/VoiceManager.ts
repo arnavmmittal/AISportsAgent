@@ -45,7 +45,10 @@ export class VoiceManager {
 
   // Silence detection
   private silenceTimer: NodeJS.Timeout | null = null;
-  private lastSoundTime: number = Date.now();
+  private lastSoundTime: number = 0;
+
+  // Audio recording chunks
+  private recordedChunks: Blob[] = [];
 
   // Callbacks
   private onStateChange?: (state: VoiceState) => void;
@@ -118,14 +121,11 @@ export class VoiceManager {
         audioBitsPerSecond: 128000,
       });
 
-      // Collect audio chunks
+      // Collect audio chunks internally
+      this.recordedChunks = [];
       this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0) {
-          const chunk: AudioChunk = {
-            data: event.data,
-            timestamp: Date.now(),
-          };
-          this.onAudioChunk?.(chunk);
+          this.recordedChunks.push(event.data);
         }
       };
 
@@ -134,12 +134,25 @@ export class VoiceManager {
       };
 
       this.mediaRecorder.onstop = () => {
+        // Combine all chunks into single complete audio file
+        if (this.recordedChunks.length > 0) {
+          const completeAudio = new Blob(this.recordedChunks, { type: this.mediaRecorder!.mimeType });
+          const chunk: AudioChunk = {
+            data: completeAudio,
+            timestamp: Date.now(),
+          };
+          this.onAudioChunk?.(chunk);
+        }
+        this.recordedChunks = [];
         this.setState('processing');
       };
 
-      // Start recording with time slices for streaming
-      this.mediaRecorder.start(this.config.chunkDurationMs);
+      // Start recording (no time slices - record as single file)
+      this.mediaRecorder.start();
       this.setState('listening');
+
+      // Reset silence detection timer
+      this.lastSoundTime = Date.now();
 
       // Start silence detection
       this.startSilenceDetection();
