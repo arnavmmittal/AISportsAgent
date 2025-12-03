@@ -85,7 +85,8 @@ export class VoiceManager {
       });
 
       // Create audio context for analysis
-      this.audioContext = new AudioContext({ sampleRate: this.config.sampleRate });
+      // Use browser default sample rate for compatibility with both recording and playback
+      this.audioContext = new AudioContext();
       this.audioSource = this.audioContext.createMediaStreamSource(this.stream);
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 2048;
@@ -231,45 +232,77 @@ export class VoiceManager {
    * Play audio stream from TTS response
    */
   async playAudioStream(audioData: ArrayBuffer): Promise<void> {
+    console.log('VoiceManager.playAudioStream called with', audioData.byteLength, 'bytes');
+
     if (!this.audioContext) {
-      this.audioContext = new AudioContext({ sampleRate: this.config.sampleRate });
+      console.log('Creating new AudioContext for playback (using browser default sample rate)...');
+      this.audioContext = new AudioContext(); // Use browser default (44.1kHz or 48kHz) for proper TTS playback
     }
 
     try {
+      console.log('Decoding audio data...');
       const audioBuffer = await this.audioContext.decodeAudioData(audioData);
+      console.log('Audio decoded successfully. Duration:', audioBuffer.duration, 'seconds');
+
       this.audioQueue.push(audioBuffer);
+      console.log('Audio added to queue. Queue length:', this.audioQueue.length);
 
       if (!this.isPlaying) {
+        console.log('Starting playback...');
         this.playNextInQueue();
+      } else {
+        console.log('Already playing, audio will play after current');
       }
     } catch (error) {
+      console.error('Error decoding audio:', error);
       const err = error instanceof Error ? error : new Error('Failed to decode audio');
       this.handleError(err);
     }
   }
 
-  private playNextInQueue(): void {
+  private async playNextInQueue(): Promise<void> {
     if (this.audioQueue.length === 0) {
+      console.log('Queue empty, stopping playback');
       this.isPlaying = false;
       this.setState('idle');
       return;
     }
 
-    if (!this.audioContext) return;
+    if (!this.audioContext) {
+      console.error('No AudioContext available for playback');
+      return;
+    }
 
+    // Resume AudioContext if suspended (browser autoplay policy requirement)
+    if (this.audioContext.state === 'suspended') {
+      console.log('AudioContext suspended, resuming...');
+      try {
+        await this.audioContext.resume();
+        console.log('AudioContext resumed successfully, state:', this.audioContext.state);
+      } catch (error) {
+        console.error('Failed to resume AudioContext:', error);
+        return;
+      }
+    }
+
+    console.log('AudioContext state:', this.audioContext.state);
     this.isPlaying = true;
     this.setState('speaking');
 
     const audioBuffer = this.audioQueue.shift()!;
+    console.log('Playing audio buffer, duration:', audioBuffer.duration, 'seconds. Remaining in queue:', this.audioQueue.length);
+
     const source = this.audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(this.audioContext.destination);
 
     source.onended = () => {
+      console.log('Audio buffer playback ended, playing next...');
       this.playNextInQueue();
     };
 
     source.start(0);
+    console.log('Audio playback started');
   }
 
   /**

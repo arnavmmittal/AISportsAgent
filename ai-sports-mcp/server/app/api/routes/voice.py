@@ -210,22 +210,31 @@ async def voice_stream(websocket: WebSocket, db: Session = Depends(get_db)):
         while session.is_active:
             try:
                 # Check message type
+                logger.info("Waiting for message from client...")
                 message = await websocket.receive()
+                logger.info(f"Received message type: {list(message.keys())}")
 
                 # Binary data = audio chunk
                 if "bytes" in message:
                     audio_data = message["bytes"]
+                    logger.info(f"Received audio chunk: {len(audio_data)} bytes")
                     await session.process_audio_chunk(audio_data)
+                    logger.info(f"Audio chunk processed. Total chunks: {len(session.audio_chunks)}")
 
                 # Text data = control message
                 elif "text" in message:
+                    logger.info(f"Received text message: {message['text']}")
                     data = json.loads(message["text"])
+                    logger.info(f"Parsed data: {data}")
 
                     if data.get("type") == "utterance_end":
+                        logger.info("Processing utterance_end...")
                         # User stopped speaking - process complete utterance
                         await session.process_utterance_end()
+                        logger.info("utterance_end processed")
 
                     elif data.get("type") == "stop":
+                        logger.info("Client requested stop")
                         # Client requested stop
                         break
 

@@ -77,24 +77,6 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
     vm.on('stateChange', (state) => {
       console.log('VoiceManager state changed to:', state);
       setVoiceState(state);
-
-      // When transitioning to processing, send utterance_end signal (only if we have audio)
-      if (state === 'processing' && wsRef.current?.readyState === WebSocket.OPEN) {
-        console.log('State changed to processing, audio chunks captured:', audioChunkCountRef.current);
-
-        // Only send utterance_end if we have audio chunks
-        if (audioChunkCountRef.current === 0) {
-          console.warn('No audio chunks captured, skipping utterance_end signal from stateChange');
-          return;
-        }
-
-        wsRef.current.send(JSON.stringify({
-          type: 'utterance_end',
-          sessionId,
-          athleteId,
-        }));
-        console.log('utterance_end signal sent from stateChange handler');
-      }
     });
 
     vm.on('volumeChange', (vol) => {
@@ -111,13 +93,24 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       onError?.(err);
     });
 
-    vm.on('audioChunk', (chunk) => {
+    vm.on('audioChunk', async (chunk) => {
       // Send audio chunk to backend via WebSocket
       console.log('Audio chunk received from VoiceManager, size:', chunk.data.size);
       audioChunkCountRef.current += 1;
+
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        sendAudioChunk(chunk);
+        // Send audio chunk first
+        await sendAudioChunk(chunk);
         console.log('Audio chunk sent to backend, total chunks:', audioChunkCountRef.current);
+
+        // AFTER audio chunk is sent, send utterance_end signal
+        // This ensures the backend receives audio before processing
+        wsRef.current.send(JSON.stringify({
+          type: 'utterance_end',
+          sessionId,
+          athleteId,
+        }));
+        console.log('utterance_end signal sent after audio chunk');
       } else {
         console.warn('WebSocket not open, cannot send audio chunk');
       }
@@ -239,8 +232,19 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
         }
         // Handle binary messages (TTS audio)
         else if (event.data instanceof Blob) {
+          console.log('Received audio chunk from backend, size:', event.data.size);
           const arrayBuffer = await event.data.arrayBuffer();
+          console.log('Converted to ArrayBuffer, size:', arrayBuffer.byteLength);
           voiceManagerRef.current?.playAudioStream(arrayBuffer);
+          console.log('Audio chunk sent to VoiceManager for playback');
+        }
+        else if (event.data instanceof ArrayBuffer) {
+          console.log('Received ArrayBuffer audio chunk from backend, size:', event.data.byteLength);
+          voiceManagerRef.current?.playAudioStream(event.data);
+          console.log('Audio chunk sent to VoiceManager for playback');
+        }
+        else {
+          console.warn('Received unknown message type:', typeof event.data);
         }
       } catch (err) {
         console.error('Error handling WebSocket message:', err);
