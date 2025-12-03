@@ -66,6 +66,14 @@ class KnowledgeCategory(str, enum.Enum):
     BURNOUT = "BURNOUT"
 
 
+class CrisisSeverity(str, enum.Enum):
+    """Crisis severity enum."""
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+
+
 # ============================================
 # USER MANAGEMENT
 # ============================================
@@ -324,6 +332,76 @@ class KnowledgeBase(Base):
     __table_args__ = (
         Index("idx_knowledgebase_category", "category"),
         Index("idx_knowledgebase_isActive", "isActive"),
+    )
+
+
+# ============================================
+# CRISIS MANAGEMENT & ANALYTICS
+# ============================================
+
+class CrisisAlert(Base):
+    """Crisis alert model for tracking detected mental health concerns."""
+    __tablename__ = "CrisisAlert"
+
+    id = Column(String, primary_key=True)
+    athleteId = Column(String, ForeignKey("Athlete.userId"), nullable=False)
+    sessionId = Column(String, ForeignKey("ChatSession.id"), nullable=True)
+
+    severity = Column(SQLEnum(CrisisSeverity), nullable=False)
+    detectedAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    reviewed = Column(Boolean, default=False, nullable=False)
+    reviewedAt = Column(DateTime, nullable=True)
+    reviewedBy = Column(String, nullable=True)
+
+    escalated = Column(Boolean, default=False, nullable=False)
+    escalatedTo = Column(String, nullable=True)  # Email address or webhook URL
+    escalatedAt = Column(DateTime, nullable=True)
+
+    notes = Column(Text, nullable=True)
+    context = Column(JSON, nullable=True)  # Store conversation context
+
+    resolved = Column(Boolean, default=False, nullable=False)
+    resolvedAt = Column(DateTime, nullable=True)
+
+    createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_crisisalert_athleteId", "athleteId"),
+        Index("idx_crisisalert_severity", "severity"),
+        Index("idx_crisisalert_detectedAt", "detectedAt"),
+        Index("idx_crisisalert_reviewed", "reviewed"),
+    )
+
+
+class ConversationInsight(Base):
+    """Conversation insight model for analytics and coach dashboards."""
+    __tablename__ = "ConversationInsight"
+
+    id = Column(String, primary_key=True)
+    athleteId = Column(String, ForeignKey("Athlete.userId"), nullable=False)
+    sessionId = Column(String, ForeignKey("ChatSession.id"), nullable=False)
+
+    themes = Column(ARRAY(String), nullable=False, default=[])  # e.g., ["anxiety", "confidence"]
+    sentiment = Column(Integer, nullable=True)  # -100 to 100 scale
+    emotions = Column(JSON, nullable=True)  # {"joy": 0.2, "sadness": 0.1}
+
+    discoveryPhase = Column(String, nullable=True)  # e.g., "EXPLORE", "UNDERSTAND"
+    interventionUsed = Column(String, nullable=True)  # e.g., "CBT", "MINDFULNESS"
+
+    keyTopics = Column(ARRAY(String), nullable=False, default=[])
+    actionItems = Column(ARRAY(String), nullable=False, default=[])
+
+    extractedAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_conversationinsight_athleteId", "athleteId"),
+        Index("idx_conversationinsight_sessionId", "sessionId"),
+        Index("idx_conversationinsight_extractedAt", "extractedAt"),
     )
 
 
