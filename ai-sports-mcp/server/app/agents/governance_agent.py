@@ -8,9 +8,14 @@ and triggers appropriate escalation protocols.
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import re
+import smtplib
+import json
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from openai import OpenAI
 from sqlalchemy.orm import Session
+import httpx
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -224,24 +229,257 @@ Message to analyze: """
         """
         Trigger escalation protocol for crisis situations.
 
+        SAFETY-CRITICAL: This function handles detection of self-harm, suicide, and severe mental health crises.
+        It creates a database record, sends email alerts, and POSTs to configured webhooks.
+
+        Args:
+            analysis: Crisis analysis results including athlete_id, session_id, risk_level, and AI analysis
+        """
+        logger.critical(f"🚨 TRIGGERING ESCALATION PROTOCOL for athlete {analysis['athlete_id']}")
+        logger.critical(f"ANALYSIS: {analysis}")
+
+        athlete_id = analysis.get('athlete_id')
+        session_id = analysis.get('session_id')
+        risk_level = analysis.get('final_risk_level', 'UNKNOWN')
+        ai_analysis = analysis.get('ai_analysis', {})
+
+        # 1. Create CrisisAlert database record
+        try:
+            import uuid
+            alert = models.CrisisAlert(
+                id=str(uuid.uuid4()),
+                athleteId=athlete_id,
+                sessionId=session_id,
+                severity=models.CrisisSeverity[risk_level] if risk_level in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] else models.CrisisSeverity.HIGH,
+                detectedAt=datetime.utcnow(),
+                escalated=True,
+                escalatedAt=datetime.utcnow(),
+                escalatedTo=getattr(settings, 'CRISIS_ALERT_EMAIL', 'team@university.edu'),
+                context=analysis,  # Store full analysis for review
+                reviewed=False,
+                resolved=False,
+                createdAt=datetime.utcnow(),
+                updatedAt=datetime.utcnow()
+            )
+            self.db.add(alert)
+            self.db.commit()
+            logger.critical(f"✓ CrisisAlert record created: {alert.id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to create CrisisAlert record: {e}", exc_info=True)
+            self.db.rollback()
+            # Continue with alerts even if DB fails
+
+        # 2. Send email to crisis team
+        try:
+            self._send_crisis_email(analysis, alert.id if 'alert' in locals() else 'UNKNOWN')
+        except Exception as e:
+            logger.error(f"❌ Failed to send crisis email: {e}", exc_info=True)
+
+        # 3. Send webhook notification (Slack/Discord/Teams)
+        try:
+            self._send_crisis_webhook(analysis, alert.id if 'alert' in locals() else 'UNKNOWN')
+        except Exception as e:
+            logger.error(f"❌ Failed to send crisis webhook: {e}", exc_info=True)
+
+        logger.critical(f"✓ Escalation protocol completed for athlete {athlete_id}")
+
+    def _send_crisis_email(self, analysis: Dict[str, Any], alert_id: str) -> None:
+        """
+        Send crisis alert email to configured recipient(s).
+
         Args:
             analysis: Crisis analysis results
+            alert_id: Database alert ID for reference
         """
-        logger.critical(f"Triggering escalation protocol for athlete {analysis['athlete_id']}")
+        # Check if email is configured
+        if not hasattr(settings, 'CRISIS_ALERT_EMAIL') or not settings.CRISIS_ALERT_EMAIL:
+            logger.warning("CRISIS_ALERT_EMAIL not configured, skipping email notification")
+            return
 
-        # In production, this would:
-        # 1. Send email to crisis team
-        # 2. Send webhook notification
-        # 3. Flag the session in database
-        # 4. Potentially notify coach/athletic director
+        if not all([
+            hasattr(settings, 'SMTP_HOST'),
+            hasattr(settings, 'SMTP_PORT'),
+            hasattr(settings, 'SMTP_USER'),
+            hasattr(settings, 'SMTP_PASSWORD')
+        ]):
+            logger.warning("SMTP settings not configured, skipping email notification")
+            return
 
-        # For now, just log
-        logger.critical(f"ESCALATION: {analysis}")
+        athlete_id = analysis.get('athlete_id', 'UNKNOWN')
+        risk_level = analysis.get('final_risk_level', 'UNKNOWN')
+        ai_analysis = analysis.get('ai_analysis', {})
+        recommended_action = ai_analysis.get('recommended_action', 'Immediate professional intervention')
 
-        # TODO: Implement actual escalation
-        # - Email to settings.CRISIS_ALERT_EMAIL
-        # - POST to settings.CRISIS_ALERT_WEBHOOK
-        # - Create alert record in database
+        # Create email
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"🚨 CRISIS ALERT: Athlete {athlete_id} - Risk Level: {risk_level}"
+        msg['From'] = settings.SMTP_USER
+        msg['To'] = settings.CRISIS_ALERT_EMAIL
+
+        # Plain text version
+        text_body = f"""
+CRISIS ALERT - IMMEDIATE ACTION REQUIRED
+
+Alert ID: {alert_id}
+Athlete ID: {athlete_id}
+Session ID: {analysis.get('session_id', 'UNKNOWN')}
+Risk Level: {risk_level}
+Timestamp: {analysis.get('timestamp', datetime.utcnow().isoformat())}
+
+Analysis:
+{ai_analysis.get('reasoning', 'See full analysis in dashboard')}
+
+Recommended Action:
+{recommended_action}
+
+Categories Detected:
+{', '.join(ai_analysis.get('categories', []))}
+
+Dashboard: {getattr(settings, 'NEXTAUTH_URL', 'http://localhost:3000')}/coach/alerts/{alert_id}
+
+---
+This is an automated alert from AI Sports Agent Crisis Detection System
+        """
+
+        # HTML version
+        html_body = f"""
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; }}
+        .alert {{ background-color: #f44336; color: white; padding: 20px; margin-bottom: 20px; }}
+        .info {{ background-color: #f5f5f5; padding: 15px; margin: 10px 0; }}
+        .action {{ background-color: #ff9800; color: white; padding: 15px; margin: 10px 0; }}
+        .button {{ background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; }}
+    </style>
+</head>
+<body>
+    <div class="alert">
+        <h1>🚨 CRISIS ALERT - IMMEDIATE ACTION REQUIRED</h1>
+        <p>Risk Level: <strong>{risk_level}</strong></p>
+    </div>
+
+    <div class="info">
+        <h2>Alert Details</h2>
+        <p><strong>Alert ID:</strong> {alert_id}</p>
+        <p><strong>Athlete ID:</strong> {athlete_id}</p>
+        <p><strong>Session ID:</strong> {analysis.get('session_id', 'UNKNOWN')}</p>
+        <p><strong>Timestamp:</strong> {analysis.get('timestamp', datetime.utcnow().isoformat())}</p>
+    </div>
+
+    <div class="action">
+        <h2>Recommended Action</h2>
+        <p>{recommended_action}</p>
+    </div>
+
+    <div class="info">
+        <h2>AI Analysis</h2>
+        <p>{ai_analysis.get('reasoning', 'See full analysis in dashboard')}</p>
+        <p><strong>Categories:</strong> {', '.join(ai_analysis.get('categories', []))}</p>
+    </div>
+
+    <p>
+        <a href="{getattr(settings, 'NEXTAUTH_URL', 'http://localhost:3000')}/coach/alerts/{alert_id}" class="button">
+            View Full Alert in Dashboard
+        </a>
+    </p>
+
+    <hr>
+    <p style="color: #666; font-size: 12px;">
+        This is an automated alert from AI Sports Agent Crisis Detection System
+    </p>
+</body>
+</html>
+        """
+
+        # Attach both versions
+        part1 = MIMEText(text_body, 'plain')
+        part2 = MIMEText(html_body, 'html')
+        msg.attach(part1)
+        msg.attach(part2)
+
+        # Send email
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            server.starttls()
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            server.send_message(msg)
+
+        logger.critical(f"✓ Crisis email sent to {settings.CRISIS_ALERT_EMAIL}")
+
+    def _send_crisis_webhook(self, analysis: Dict[str, Any], alert_id: str) -> None:
+        """
+        Send crisis alert to configured webhook (Slack/Discord/Teams).
+
+        Args:
+            analysis: Crisis analysis results
+            alert_id: Database alert ID for reference
+        """
+        # Check if webhook is configured
+        if not hasattr(settings, 'CRISIS_ALERT_WEBHOOK') or not settings.CRISIS_ALERT_WEBHOOK:
+            logger.warning("CRISIS_ALERT_WEBHOOK not configured, skipping webhook notification")
+            return
+
+        athlete_id = analysis.get('athlete_id', 'UNKNOWN')
+        risk_level = analysis.get('final_risk_level', 'UNKNOWN')
+        ai_analysis = analysis.get('ai_analysis', {})
+
+        # Slack/Discord compatible payload
+        payload = {
+            "text": f"🚨 CRISIS ALERT: Athlete {athlete_id}",
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"🚨 CRISIS ALERT - Risk Level: {risk_level}"
+                    }
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {"type": "mrkdwn", "text": f"*Alert ID:*\n{alert_id}"},
+                        {"type": "mrkdwn", "text": f"*Athlete ID:*\n{athlete_id}"},
+                        {"type": "mrkdwn", "text": f"*Session ID:*\n{analysis.get('session_id', 'UNKNOWN')}"},
+                        {"type": "mrkdwn", "text": f"*Timestamp:*\n{analysis.get('timestamp', datetime.utcnow().isoformat())}"}
+                    ]
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*Analysis:*\n{ai_analysis.get('reasoning', 'See dashboard for details')}"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*Recommended Action:*\n{ai_analysis.get('recommended_action', 'Immediate professional intervention')}"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "View in Dashboard"},
+                            "url": f"{getattr(settings, 'NEXTAUTH_URL', 'http://localhost:3000')}/coach/alerts/{alert_id}",
+                            "style": "danger"
+                        }
+                    ]
+                }
+            ]
+        }
+
+        # Send webhook (with timeout)
+        response = httpx.post(
+            settings.CRISIS_ALERT_WEBHOOK,
+            json=payload,
+            timeout=10.0
+        )
+        response.raise_for_status()
+
+        logger.critical(f"✓ Crisis webhook sent to {settings.CRISIS_ALERT_WEBHOOK}")
 
     def check_mood_patterns(
         self,
