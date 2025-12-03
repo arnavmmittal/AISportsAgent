@@ -7,10 +7,12 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.routes import chat, coach, voice
+from app.db.database import init_db, engine
 
 logger = setup_logging()
 
@@ -25,6 +27,20 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
+
+    # Initialize database tables
+    logger.info("Initializing database...")
+    try:
+        init_db()  # Create tables from SQLAlchemy models
+
+        # Verify database connection
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        logger.info("✓ Database initialized and verified")
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}", exc_info=True)
+        # Continue anyway - some routes may still work
+        logger.warning("Continuing without database connection")
 
     yield
 
