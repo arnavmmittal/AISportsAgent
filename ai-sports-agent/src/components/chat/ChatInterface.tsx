@@ -166,9 +166,13 @@ export function ChatInterface() {
               } else if (parsed.type === 'content') {
                 setMessages((prev) => {
                   const updated = [...prev];
-                  const lastMsg = updated[updated.length - 1];
-                  if (lastMsg && lastMsg.role === 'assistant') {
-                    lastMsg.content += parsed.data;
+                  const lastIndex = updated.length - 1;
+                  if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
+                    // Create new message object instead of mutating
+                    updated[lastIndex] = {
+                      ...updated[lastIndex],
+                      content: updated[lastIndex].content + parsed.data
+                    };
                   }
                   return updated;
                 });
