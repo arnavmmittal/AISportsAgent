@@ -163,10 +163,17 @@ class Settings(BaseSettings):
         return self
 
     # ============================================================================
-    # Crisis Detection & Alerts
+    # Crisis Detection & Alerts (SAFETY-CRITICAL)
     # ============================================================================
-    CRISIS_ALERT_EMAIL: Optional[str] = None
-    CRISIS_ALERT_WEBHOOK: Optional[str] = None
+    CRISIS_ALERT_EMAIL: Optional[str] = None  # Email to send crisis alerts (e.g., team@university.edu)
+    CRISIS_ALERT_WEBHOOK: Optional[str] = None  # Webhook URL for Slack/Discord/Teams alerts
+
+    # SMTP Configuration for Crisis Emails
+    SMTP_HOST: Optional[str] = None  # e.g., smtp.gmail.com, smtp.office365.com
+    SMTP_PORT: int = Field(default=587, ge=1, le=65535)  # Default TLS port
+    SMTP_USER: Optional[str] = None  # SMTP username (usually email address)
+    SMTP_PASSWORD: Optional[str] = None  # SMTP password or app-specific password
+    EMAIL_FROM: Optional[str] = None  # Sender email address (defaults to SMTP_USER if not set)
 
     @field_validator("CRISIS_ALERT_EMAIL")
     @classmethod
@@ -175,6 +182,19 @@ class Settings(BaseSettings):
         if v and "@" not in v:
             raise ValueError("Invalid email format for CRISIS_ALERT_EMAIL")
         return v
+
+    @model_validator(mode="after")
+    def validate_smtp_config(self) -> "Settings":
+        """Validate SMTP configuration if crisis email is enabled."""
+        if self.CRISIS_ALERT_EMAIL:
+            if self.is_production and not all([self.SMTP_HOST, self.SMTP_USER, self.SMTP_PASSWORD]):
+                raise ValueError(
+                    "SMTP_HOST, SMTP_USER, and SMTP_PASSWORD are required when CRISIS_ALERT_EMAIL is configured in production"
+                )
+        # Set EMAIL_FROM to SMTP_USER if not explicitly provided
+        if not self.EMAIL_FROM and self.SMTP_USER:
+            self.EMAIL_FROM = self.SMTP_USER
+        return self
 
     # ============================================================================
     # Rate Limiting
