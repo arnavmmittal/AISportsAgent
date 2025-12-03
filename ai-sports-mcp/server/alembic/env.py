@@ -2,7 +2,7 @@ from logging.config import fileConfig
 import sys
 from pathlib import Path
 
-from sqlalchemy import engine_from_config
+from sqlalchemy import engine_from_config, create_engine
 from sqlalchemy import pool
 
 from alembic import context
@@ -19,8 +19,8 @@ from app.db import models  # Import models to register them with Base
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with our DATABASE_URL from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Don't set sqlalchemy.url in config - use settings.DATABASE_URL directly
+# This avoids ConfigParser issues with URL-encoded characters like %3F
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -43,7 +43,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    # Use DATABASE_URL directly to avoid ConfigParser interpolation issues
+    url = settings.DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -64,9 +65,9 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    # Create engine directly from DATABASE_URL to avoid ConfigParser issues
+    connectable = create_engine(
+        settings.DATABASE_URL,
         poolclass=pool.NullPool,
     )
 

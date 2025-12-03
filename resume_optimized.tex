@@ -1,0 +1,155 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+%----------- PAGE STYLE -----------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+%----------- SECTION FORMATTING ----------
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+\pdfgentounicode=1
+
+%----------- COMMANDS ----------
+\newcommand{\resumeItem}[1]{
+  \item\small{{#1 \vspace{-2pt}}}
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+  \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+    \textbf{#1} & #2 \\
+    \textit{\small#3} & \textit{\small #4} \\
+  \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+  \item
+  \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+    \small\textbf{#1} & \textit{\small #2} \\
+  \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\begin{document}
+
+%---------- HEADING ----------
+\begin{center}
+    {\Huge \scshape Arnav Mittal} \\ \vspace{1pt}
+    \small 425-305-1412 $|$
+    \href{mailto:arnavmit@andrew.cmu.edu}{\underline{arnavmit@andrew.cmu.edu}} $|$
+    \href{https://linkedin.com/in/arnavmmittal}{\underline{linkedin.com/in/arnavmmittal}} $|$
+    \href{https://github.com/arnavmmittal}{\underline{github.com/arnavmmittal}}
+\end{center}
+
+%----------- EDUCATION -----------
+\section{Education}
+\resumeSubHeadingListStart
+  \resumeSubheading
+    {Carnegie Mellon University}{Pittsburgh, PA}
+    {Bachelor of Science in Artificial Intelligence}{Aug 2022 -- May 2026}
+    \resumeItemListStart
+      \resumeItem{\textbf{Coursework:} Machine Learning, NLP, Data Structures, Systems, HCI, Probability, Discrete Math, Theoretical CS}
+    \resumeItemListEnd
+\resumeSubHeadingListEnd
+
+%----------- EXPERIENCE -----------
+\section{Experience}
+\resumeSubHeadingListStart
+
+\resumeSubheading
+  {Software Engineering Intern}{May 2025 -- Aug 2025}
+  {Splunk (Cisco)}{Boulder, CO}
+  \resumeItemListStart
+    \resumeItem{Architected \textbf{AI-powered Scheduler Assistant} using \textbf{Model Context Protocol (MCP)} and \textbf{Python microservices}, reducing root-cause analysis time by \textbf{50\%} and manual investigation by \textbf{45\%}}
+    \resumeItem{Integrated \textbf{LLMs} with Splunk REST APIs to automate anomaly detection; built real-time \textbf{React/TypeScript} panels reducing investigation steps by \textbf{50\%}}
+    \resumeItem{Developed \textbf{agentic workflows} for autonomous diagnostics, improving system reliability SLA by \textbf{15\%}}
+    \resumeItem{Presented to VP-level stakeholders, directly influencing AI observability product roadmap decisions}
+  \resumeItemListEnd
+
+\resumeSubheading
+  {Software Engineering Intern}{May 2024 -- Aug 2024}
+  {Visa Inc.}{Foster City, CA}
+  \resumeItemListStart
+    \resumeItem{Engineered \textbf{generative AI visualization module} using \textbf{Angular}, \textbf{Spring Boot}, and \textbf{GPT-4 API} to dynamically generate context-aware charts from unstructured datasets, supporting 12+ chart types}
+    \resumeItem{Optimized rendering pipeline achieving \textbf{35\% reduction} in load time (2.8s→1.8s) for 100K+ record datasets; improved decision-making speed by \textbf{20\%}}
+    \resumeItem{Delivered demo to 200+ stakeholders, contributing to \textbf{35\% adoption increase} of generative AI tools across analytics teams}
+  \resumeItemListEnd
+
+\resumeSubheading
+  {Software Engineering Intern}{May 2023 -- Jul 2023}
+  {Relief Factor}{Kirkland, WA}
+  \resumeItemListStart
+    \resumeItem{Built \textbf{AI-powered knowledge base} using \textbf{Django} and \textbf{OpenAI API}, reducing ticket response time by \textbf{60\%} (4h→1.5h); authored \textbf{500+ FAQ entries} with semantic embeddings}
+    \resumeItem{Developed automated response engine with \textbf{RAG (Retrieval-Augmented Generation)}, handling \textbf{200+ daily requests} autonomously and improving resolution speed by \textbf{30\%}}
+  \resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+%----------- PROJECTS -----------
+\section{Projects}
+\resumeSubHeadingListStart
+
+\resumeProjectHeading
+  {\textbf{MCP Scheduler Assistant} $|$ \emph{Python, React, TypeScript, LangChain, REST APIs}}{May 2025 -- Aug 2025}
+\resumeItemListStart
+  \resumeItem{Built \textbf{autonomous diagnostic agent} using \textbf{Model Context Protocol} and \textbf{LangChain} to investigate skipped searches, analyze logs, and recommend remediation actions with real-time anomaly detection}
+  \resumeItem{Created \textbf{React/TypeScript} dashboard with streaming updates, reducing time-to-resolution from 30 to 8 minutes (\textbf{73\%})}
+\resumeItemListEnd
+
+\resumeProjectHeading
+  {\textbf{TaskMaster AI} $|$ \emph{React, Next.js, Supabase, OpenAI API}}{Jan 2025 -- Apr 2025}
+\resumeItemListStart
+  \resumeItem{Developed \textbf{AI-powered task platform} with \textbf{GPT-4} suggestion engine recommending next-step tasks, boosting completion by \textbf{30\%} and weekly engagement by \textbf{22\%} for 50+ users}
+  \resumeItem{Built interactive dashboards with \textbf{Recharts} and real-time collaboration using \textbf{Supabase Realtime/WebSocket}}
+\resumeItemListEnd
+
+\resumeProjectHeading
+  {\textbf{Gen-AI Charting System} $|$ \emph{Spring Boot, Angular, OpenAI API}}{May 2024 -- Aug 2024}
+\resumeItemListStart
+  \resumeItem{Created \textbf{generative AI charting engine} with \textbf{GPT-4} that dynamically adapted visualizations to dataset type, improving interpretability by \textbf{25\%} and reducing load time by \textbf{35\%}}
+  \resumeItem{Integrated \textbf{AI-driven insight summaries} to automatically explain trends and anomalies in generated charts}
+\resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+%----------- SKILLS -----------
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}]
+  \small{\item{
+    \textbf{Languages:} Python, TypeScript, JavaScript, Java, C, SQL, HTML/CSS, Bash \\
+    \textbf{AI/ML:} LLMs, GPT-4, RAG, Model Context Protocol (MCP), LangChain, OpenAI API, Agentic AI, Prompt Engineering \\
+    \textbf{Frameworks \& Tools:} React, Next.js, Angular, Django, FastAPI, Spring Boot, Node.js, PostgreSQL, Docker, AWS, Git \\
+  }}
+\end{itemize}
+
+\end{document}
