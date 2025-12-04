@@ -85,7 +85,71 @@ async def synthesize_speech(
         raise Exception(f"Speech synthesis failed: {str(e)}")
 
 
-async def synthesize_speech_stream(
+async def synthesize_speech_stream_cartesia(
+    text: str,
+    voice_id: str = DEFAULT_VOICE_ID,
+    emotion: str = "supportive",
+    speed: float = 1.0,
+) -> AsyncGenerator[bytes, None]:
+    """
+    Synthesize speech with streaming using Cartesia.ai
+
+    Args:
+        text: Text to convert to speech
+        voice_id: Cartesia voice ID
+        emotion: Emotion/tone (supportive, calm, encouraging)
+        speed: Speech rate (0.5 to 2.0)
+
+    Yields:
+        Audio chunks as they're generated
+
+    Raises:
+        Exception: If synthesis fails
+    """
+    from app.core.logging import setup_logging
+
+    logger = setup_logging()
+    logger.info(f"Synthesizing speech with Cartesia: {len(text)} characters")
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            headers = {
+                "Authorization": f"Bearer {CARTESIA_API_KEY}",
+                "Content-Type": "application/json",
+            }
+
+            payload = {
+                "text": text,
+                "voice_id": voice_id,
+                "output_format": "mp3",
+                "language": "en",
+                "speed": speed,
+                "emotion": emotion,
+                "stream": True,
+            }
+
+            async with session.post(
+                f"{CARTESIA_API_URL}/synthesize/stream",
+                headers=headers,
+                json=payload,
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"Cartesia API error: {error_text}")
+
+                # Stream audio chunks as they arrive
+                async for chunk in response.content.iter_chunked(4096):
+                    if chunk:
+                        yield chunk
+
+        logger.info("Cartesia speech synthesis complete")
+
+    except Exception as e:
+        logger.error(f"Cartesia TTS error: {e}")
+        raise Exception(f"Cartesia speech synthesis failed: {str(e)}")
+
+
+async def synthesize_speech_stream_openai(
     text: str,
     voice: str = "alloy",
     speed: float = 1.0,
@@ -108,7 +172,7 @@ async def synthesize_speech_stream(
     from app.core.logging import setup_logging
 
     logger = setup_logging()
-    logger.info(f"Synthesizing speech: {len(text)} characters")
+    logger.info(f"Synthesizing speech with OpenAI: {len(text)} characters")
 
     try:
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
@@ -126,11 +190,74 @@ async def synthesize_speech_stream(
                 if chunk:
                     yield chunk
 
-        logger.info("Speech synthesis complete")
+        logger.info("OpenAI speech synthesis complete")
 
     except Exception as e:
-        logger.error(f"TTS error: {e}")
-        raise Exception(f"Speech synthesis streaming failed: {str(e)}")
+        logger.error(f"OpenAI TTS error: {e}")
+        raise Exception(f"OpenAI speech synthesis failed: {str(e)}")
+
+
+async def synthesize_speech_stream(
+    text: str,
+    voice: str = "alloy",
+    speed: float = 1.0,
+    emotion: str = "supportive",
+    use_cartesia: bool = True,
+) -> AsyncGenerator[bytes, None]:
+    """
+    Synthesize speech with seamless fallback: Cartesia.ai → OpenAI TTS
+
+    This function tries Cartesia.ai first for ultra-low latency (<300ms) and
+    emotion control. If Cartesia fails or is not configured, it automatically
+    falls back to OpenAI TTS.
+
+    Args:
+        text: Text to convert to speech
+        voice: Voice name (OpenAI voice for fallback)
+        speed: Speech rate (0.25 to 4.0)
+        emotion: Emotion/tone for Cartesia (supportive, calm, encouraging)
+        use_cartesia: Whether to attempt Cartesia first (default True)
+
+    Yields:
+        Audio chunks as they're generated
+
+    Raises:
+        Exception: If both Cartesia and OpenAI fail
+    """
+    from app.core.logging import setup_logging
+
+    logger = setup_logging()
+
+    # Try Cartesia first if configured and enabled
+    if use_cartesia and CARTESIA_API_KEY:
+        try:
+            logger.info("Attempting TTS with Cartesia.ai...")
+            async for chunk in synthesize_speech_stream_cartesia(
+                text=text,
+                voice_id=DEFAULT_VOICE_ID,
+                emotion=emotion,
+                speed=speed,
+            ):
+                yield chunk
+            logger.info("Successfully used Cartesia.ai")
+            return
+        except Exception as e:
+            logger.warning(f"Cartesia TTS failed, falling back to OpenAI: {e}")
+            # Fall through to OpenAI fallback
+
+    # Fallback to OpenAI TTS
+    try:
+        logger.info("Using OpenAI TTS (fallback)")
+        async for chunk in synthesize_speech_stream_openai(
+            text=text,
+            voice=voice,
+            speed=speed,
+        ):
+            yield chunk
+        logger.info("Successfully used OpenAI TTS")
+    except Exception as e:
+        logger.error(f"Both Cartesia and OpenAI TTS failed: {e}")
+        raise Exception(f"Speech synthesis failed: {str(e)}")
 
 
 def get_voice_for_context(context: str = "general") -> str:
