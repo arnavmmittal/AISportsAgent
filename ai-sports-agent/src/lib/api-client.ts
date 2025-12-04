@@ -233,6 +233,134 @@ class APIClient {
   }
 
   /**
+   * Get list of athletes for a coach
+   */
+  async getAthletes(coachId: string): Promise<Array<{
+    id: string;
+    name: string;
+    email: string;
+    sport: string;
+    year: string;
+    teamPosition?: string;
+    avgMood?: number;
+    avgStress?: number;
+    riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW';
+  }>> {
+    const response = await fetch(
+      `${this.baseURL}/api/coach/athletes?coach_id=${coachId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get mood logs for an athlete
+   */
+  async getMoodLogs(athleteId: string, days: number = 30): Promise<Array<{
+    id: string;
+    athleteId: string;
+    mood: number;
+    confidence: number;
+    stress: number;
+    energy?: number;
+    sleep?: number;
+    notes?: string;
+    tags: string[];
+    createdAt: string;
+  }>> {
+    const response = await fetch(
+      `${this.baseURL}/api/mood-logs?athleteId=${athleteId}&days=${days}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get goals for an athlete
+   */
+  async getGoals(athleteId: string, status?: string): Promise<Array<{
+    id: string;
+    athleteId: string;
+    title: string;
+    description?: string;
+    category: string;
+    status: string;
+    targetDate?: string;
+    completedAt?: string;
+    createdAt: string;
+    updatedAt: string;
+  }>> {
+    const params = new URLSearchParams({ athleteId });
+    if (status) params.append('status', status);
+
+    const response = await fetch(`${this.baseURL}/api/goals?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get chat sessions for an athlete
+   */
+  async getChatSessions(athleteId: string, limit: number = 10): Promise<Array<{
+    id: string;
+    athleteId: string;
+    summary?: string;
+    topic?: string;
+    sentiment?: string;
+    createdAt: string;
+    updatedAt: string;
+  }>> {
+    const response = await fetch(
+      `${this.baseURL}/api/chat/sessions?athleteId=${athleteId}&limit=${limit}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get conversation insights for coach dashboard
+   */
+  async getConversationInsights(coachId: string, days: number = 30): Promise<Array<{
+    id: string;
+    athleteId: string;
+    sessionId: string;
+    themes: string[];
+    sentiment: number;
+    emotions?: Record<string, number>;
+    discoveryPhase?: string;
+    interventionUsed?: string;
+    keyTopics: string[];
+    actionItems: string[];
+    extractedAt: string;
+  }>> {
+    const response = await fetch(
+      `${this.baseURL}/api/coach/insights?coach_id=${coachId}&days=${days}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Check backend health
    */
   async healthCheck(): Promise<{ status: string; version: string; environment: string }> {
