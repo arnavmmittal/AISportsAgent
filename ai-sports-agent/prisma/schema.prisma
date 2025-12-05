@@ -23,6 +23,8 @@ model User {
   image         String?
   role          Role      @default(ATHLETE)
 
+  onboardingCompleted Boolean @default(false)  // Track if user has completed onboarding
+
   schoolId      String
   school        School    @relation(fields: [schoolId], references: [id])
 
