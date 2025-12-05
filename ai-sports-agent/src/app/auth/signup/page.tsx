@@ -23,9 +23,24 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      // For now, just show a message that sign-up needs database setup
-      setError('Sign-up functionality requires database setup. Please use the demo account to sign in.');
-      setIsLoading(false);
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to create account');
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - redirect to signin page
+      router.push('/auth/signin?message=Account created successfully! Please sign in.');
     } catch (err) {
       setError('An error occurred. Please try again.');
       setIsLoading(false);
