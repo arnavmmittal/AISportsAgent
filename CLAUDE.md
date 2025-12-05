@@ -2,6 +2,18 @@
 
 This file provides Claude with essential context about the AI Sports Agent project.
 
+## 📋 IMPORTANT: Development Plan & Progress
+
+**Always check `PLAN.md` first** - This file contains:
+- Current MVP progress and completed work
+- Active branch and sprint goals
+- Blockers and issues
+- Next steps and task breakdown
+- Database connection info
+- Git workflow and commit history context
+
+`PLAN.md` is maintained continuously across all development sessions to preserve context. **Update it whenever you complete tasks, encounter blockers, or change direction.**
+
 ## Project Overview
 
 AI Sports Agent is an evidence-based virtual sports psychology assistant for collegiate athletes. The platform provides 24/7 mental performance support through AI-powered conversations, mood tracking, and goal management.
