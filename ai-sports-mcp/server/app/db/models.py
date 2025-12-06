@@ -84,6 +84,8 @@ class School(Base):
 
     # Relationships
     users = relationship("User", back_populates="school")
+    teamConfigs = relationship("TeamConfig", back_populates="school")
+    knowledgeBase = relationship("KnowledgeBase", back_populates="school")
 
     __table_args__ = (
         Index("idx_school_name", "name"),
@@ -141,6 +143,9 @@ class Athlete(Base):
     sessions = relationship("ChatSession", back_populates="athlete")
     moodLogs = relationship("MoodLog", back_populates="athlete")
     goals = relationship("Goal", back_populates="athlete")
+    performanceMetrics = relationship("PerformanceMetric", back_populates="athlete")
+    readinessScores = relationship("ReadinessScore", back_populates="athlete")
+    wearableData = relationship("WearableData", back_populates="athlete")
 
     __table_args__ = (
         Index("idx_athlete_sport", "sport"),
@@ -316,14 +321,169 @@ class KnowledgeBase(Base):
     category = Column(SQLEnum(KnowledgeCategory), nullable=False)
     tags = Column(ARRAY(String), nullable=False, default=[])
 
+    # Multi-Tenancy Fix: NULL = shared content, non-NULL = school-specific
+    schoolId = Column(String, ForeignKey("School.id"), nullable=True)
+
     isActive = Column(Boolean, default=True, nullable=False)
 
     createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
     updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+    # Relationships
+    school = relationship("School", back_populates="knowledgeBase")
+
     __table_args__ = (
         Index("idx_knowledgebase_category", "category"),
         Index("idx_knowledgebase_isActive", "isActive"),
+        Index("idx_knowledgebase_schoolId", "schoolId"),
+    )
+
+
+# ============================================
+# PERFORMANCE ANALYTICS (NEW)
+# ============================================
+
+class PerformanceMetric(Base):
+    """Performance metric model for game stats and mental state correlation."""
+    __tablename__ = "PerformanceMetric"
+
+    id = Column(String, primary_key=True)
+    athleteId = Column(String, ForeignKey("Athlete.userId"), nullable=False)
+
+    gameDate = Column(DateTime, nullable=False)
+    sport = Column(String, nullable=False)
+    opponentName = Column(String, nullable=True)
+
+    # Mental state snapshot (from MoodLog closest to game time)
+    mentalMoodScore = Column(Integer, nullable=True)
+    mentalStressScore = Column(Integer, nullable=True)
+    mentalSleepHours = Column(Integer, nullable=True)
+    mentalHRVScore = Column(Integer, nullable=True)
+
+    # Performance stats (sport-specific JSON)
+    stats = Column(JSON, nullable=False)
+
+    # Game outcome
+    outcome = Column(String, nullable=False)
+
+    # Correlation metadata
+    readinessScore = Column(Integer, nullable=True)
+    slumpPrediction = Column(Boolean, nullable=True)
+
+    createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    athlete = relationship("Athlete", back_populates="performanceMetrics")
+
+    __table_args__ = (
+        Index("idx_performancemetric_athleteId_gameDate", "athleteId", "gameDate"),
+        Index("idx_performancemetric_sport", "sport"),
+    )
+
+
+class ReadinessScore(Base):
+    """Pre-competition readiness score model."""
+    __tablename__ = "ReadinessScore"
+
+    id = Column(String, primary_key=True)
+    athleteId = Column(String, ForeignKey("Athlete.userId"), nullable=False)
+
+    gameDate = Column(DateTime, nullable=False)
+    calculatedAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    score = Column(Integer, nullable=False)
+    level = Column(String, nullable=False)  # GREEN | YELLOW | RED
+    factors = Column(JSON, nullable=False)
+
+    # Raw feature values
+    moodAvg7d = Column(Integer, nullable=False)
+    stressAvg7d = Column(Integer, nullable=False)
+    sleepAvg3d = Column(Integer, nullable=False)
+    hrvRecovery = Column(Integer, nullable=True)
+    daysSinceGame = Column(Integer, nullable=True)
+    chatEngagement = Column(Integer, nullable=True)
+
+    # Relationships
+    athlete = relationship("Athlete", back_populates="readinessScores")
+
+    __table_args__ = (
+        Index("idx_readinessscore_athleteId_gameDate", "athleteId", "gameDate"),
+        Index("idx_readinessscore_level", "level"),
+    )
+
+
+class WearableData(Base):
+    """Wearable device data model (Whoop, Oura, Apple Watch)."""
+    __tablename__ = "WearableData"
+
+    id = Column(String, primary_key=True)
+    athleteId = Column(String, ForeignKey("Athlete.userId"), nullable=False)
+
+    deviceType = Column(String, nullable=False)  # whoop | oura | apple_watch
+    metricType = Column(String, nullable=False)  # hrv | recovery | sleep | strain
+    value = Column(Integer, nullable=False)
+    unit = Column(String, nullable=True)  # ms, score, hours, bpm
+
+    recordedAt = Column(DateTime, nullable=False)
+    syncedAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    athlete = relationship("Athlete", back_populates="wearableData")
+
+    __table_args__ = (
+        Index("idx_wearabledata_athleteId_metricType_recordedAt", "athleteId", "metricType", "recordedAt"),
+        Index("idx_wearabledata_deviceType", "deviceType"),
+    )
+
+
+class TeamConfig(Base):
+    """Team customization configuration model."""
+    __tablename__ = "TeamConfig"
+
+    id = Column(String, primary_key=True)
+    schoolId = Column(String, ForeignKey("School.id"), nullable=False)
+    sport = Column(String, nullable=False)
+
+    customPrompts = Column(JSON, nullable=True)
+    customKeywords = Column(JSON, nullable=True)
+    customResources = Column(JSON, nullable=True)
+
+    updatedBy = Column(String, nullable=True)
+    updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    school = relationship("School", back_populates="teamConfigs")
+
+    __table_args__ = (
+        Index("idx_teamconfig_sport", "sport"),
+    )
+
+
+class AuditLog(Base):
+    """FERPA compliance audit log model."""
+    __tablename__ = "AuditLog"
+
+    id = Column(String, primary_key=True)
+
+    userId = Column(String, nullable=False)
+    userRole = Column(SQLEnum(Role), nullable=False)
+
+    action = Column(String, nullable=False)
+    resourceType = Column(String, nullable=False)
+    resourceId = Column(String, nullable=True)
+
+    athleteId = Column(String, nullable=True)
+
+    ipAddress = Column(String, nullable=True)
+    userAgent = Column(String, nullable=True)
+
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_auditlog_athleteId_timestamp", "athleteId", "timestamp"),
+        Index("idx_auditlog_userId_timestamp", "userId", "timestamp"),
+        Index("idx_auditlog_action", "action"),
     )
 
 

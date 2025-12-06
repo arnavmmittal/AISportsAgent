@@ -25,6 +25,9 @@ export async function middleware(request: NextRequest) {
   const isAthleteRoute = ['/chat', '/dashboard', '/mood', '/goals'].some(
     path => pathname.startsWith(path)
   );
+  const isCoachApiRoute = pathname.startsWith('/api/analytics') ||
+                          pathname.startsWith('/api/performance') ||
+                          pathname.startsWith('/api/coach');
   const isPublicRoute = pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/api/auth');
 
   // Allow public routes and API routes
@@ -58,6 +61,22 @@ export async function middleware(request: NextRequest) {
     // Athletes cannot access coach routes
     if (role === 'ATHLETE' && isCoachRoute) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    // Athletes cannot access coach API routes
+    if (role === 'ATHLETE' && isCoachApiRoute) {
+      return NextResponse.json(
+        { error: 'Forbidden - Coach access required' },
+        { status: 403 }
+      );
+    }
+
+    // Only coaches and admins can access coach API routes
+    if (isCoachApiRoute && role !== 'COACH' && role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden - Coach access required' },
+        { status: 403 }
+      );
     }
 
     // Admins can access everything (future-proofing)

@@ -229,19 +229,71 @@ Message to analyze: """
         """
         logger.critical(f"Triggering escalation protocol for athlete {analysis['athlete_id']}")
 
-        # In production, this would:
-        # 1. Send email to crisis team
-        # 2. Send webhook notification
-        # 3. Flag the session in database
-        # 4. Potentially notify coach/athletic director
+        try:
+            # Get athlete information
+            athlete = self.db.query(models.Athlete).filter(
+                models.Athlete.userId == analysis['athlete_id']
+            ).first()
 
-        # For now, just log
-        logger.critical(f"ESCALATION: {analysis}")
+            if not athlete:
+                logger.error(f"Athlete {analysis['athlete_id']} not found for escalation")
+                return
 
-        # TODO: Implement actual escalation
-        # - Email to settings.CRISIS_ALERT_EMAIL
-        # - POST to settings.CRISIS_ALERT_WEBHOOK
-        # - Create alert record in database
+            athlete_name = athlete.user.name if athlete.user else "Unknown Athlete"
+
+            # Get AI analysis details
+            ai_analysis = analysis.get('ai_analysis', {})
+            risk_level = ai_analysis.get('risk_level', 'UNKNOWN')
+            categories = ai_analysis.get('categories', [])
+            reasoning = ai_analysis.get('reasoning', 'No reasoning provided')
+
+            # Get the original message content (from keyword scan or analysis context)
+            # For now, we'll use a placeholder - in production this would come from the message
+            message_content = "Message content not available in analysis context"
+
+            # Send crisis alert via escalation system
+            from app.core.escalation import get_escalation_system
+            escalation_system = get_escalation_system()
+
+            alert_result = escalation_system.send_crisis_alert(
+                athlete_id=analysis['athlete_id'],
+                athlete_name=athlete_name,
+                risk_level=risk_level,
+                categories=categories,
+                message_content=message_content,
+                reasoning=reasoning,
+                session_id=analysis.get('session_id')
+            )
+
+            logger.info(f"Escalation alert sent: {alert_result}")
+
+            # Create crisis alert record in database
+            if hasattr(models, 'CrisisAlert'):
+                try:
+                    # Map risk level to Severity enum
+                    severity_mapping = {
+                        "CRITICAL": models.Severity.CRITICAL,
+                        "HIGH": models.Severity.HIGH,
+                        "MEDIUM": models.Severity.MEDIUM,
+                        "LOW": models.Severity.LOW
+                    }
+                    severity = severity_mapping.get(risk_level, models.Severity.MEDIUM)
+
+                    # Note: CrisisAlert requires messageId and sessionId which we have
+                    # In a real implementation, this would be called from the chat endpoint
+                    # where we have access to the actual message ID
+                    logger.info("CrisisAlert model available - would create database record here")
+                    # TODO: Create actual CrisisAlert record when called from chat endpoint with message_id
+
+                except Exception as e:
+                    logger.error(f"Error creating crisis alert record: {str(e)}")
+            else:
+                logger.warning("CrisisAlert model not available")
+
+        except Exception as e:
+            logger.error(f"Error in escalation trigger: {str(e)}")
+            # Don't let escalation errors block the crisis detection
+            pass
 
     def check_mood_patterns(
         self,

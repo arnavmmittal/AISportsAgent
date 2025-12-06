@@ -21,6 +21,8 @@ export function Navigation() {
 
   const coachLinks = [
     { href: '/coach/dashboard', label: 'Dashboard', icon: '📈' },
+    { href: '/coach/readiness', label: 'Readiness', icon: '🎯' },
+    { href: '/coach/performance/record', label: 'Record Stats', icon: '📊' },
     { href: '/coach/athletes', label: 'Athletes', icon: '👥' },
     { href: '/coach/insights', label: 'Insights', icon: '💡' },
   ];

@@ -116,3 +116,6 @@ const { handlers, auth, signIn, signOut } = NextAuth(authOptions);
 
 export const GET = handlers.GET;
 export const POST = handlers.POST;
+
+// Export auth for use in server components
+export { auth };
