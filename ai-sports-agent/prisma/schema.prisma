@@ -53,6 +53,10 @@ model School {
   customConfig  Json?    // Custom persona settings, resources
   users         User[]
 
+  // Team Customization & Multi-Tenancy (NEW)
+  teamConfigs   TeamConfig[]
+  knowledgeBase KnowledgeBase[]
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -81,6 +85,11 @@ model Athlete {
   goals         Goal[]
   crisisAlerts  CrisisAlert[]
   insights      ConversationInsight[]
+
+  // Performance Analytics (NEW)
+  performanceMetrics PerformanceMetric[]
+  readinessScores    ReadinessScore[]
+  wearableData       WearableData[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -306,6 +315,10 @@ model KnowledgeBase {
   category      KnowledgeCategory
   tags          String[]
 
+  // Multi-Tenancy Fix: NULL = shared content, non-NULL = school-specific
+  schoolId      String?
+  school        School?     @relation(fields: [schoolId], references: [id])
+
   isActive      Boolean     @default(true)
 
   createdAt     DateTime    @default(now())
@@ -313,6 +326,7 @@ model KnowledgeBase {
 
   @@index([category])
   @@index([isActive])
+  @@index([schoolId])
 }
 
 enum KnowledgeCategory {
@@ -330,6 +344,134 @@ enum KnowledgeCategory {
   VISUALIZATION
   MINDFULNESS
   BURNOUT
+}
+
+// ============================================
+// PERFORMANCE ANALYTICS (NEW)
+// ============================================
+
+model PerformanceMetric {
+  id                String   @id @default(cuid())
+  athleteId         String
+  athlete           Athlete  @relation(fields: [athleteId], references: [userId])
+
+  gameDate          DateTime
+  sport             String
+  opponentName      String?
+
+  // Mental state snapshot (from MoodLog closest to game time)
+  mentalMoodScore   Int?     // 1-10
+  mentalStressScore Int?     // 1-10
+  mentalSleepHours  Float?   // Hours
+  mentalHRVScore    Int?     // From wearable (0-100)
+
+  // Performance stats (sport-specific JSON)
+  // Examples: {"points": 15, "shooting_pct": 0.45, "assists": 7, "turnovers": 2}
+  stats             Json
+
+  // Game outcome
+  outcome           String   // "win" | "loss" | "draw"
+
+  // Correlation metadata
+  readinessScore    Int?     // Pre-game readiness score (0-100)
+  slumpPrediction   Boolean? // Was this game predicted as a slump?
+
+  createdAt         DateTime @default(now())
+
+  @@index([athleteId, gameDate])
+  @@index([sport])
+}
+
+model ReadinessScore {
+  id              String   @id @default(cuid())
+  athleteId       String
+  athlete         Athlete  @relation(fields: [athleteId], references: [userId])
+
+  gameDate        DateTime
+  calculatedAt    DateTime @default(now())
+
+  // Readiness score (0-100)
+  score           Int
+
+  // Traffic light level
+  level           String   // "GREEN" (≥75) | "YELLOW" (55-74) | "RED" (<55)
+
+  // Contributing factors (JSON array)
+  // Example: [{"factor": "low_sleep", "impact": -15}, {"factor": "good_mood", "impact": +20}]
+  factors         Json
+
+  // Raw feature values used in calculation
+  moodAvg7d       Float
+  stressAvg7d     Float
+  sleepAvg3d      Float
+  hrvRecovery     Float?
+  daysSinceGame   Int?
+  chatEngagement  Int?
+
+  @@index([athleteId, gameDate])
+  @@index([level])
+}
+
+model WearableData {
+  id         String   @id @default(cuid())
+  athleteId  String
+  athlete    Athlete  @relation(fields: [athleteId], references: [userId])
+
+  deviceType String   // "whoop" | "oura" | "apple_watch"
+  metricType String   // "hrv" | "recovery" | "sleep" | "strain" | "resting_hr"
+  value      Float
+  unit       String?  // "ms", "score", "hours", "bpm"
+
+  recordedAt DateTime // When the metric was recorded by the device
+  syncedAt   DateTime @default(now()) // When we synced it to our database
+
+  @@index([athleteId, metricType, recordedAt])
+  @@index([deviceType])
+}
+
+model TeamConfig {
+  id              String   @id @default(cuid())
+  schoolId        String
+  school          School   @relation(fields: [schoolId], references: [id])
+  sport           String
+
+  // Customizations (JSON objects)
+  customPrompts   Json?    // {"pre_game": "...", "post_loss": "...", "recovery": "..."}
+  customKeywords  Json?    // {"crisis": [...], "concern": [...], "sports_specific": [...]}
+  customResources Json?    // {"emergency_contacts": [...], "campus_services": [...]}
+
+  updatedBy       String?  // Coach user ID who made the changes
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@unique([schoolId, sport])
+  @@index([sport])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+
+  // Who performed the action
+  userId       String
+  userRole     Role
+
+  // What was done
+  action       String   // "view_athlete_mood" | "export_report" | "view_chat_history" | "update_crisis_alert"
+  resourceType String   // "mood_log" | "chat_session" | "performance_metric"
+  resourceId   String?  // ID of the accessed resource
+
+  // Which athlete's data was accessed (NULL for aggregate/team views)
+  athleteId    String?
+
+  // Request metadata
+  ipAddress    String?
+  userAgent    String?
+
+  timestamp    DateTime @default(now())
+
+  @@index([athleteId, timestamp])
+  @@index([userId, timestamp])
+  @@index([action])
 }
 
 // ============================================

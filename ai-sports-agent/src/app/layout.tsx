@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { Header } from "@/components/layout/Header";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -9,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI Sports Coach - Mental Performance Assistant",
-  description: "Evidence-based virtual sports psychology support for collegiate athletes",
+  title: "AI Sports Agent - Mental Performance Platform",
+  description: "Evidence-based mental performance platform for collegiate athletics",
 };
 
 export default function RootLayout({
@@ -20,8 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${inter.variable} antialiased bg-gray-50`}>
         <SessionProvider>
+          <Header />
           {children}
         </SessionProvider>
       </body>
