@@ -137,15 +137,18 @@ export default async function CoachReadinessPage() {
       schoolId: coach.schoolId,
     },
     include: {
-      athlete: true,
-      moodLogs: {
-        orderBy: { createdAt: 'desc' },
-        take: 7, // Last 7 days
-      },
-      sessions: {
-        where: {
-          createdAt: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+      athlete: {
+        include: {
+          moodLogs: {
+            orderBy: { createdAt: 'desc' },
+            take: 7, // Last 7 days
+          },
+          sessions: {
+            where: {
+              createdAt: {
+                gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+              },
+            },
           },
         },
       },
@@ -155,7 +158,12 @@ export default async function CoachReadinessPage() {
 
   // Calculate readiness scores for all athletes
   const athleteReadiness = athletes.map((athlete) => {
-    const readiness = calculateReadinessScore(athlete);
+    // Pass the athlete data with correct structure
+    const athleteData = {
+      moodLogs: athlete.athlete?.moodLogs || [],
+      sessions: athlete.athlete?.sessions || [],
+    };
+    const readiness = calculateReadinessScore(athleteData);
     return {
       id: athlete.id,
       name: athlete.name,

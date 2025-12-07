@@ -34,10 +34,13 @@ export default async function CoachAthletesPage() {
       schoolId: coach.schoolId,
     },
     include: {
-      athlete: true,
-      moodLogs: {
-        orderBy: { createdAt: 'desc' },
-        take: 7, // Last 7 days
+      athlete: {
+        include: {
+          moodLogs: {
+            orderBy: { createdAt: 'desc' },
+            take: 7, // Last 7 days
+          },
+        },
       },
     },
     orderBy: { name: 'asc' },
@@ -45,7 +48,7 @@ export default async function CoachAthletesPage() {
 
   // Calculate metrics for each athlete
   const athleteMetrics = athletes.map((athlete) => {
-    const recentMoods = athlete.moodLogs;
+    const recentMoods = athlete.athlete?.moodLogs || [];
 
     if (recentMoods.length === 0) {
       return {
