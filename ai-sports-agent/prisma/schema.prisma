@@ -33,6 +33,9 @@ model User {
   accounts      Account[]
   sessions      Session[]
 
+  // Assignments created by coach
+  assignmentsCreated Assignment[] @relation("CoachAssignments")
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -56,6 +59,7 @@ model School {
   // Team Customization & Multi-Tenancy (NEW)
   teamConfigs   TeamConfig[]
   knowledgeBase KnowledgeBase[]
+  assignments   Assignment[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -90,6 +94,9 @@ model Athlete {
   performanceMetrics PerformanceMetric[]
   readinessScores    ReadinessScore[]
   wearableData       WearableData[]
+
+  // Assignments
+  assignmentSubmissions AssignmentSubmission[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -344,6 +351,98 @@ enum KnowledgeCategory {
   VISUALIZATION
   MINDFULNESS
   BURNOUT
+}
+
+// ============================================
+// ASSIGNMENT SYSTEM
+// ============================================
+
+model Assignment {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  instructions  String
+
+  // Assignment metadata
+  type          AssignmentType
+  category      String   // "Pre-competition", "Post-competition", "Daily Practice", etc.
+  difficulty    String   // "Easy", "Medium", "Hard"
+  estimatedTime Int      // Minutes to complete
+
+  // Resources (links, videos, PDFs)
+  resources     Json?
+
+  // Assigned by coach
+  coachId       String
+  coachUser     User     @relation("CoachAssignments", fields: [coachId], references: [id])
+
+  // Assignment scope
+  schoolId      String
+  school        School   @relation(fields: [schoolId], references: [id])
+  sportFilter   String?  // NULL = all sports, non-null = specific sport
+  yearFilter    String?  // NULL = all years, non-null = specific year
+
+  // Dates
+  assignedDate  DateTime @default(now())
+  dueDate       DateTime
+
+  // Submissions
+  submissions   AssignmentSubmission[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([coachId, assignedDate])
+  @@index([schoolId, sportFilter])
+  @@index([dueDate])
+}
+
+enum AssignmentType {
+  REFLECTION      // Written reflection questions
+  EXERCISE        // Guided mental exercise (breathing, visualization)
+  VIDEO_WATCH     // Watch educational video + quiz
+  READING         // Read article/chapter + summary
+  JOURNALING      // Free-form journaling prompt
+  GOAL_SETTING    // Create/update goals
+  MINDFULNESS     // Meditation/mindfulness practice
+}
+
+model AssignmentSubmission {
+  id            String   @id @default(cuid())
+
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  athleteId     String
+  athlete       Athlete    @relation(fields: [athleteId], references: [userId])
+
+  // Submission data
+  status        SubmissionStatus  @default(NOT_STARTED)
+  response      Json              // Athlete's answers, notes, etc.
+  timeSpent     Int?              // Minutes spent
+
+  // Grading/feedback (optional)
+  coachFeedback String?
+  coachRating   Int?              // 1-5 stars
+
+  // Timestamps
+  startedAt     DateTime?
+  submittedAt   DateTime?
+  reviewedAt    DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([assignmentId, athleteId])
+  @@index([athleteId, status])
+  @@index([assignmentId, submittedAt])
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  REVIEWED
 }
 
 // ============================================
