@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -121,7 +121,7 @@ model CoachNote {
   coach         Coach       @relation(fields: [coachId], references: [userId])
 
   athleteId     String      // Reference to User.id where role=ATHLETE
-  content       String      @db.Text
+  content       String      
   isPrivate     Boolean     @default(true)
 
   createdAt     DateTime    @default(now())
@@ -144,7 +144,7 @@ model ChatSession {
   crisisAlerts  CrisisAlert[]
   insights      ConversationInsight[]
 
-  summary       String?     @db.Text
+  summary       String?     
   topic         String?     // anxiety, focus, recovery, confidence, etc.
   sentiment     String?     // positive, neutral, negative
 
@@ -161,7 +161,7 @@ model Message {
   session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   role          MessageRole // user, assistant, system
-  content       String      @db.Text
+  content       String      
 
   // For RAG - vector embedding stored as JSON array
   embedding     Json?
@@ -202,7 +202,7 @@ model CrisisAlert {
 
   escalated     Boolean     @default(false)
   escalatedTo   String?     // Contact info or service escalated to
-  notes         String?     @db.Text
+  notes         String?     
 
   @@index([athleteId, detectedAt])
   @@index([severity, reviewed])
@@ -254,8 +254,8 @@ model MoodLog {
   energy        Int?        // 1-10 scale
   sleep         Int?        // Hours of sleep
 
-  notes         String?     @db.Text
-  tags          String[]    // ["pre-game", "post-practice", "exam-week"]
+  notes         String?     
+  tags          String    // ["pre-game", "post-practice", "exam-week"]
 
   createdAt     DateTime    @default(now())
 
@@ -269,7 +269,7 @@ model Goal {
   athlete       Athlete     @relation(fields: [athleteId], references: [userId])
 
   title         String
-  description   String?     @db.Text
+  description   String?     
   category      GoalCategory
   status        GoalStatus  @default(IN_PROGRESS)
 
@@ -305,7 +305,7 @@ model KnowledgeBase {
   id            String      @id @default(cuid())
 
   title         String
-  content       String      @db.Text
+  content       String      
   source        String      // "CBT Handbook", "Flow State Research", etc.
   sourceUrl     String?
 
@@ -313,7 +313,7 @@ model KnowledgeBase {
   embedding     Json?
 
   category      KnowledgeCategory
-  tags          String[]
+  tags          String
 
   // Multi-Tenancy Fix: NULL = shared content, non-NULL = school-specific
   schoolId      String?
@@ -484,12 +484,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String? 
+  access_token      String? 
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String? 
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
