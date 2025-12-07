@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { athleteId, mood, confidence, stress, energy, sleep, notes } = body;
+    const { athleteId, mood, confidence, stress, energy, sleep, notes, tags } = body;
 
     if (!athleteId || mood === undefined || confidence === undefined || stress === undefined) {
       return NextResponse.json(
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
         energy: energy || null,
         sleep: sleep || null,
         notes: notes || null,
+        tags: tags || '',
       },
     });
 
