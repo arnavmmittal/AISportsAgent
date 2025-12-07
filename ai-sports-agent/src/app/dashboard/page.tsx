@@ -360,7 +360,7 @@ export default function DashboardPage() {
 
           <Card
             className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02] bg-gradient-to-br from-secondary/10 to-secondary/5 border-secondary/20"
-            onClick={() => router.push('/chat')}
+            onClick={() => router.push('/history')}
           >
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
