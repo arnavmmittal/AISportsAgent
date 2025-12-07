@@ -1,6 +1,10 @@
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, MessageCircle, TrendingUp, Users } from 'lucide-react';
 
 export default async function CoachInsightsPage() {
   const session = await auth();
@@ -13,6 +17,84 @@ export default async function CoachInsightsPage() {
     redirect('/dashboard');
   }
 
+  // Get coach's school
+  const coach = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
+
+  if (!coach) {
+    return <div>Coach not found</div>;
+  }
+
+  // Get crisis alerts from the last 30 days (for athletes in same school)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const crisisAlerts = await prisma.crisisAlert.findMany({
+    where: {
+      athlete: {
+        schoolId: coach.schoolId,
+      },
+      detectedAt: {
+        gte: thirtyDaysAgo,
+      },
+    },
+    include: {
+      athlete: {
+        include: {
+          user: true,
+        },
+      },
+      message: true,
+    },
+    orderBy: {
+      detectedAt: 'desc',
+    },
+    take: 20,
+  });
+
+  // Get all athletes for team metrics
+  const athletes = await prisma.user.findMany({
+    where: {
+      role: 'ATHLETE',
+      schoolId: coach.schoolId,
+    },
+    include: {
+      moodLogs: {
+        where: {
+          createdAt: {
+            gte: thirtyDaysAgo,
+          },
+        },
+      },
+      sessions: {
+        where: {
+          createdAt: {
+            gte: thirtyDaysAgo,
+          },
+        },
+        include: {
+          messages: true,
+        },
+      },
+    },
+  });
+
+  // Calculate team metrics
+  const totalAthletes = athletes.length;
+  const activeAthletes = athletes.filter((a) => a.moodLogs.length > 0 || a.sessions.length > 0).length;
+  const avgMoodLogs = athletes.reduce((sum, a) => sum + a.moodLogs.length, 0) / Math.max(totalAthletes, 1);
+  const avgChatSessions = athletes.reduce((sum, a) => sum + a.sessions.length, 0) / Math.max(totalAthletes, 1);
+
+  // Calculate team mood average
+  const allMoodLogs = athletes.flatMap((a) => a.moodLogs);
+  const teamAvgMood = allMoodLogs.length > 0
+    ? allMoodLogs.reduce((sum, log) => sum + log.mood, 0) / allMoodLogs.length
+    : 0;
+  const teamAvgStress = allMoodLogs.length > 0
+    ? allMoodLogs.reduce((sum, log) => sum + log.stress, 0) / allMoodLogs.length
+    : 0;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -24,7 +106,7 @@ export default async function CoachInsightsPage() {
                 Team Insights
               </h1>
               <p className="mt-2 text-gray-600">
-                Mental performance trends and analytics
+                Mental performance trends and crisis alerts
               </p>
             </div>
             <Link href="/coach/dashboard">
@@ -37,123 +119,297 @@ export default async function CoachInsightsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Team Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Active Athletes</p>
+                  <p className="text-2xl font-bold text-gray-900">{activeAthletes}/{totalAthletes}</p>
+                </div>
+                <Users className="size-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Coming Soon Banner */}
-        <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-lg p-8 text-white mb-8">
-          <div className="flex items-center mb-4">
-            <div className="text-5xl mr-4">💡</div>
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Advanced Analytics Coming Soon</h2>
-              <p className="text-purple-100">
-                Performance correlation charts, slump predictions, and ROI metrics
-              </p>
-            </div>
-          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Team Avg Mood</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {teamAvgMood > 0 ? teamAvgMood.toFixed(1) : '--'}/10
+                  </p>
+                </div>
+                <TrendingUp className="size-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Avg Chat Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">{avgChatSessions.toFixed(1)}</p>
+                </div>
+                <MessageCircle className="size-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Crisis Alerts (30d)</p>
+                  <p className="text-2xl font-bold text-gray-900">{crisisAlerts.length}</p>
+                </div>
+                <AlertTriangle className="size-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Feature Preview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Crisis Alerts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Crisis Alerts</CardTitle>
+            <CardDescription>
+              Automatic detection of concerning language in athlete conversations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {crisisAlerts.length > 0 ? (
+              <div className="space-y-4">
+                {crisisAlerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className={`p-4 rounded-lg border-2 ${
+                      alert.severity === 'CRITICAL'
+                        ? 'bg-red-50 border-red-200'
+                        : alert.severity === 'HIGH'
+                        ? 'bg-orange-50 border-orange-200'
+                        : alert.severity === 'MEDIUM'
+                        ? 'bg-yellow-50 border-yellow-200'
+                        : 'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Badge
+                            variant="destructive"
+                            className={
+                              alert.severity === 'CRITICAL'
+                                ? 'bg-red-600'
+                                : alert.severity === 'HIGH'
+                                ? 'bg-orange-500'
+                                : alert.severity === 'MEDIUM'
+                                ? 'bg-yellow-500'
+                                : 'bg-blue-500'
+                            }
+                          >
+                            {alert.severity}
+                          </Badge>
+                          <span className="font-semibold text-gray-900">
+                            {alert.athlete.user.name}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {new Date(alert.detectedAt).toLocaleDateString()} at{' '}
+                            {new Date(alert.detectedAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 italic mb-2">
+                          "{alert.message.content.substring(0, 150)}
+                          {alert.message.content.length > 150 ? '...' : ''}"
+                        </p>
+                        {alert.reviewed ? (
+                          <div className="text-xs text-green-600 font-medium">
+                            ✓ Reviewed
+                            {alert.reviewedAt &&
+                              ` on ${new Date(alert.reviewedAt).toLocaleDateString()}`}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-orange-600 font-medium">
+                            ⚠️ Needs Review
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <AlertTriangle className="size-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No crisis alerts in the last 30 days</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  The system automatically flags concerning language for review
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Mental-Performance Correlation */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center mb-4">
-              <div className="text-3xl mr-3">📈</div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Performance Correlation
-              </h3>
+        {/* Engagement Trends */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Platform Engagement (Last 30 Days)</CardTitle>
+            <CardDescription>
+              Athletes using mood logging and AI chat features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">
+                  Athletes logging moods regularly
+                </span>
+                <span className="text-lg font-bold text-gray-900">
+                  {athletes.filter((a) => a.moodLogs.length >= 7).length}/{totalAthletes}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">
+                  Athletes using AI chat
+                </span>
+                <span className="text-lg font-bold text-gray-900">
+                  {athletes.filter((a) => a.sessions.length > 0).length}/{totalAthletes}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">
+                  Total mood logs
+                </span>
+                <span className="text-lg font-bold text-gray-900">
+                  {allMoodLogs.length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">
+                  Total chat messages
+                </span>
+                <span className="text-lg font-bold text-gray-900">
+                  {athletes.reduce((sum, a) => sum + a.sessions.reduce((s, sess) => s + sess.messages.length, 0), 0)}
+                </span>
+              </div>
             </div>
-            <p className="text-gray-600 text-sm mb-4">
-              See how mental state (mood, stress, sleep) correlates with game performance stats.
-            </p>
-            <div className="bg-gray-100 rounded p-4 text-xs text-gray-500">
-              <strong>Example Insight:</strong> "Athletes with mood &gt;7 have +15% shooting accuracy"
-            </div>
-            <div className="mt-4 text-xs text-gray-400">
-              ⏳ Available after 10+ games tracked
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Slump Prediction */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center mb-4">
-              <div className="text-3xl mr-3">🔮</div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Slump Early Warning
-              </h3>
-            </div>
-            <p className="text-gray-600 text-sm mb-4">
-              ML model predicts performance decline 7-14 days before it shows in stats.
-            </p>
-            <div className="bg-gray-100 rounded p-4 text-xs text-gray-500">
-              <strong>Example Alert:</strong> "Warning: John Smith shows mental pattern consistent with upcoming slump"
-            </div>
-            <div className="mt-4 text-xs text-gray-400">
-              ⏳ Available after full season (90+ days data)
-            </div>
-          </div>
+        {/* Stress Distribution */}
+        {allMoodLogs.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Team Mental State Distribution (Last 30 Days)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Mood Levels</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">High (7-10)</span>
+                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-500 rounded-full h-2"
+                          style={{
+                            width: `${(allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-900">
+                        {Math.round((allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">Medium (4-6)</span>
+                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-yellow-500 rounded-full h-2"
+                          style={{
+                            width: `${(allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-900">
+                        {Math.round((allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">Low (1-3)</span>
+                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-red-500 rounded-full h-2"
+                          style={{
+                            width: `${(allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-900">
+                        {Math.round((allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Team Trends */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center mb-4">
-              <div className="text-3xl mr-3">📊</div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Team Mental Trends
-              </h3>
-            </div>
-            <p className="text-gray-600 text-sm mb-4">
-              Track team-wide mood, stress, and engagement trends over time.
-            </p>
-            <div className="bg-gray-100 rounded p-4 text-xs text-gray-500">
-              <strong>Example Chart:</strong> 30-day rolling average of team mood with game outcomes overlay
-            </div>
-            <div className="mt-4 text-xs text-gray-400">
-              ⏳ Available after 30+ days of athlete mood logs
-            </div>
-          </div>
-
-          {/* ROI Metrics */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center mb-4">
-              <div className="text-3xl mr-3">💰</div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                ROI Calculator
-              </h3>
-            </div>
-            <p className="text-gray-600 text-sm mb-4">
-              Calculate the value of mental performance optimization on win rate and program outcomes.
-            </p>
-            <div className="bg-gray-100 rounded p-4 text-xs text-gray-500">
-              <strong>Example Metric:</strong> "+2 wins/season = $200K value (bowl game, recruiting)"
-            </div>
-            <div className="mt-4 text-xs text-gray-400">
-              ⏳ Available after full season comparison
-            </div>
-          </div>
-
-        </div>
-
-        {/* Current Functionality */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">
-            ✅ What's Available Now
-          </h3>
-          <div className="space-y-2 text-sm text-blue-800">
-            <p>
-              • <Link href="/coach/readiness" className="underline font-medium">Team Readiness Scoring</Link> - Pre-game mental readiness (0-100 score)
-            </p>
-            <p>
-              • <Link href="/coach/performance/record" className="underline font-medium">Performance Data Entry</Link> - Track game stats with mental state snapshots
-            </p>
-            <p>
-              • Individual athlete chat history and mood logs (with consent)
-            </p>
-          </div>
-          <p className="text-xs text-blue-600 mt-4">
-            💡 Keep collecting data! Advanced insights unlock automatically as your dataset grows.
-          </p>
-        </div>
-
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Stress Levels</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">Low (1-4)</span>
+                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-500 rounded-full h-2"
+                          style={{
+                            width: `${(allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-900">
+                        {Math.round((allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">Medium (5-7)</span>
+                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-yellow-500 rounded-full h-2"
+                          style={{
+                            width: `${(allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-900">
+                        {Math.round((allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">High (8-10)</span>
+                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-red-500 rounded-full h-2"
+                          style={{
+                            width: `${(allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-900">
+                        {Math.round((allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
