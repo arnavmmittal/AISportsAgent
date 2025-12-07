@@ -1,6 +1,10 @@
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
 
 export default async function CoachAthletesPage() {
   const session = await auth();
@@ -13,6 +17,92 @@ export default async function CoachAthletesPage() {
     redirect('/dashboard');
   }
 
+  // Get coach's school
+  const coach = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: { school: true },
+  });
+
+  if (!coach) {
+    return <div>Coach not found</div>;
+  }
+
+  // Get all athletes from the same school
+  const athletes = await prisma.user.findMany({
+    where: {
+      role: 'ATHLETE',
+      schoolId: coach.schoolId,
+    },
+    include: {
+      athlete: true,
+      moodLogs: {
+        orderBy: { createdAt: 'desc' },
+        take: 7, // Last 7 days
+      },
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  // Calculate metrics for each athlete
+  const athleteMetrics = athletes.map((athlete) => {
+    const recentMoods = athlete.moodLogs;
+
+    if (recentMoods.length === 0) {
+      return {
+        ...athlete,
+        avgMood: 0,
+        avgStress: 0,
+        avgConfidence: 0,
+        trend: 'neutral' as const,
+        riskLevel: 'LOW' as const,
+      };
+    }
+
+    const avgMood = recentMoods.reduce((sum, log) => sum + log.mood, 0) / recentMoods.length;
+    const avgStress = recentMoods.reduce((sum, log) => sum + log.stress, 0) / recentMoods.length;
+    const avgConfidence = recentMoods.reduce((sum, log) => sum + log.confidence, 0) / recentMoods.length;
+
+    // Calculate trend (comparing first half vs second half of recent logs)
+    const midpoint = Math.floor(recentMoods.length / 2);
+    const recentAvg = recentMoods.slice(0, midpoint).reduce((sum, log) => sum + log.mood, 0) / Math.max(midpoint, 1);
+    const olderAvg = recentMoods.slice(midpoint).reduce((sum, log) => sum + log.mood, 0) / Math.max(recentMoods.length - midpoint, 1);
+    const trend = recentAvg > olderAvg + 0.5 ? 'improving' : recentAvg < olderAvg - 0.5 ? 'declining' : 'neutral';
+
+    // Determine risk level based on mood and stress
+    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+    if (avgMood < 4 || avgStress > 7) {
+      riskLevel = 'HIGH';
+    } else if (avgMood < 5 || avgStress > 6) {
+      riskLevel = 'MEDIUM';
+    }
+
+    // Critical if very low mood or very high stress
+    if (avgMood < 3 || avgStress > 8) {
+      riskLevel = 'CRITICAL';
+    }
+
+    return {
+      ...athlete,
+      avgMood: Math.round(avgMood * 10) / 10,
+      avgStress: Math.round(avgStress * 10) / 10,
+      avgConfidence: Math.round(avgConfidence * 10) / 10,
+      trend,
+      riskLevel,
+    };
+  });
+
+  // Sort by risk level (CRITICAL first, then HIGH, MEDIUM, LOW)
+  const riskOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  const sortedAthletes = athleteMetrics.sort((a, b) => riskOrder[a.riskLevel] - riskOrder[b.riskLevel]);
+
+  // Count by risk level
+  const riskCounts = {
+    CRITICAL: sortedAthletes.filter((a) => a.riskLevel === 'CRITICAL').length,
+    HIGH: sortedAthletes.filter((a) => a.riskLevel === 'HIGH').length,
+    MEDIUM: sortedAthletes.filter((a) => a.riskLevel === 'MEDIUM').length,
+    LOW: sortedAthletes.filter((a) => a.riskLevel === 'LOW').length,
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -21,10 +111,10 @@ export default async function CoachAthletesPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Manage Athletes
+                Team Roster
               </h1>
               <p className="mt-2 text-gray-600">
-                View and manage your team roster
+                {coach.school.name} - {athletes.length} Athletes
               </p>
             </div>
             <Link href="/coach/dashboard">
@@ -37,42 +127,191 @@ export default async function CoachAthletesPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* Empty State */}
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <div className="text-6xl mb-4">👥</div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            No Athletes Yet
-          </h2>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Your team roster will appear here once athletes create accounts and join your team.
-          </p>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto mt-8">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">
-              How to Add Athletes
-            </h3>
-            <div className="text-left space-y-3 text-sm text-blue-800">
-              <p>
-                <strong>Step 1:</strong> Share the signup link with your athletes:
-                <code className="ml-2 px-2 py-1 bg-white rounded text-xs">
-                  {typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/auth/signup
-                </code>
-              </p>
-              <p>
-                <strong>Step 2:</strong> Have them select "Student Athlete" as their role
-              </p>
-              <p>
-                <strong>Step 3:</strong> Athletes should enter your school/team name to be linked to your roster
-              </p>
-              <p className="text-xs text-blue-600 mt-4">
-                💡 Note: Multi-school support and automatic roster sync coming in next update
-              </p>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Risk Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="border-2 border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-red-700">{riskCounts.CRITICAL}</div>
+                <div className="text-sm text-red-600 mt-1">Critical Risk</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-orange-200 bg-orange-50">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-orange-700">{riskCounts.HIGH}</div>
+                <div className="text-sm text-orange-600 mt-1">High Risk</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-yellow-700">{riskCounts.MEDIUM}</div>
+                <div className="text-sm text-yellow-600 mt-1">Medium Risk</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-700">{riskCounts.LOW}</div>
+                <div className="text-sm text-green-600 mt-1">Low Risk</div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
+        {/* Athletes Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Athlete Mental Performance Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sortedAthletes.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Athlete
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Sport
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                        Position
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                        Avg Mood (7d)
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                        Avg Stress (7d)
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                        Confidence
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                        Trend
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                        Risk Level
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {sortedAthletes.map((athlete) => (
+                      <tr key={athlete.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-gray-900">{athlete.name}</div>
+                          <div className="text-sm text-gray-500">{athlete.athlete?.year || 'N/A'}</div>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-700">
+                          {athlete.athlete?.sport || 'N/A'}
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-700">
+                          {athlete.athlete?.teamPosition || 'N/A'}
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <span className={`font-semibold ${
+                            athlete.avgMood >= 7 ? 'text-green-600' :
+                            athlete.avgMood >= 5 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {athlete.avgMood > 0 ? athlete.avgMood.toFixed(1) : '--'}/10
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <span className={`font-semibold ${
+                            athlete.avgStress <= 4 ? 'text-green-600' :
+                            athlete.avgStress <= 6 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {athlete.avgStress > 0 ? athlete.avgStress.toFixed(1) : '--'}/10
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <span className="text-sm text-gray-700">
+                            {athlete.avgConfidence > 0 ? athlete.avgConfidence.toFixed(1) : '--'}/10
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center">
+                            {athlete.trend === 'improving' && (
+                              <div className="flex items-center gap-1 text-green-600">
+                                <TrendingUp className="size-4" />
+                                <span className="text-xs font-medium">Improving</span>
+                              </div>
+                            )}
+                            {athlete.trend === 'declining' && (
+                              <div className="flex items-center gap-1 text-red-600">
+                                <TrendingDown className="size-4" />
+                                <span className="text-xs font-medium">Declining</span>
+                              </div>
+                            )}
+                            {athlete.trend === 'neutral' && (
+                              <div className="flex items-center gap-1 text-gray-500">
+                                <Minus className="size-4" />
+                                <span className="text-xs font-medium">Stable</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <Badge
+                              variant={
+                                athlete.riskLevel === 'CRITICAL' ? 'destructive' :
+                                athlete.riskLevel === 'HIGH' ? 'destructive' :
+                                athlete.riskLevel === 'MEDIUM' ? 'secondary' :
+                                'secondary'
+                              }
+                              className={
+                                athlete.riskLevel === 'CRITICAL' ? 'bg-red-600' :
+                                athlete.riskLevel === 'HIGH' ? 'bg-orange-500' :
+                                athlete.riskLevel === 'MEDIUM' ? 'bg-yellow-500' :
+                                'bg-green-500'
+                              }
+                            >
+                              {athlete.riskLevel}
+                            </Badge>
+                            {(athlete.riskLevel === 'CRITICAL' || athlete.riskLevel === 'HIGH') && (
+                              <AlertCircle className="size-4 text-red-500" />
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No athletes found in your school.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Help Text */}
+        {riskCounts.CRITICAL > 0 || riskCounts.HIGH > 0 ? (
+          <Card className="border-2 border-orange-200 bg-orange-50">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="size-6 text-orange-600 mt-0.5 shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-orange-900 mb-2">Action Recommended</h3>
+                  <p className="text-sm text-orange-800">
+                    You have {riskCounts.CRITICAL + riskCounts.HIGH} athlete(s) showing signs of elevated mental health risk.
+                    Consider reaching out for a one-on-one check-in or reviewing their recent chat sessions for more context.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </div>
   );
