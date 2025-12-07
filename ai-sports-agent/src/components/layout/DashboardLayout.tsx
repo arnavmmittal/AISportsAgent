@@ -1,6 +1,5 @@
 'use client';
 
-import { Navigation } from './Navigation';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -36,7 +35,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
       <main className="max-w-7xl mx-auto">
         {children}
       </main>
