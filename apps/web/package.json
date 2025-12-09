@@ -1,5 +1,5 @@
 {
-  "name": "ai-sports-agent",
+  "name": "@sports-agent/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -16,6 +16,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@sports-agent/types": "workspace:*",
+    "@sports-agent/api-client": "workspace:*",
     "@auth/prisma-adapter": "^2.0.0",
     "@cartesia/cartesia-js": "^2.2.9",
     "@hookform/resolvers": "^3.9.0",
