@@ -1,0 +1,550 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String
+  password      String?   // For email/password auth
+  image         String?
+  role          Role      @default(ATHLETE)
+
+  onboardingCompleted Boolean @default(false)  // Track if user has completed onboarding
+
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id])
+
+  athlete       Athlete?
+  coach         Coach?
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([schoolId])
+}
+
+enum Role {
+  ATHLETE
+  COACH
+  ADMIN
+}
+
+model School {
+  id            String   @id @default(cuid())
+  name          String
+  division      String   // D1, D2, D3
+  customConfig  Json?    // Custom persona settings, resources
+  users         User[]
+
+  // Team Customization & Multi-Tenancy (NEW)
+  teamConfigs   TeamConfig[]
+  knowledgeBase KnowledgeBase[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+}
+
+// ============================================
+// ATHLETE DATA
+// ============================================
+
+model Athlete {
+  userId        String        @id
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sport         String
+  year          String        // Freshman, Sophomore, Junior, Senior
+  teamPosition  String?
+
+  // Coach analytics permissions and risk assessment
+  consentCoachView Boolean    @default(false)  // Athlete consent for coach to view details
+  consentChatSummaries Boolean @default(false)  // Athlete consent for coach to view chat summaries
+  riskLevel        RiskLevel  @default(LOW)
+  lastRiskUpdate   DateTime?
+
+  sessions      ChatSession[]
+  moodLogs      MoodLog[]
+  goals         Goal[]
+  crisisAlerts  CrisisAlert[]
+  insights      ConversationInsight[]
+  chatSummaries ChatSummary[]
+
+  // Performance Analytics (NEW)
+  performanceMetrics PerformanceMetric[]
+  readinessScores    ReadinessScore[]
+  wearableData       WearableData[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([sport])
+  @@index([riskLevel])
+}
+
+// ============================================
+// COACH DATA
+// ============================================
+
+model Coach {
+  userId        String      @id
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sport         String
+  title         String?     // Head Coach, Assistant Coach, etc.
+
+  notes         CoachNote[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model CoachNote {
+  id            String      @id @default(cuid())
+  coachId       String
+  coach         Coach       @relation(fields: [coachId], references: [userId])
+
+  athleteId     String      // Reference to User.id where role=ATHLETE
+  content       String      
+  isPrivate     Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([coachId])
+  @@index([athleteId])
+}
+
+// ============================================
+// CHAT & AI SESSIONS
+// ============================================
+
+model ChatSession {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+
+  messages      Message[]
+  crisisAlerts  CrisisAlert[]
+  insights      ConversationInsight[]
+  chatSummaries ChatSummary[]
+
+  summary       String?
+  topic         String?     // anxiety, focus, recovery, confidence, etc.
+  sentiment     String?     // positive, neutral, negative
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([athleteId])
+  @@index([createdAt])
+}
+
+model Message {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  role          MessageRole // user, assistant, system
+  content       String      
+
+  // For RAG - vector embedding stored as JSON array
+  embedding     Json?
+
+  crisisAlerts  CrisisAlert[]
+
+  createdAt     DateTime    @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+}
+
+// ============================================
+// CHAT SUMMARIES
+// ============================================
+
+model ChatSummary {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  athleteId     String      // Denormalized for easier coach queries
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+  coachId       String?     // Coach who viewed this summary (for audit trail)
+
+  // AI-generated summary content
+  summary       String      // GPT-4 generated summary
+  keyThemes     Json        // Array of key themes discussed
+  emotionalState String?    // Overall emotional state (positive, neutral, negative, mixed)
+  actionItems   Json?       // Suggested follow-ups or concerns
+
+  // Metadata
+  messageCount  Int         // Number of messages in the session
+  generatedAt   DateTime    @default(now())
+  viewedByCoach Boolean     @default(false)
+  viewedAt      DateTime?
+
+  @@index([athleteId, generatedAt])
+  @@index([sessionId])
+  @@index([viewedByCoach])
+}
+
+// ============================================
+// CRISIS DETECTION & COACH ANALYTICS
+// ============================================
+
+model CrisisAlert {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id])
+  messageId     String
+  message       Message     @relation(fields: [messageId], references: [id])
+
+  severity      Severity
+  detectedAt    DateTime    @default(now())
+
+  reviewed      Boolean     @default(false)
+  reviewedBy    String?     // User ID of coach who reviewed
+  reviewedAt    DateTime?
+
+  escalated     Boolean     @default(false)
+  escalatedTo   String?     // Contact info or service escalated to
+  notes         String?     
+
+  @@index([athleteId, detectedAt])
+  @@index([severity, reviewed])
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model ConversationInsight {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id])
+
+  themes        Json        // Array of detected themes
+  sentiment     Float       // -1.0 to 1.0
+  emotions      Json?       // Emotion scores from voice analysis
+  discoveryPhase String?    // EXPLORE, CLARIFY, COLLABORATE, EXPERIMENT, ITERATE
+
+  extractedAt   DateTime    @default(now())
+
+  @@index([athleteId, extractedAt])
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// MENTAL PERFORMANCE TRACKING
+// ============================================
+
+model MoodLog {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+
+  mood          Int         // 1-10 scale
+  confidence    Int         // 1-10 scale
+  stress        Int         // 1-10 scale
+  energy        Int?        // 1-10 scale
+  sleep         Int?        // Hours of sleep
+
+  notes         String?     
+  tags          String    // ["pre-game", "post-practice", "exam-week"]
+
+  createdAt     DateTime    @default(now())
+
+  @@index([athleteId])
+  @@index([createdAt])
+}
+
+model Goal {
+  id            String      @id @default(cuid())
+  athleteId     String
+  athlete       Athlete     @relation(fields: [athleteId], references: [userId])
+
+  title         String
+  description   String?     
+  category      GoalCategory
+  status        GoalStatus  @default(IN_PROGRESS)
+
+  targetDate    DateTime?
+  completedAt   DateTime?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([athleteId])
+  @@index([status])
+}
+
+enum GoalCategory {
+  PERFORMANCE     // Physical performance goals
+  MENTAL          // Mental skills goals
+  ACADEMIC        // Academic goals
+  PERSONAL        // Personal development
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+// ============================================
+// KNOWLEDGE BASE (for RAG)
+// ============================================
+
+model KnowledgeBase {
+  id            String      @id @default(cuid())
+
+  title         String
+  content       String      
+  source        String      // "CBT Handbook", "Flow State Research", etc.
+  sourceUrl     String?
+
+  // Vector embedding stored as JSON array for similarity search
+  embedding     Json?
+
+  category      KnowledgeCategory
+  tags          String
+
+  // Multi-Tenancy Fix: NULL = shared content, non-NULL = school-specific
+  schoolId      String?
+  school        School?     @relation(fields: [schoolId], references: [id])
+
+  isActive      Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([schoolId])
+}
+
+enum KnowledgeCategory {
+  ANXIETY
+  CONFIDENCE
+  FOCUS
+  RECOVERY
+  GOAL_SETTING
+  MOTIVATION
+  TEAM_DYNAMICS
+  STRESS_MANAGEMENT
+  PERFORMANCE_ANXIETY
+  FLOW_STATE
+  SELF_TALK
+  VISUALIZATION
+  MINDFULNESS
+  BURNOUT
+}
+
+// ============================================
+// PERFORMANCE ANALYTICS (NEW)
+// ============================================
+
+model PerformanceMetric {
+  id                String   @id @default(cuid())
+  athleteId         String
+  athlete           Athlete  @relation(fields: [athleteId], references: [userId])
+
+  gameDate          DateTime
+  sport             String
+  opponentName      String?
+
+  // Mental state snapshot (from MoodLog closest to game time)
+  mentalMoodScore   Int?     // 1-10
+  mentalStressScore Int?     // 1-10
+  mentalSleepHours  Float?   // Hours
+  mentalHRVScore    Int?     // From wearable (0-100)
+
+  // Performance stats (sport-specific JSON)
+  // Examples: {"points": 15, "shooting_pct": 0.45, "assists": 7, "turnovers": 2}
+  stats             Json
+
+  // Game outcome
+  outcome           String   // "win" | "loss" | "draw"
+
+  // Correlation metadata
+  readinessScore    Int?     // Pre-game readiness score (0-100)
+  slumpPrediction   Boolean? // Was this game predicted as a slump?
+
+  createdAt         DateTime @default(now())
+
+  @@index([athleteId, gameDate])
+  @@index([sport])
+}
+
+model ReadinessScore {
+  id              String   @id @default(cuid())
+  athleteId       String
+  athlete         Athlete  @relation(fields: [athleteId], references: [userId])
+
+  gameDate        DateTime
+  calculatedAt    DateTime @default(now())
+
+  // Readiness score (0-100)
+  score           Int
+
+  // Traffic light level
+  level           String   // "GREEN" (≥75) | "YELLOW" (55-74) | "RED" (<55)
+
+  // Contributing factors (JSON array)
+  // Example: [{"factor": "low_sleep", "impact": -15}, {"factor": "good_mood", "impact": +20}]
+  factors         Json
+
+  // Raw feature values used in calculation
+  moodAvg7d       Float
+  stressAvg7d     Float
+  sleepAvg3d      Float
+  hrvRecovery     Float?
+  daysSinceGame   Int?
+  chatEngagement  Int?
+
+  @@index([athleteId, gameDate])
+  @@index([level])
+}
+
+model WearableData {
+  id         String   @id @default(cuid())
+  athleteId  String
+  athlete    Athlete  @relation(fields: [athleteId], references: [userId])
+
+  deviceType String   // "whoop" | "oura" | "apple_watch"
+  metricType String   // "hrv" | "recovery" | "sleep" | "strain" | "resting_hr"
+  value      Float
+  unit       String?  // "ms", "score", "hours", "bpm"
+
+  recordedAt DateTime // When the metric was recorded by the device
+  syncedAt   DateTime @default(now()) // When we synced it to our database
+
+  @@index([athleteId, metricType, recordedAt])
+  @@index([deviceType])
+}
+
+model TeamConfig {
+  id              String   @id @default(cuid())
+  schoolId        String
+  school          School   @relation(fields: [schoolId], references: [id])
+  sport           String
+
+  // Customizations (JSON objects)
+  customPrompts   Json?    // {"pre_game": "...", "post_loss": "...", "recovery": "..."}
+  customKeywords  Json?    // {"crisis": [...], "concern": [...], "sports_specific": [...]}
+  customResources Json?    // {"emergency_contacts": [...], "campus_services": [...]}
+
+  updatedBy       String?  // Coach user ID who made the changes
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@unique([schoolId, sport])
+  @@index([sport])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+
+  // Who performed the action
+  userId       String
+  userRole     Role
+
+  // What was done
+  action       String   // "view_athlete_mood" | "export_report" | "view_chat_history" | "update_crisis_alert"
+  resourceType String   // "mood_log" | "chat_session" | "performance_metric"
+  resourceId   String?  // ID of the accessed resource
+
+  // Which athlete's data was accessed (NULL for aggregate/team views)
+  athleteId    String?
+
+  // Request metadata
+  ipAddress    String?
+  userAgent    String?
+
+  timestamp    DateTime @default(now())
+
+  @@index([athleteId, timestamp])
+  @@index([userId, timestamp])
+  @@index([action])
+}
+
+// ============================================
+// NEXTAUTH MODELS
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? 
+  access_token      String? 
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? 
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
