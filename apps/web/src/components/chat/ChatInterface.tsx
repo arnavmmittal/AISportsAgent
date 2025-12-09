@@ -189,7 +189,7 @@ export function ChatInterface() {
         const updated = [...prev];
         const lastMsg = updated[updated.length - 1];
         if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content === '') {
-          lastMsg.content = 'Sorry, I encountered an error. Please try again.';
+          lastMsg.content = "Oops! Something went wrong on my end. Let's try that again - I'm here and ready to help! 💪";
         }
         return updated;
       });
@@ -238,7 +238,7 @@ export function ChatInterface() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
         {messages.length === 0 ? (
           <div className="text-center py-16 px-6">
             <div className="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-8 shadow-2xl animate-pulse">
@@ -247,31 +247,31 @@ export function ChatInterface() {
               </svg>
             </div>
             <h3 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-5">
-              Welcome to Your AI Mental Coach
+              Hey there! Ready to level up? 💪
             </h3>
             <p className="text-xl text-gray-700 max-w-2xl mx-auto mb-10 leading-relaxed">
-              I'm here to help you unlock your mental potential through evidence-based techniques for stress management, confidence building, and peak performance.
+              I'm your 24/7 mental performance coach. Whether you're battling pre-game jitters, need a confidence boost, or just want to chat about what's on your mind - I've got your back. Let's unlock your full potential together!
             </p>
             <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
               <div className="bg-white rounded-2xl p-6 border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">🎯</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Performance Anxiety</p>
-                <p className="text-sm text-gray-600">Managing pre-competition nerves and staying calm under pressure</p>
+                <p className="text-lg font-bold text-gray-900 mb-2">Crush Pre-Game Nerves</p>
+                <p className="text-sm text-gray-600">"I get so anxious before games..."</p>
               </div>
               <div className="bg-white rounded-2xl p-6 border-2 border-purple-200 hover:border-purple-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">💪</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Building Confidence</p>
-                <p className="text-sm text-gray-600">Developing unshakeable mental strength and self-belief</p>
+                <p className="text-lg font-bold text-gray-900 mb-2">Boost Your Confidence</p>
+                <p className="text-sm text-gray-600">"How do I believe in myself more?"</p>
               </div>
               <div className="bg-white rounded-2xl p-6 border-2 border-pink-200 hover:border-pink-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">🧘</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Stress Management</p>
-                <p className="text-sm text-gray-600">Balancing athletics, academics, and life with ease</p>
+                <p className="text-lg font-bold text-gray-900 mb-2">Balance Life & Sport</p>
+                <p className="text-sm text-gray-600">"I'm overwhelmed juggling everything..."</p>
               </div>
               <div className="bg-white rounded-2xl p-6 border-2 border-indigo-200 hover:border-indigo-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <p className="text-2xl mb-2">🎓</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Focus Techniques</p>
-                <p className="text-sm text-gray-600">Sharpening concentration and achieving flow state</p>
+                <p className="text-2xl mb-2">⚡</p>
+                <p className="text-lg font-bold text-gray-900 mb-2">Find Your Flow State</p>
+                <p className="text-sm text-gray-600">"Help me get in the zone..."</p>
               </div>
             </div>
           </div>
@@ -293,7 +293,15 @@ export function ChatInterface() {
                 </div>
                 <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div className={`rounded-3xl px-6 py-4 shadow-xl ${message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-md' : 'bg-white text-gray-900 border-2 border-purple-200 rounded-tl-md'}`}>
-                    <p className="text-base leading-relaxed whitespace-pre-wrap">{message.content || '...'}</p>
+                    {message.content ? (
+                      <p className="text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <div className="flex space-x-2">
+                        <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce"></div>
+                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2.5 h-2.5 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    )}
                   </div>
                   <p className={`text-sm mt-2 px-2 font-medium ${message.role === 'user' ? 'text-blue-600' : 'text-purple-600'}`}>
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -303,25 +311,7 @@ export function ChatInterface() {
             </div>
           ))
         )}
-        {isLoading && messages[messages.length - 1]?.content === '' && (
-          <div className="flex justify-start animate-in fade-in duration-300">
-            <div className="flex gap-4 max-w-[80%]">
-              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
-                </svg>
-              </div>
-              <div className="bg-white border-2 border-purple-200 rounded-3xl rounded-tl-md px-6 py-5 shadow-xl">
-                <div className="flex space-x-3">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"></div>
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-4" />
       </div>
 
       {/* Input */}
@@ -353,8 +343,8 @@ export function ChatInterface() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={voiceMode ? "🎤 Voice mode active - click mic to speak" : "💬 Type your message..."}
-              className="flex-1 resize-none border-3 border-purple-300 rounded-3xl px-6 py-4 text-lg focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all disabled:bg-gray-100 shadow-lg"
+              placeholder={voiceMode ? "🎤 Voice mode active - click mic to speak" : "What's on your mind? I'm here to help..."}
+              className="flex-1 resize-none border-3 border-purple-300 rounded-3xl px-6 py-4 text-lg focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all disabled:bg-gray-100 shadow-lg placeholder:text-gray-400"
               rows={2}
               disabled={isLoading || voiceMode}
             />
