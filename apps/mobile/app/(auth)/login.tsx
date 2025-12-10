@@ -21,7 +21,11 @@ export default function LoginScreen() {
 
     try {
       await login(email, password);
-      router.replace('/(tabs)/dashboard');
+
+      // Force navigation with a small delay to ensure state updates
+      setTimeout(() => {
+        router.replace('/(tabs)/dashboard');
+      }, 100);
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {

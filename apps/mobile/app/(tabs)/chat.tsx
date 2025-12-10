@@ -9,19 +9,142 @@ import {
   Platform,
   StyleSheet,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { Message } from '@sports-agent/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
+import { VoiceButton } from '../../components/chat/VoiceButton';
+import { useVoiceChat } from '../../hooks/useVoiceChat';
+import { EmptyState, LoadingScreen, ErrorView } from '../../components/ui';
+import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
+
+type ChatMode = 'text' | 'voice';
 
 export default function ChatScreen() {
+  // State
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState(`session_${Date.now()}`);
-  const flatListRef = useRef<FlatList>(null);
+  const [chatMode, setChatMode] = useState<ChatMode>('text');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
 
+  // Refs
+  const flatListRef = useRef<FlatList>(null);
+  const modeToggleAnim = useRef(new Animated.Value(0)).current;
+
+  // Initialize user ID
+  useEffect(() => {
+    async function init() {
+      try {
+        const id = await getStoredUserId();
+        if (!id) {
+          setInitError('User not logged in');
+          return;
+        }
+        setUserId(id);
+      } catch (error: any) {
+        setInitError(error.message || 'Failed to initialize');
+      }
+    }
+    init();
+  }, []);
+
+  // Voice chat hook (only initialize if userId is available)
+  const voice = useVoiceChat({
+    sessionId,
+    athleteId: userId || '',
+    wsUrl: `ws://10.0.0.127:3000/api/voice`, // TODO: Make this configurable
+  });
+
+  // Animate mode toggle
+  useEffect(() => {
+    Animated.spring(modeToggleAnim, {
+      toValue: chatMode === 'voice' ? 1 : 0,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [chatMode]);
+
+  // Add voice transcript to messages
+  useEffect(() => {
+    if (voice.transcript && chatMode === 'voice') {
+      // Update or add user's transcript message
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.role === 'user' && lastMessage.id.startsWith('voice_')) {
+          // Update existing transcript
+          return [
+            ...prev.slice(0, -1),
+            { ...lastMessage, content: voice.transcript },
+          ];
+        } else {
+          // Add new transcript message
+          return [
+            ...prev,
+            {
+              id: `voice_${Date.now()}`,
+              sessionId,
+              role: 'user',
+              content: voice.transcript,
+              createdAt: new Date(),
+            },
+          ];
+        }
+      });
+    }
+  }, [voice.transcript, chatMode]);
+
+  // Add AI response to messages
+  useEffect(() => {
+    if (voice.aiResponse && chatMode === 'voice') {
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.role === 'assistant' && lastMessage.id.startsWith('voice_ai_')) {
+          // Update existing AI message
+          return [
+            ...prev.slice(0, -1),
+            { ...lastMessage, content: voice.aiResponse },
+          ];
+        } else {
+          // Add new AI message
+          return [
+            ...prev,
+            {
+              id: `voice_ai_${Date.now()}`,
+              sessionId,
+              role: 'assistant',
+              content: voice.aiResponse,
+              createdAt: new Date(),
+            },
+          ];
+        }
+      });
+    }
+  }, [voice.aiResponse, chatMode]);
+
+  // Handle voice errors
+  useEffect(() => {
+    if (voice.error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error_${Date.now()}`,
+          sessionId,
+          role: 'assistant',
+          content: `Voice error: ${voice.error.message}. Please try again or switch to text mode.`,
+          createdAt: new Date(),
+        },
+      ]);
+    }
+  }, [voice.error]);
+
+  // Send text message
   const sendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || !userId) return;
 
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
@@ -36,9 +159,6 @@ export default function ChatScreen() {
     setIsLoading(true);
 
     try {
-      const userId = await getStoredUserId();
-      if (!userId) throw new Error('User not logged in');
-
       // Create assistant message placeholder
       const assistantId = `msg_${Date.now()}_assistant`;
       setMessages((prev) => [
@@ -123,6 +243,7 @@ export default function ChatScreen() {
     }
   };
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => {
@@ -131,52 +252,162 @@ export default function ChatScreen() {
     }
   }, [messages]);
 
+  // Toggle chat mode
+  const toggleChatMode = () => {
+    const newMode = chatMode === 'text' ? 'voice' : 'text';
+    setChatMode(newMode);
+
+    // Stop voice if switching to text mode
+    if (newMode === 'text' && voice.voiceState !== 'idle') {
+      voice.stopVoice();
+    }
+  };
+
+  // Start new chat
+  const startNewChat = () => {
+    setMessages([]);
+    setSessionId(`session_${Date.now()}`);
+    if (voice.voiceState !== 'idle') {
+      voice.stopVoice();
+    }
+  };
+
+  // Show loading screen while initializing
+  if (!userId && !initError) {
+    return <LoadingScreen message="Initializing chat..." />;
+  }
+
+  // Show error if initialization failed
+  if (initError) {
+    return (
+      <ErrorView
+        title="Initialization Error"
+        message={initError}
+        actionLabel="Try Again"
+        onAction={() => window.location.reload()}
+      />
+    );
+  }
+
+  // Mode toggle indicator position
+  const toggleIndicatorTranslate = modeToggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 60], // Width of each mode button
+  });
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={100}
     >
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>AI Chat Assistant</Text>
-        <TouchableOpacity
-          onPress={() => {
-            setMessages([]);
-            setSessionId(`session_${Date.now()}`);
-          }}
-          style={styles.newChatButton}
-        >
-          <Text style={styles.newChatText}>New Chat</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>AI Coach</Text>
+          <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
+            <Ionicons name="add-circle-outline" size={24} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
 
-      {messages.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>Start a conversation</Text>
-          <Text style={styles.emptyText}>
-            I'm here to help with your mental performance, training, and well-being.
-          </Text>
-          <View style={styles.suggestionsContainer}>
+        {/* Mode Toggle */}
+        <View style={styles.modeToggleContainer}>
+          <View style={styles.modeToggle}>
+            <Animated.View
+              style={[
+                styles.modeToggleIndicator,
+                {
+                  transform: [{ translateX: toggleIndicatorTranslate }],
+                },
+              ]}
+            />
             <TouchableOpacity
-              style={styles.suggestionButton}
-              onPress={() => setInputValue("I'm feeling anxious about my upcoming game")}
+              style={styles.modeButton}
+              onPress={() => setChatMode('text')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.suggestionText}>Pre-game anxiety</Text>
+              <Ionicons
+                name="chatbubble-outline"
+                size={20}
+                color={chatMode === 'text' ? Colors.primary : Colors.gray500}
+              />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  chatMode === 'text' && styles.modeButtonTextActive,
+                ]}
+              >
+                Text
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.suggestionButton}
-              onPress={() => setInputValue("I need help staying motivated")}
+              style={styles.modeButton}
+              onPress={() => setChatMode('voice')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.suggestionText}>Motivation tips</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.suggestionButton}
-              onPress={() => setInputValue("How can I improve my focus?")}
-            >
-              <Text style={styles.suggestionText}>Focus strategies</Text>
+              <Ionicons
+                name="mic-outline"
+                size={20}
+                color={chatMode === 'voice' ? Colors.primary : Colors.gray500}
+              />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  chatMode === 'voice' && styles.modeButtonTextActive,
+                ]}
+              >
+                Voice
+              </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Voice connection status */}
+          {chatMode === 'voice' && (
+            <View style={styles.voiceStatus}>
+              <View
+                style={[
+                  styles.voiceStatusDot,
+                  voice.isConnected ? styles.voiceStatusConnected : styles.voiceStatusDisconnected,
+                ]}
+              />
+              <Text style={styles.voiceStatusText}>
+                {voice.isConnected ? 'Connected' : 'Connecting...'}
+              </Text>
+            </View>
+          )}
         </View>
+      </View>
+
+      {/* Messages */}
+      {messages.length === 0 ? (
+        <EmptyState
+          icon="chatbubbles-outline"
+          title="Start a conversation"
+          message="I'm here to help with your mental performance, training, and well-being."
+          actionButtons={[
+            {
+              label: "Pre-game anxiety",
+              onPress: () => {
+                setInputValue("I'm feeling anxious about my upcoming game");
+                setChatMode('text');
+              },
+            },
+            {
+              label: "Motivation tips",
+              onPress: () => {
+                setInputValue("I need help staying motivated");
+                setChatMode('text');
+              },
+            },
+            {
+              label: "Focus strategies",
+              onPress: () => {
+                setInputValue("How can I improve my focus?");
+                setChatMode('text');
+              },
+            },
+          ]}
+        />
       ) : (
         <FlatList
           ref={flatListRef}
@@ -203,28 +434,67 @@ export default function ChatScreen() {
         />
       )}
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={inputValue}
-          onChangeText={setInputValue}
-          placeholder="What's on your mind?"
-          multiline
-          maxLength={2000}
-          editable={!isLoading}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, (!inputValue.trim() || isLoading) && styles.sendButtonDisabled]}
-          onPress={sendMessage}
-          disabled={!inputValue.trim() || isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.sendButtonText}>Send</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      {/* Voice state indicator */}
+      {chatMode === 'voice' && voice.voiceState !== 'idle' && (
+        <View style={styles.voiceStateIndicator}>
+          <Text style={styles.voiceStateText}>
+            {voice.voiceState === 'listening' && '🎙️ Listening...'}
+            {voice.voiceState === 'processing' && '⏳ Processing...'}
+            {voice.voiceState === 'speaking' && '🔊 Speaking...'}
+            {voice.voiceState === 'error' && '❌ Error'}
+          </Text>
+        </View>
+      )}
+
+      {/* Input Area */}
+      {chatMode === 'text' ? (
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputValue}
+            onChangeText={setInputValue}
+            placeholder="What's on your mind?"
+            placeholderTextColor={Colors.gray400}
+            multiline
+            maxLength={2000}
+            editable={!isLoading}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              (!inputValue.trim() || isLoading) && styles.sendButtonDisabled,
+            ]}
+            onPress={sendMessage}
+            disabled={!inputValue.trim() || isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons name="send" size={20} color="#fff" />
+            )}
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.voiceInputContainer}>
+          <VoiceButton
+            voiceState={voice.voiceState}
+            volume={voice.volume}
+            onPress={voice.toggleVoice}
+            disabled={!voice.isConnected}
+          />
+          <Text style={styles.voiceHint}>
+            {voice.voiceState === 'idle'
+              ? 'Tap to start speaking'
+              : voice.voiceState === 'listening'
+              ? 'Listening... (auto-stops after silence)'
+              : voice.voiceState === 'processing'
+              ? 'Processing your message...'
+              : voice.voiceState === 'speaking'
+              ? 'AI is responding...'
+              : 'Tap to try again'}
+          </Text>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -232,129 +502,176 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.background,
   },
   header: {
+    backgroundColor: '#fff',
+    paddingTop: 60,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray200,
+    ...Shadows.small,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+    fontSize: Typography.xxxl,
+    fontWeight: Typography.bold,
+    color: Colors.textPrimary,
   },
   newChatButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: '#eff6ff',
+    padding: Spacing.xs,
   },
-  newChatText: {
-    color: '#2563eb',
-    fontSize: 14,
-    fontWeight: '500',
+  modeToggleContainer: {
+    paddingHorizontal: Spacing.lg,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: Colors.gray100,
+    borderRadius: BorderRadius.lg,
+    padding: 4,
+    position: 'relative',
   },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  suggestionsContainer: {
-    width: '100%',
-    gap: 12,
-  },
-  suggestionButton: {
+  modeToggleIndicator: {
+    position: 'absolute',
+    left: 4,
+    top: 4,
+    bottom: 4,
+    width: 60,
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderRadius: BorderRadius.md,
+    ...Shadows.small,
   },
-  suggestionText: {
-    fontSize: 14,
-    color: '#374151',
-    textAlign: 'center',
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    gap: Spacing.xs,
+    zIndex: 1,
+  },
+  modeButtonText: {
+    fontSize: Typography.sm,
+    fontWeight: Typography.medium,
+    color: Colors.gray500,
+  },
+  modeButtonTextActive: {
+    color: Colors.primary,
+    fontWeight: Typography.semibold,
+  },
+  voiceStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  voiceStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  voiceStatusConnected: {
+    backgroundColor: Colors.success,
+  },
+  voiceStatusDisconnected: {
+    backgroundColor: Colors.warning,
+  },
+  voiceStatusText: {
+    fontSize: Typography.xs,
+    color: Colors.textSecondary,
   },
   messagesContainer: {
-    padding: 16,
-    paddingBottom: 8,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.sm,
   },
   messageBubble: {
     maxWidth: '80%',
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 12,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    marginBottom: Spacing.md,
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: '#2563eb',
+    backgroundColor: Colors.primary,
+    borderBottomRightRadius: 4,
   },
   assistantBubble: {
     alignSelf: 'flex-start',
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: Colors.gray200,
+    borderBottomLeftRadius: 4,
   },
   messageText: {
-    fontSize: 16,
-    color: '#1f2937',
+    fontSize: Typography.base,
+    color: Colors.textPrimary,
     lineHeight: 22,
   },
   userMessageText: {
     color: '#fff',
   },
+  voiceStateIndicator: {
+    backgroundColor: Colors.primaryLight,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray200,
+  },
+  voiceStateText: {
+    fontSize: Typography.sm,
+    color: Colors.primary,
+    fontWeight: Typography.medium,
+  },
   inputContainer: {
     flexDirection: 'row',
-    padding: 16,
+    padding: Spacing.lg,
     backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: Colors.gray200,
+    gap: Spacing.sm,
   },
   input: {
     flex: 1,
     minHeight: 44,
     maxHeight: 120,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#f3f4f6',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.gray100,
     borderRadius: 22,
-    fontSize: 16,
-    marginRight: 8,
+    fontSize: Typography.base,
+    color: Colors.textPrimary,
   },
   sendButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 24,
+    backgroundColor: Colors.primary,
+    width: 44,
+    height: 44,
     borderRadius: 22,
-    minWidth: 70,
+    ...Shadows.small,
   },
   sendButtonDisabled: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: Colors.gray300,
   },
-  sendButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  voiceInputContainer: {
+    padding: Spacing.xl,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray200,
+    alignItems: 'center',
+    gap: Spacing.lg,
+  },
+  voiceHint: {
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });
