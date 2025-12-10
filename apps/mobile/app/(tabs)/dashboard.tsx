@@ -47,7 +47,12 @@ export default function DashboardScreen() {
       }
 
       const userId = await getStoredUserId();
-      if (!userId) throw new Error('User not logged in');
+      if (!userId) {
+        // User not logged in - redirect to login
+        console.log('No user ID found, redirecting to login');
+        router.replace('/(auth)/login');
+        return;
+      }
 
       // Load mood logs and goals in parallel (using fallback API)
       const [moodLogsData, goalsData] = await Promise.all([
