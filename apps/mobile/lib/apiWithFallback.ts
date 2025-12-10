@@ -138,7 +138,7 @@ export async function sendChatMessage(params: {
   try {
     if (!(await isBackendAvailable())) {
       console.log('Using demo chat mode');
-      return createDemoResponse(params.message);
+      return await createDemoResponse(params.message);
     }
 
     const response = await apiClient.sendMessage(params);
@@ -149,41 +149,33 @@ export async function sendChatMessage(params: {
   } catch (error) {
     console.log('Chat API failed, using demo mode');
     backendAvailable = false;
-    return createDemoResponse(params.message);
+    return await createDemoResponse(params.message);
   }
 }
 
-// Create a fake SSE response for demo mode
-function createDemoResponse(userMessage: string): Response {
-  const encoder = new TextEncoder();
+// Create a fake SSE response for demo mode (React Native compatible)
+async function createDemoResponse(userMessage: string): Promise<Response> {
+  // Get AI response
+  const aiResponse = await simulateAIResponse(userMessage);
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      // Simulate typing delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+  // Create SSE-formatted response body with all events
+  // We'll send it all at once, and the client will process it
+  const events: string[] = [];
 
-      // Get AI response
-      const response = await simulateAIResponse(userMessage);
+  // Send each character as a separate event for streaming effect
+  for (const char of aiResponse) {
+    events.push(`data: ${JSON.stringify({ type: 'content', data: char })}\n\n`);
+  }
 
-      // Stream it character by character for realistic effect
-      for (let i = 0; i < response.length; i++) {
-        const char = response[i];
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ type: 'content', data: char })}\n\n`
-          )
-        );
+  // Send done event
+  events.push('data: [DONE]\n\n');
 
-        // Add slight delay for typing effect
-        await new Promise((resolve) => setTimeout(resolve, 20));
-      }
+  const fullBody = events.join('');
 
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
+  // Create a Response with the full body
+  // React Native's fetch will handle this better than ReadableStream
+  return new Response(fullBody, {
+    status: 200,
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
