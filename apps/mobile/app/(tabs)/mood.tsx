@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { apiClient, getStoredUserId } from '../../lib/auth';
+import { Colors } from '../../constants/theme';
 
 export default function MoodScreen() {
   const [mood, setMood] = useState(5);

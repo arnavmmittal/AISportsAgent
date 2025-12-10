@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { Goal } from '@sports-agent/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
+import { Colors } from '../../constants/theme';
 
 export default function GoalsScreen() {
   const [goals, setGoals] = useState<Goal[]>([]);
