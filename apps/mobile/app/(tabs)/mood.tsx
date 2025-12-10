@@ -10,7 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { apiClient, getStoredUserId } from '../../lib/auth';
+import { getStoredUserId } from '../../lib/auth';
+import { createMoodLog } from '../../lib/apiWithFallback';
 import { Colors } from '../../constants/theme';
 
 export default function MoodScreen() {

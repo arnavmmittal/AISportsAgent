@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { Message } from '@sports-agent/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
+import { sendChatMessage } from '../../lib/apiWithFallback';
 import { VoiceButton } from '../../components/chat/VoiceButton';
 import { useVoiceChat } from '../../hooks/useVoiceChat';
 import { EmptyState, LoadingScreen, ErrorView } from '../../components/ui';
@@ -173,7 +174,7 @@ export default function ChatScreen() {
       ]);
 
       // Stream response
-      const response = await apiClient.sendMessage({
+      const response = await sendChatMessage({
         session_id: sessionId,
         message: userMessage.content,
         athlete_id: userId,
