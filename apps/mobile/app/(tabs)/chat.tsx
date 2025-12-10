@@ -12,6 +12,8 @@ import {
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { Message } from '@sports-agent/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
 import { sendChatMessage, getBackendStatus } from '../../lib/apiWithFallback';
@@ -273,6 +275,7 @@ export default function ChatScreen() {
 
   // Toggle chat mode
   const toggleChatMode = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newMode = chatMode === 'text' ? 'voice' : 'text';
     setChatMode(newMode);
 
@@ -284,6 +287,7 @@ export default function ChatScreen() {
 
   // Start new chat
   const startNewChat = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setMessages([]);
     setSessionId(`session_${Date.now()}`);
     if (voice.voiceState !== 'idle') {
@@ -500,18 +504,32 @@ export default function ChatScreen() {
             editable={!isLoading}
           />
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!inputValue.trim() || isLoading) && styles.sendButtonDisabled,
-            ]}
-            onPress={sendMessage}
+            style={styles.sendButtonContainer}
+            onPress={() => {
+              if (inputValue.trim() && !isLoading) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                sendMessage();
+              }
+            }}
             disabled={!inputValue.trim() || isLoading}
+            activeOpacity={0.8}
           >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Ionicons name="send" size={20} color="#fff" />
-            )}
+            <LinearGradient
+              colors={
+                !inputValue.trim() || isLoading
+                  ? [Colors.gray300, Colors.gray400]
+                  : ['#2563eb', '#3b82f6']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.sendButton}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Ionicons name="send" size={20} color="#fff" />
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       ) : (
@@ -708,17 +726,18 @@ const styles = StyleSheet.create({
     fontSize: Typography.base,
     color: Colors.textPrimary,
   },
-  sendButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
+  sendButtonContainer: {
     width: 44,
     height: 44,
     borderRadius: 22,
+    overflow: 'hidden',
     ...Shadows.small,
   },
-  sendButtonDisabled: {
-    backgroundColor: Colors.gray300,
+  sendButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
   voiceInputContainer: {
     padding: Spacing.xl,
