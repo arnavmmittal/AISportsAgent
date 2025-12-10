@@ -204,46 +204,42 @@ export default function ChatScreen() {
         throw new Error('Failed to send message');
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      // React Native: Use .text() instead of getReader()
+      const responseText = await response.text();
 
-      if (!reader) throw new Error('No response body');
+      if (!responseText) {
+        throw new Error('No response body');
+      }
 
-      let buffer = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Parse SSE format
+      const lines = responseText.split('\n');
 
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break;
+          if (!data) continue;
 
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content') {
+              // Small delay for smooth streaming effect
+              await new Promise(resolve => setTimeout(resolve, 20));
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6).trim();
-            if (data === '[DONE]') break;
-            if (!data) continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.type === 'content') {
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastIndex = updated.length - 1;
-                  if (updated[lastIndex]?.role === 'assistant') {
-                    updated[lastIndex] = {
-                      ...updated[lastIndex],
-                      content: updated[lastIndex].content + parsed.data,
-                    };
-                  }
-                  return updated;
-                });
-              }
-            } catch (e) {
-              // Ignore parse errors
+              setMessages((prev) => {
+                const updated = [...prev];
+                const lastIndex = updated.length - 1;
+                if (updated[lastIndex]?.role === 'assistant') {
+                  updated[lastIndex] = {
+                    ...updated[lastIndex],
+                    content: updated[lastIndex].content + parsed.data,
+                  };
+                }
+                return updated;
+              });
             }
+          } catch (e) {
+            // Ignore parse errors
           }
         }
       }
