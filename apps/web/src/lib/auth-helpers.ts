@@ -3,44 +3,117 @@
  *
  * Use these helpers in API routes to verify permissions and enforce
  * role-based access control.
+ *
+ * Supports both NextAuth sessions (web) and JWT tokens (mobile)
  */
 
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import type { Session } from 'next-auth';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
+);
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+  schoolId: string;
+}
 
 export interface AuthResult {
   authorized: boolean;
   session: Session | null;
+  user: AuthUser | null;
   response?: NextResponse;
 }
 
 /**
- * Require authentication - Any authenticated user
+ * Verify authentication from either JWT token (mobile) or NextAuth session (web)
+ */
+export async function verifyAuthFromRequest(request: NextRequest): Promise<AuthUser | null> {
+  // Check for Bearer token (mobile app)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const verified = await jwtVerify(token, JWT_SECRET);
+      return verified.payload as AuthUser;
+    } catch (error) {
+      console.error('JWT verification failed:', error);
+      return null;
+    }
+  }
+
+  // Fall back to NextAuth session (web app)
+  try {
+    const session = await auth();
+    if (session?.user?.id) {
+      return {
+        id: session.user.id,
+        email: session.user.email ?? '',
+        role: session.user.role ?? 'ATHLETE',
+        schoolId: session.user.schoolId ?? '',
+      };
+    }
+  } catch (error) {
+    console.error('Session verification failed:', error);
+  }
+
+  return null;
+}
+
+/**
+ * Require authentication - Any authenticated user (supports both JWT and session)
  *
  * Usage in API routes:
  * ```typescript
- * const { authorized, session, response } = await requireAuth();
+ * const { authorized, user, response } = await requireAuth(request);
  * if (!authorized) return response;
  * ```
  */
-export async function requireAuth(): Promise<AuthResult> {
-  const session = await auth();
+export async function requireAuth(request?: NextRequest): Promise<AuthResult> {
+  let user: AuthUser | null = null;
+  let session: Session | null = null;
 
-  if (!session) {
-    return {
-      authorized: false,
-      session: null,
-      response: NextResponse.json(
-        { error: 'Unauthorized - Authentication required' },
-        { status: 401 }
-      ),
-    };
+  // If request provided, check for JWT token first
+  if (request) {
+    user = await verifyAuthFromRequest(request);
+    if (user) {
+      return {
+        authorized: true,
+        session: null,
+        user,
+      };
+    }
+  } else {
+    // Fall back to session-only auth
+    session = await auth();
+    if (session?.user?.id) {
+      user = {
+        id: session.user.id,
+        email: session.user.email ?? '',
+        role: session.user.role ?? 'ATHLETE',
+        schoolId: session.user.schoolId ?? '',
+      };
+      return {
+        authorized: true,
+        session,
+        user,
+      };
+    }
   }
 
   return {
-    authorized: true,
-    session,
+    authorized: false,
+    session: null,
+    user: null,
+    response: NextResponse.json(
+      { error: 'Unauthorized - Authentication required' },
+      { status: 401 }
+    ),
   };
 }
 
@@ -49,21 +122,22 @@ export async function requireAuth(): Promise<AuthResult> {
  *
  * Usage in API routes:
  * ```typescript
- * const { authorized, session, response } = await requireCoach();
+ * const { authorized, user, response } = await requireCoach(request);
  * if (!authorized) return response;
  * ```
  */
-export async function requireCoach(): Promise<AuthResult> {
-  const { authorized, session, response } = await requireAuth();
+export async function requireCoach(request?: NextRequest): Promise<AuthResult> {
+  const { authorized, session, user, response } = await requireAuth(request);
 
   if (!authorized) {
-    return { authorized: false, session: null, response };
+    return { authorized: false, session: null, user: null, response };
   }
 
-  if (session!.user?.role !== 'COACH' && session!.user?.role !== 'ADMIN') {
+  if (user!.role !== 'COACH' && user!.role !== 'ADMIN') {
     return {
       authorized: false,
-      session: session,
+      session,
+      user,
       response: NextResponse.json(
         { error: 'Forbidden - Coach access required' },
         { status: 403 }
@@ -74,6 +148,7 @@ export async function requireCoach(): Promise<AuthResult> {
   return {
     authorized: true,
     session,
+    user,
   };
 }
 

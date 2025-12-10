@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { OpenAI} from 'openai';
 import { prisma } from '@/lib/prisma';
+import { verifyAuthFromRequest } from '@/lib/auth-helpers';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -55,6 +56,22 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
 
   try {
+    // Verify authentication (supports both JWT and session)
+    const user = await verifyAuthFromRequest(req);
+    if (!user) {
+      return new Response(
+        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Unauthorized' }) + '\n\n'),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        }
+      );
+    }
+
     const body = await req.json();
     const { session_id, message, athlete_id } = body;
 
@@ -62,6 +79,21 @@ export async function POST(req: NextRequest) {
       return new Response(
         encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Missing required fields' }) + '\n\n'),
         {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        }
+      );
+    }
+
+    // Verify user can chat as this athlete
+    if (user.id !== athlete_id && user.role !== 'ADMIN') {
+      return new Response(
+        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Forbidden' }) + '\n\n'),
+        {
+          status: 403,
           headers: {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',

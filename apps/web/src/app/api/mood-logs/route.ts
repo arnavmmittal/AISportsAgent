@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth-helpers';
 
 export async function POST(req: NextRequest) {
   try {
+    // Verify authentication (supports both JWT and session)
+    const { authorized, user, response } = await requireAuth(req);
+    if (!authorized) return response;
+
     const body = await req.json();
     const { athleteId, mood, confidence, stress, energy, sleep, notes, tags } = body;
 
@@ -10,6 +15,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
+      );
+    }
+
+    // Verify user can create mood logs for this athlete
+    if (user!.id !== athleteId && user!.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden - Cannot create mood logs for other users' },
+        { status: 403 }
       );
     }
 
@@ -50,6 +63,10 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    // Verify authentication (supports both JWT and session)
+    const { authorized, user, response } = await requireAuth(req);
+    if (!authorized) return response;
+
     const { searchParams } = new URL(req.url);
     const athleteId = searchParams.get('athleteId');
     const limit = parseInt(searchParams.get('limit') || '30');
@@ -58,6 +75,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         { error: 'Missing athleteId parameter' },
         { status: 400 }
+      );
+    }
+
+    // Verify user can access this athlete's data
+    if (user!.id !== athleteId && user!.role !== 'ADMIN' && user!.role !== 'COACH') {
+      return NextResponse.json(
+        { error: 'Forbidden - Cannot access other users\' data' },
+        { status: 403 }
       );
     }
 
