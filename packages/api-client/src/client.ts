@@ -42,7 +42,8 @@ export class APIClient {
   // ========== Auth ==========
 
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
-    return this.request('/api/auth/signin', {
+    // Use mobile-specific endpoint that returns JWT tokens
+    return this.request('/api/auth/mobile/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });

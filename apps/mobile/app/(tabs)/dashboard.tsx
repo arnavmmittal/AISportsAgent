@@ -5,13 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { logout, getStoredUserId, getStoredUserRole } from '../../lib/auth';
+import { logout, getStoredUserId } from '../../lib/auth';
 import { apiClient } from '../../lib/auth';
 import type { MoodLog, Goal } from '@sports-agent/types';
+import { Card, LoadingScreen } from '../../components/ui';
+import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -84,11 +85,7 @@ export default function DashboardScreen() {
   };
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
-      </View>
-    );
+    return <LoadingScreen message="Loading dashboard..." />;
   }
 
   return (
@@ -99,35 +96,35 @@ export default function DashboardScreen() {
           <Text style={styles.headerSubtitle}>Welcome back!</Text>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={20} color="#374151" />
+          <Ionicons name="log-out-outline" size={20} color={Colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Quick Stats */}
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: '#eff6ff' }]}>
-            <Ionicons name="happy" size={24} color="#2563eb" />
+          <View style={[styles.statCard, { backgroundColor: Colors.primaryLight }]}>
+            <Ionicons name="happy" size={24} color={Colors.primary} />
             <Text style={styles.statValue}>
               {getMoodEmoji(getAverageMood())} {getAverageMood()}/10
             </Text>
             <Text style={styles.statLabel}>Avg Mood</Text>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: '#f0fdf4' }]}>
-            <Ionicons name="trending-up" size={24} color="#10b981" />
+          <View style={[styles.statCard, { backgroundColor: Colors.successLight }]}>
+            <Ionicons name="trending-up" size={24} color={Colors.success} />
             <Text style={styles.statValue}>{getAverageConfidence()}/10</Text>
             <Text style={styles.statLabel}>Confidence</Text>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: '#fef3c7' }]}>
-            <Ionicons name="alert-circle" size={24} color="#f59e0b" />
+          <View style={[styles.statCard, { backgroundColor: Colors.warningLight }]}>
+            <Ionicons name="alert-circle" size={24} color={Colors.warning} />
             <Text style={styles.statValue}>{getAverageStress()}/10</Text>
             <Text style={styles.statLabel}>Stress</Text>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: '#fef2f2' }]}>
-            <Ionicons name="trophy" size={24} color="#ef4444" />
+          <View style={[styles.statCard, { backgroundColor: Colors.errorLight }]}>
+            <Ionicons name="trophy" size={24} color={Colors.error} />
             <Text style={styles.statValue}>{goals.length}</Text>
             <Text style={styles.statLabel}>Active Goals</Text>
           </View>
@@ -143,19 +140,20 @@ export default function DashboardScreen() {
           </View>
 
           {moodLogs.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="calendar-outline" size={32} color="#d1d5db" />
+            <Card style={styles.emptyCard}>
+              <Ionicons name="calendar-outline" size={32} color={Colors.gray300} />
               <Text style={styles.emptyText}>No check-ins yet</Text>
               <TouchableOpacity
                 style={styles.emptyButton}
                 onPress={() => router.push('/(tabs)/mood')}
+                activeOpacity={0.8}
               >
                 <Text style={styles.emptyButtonText}>Log your first check-in</Text>
               </TouchableOpacity>
-            </View>
+            </Card>
           ) : (
             moodLogs.slice(0, 3).map((log) => (
-              <View key={log.id} style={styles.activityCard}>
+              <Card key={log.id} style={styles.activityCard}>
                 <View style={styles.activityIcon}>
                   <Text style={styles.activityEmoji}>{getMoodEmoji(log.mood)}</Text>
                 </View>
@@ -167,7 +165,7 @@ export default function DashboardScreen() {
                     {new Date(log.date).toLocaleDateString()}
                   </Text>
                 </View>
-              </View>
+              </Card>
             ))
           )}
         </View>
@@ -182,22 +180,23 @@ export default function DashboardScreen() {
           </View>
 
           {goals.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="trophy-outline" size={32} color="#d1d5db" />
+            <Card style={styles.emptyCard}>
+              <Ionicons name="trophy-outline" size={32} color={Colors.gray300} />
               <Text style={styles.emptyText}>No goals set</Text>
               <TouchableOpacity
                 style={styles.emptyButton}
                 onPress={() => router.push('/(tabs)/goals')}
+                activeOpacity={0.8}
               >
                 <Text style={styles.emptyButtonText}>Create your first goal</Text>
               </TouchableOpacity>
-            </View>
+            </Card>
           ) : (
             goals
               .filter((g) => g.status !== 'COMPLETED')
               .slice(0, 3)
               .map((goal) => (
-                <View key={goal.id} style={styles.goalCard}>
+                <Card key={goal.id} style={styles.goalCard}>
                   <View style={styles.goalHeader}>
                     <Text style={styles.goalTitle}>{goal.title}</Text>
                     <Text style={styles.goalProgress}>{goal.progress}%</Text>
@@ -206,11 +205,11 @@ export default function DashboardScreen() {
                     <View
                       style={[
                         styles.progressBarFill,
-                        { width: `${goal.progress}%`, backgroundColor: '#2563eb' },
+                        { width: `${goal.progress}%`, backgroundColor: Colors.primary },
                       ]}
                     />
                   </View>
-                </View>
+                </Card>
               ))
           )}
         </View>
@@ -222,37 +221,46 @@ export default function DashboardScreen() {
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/(tabs)/chat')}
+            activeOpacity={0.7}
           >
-            <Ionicons name="chatbubbles" size={24} color="#2563eb" />
+            <View style={[styles.actionIcon, { backgroundColor: Colors.primaryLight }]}>
+              <Ionicons name="chatbubbles" size={24} color={Colors.primary} />
+            </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Start Chat Session</Text>
               <Text style={styles.actionDescription}>Talk to your AI assistant</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/(tabs)/mood')}
+            activeOpacity={0.7}
           >
-            <Ionicons name="happy" size={24} color="#10b981" />
+            <View style={[styles.actionIcon, { backgroundColor: Colors.successLight }]}>
+              <Ionicons name="happy" size={24} color={Colors.success} />
+            </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Daily Check-In</Text>
               <Text style={styles.actionDescription}>Log your mood and feelings</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => router.push('/(tabs)/goals')}
+            activeOpacity={0.7}
           >
-            <Ionicons name="trophy" size={24} color="#f59e0b" />
+            <View style={[styles.actionIcon, { backgroundColor: Colors.warningLight }]}>
+              <Ionicons name="trophy" size={24} color={Colors.warning} />
+            </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Manage Goals</Text>
               <Text style={styles.actionDescription}>Track your progress</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
           </TouchableOpacity>
         </View>
 
@@ -265,39 +273,34 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: Colors.backgroundSecondary,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.lg,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: Spacing.lg,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: Colors.gray200,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+    fontSize: Typography.xxxl,
+    fontWeight: Typography.bold,
+    color: Colors.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   logoutButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: Colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -305,98 +308,84 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: Spacing.lg,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 24,
-    gap: 12,
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
   },
   statCard: {
     width: '48%',
-    padding: 16,
-    borderRadius: 12,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginTop: 8,
+    fontSize: Typography.xxxl,
+    fontWeight: Typography.bold,
+    color: Colors.textPrimary,
+    marginTop: Spacing.sm,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
+    fontSize: Typography.xs,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: Spacing.xl,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontSize: Typography.lg,
+    fontWeight: Typography.semibold,
+    color: Colors.textPrimary,
   },
   sectionLink: {
-    fontSize: 14,
-    color: '#2563eb',
-    fontWeight: '500',
+    fontSize: Typography.sm,
+    color: Colors.primary,
+    fontWeight: Typography.medium,
   },
   emptyCard: {
-    backgroundColor: '#fff',
-    padding: 32,
-    borderRadius: 12,
+    padding: Spacing.xxxl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginTop: 12,
-    marginBottom: 16,
+    fontSize: Typography.base,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   emptyButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
   },
   emptyButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: Typography.sm,
+    fontWeight: Typography.semibold,
   },
   activityCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   activityIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: Colors.gray100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   activityEmoji: {
     fontSize: 24,
@@ -406,46 +395,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activityTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1f2937',
-    marginBottom: 4,
+    fontSize: Typography.sm,
+    fontWeight: Typography.medium,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
   },
   activityDate: {
-    fontSize: 12,
-    color: '#9ca3af',
+    fontSize: Typography.xs,
+    color: Colors.textTertiary,
   },
   goalCard: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   goalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   goalTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1f2937',
+    fontSize: Typography.sm,
+    fontWeight: Typography.medium,
+    color: Colors.textPrimary,
     flex: 1,
   },
   goalProgress: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2563eb',
+    fontSize: Typography.sm,
+    fontWeight: Typography.semibold,
+    color: Colors.primary,
   },
   progressBar: {
     height: 6,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: Colors.gray200,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -457,28 +439,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
+    ...Shadows.small,
+  },
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   actionContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: Spacing.md,
   },
   actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontSize: Typography.base,
+    fontWeight: Typography.semibold,
+    color: Colors.textPrimary,
     marginBottom: 2,
   },
   actionDescription: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
   },
   bottomPadding: {
     height: 40,
