@@ -8,13 +8,18 @@ This is a native iOS and Android app built with Expo and React Native. It provid
 
 ### Key Features
 
-- **AI Chat Assistant**: Real-time streaming conversations with GPT-4
-- **Daily Check-Ins**: Mood, confidence, stress, energy, and sleep tracking
-- **Goal Management**: Create, track, and complete performance goals
-- **Dashboard**: Aggregated insights and quick actions
-- **Push Notifications**: Daily reminders and alerts
-- **Offline Support**: Cache data for offline access
-- **Biometric Auth**: Face ID / Touch ID for secure access
+- **🎙️ Voice + Text Chat**: Dual-mode AI conversations with animated voice button
+  - WebSocket-based voice streaming with real-time transcription
+  - Voice Activity Detection (VAD) for automatic utterance end
+  - Smooth toggle between voice and text modes
+  - Live transcript and AI response display
+- **📊 Daily Check-Ins**: Mood, confidence, stress, energy, and sleep tracking
+- **🎯 Goal Management**: Create, track, and complete performance goals
+- **📱 Enhanced Dashboard**: Aggregated insights with polished UI
+- **🔔 Push Notifications**: Daily reminders and alerts
+- **💾 Offline Support**: Cache data for offline access
+- **🔐 Biometric Auth**: Face ID / Touch ID for secure access
+- **🎨 Design System**: Centralized theme with consistent colors, spacing, typography
 
 ## Tech Stack
 
@@ -112,15 +117,16 @@ const API_URL = __DEV__
 
 **Files**: `app/(auth)/*`, `lib/auth.ts`
 
-### Phase 2: Chat Interface ✅
+### Phase 2: Chat Interface ✅ **ENHANCED**
 
-- Real-time streaming chat with GPT-4
-- Server-Sent Events (SSE) support
-- Message history and session management
-- Suggestion chips for quick starts
-- Loading states and error handling
-
-**Files**: `app/(tabs)/chat.tsx`
+- ✨ **Dual-mode chat**: Voice and text with animated toggle
+- 🎙️ **Voice integration**: VoiceButton with 5 states (idle/listening/processing/speaking/error)
+- 🔊 **Real-time streaming**: WebSocket for voice, SSE for text responses
+- 📝 **Live transcription**: Voice input → text → AI response with TTS playback
+- 🎨 **Enhanced UI**: EmptyState with suggestion chips, LoadingScreen, ErrorView
+- 🎯 **Voice state indicators**: Visual feedback for listening/processing/speaking
+- 🔌 **WebSocket status**: Connection indicator for voice mode
+- **Files**: `app/(tabs)/chat.tsx` (361 → 678 lines), `components/chat/VoiceButton.tsx`, `hooks/useVoiceChat.ts`
 
 ### Phase 3: Mood Tracking ✅
 
@@ -152,7 +158,22 @@ const API_URL = __DEV__
 
 **Files**: `app/(tabs)/dashboard.tsx`
 
-### Phase 6: Native Features ✅
+### Phase 6: Native Features ✅ **ENHANCED**
+
+**Voice Infrastructure** (NEW):
+- 🎤 **AudioRecorder**: expo-av based, 16kHz mono AAC optimized for Whisper API
+  - Microphone permissions handling
+  - Real-time audio level metering (for visualizer)
+  - VAD integration for silence detection
+- 🔊 **AudioPlayer**: Queued TTS chunk playback
+  - Auto-plays chunks as they arrive via WebSocket
+  - File-based playback with automatic cleanup
+  - Playback status listeners for UI updates
+- 🔍 **VoiceActivityDetector**: Smart silence detection
+  - 1.5s silence threshold after 300ms+ speech
+  - Automatic utterance end triggering
+  - Configurable thresholds and parameters
+- **Files**: `lib/voice/AudioRecorder.ts` (308 lines), `lib/voice/AudioPlayer.ts` (344 lines), `lib/voice/VoiceActivityDetector.ts` (226 lines)
 
 **Push Notifications:**
 - Daily mood reminders
@@ -171,7 +192,26 @@ const API_URL = __DEV__
 - Hardware availability checking
 - Graceful fallback
 
-**Files**: `lib/notifications.ts`, `lib/storage.ts`, `lib/biometric.ts`
+**Navigation Enhancements** (NEW):
+- Smart entry point (`app/index.tsx`) with auth-based routing
+- Enhanced auth flow with segment tracking
+- Fixed race conditions in login/signup (100ms delay for state sync)
+- Auto-redirect for logged-in/logged-out users
+
+**Theme System** (NEW):
+- 🎨 **Colors**: Primary, semantic (success/warning/error), grayscale palette
+- 📏 **Spacing**: Consistent spacing scale (xs to xxxl)
+- 🔤 **Typography**: Font sizes, weights, line heights
+- 🔲 **BorderRadius**: Rounded corners (sm to full)
+- 🌑 **Shadows**: Elevation system (small, medium, large)
+- **File**: `constants/theme.ts` (102 lines)
+
+**UI Components Library** (NEW):
+- 📦 **Card**: Reusable card container with shadows
+- ⏳ **LoadingScreen**: Full-screen loading with custom message
+- ❌ **ErrorView**: Error display with retry button
+- 🎴 **EmptyState**: Empty state with icon, message, and action buttons
+- **Files**: `components/ui/` (5 components + index)
 
 ## Dependencies
 
