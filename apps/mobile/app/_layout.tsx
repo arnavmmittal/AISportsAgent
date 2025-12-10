@@ -47,13 +47,24 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
+  // Check authentication status
+  const checkAuth = async () => {
+    const authenticated = await initializeAuth();
+    setIsAuthenticated(authenticated);
+    return authenticated;
+  };
+
   useEffect(() => {
-    async function checkAuth() {
-      const authenticated = await initializeAuth();
-      setIsAuthenticated(authenticated);
-    }
     checkAuth();
   }, []);
+
+  // Re-check auth when segments change (navigation occurs)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [segments]);
 
   useEffect(() => {
     if (isAuthenticated === null) return;

@@ -1,7 +1,17 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Modal } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { apiClient, login } from '../../lib/auth';
+
+const SPORTS = [
+  'Basketball', 'Football', 'Soccer', 'Baseball', 'Softball',
+  'Volleyball', 'Track & Field', 'Cross Country', 'Swimming',
+  'Tennis', 'Golf', 'Wrestling', 'Lacrosse', 'Hockey',
+  'Rowing', 'Gymnastics', 'Other'
+];
+
+const YEARS = ['FRESHMAN', 'SOPHOMORE', 'JUNIOR', 'SENIOR', 'GRADUATE'];
 
 export default function SignupScreen() {
   const [name, setName] = useState('');
@@ -12,6 +22,8 @@ export default function SignupScreen() {
   const [role, setRole] = useState<'ATHLETE' | 'COACH'>('ATHLETE');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSportPicker, setShowSportPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker] = useState(false);
   const router = useRouter();
 
   const handleSignup = async () => {
@@ -21,7 +33,7 @@ export default function SignupScreen() {
     }
 
     if (role === 'ATHLETE' && (!sport || !year)) {
-      setError('Please enter your sport and year');
+      setError('Please select your sport and year');
       return;
     }
 
@@ -35,12 +47,16 @@ export default function SignupScreen() {
         password,
         role,
         sport: sport || undefined,
-        year: year ? parseInt(year) : undefined,
+        year: year || undefined,
       });
 
       // Auto-login after signup
       await login(email, password);
-      router.replace('/(tabs)/dashboard');
+
+      // Force navigation
+      setTimeout(() => {
+        router.replace('/(tabs)/dashboard');
+      }, 100);
     } catch (err: any) {
       setError(err.message || 'Signup failed. Please try again.');
     } finally {
@@ -121,28 +137,27 @@ export default function SignupScreen() {
 
           {role === 'ATHLETE' && (
             <>
-              <TextInput
-                style={styles.input}
-                placeholder="Sport (e.g., Basketball)"
-                value={sport}
-                onChangeText={(text) => {
-                  setSport(text);
-                  setError('');
-                }}
-                editable={!isLoading}
-              />
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => setShowSportPicker(true)}
+                disabled={isLoading}
+              >
+                <Text style={sport ? styles.pickerButtonTextSelected : styles.pickerButtonText}>
+                  {sport || 'Select Sport'}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#6b7280" />
+              </TouchableOpacity>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Year (e.g., 2024)"
-                value={year}
-                onChangeText={(text) => {
-                  setYear(text);
-                  setError('');
-                }}
-                keyboardType="numeric"
-                editable={!isLoading}
-              />
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => setShowYearPicker(true)}
+                disabled={isLoading}
+              >
+                <Text style={year ? styles.pickerButtonTextSelected : styles.pickerButtonText}>
+                  {year ? year.charAt(0) + year.slice(1).toLowerCase() : 'Select Year'}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#6b7280" />
+              </TouchableOpacity>
             </>
           )}
 
@@ -163,6 +178,100 @@ export default function SignupScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Sport Picker Modal */}
+      <Modal
+        visible={showSportPicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowSportPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Sport</Text>
+              <TouchableOpacity onPress={() => setShowSportPicker(false)}>
+                <Ionicons name="close" size={24} color="#1f2937" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScroll}>
+              {SPORTS.map((sportOption) => (
+                <TouchableOpacity
+                  key={sportOption}
+                  style={[
+                    styles.modalOption,
+                    sport === sportOption && styles.modalOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setSport(sportOption);
+                    setShowSportPicker(false);
+                    setError('');
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      sport === sportOption && styles.modalOptionTextSelected,
+                    ]}
+                  >
+                    {sportOption}
+                  </Text>
+                  {sport === sportOption && (
+                    <Ionicons name="checkmark" size={20} color="#2563eb" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Year Picker Modal */}
+      <Modal
+        visible={showYearPicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowYearPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Class Year</Text>
+              <TouchableOpacity onPress={() => setShowYearPicker(false)}>
+                <Ionicons name="close" size={24} color="#1f2937" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScroll}>
+              {YEARS.map((yearOption) => (
+                <TouchableOpacity
+                  key={yearOption}
+                  style={[
+                    styles.modalOption,
+                    year === yearOption && styles.modalOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setYear(yearOption);
+                    setShowYearPicker(false);
+                    setError('');
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      year === yearOption && styles.modalOptionTextSelected,
+                    ]}
+                  >
+                    {yearOption.charAt(0) + yearOption.slice(1).toLowerCase()}
+                  </Text>
+                  {year === yearOption && (
+                    <Ionicons name="checkmark" size={20} color="#2563eb" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -267,5 +376,75 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontSize: 14,
     textAlign: 'center',
+  },
+  pickerButton: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#f9fafb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pickerButtonText: {
+    fontSize: 16,
+    color: '#9ca3af',
+  },
+  pickerButtonTextSelected: {
+    fontSize: 16,
+    color: '#1f2937',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  modalScroll: {
+    padding: 16,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#f9fafb',
+  },
+  modalOptionSelected: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#2563eb',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#1f2937',
+  },
+  modalOptionTextSelected: {
+    fontSize: 16,
+    color: '#2563eb',
+    fontWeight: '600',
   },
 });
