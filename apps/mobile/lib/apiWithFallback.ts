@@ -105,7 +105,11 @@ export async function createMoodLog(
       return demoLog;
     }
 
-    const log = await apiClient.createMoodLog(athleteId, data);
+    const log = await apiClient.createMoodLog({
+      athleteId,
+      date: new Date(),
+      ...data,
+    });
     return log;
   } catch (error) {
     console.log('Create mood log failed, using demo mode');
