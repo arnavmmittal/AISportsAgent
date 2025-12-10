@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   ScrollView,
   Animated,
   Pressable,
+  RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,20 +20,32 @@ import type { MoodLog, Goal } from '@sports-agent/types';
 import { Card, LoadingScreen, GradientCard } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
 
+const { width } = Dimensions.get('window');
+
 export default function DashboardScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [userName, setUserName] = useState('');
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [moodStats, setMoodStats] = useState<any>(null);
 
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+
   useEffect(() => {
     loadDashboardData();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
       const userId = await getStoredUserId();
       if (!userId) throw new Error('User not logged in');
 
@@ -43,11 +57,32 @@ export default function DashboardScreen() {
 
       setMoodLogs(moodLogsData);
       setGoals(goalsData);
+
+      // Animate in content
+      if (!isRefresh) {
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    loadDashboardData(true);
   };
 
   const handleLogout = async () => {
@@ -86,23 +121,89 @@ export default function DashboardScreen() {
     return '😊';
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const getMotivationalMessage = () => {
+    const messages = [
+      'Ready to crush your goals today?',
+      'Let\'s make today count!',
+      'You\'re doing amazing!',
+      'Time to level up!',
+      'Stay focused on your goals!',
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
   if (isLoading) {
     return <LoadingScreen message="Loading dashboard..." />;
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Dashboard</Text>
-          <Text style={styles.headerSubtitle}>Welcome back!</Text>
-        </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
+      >
+        {/* Hero Section */}
+        <Animated.View
+          style={[
+            styles.heroSection,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={['#2563eb', '#3b82f6', '#60a5fa']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
+          >
+            <View style={styles.heroContent}>
+              <View style={styles.heroHeader}>
+                <View style={styles.heroTextContainer}>
+                  <Text style={styles.heroGreeting}>{getGreeting()}!</Text>
+                  <Text style={styles.heroMessage}>{getMotivationalMessage()}</Text>
+                </View>
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutButtonHero}>
+                  <Ionicons name="log-out-outline" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+              {/* Mini Stats in Hero */}
+              <View style={styles.heroStats}>
+                <View style={styles.heroStatItem}>
+                  <Text style={styles.heroStatValue}>{moodLogs.length}</Text>
+                  <Text style={styles.heroStatLabel}>Check-ins</Text>
+                </View>
+                <View style={styles.heroStatDivider} />
+                <View style={styles.heroStatItem}>
+                  <Text style={styles.heroStatValue}>{goals.filter(g => g.status !== 'COMPLETED').length}</Text>
+                  <Text style={styles.heroStatLabel}>Active Goals</Text>
+                </View>
+                <View style={styles.heroStatDivider} />
+                <View style={styles.heroStatItem}>
+                  <Text style={styles.heroStatValue}>{getAverageMood()}</Text>
+                  <Text style={styles.heroStatLabel}>Avg Mood</Text>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
+        </Animated.View>
         {/* Quick Stats */}
         <View style={styles.statsGrid}>
           <Pressable
@@ -359,35 +460,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.backgroundSecondary,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: 60,
-    paddingBottom: Spacing.lg,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray200,
-  },
-  headerTitle: {
-    fontSize: Typography.xxxl,
-    fontWeight: Typography.bold,
-    color: Colors.textPrimary,
-  },
-  headerSubtitle: {
-    fontSize: Typography.sm,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  logoutButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.gray100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   scrollView: {
     flex: 1,
   },
@@ -563,5 +635,77 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  // Hero Section
+  heroSection: {
+    marginTop: -Spacing.lg,
+    marginHorizontal: -Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  heroGradient: {
+    paddingTop: 60,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
+    borderBottomLeftRadius: BorderRadius.xl * 1.5,
+    borderBottomRightRadius: BorderRadius.xl * 1.5,
+  },
+  heroContent: {
+    gap: Spacing.lg,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  heroTextContainer: {
+    flex: 1,
+  },
+  heroGreeting: {
+    fontSize: Typography.xxxl,
+    fontWeight: Typography.bold,
+    color: '#fff',
+    marginBottom: Spacing.xs,
+  },
+  heroMessage: {
+    fontSize: Typography.base,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: Typography.medium,
+  },
+  logoutButtonHero: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginTop: Spacing.md,
+  },
+  heroStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  heroStatValue: {
+    fontSize: Typography.xxl,
+    fontWeight: Typography.bold,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  heroStatLabel: {
+    fontSize: Typography.xs,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: Typography.medium,
+  },
+  heroStatDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
 });
