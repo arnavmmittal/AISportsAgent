@@ -92,10 +92,12 @@ export class APIClient {
   // ========== Mood Logs ==========
 
   async createMoodLog(data: Omit<MoodLog, 'id' | 'createdAt'>): Promise<MoodLog> {
-    return this.request('/api/mood-logs', {
+    const response: any = await this.request('/api/mood-logs', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    // Backend returns { success: true, data: moodLog }
+    return response.data || response;
   }
 
   async getMoodLogs(athleteId: string, limit?: number): Promise<MoodLog[]> {
@@ -103,7 +105,9 @@ export class APIClient {
       athleteId,
       ...(limit && { limit: limit.toString() }),
     });
-    return this.request(`/api/mood-logs?${queryParams}`);
+    const response: any = await this.request(`/api/mood-logs?${queryParams}`);
+    // Backend returns { success: true, data: [...] }
+    return response.data || response;
   }
 
   async getMoodStats(athleteId: string): Promise<any> {
@@ -113,14 +117,18 @@ export class APIClient {
   // ========== Goals ==========
 
   async getGoals(athleteId: string): Promise<Goal[]> {
-    return this.request(`/api/goals?athleteId=${athleteId}`);
+    const response: any = await this.request(`/api/goals?athleteId=${athleteId}`);
+    // Backend returns { success: true, data: [...] }
+    return response.data || response;
   }
 
   async createGoal(data: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>): Promise<Goal> {
-    return this.request('/api/goals', {
+    const response: any = await this.request('/api/goals', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    // Backend returns { success: true, data: goal }
+    return response.data || response;
   }
 
   async updateGoal(id: string, data: Partial<Goal>): Promise<Goal> {
