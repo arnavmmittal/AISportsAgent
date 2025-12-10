@@ -1,17 +1,31 @@
 # Mobile App Quick Start Guide
 
-## 🔴 **CURRENT ISSUES & FIXES**
+## 🔴 **CURRENT STATUS**
 
-### Issue 1: "Network request failed" ❌
-**Cause:** Backend not accessible from mobile device
-**Fix:** Restart web server with network access
+### ✅ Demo Mode Working
+The app now automatically works in demo mode when the backend is unavailable:
+- Chat with AI (simulated responses)
+- Dashboard with mood stats and goals
+- Mood tracking
+- Goal management
+- Full UI functionality
 
+### 🔄 To Connect to Real Backend (Optional)
+
+**IMPORTANT:** If your web server is already running, you MUST restart it for network access to work.
+
+1. **Stop the web server** (Ctrl+C in the terminal running `npm run dev`)
+2. **Start it again:**
 ```bash
 cd /Users/arnavmittal/Desktop/SportsAgent/apps/web
 npm run dev
 ```
 
 ✅ **You should see:** `ready - started server on 0.0.0.0:3000`
+
+3. **Reload mobile app:** Press `r` in Expo terminal
+
+The app will automatically detect the backend and switch from demo mode to live mode.
 
 ---
 
