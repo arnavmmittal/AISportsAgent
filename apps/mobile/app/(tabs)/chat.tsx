@@ -315,13 +315,20 @@ export default function ChatScreen() {
   });
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={100}
-    >
-      {/* Header */}
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#eff6ff', '#f3e8ff', '#fce7f3']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientContainer}
+      >
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={100}
+        >
+          {/* Header */}
+          <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>AI Coach</Text>
           <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
@@ -420,34 +427,76 @@ export default function ChatScreen() {
 
       {/* Messages */}
       {messages.length === 0 ? (
-        <EmptyState
-          icon="chatbubbles-outline"
-          title="Start a conversation"
-          message="I'm here to help with your mental performance, training, and well-being."
-          actionButtons={[
-            {
-              label: "Pre-game anxiety",
-              onPress: () => {
-                setInputValue("I'm feeling anxious about my upcoming game");
+        <ScrollView style={styles.messagesContainer} contentContainerStyle={styles.emptyStateContainer}>
+          <LinearGradient
+            colors={['#3b82f6', '#8b5cf6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.emptyIconCircle}
+          >
+            <Ionicons name="chatbubbles" size={64} color="#fff" />
+          </LinearGradient>
+
+          <Text style={styles.emptyTitle}>Hey there! Ready to level up? 💪</Text>
+
+          <Text style={styles.emptyMessage}>
+            I'm your 24/7 mental performance coach. Whether you're battling pre-game jitters, need a confidence boost, or just want to chat about what's on your mind - I've got your back. Let's unlock your full potential together!
+          </Text>
+
+          <View style={styles.suggestionGrid}>
+            <TouchableOpacity
+              style={[styles.suggestionCard, { borderColor: '#93c5fd' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setInputValue("I get so anxious before games...");
                 setChatMode('text');
-              },
-            },
-            {
-              label: "Motivation tips",
-              onPress: () => {
-                setInputValue("I need help staying motivated");
+              }}
+            >
+              <Text style={styles.suggestionEmoji}>🎯</Text>
+              <Text style={styles.suggestionTitle}>Crush Pre-Game Nerves</Text>
+              <Text style={styles.suggestionSubtitle}>"I get so anxious before games..."</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.suggestionCard, { borderColor: '#c4b5fd' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setInputValue("How do I believe in myself more?");
                 setChatMode('text');
-              },
-            },
-            {
-              label: "Focus strategies",
-              onPress: () => {
-                setInputValue("How can I improve my focus?");
+              }}
+            >
+              <Text style={styles.suggestionEmoji}>💪</Text>
+              <Text style={styles.suggestionTitle}>Boost Your Confidence</Text>
+              <Text style={styles.suggestionSubtitle}>"How do I believe in myself more?"</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.suggestionCard, { borderColor: '#fbcfe8' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setInputValue("I'm overwhelmed juggling everything...");
                 setChatMode('text');
-              },
-            },
-          ]}
-        />
+              }}
+            >
+              <Text style={styles.suggestionEmoji}>🧘</Text>
+              <Text style={styles.suggestionTitle}>Balance Life & Sport</Text>
+              <Text style={styles.suggestionSubtitle}>"I'm overwhelmed juggling everything..."</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.suggestionCard, { borderColor: '#a5b4fc' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setInputValue("Help me get in the zone...");
+                setChatMode('text');
+              }}
+            >
+              <Text style={styles.suggestionEmoji}>⚡</Text>
+              <Text style={styles.suggestionTitle}>Find Your Flow State</Text>
+              <Text style={styles.suggestionSubtitle}>"Help me get in the zone..."</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       ) : (
         <FlatList
           ref={flatListRef}
@@ -549,17 +598,25 @@ export default function ChatScreen() {
           </Text>
         </View>
       )}
-    </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+  },
+  gradientContainer: {
+    flex: 1,
+  },
+  keyboardView: {
+    flex: 1,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(10px)',
     paddingTop: 60,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
@@ -661,8 +718,61 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   messagesContainer: {
+    flex: 1,
+  },
+  emptyStateContainer: {
+    padding: Spacing.xl,
+    alignItems: 'center',
+  },
+  emptyIconCircle: {
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xl,
+    ...Shadows.large,
+  },
+  emptyTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: Colors.primary,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  emptyMessage: {
+    fontSize: Typography.lg,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 28,
+    marginBottom: Spacing.xxxl,
+    paddingHorizontal: Spacing.md,
+  },
+  suggestionGrid: {
+    width: '100%',
+    gap: Spacing.md,
+  },
+  suggestionCard: {
+    backgroundColor: '#fff',
+    borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    paddingBottom: Spacing.sm,
+    borderWidth: 2,
+    marginBottom: Spacing.sm,
+    ...Shadows.medium,
+  },
+  suggestionEmoji: {
+    fontSize: 32,
+    marginBottom: Spacing.sm,
+  },
+  suggestionTitle: {
+    fontSize: Typography.lg,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
+  },
+  suggestionSubtitle: {
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
   },
   messageBubble: {
     maxWidth: '80%',
