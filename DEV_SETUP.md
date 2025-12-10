@@ -164,6 +164,21 @@ python scripts/check_kb_stats.py
    - Password: `demo123`
 4. Chat should now use full MCP system with RAG!
 
+## Common Issues & Solutions
+
+### "Address already in use" errors
+
+If you get port conflicts:
+
+```bash
+# Kill processes on ports 8000 and 3000
+lsof -ti :8000 | xargs kill -9
+lsof -ti :3000 | xargs kill -9
+
+# Then restart
+pnpm dev:full
+```
+
 ## Troubleshooting
 
 ### "MCP server won't start"
