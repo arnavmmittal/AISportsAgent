@@ -17,13 +17,20 @@ npm run dev
 
 ### Issue 2: Dashboard loads forever ⏳
 **Cause:** Can't connect to backend
-**Fix:** Use demo account
+**Fix:** App automatically uses demo mode when backend is unavailable
 
 **Login Credentials:**
 - Email: `demo@athlete.com`
 - Password: `demo123`
 
-This works **WITHOUT** a database!
+**Demo Mode Features:**
+- ✅ Works **WITHOUT** backend or database
+- ✅ Chat with AI (simulated responses)
+- ✅ View mood logs (sample data)
+- ✅ View goals (sample data)
+- ✅ Full UI functionality
+
+The app will automatically detect if the backend is unavailable and switch to demo mode.
 
 ---
 
