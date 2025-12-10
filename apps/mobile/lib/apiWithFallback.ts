@@ -20,27 +20,30 @@ const CHECK_INTERVAL = 30000; // Check every 30 seconds
 async function isBackendAvailable(): Promise<boolean> {
   const now = Date.now();
   if (now - lastCheck < CHECK_INTERVAL) {
+    console.log(`🔄 Using cached backend status: ${backendAvailable ? '✅ ONLINE' : '📴 OFFLINE'}`);
     return backendAvailable;
   }
+
+  const checkUrl = `${apiClient['baseURL']}/api/auth/mobile/login`;
+  console.log(`🔍 Checking backend availability at: ${checkUrl}`);
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
 
-    const response = await fetch(
-      `${apiClient['baseURL']}/api/auth/mobile/login`,
-      {
-        method: 'OPTIONS', // Just check if endpoint exists
-        signal: controller.signal,
-      }
-    );
+    const response = await fetch(checkUrl, {
+      method: 'OPTIONS', // Just check if endpoint exists
+      signal: controller.signal,
+    });
 
     clearTimeout(timeoutId);
     backendAvailable = response.ok || response.status === 405; // 405 = method not allowed but endpoint exists
     lastCheck = now;
+
+    console.log(`✅ Backend check result: ${backendAvailable ? 'ONLINE' : 'OFFLINE'} (status: ${response.status})`);
     return backendAvailable;
-  } catch (error) {
-    console.log('📴 Backend unavailable, using demo mode');
+  } catch (error: any) {
+    console.log('📴 Backend unavailable:', error.message || error);
     backendAvailable = false;
     lastCheck = now;
     return false;
@@ -49,16 +52,26 @@ async function isBackendAvailable(): Promise<boolean> {
 
 // Mood Logs with Fallback
 export async function getMoodLogs(userId: string, limit?: number): Promise<MoodLog[]> {
+  console.log(`📊 Getting mood logs for user: ${userId}, limit: ${limit}`);
+
   try {
     if (!(await isBackendAvailable())) {
-      console.log('Using demo mood logs');
+      console.log('⚠️ Backend offline - using demo mood logs');
       return DEMO_MOOD_LOGS.slice(0, limit || 7);
     }
 
+    console.log(`🌐 Calling apiClient.getMoodLogs() at ${apiClient['baseURL']}`);
     const logs = await apiClient.getMoodLogs(userId, limit);
+    console.log(`✅ Successfully fetched ${logs.length} mood logs from backend`);
     return logs;
-  } catch (error) {
-    console.log('Mood logs API failed, using demo data');
+  } catch (error: any) {
+    console.error('❌ Mood logs API failed:', error);
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      name: error.name,
+      stack: error.stack?.slice(0, 200)
+    });
     backendAvailable = false;
     return DEMO_MOOD_LOGS.slice(0, limit || 7);
   }
@@ -114,16 +127,26 @@ export async function createMoodLog(
 
 // Goals with Fallback
 export async function getGoals(userId: string): Promise<Goal[]> {
+  console.log(`🎯 Getting goals for user: ${userId}`);
+
   try {
     if (!(await isBackendAvailable())) {
-      console.log('Using demo goals');
+      console.log('⚠️ Backend offline - using demo goals');
       return DEMO_GOALS;
     }
 
+    console.log(`🌐 Calling apiClient.getGoals() at ${apiClient['baseURL']}`);
     const goals = await apiClient.getGoals(userId);
+    console.log(`✅ Successfully fetched ${goals.length} goals from backend`);
     return goals;
-  } catch (error) {
-    console.log('Goals API failed, using demo data');
+  } catch (error: any) {
+    console.error('❌ Goals API failed:', error);
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      name: error.name,
+      stack: error.stack?.slice(0, 200)
+    });
     backendAvailable = false;
     return DEMO_GOALS;
   }
@@ -135,19 +158,29 @@ export async function sendChatMessage(params: {
   message: string;
   athlete_id: string;
 }): Promise<Response> {
+  console.log(`💬 Sending chat message for athlete: ${params.athlete_id}`);
+
   try {
     if (!(await isBackendAvailable())) {
-      console.log('Using demo chat mode');
+      console.log('⚠️ Backend offline - using demo chat mode');
       return await createDemoResponse(params.message);
     }
 
+    console.log(`🌐 Calling apiClient.sendMessage() at ${apiClient['baseURL']}`);
     const response = await apiClient.sendMessage(params);
     if (!response.ok) {
-      throw new Error('Chat API failed');
+      console.error(`❌ Chat API returned error status: ${response.status}`);
+      throw new Error(`Chat API failed with status ${response.status}`);
     }
+    console.log('✅ Successfully sent chat message to backend');
     return response;
-  } catch (error) {
-    console.log('Chat API failed, using demo mode');
+  } catch (error: any) {
+    console.error('❌ Chat API failed:', error);
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      name: error.name,
+    });
     backendAvailable = false;
     return await createDemoResponse(params.message);
   }
