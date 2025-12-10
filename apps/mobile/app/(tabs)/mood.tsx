@@ -10,6 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getStoredUserId } from '../../lib/auth';
 import { createMoodLog } from '../../lib/apiWithFallback';
 import { Colors } from '../../constants/theme';
@@ -38,6 +40,7 @@ export default function MoodScreen() {
   };
 
   const handleSubmit = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsSubmitting(true);
     try {
       const userId = await getStoredUserId();
@@ -52,6 +55,7 @@ export default function MoodScreen() {
         notes: notes.trim() || undefined,
       });
 
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Success', 'Mood log saved successfully!', [
         {
           text: 'OK',
@@ -67,6 +71,7 @@ export default function MoodScreen() {
         },
       ]);
     } catch (error: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', error.message || 'Failed to save mood log');
     } finally {
       setIsSubmitting(false);
@@ -98,7 +103,10 @@ export default function MoodScreen() {
             maximumValue={10}
             step={1}
             value={mood}
-            onValueChange={setMood}
+            onValueChange={(value) => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setMood(value);
+            }}
             minimumTrackTintColor="#2563eb"
             maximumTrackTintColor="#d1d5db"
             thumbTintColor="#2563eb"
@@ -220,15 +228,27 @@ export default function MoodScreen() {
 
         {/* Submit Button */}
         <TouchableOpacity
-          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          style={styles.submitButtonContainer}
           onPress={handleSubmit}
           disabled={isSubmitting}
+          activeOpacity={0.8}
         >
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>Save Check-In</Text>
-          )}
+          <LinearGradient
+            colors={
+              isSubmitting
+                ? [Colors.gray300, Colors.gray400]
+                : ['#10b981', '#34d399']
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.submitButton}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Save Check-In</Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
         <View style={styles.bottomPadding} />
@@ -341,14 +361,18 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 8,
   },
-  submitButton: {
-    backgroundColor: Colors.primary,
-    padding: 16,
+  submitButtonContainer: {
     borderRadius: 12,
-    alignItems: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  submitButtonDisabled: {
-    backgroundColor: Colors.gray400,
+  submitButton: {
+    padding: 16,
+    alignItems: 'center',
   },
   submitButtonText: {
     color: '#fff',
