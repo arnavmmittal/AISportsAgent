@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { Message } from '@sports-agent/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
-import { sendChatMessage } from '../../lib/apiWithFallback';
+import { sendChatMessage, getBackendStatus } from '../../lib/apiWithFallback';
 import { VoiceButton } from '../../components/chat/VoiceButton';
 import { useVoiceChat } from '../../hooks/useVoiceChat';
 import { EmptyState, LoadingScreen, ErrorView } from '../../components/ui';
@@ -31,12 +31,13 @@ export default function ChatScreen() {
   const [chatMode, setChatMode] = useState<ChatMode>('text');
   const [userId, setUserId] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  const [isBackendAvailable, setIsBackendAvailable] = useState(true);
 
   // Refs
   const flatListRef = useRef<FlatList>(null);
   const modeToggleAnim = useRef(new Animated.Value(0)).current;
 
-  // Initialize user ID
+  // Initialize user ID and check backend status
   useEffect(() => {
     async function init() {
       try {
@@ -46,12 +47,29 @@ export default function ChatScreen() {
           return;
         }
         setUserId(id);
+
+        // Check backend status
+        const status = getBackendStatus();
+        setIsBackendAvailable(status.available);
       } catch (error: any) {
         setInitError(error.message || 'Failed to initialize');
       }
     }
     init();
-  }, []);
+
+    // Check backend status periodically
+    const interval = setInterval(() => {
+      const status = getBackendStatus();
+      setIsBackendAvailable(status.available);
+
+      // If backend becomes unavailable while in voice mode, switch to text
+      if (!status.available && chatMode === 'voice') {
+        setChatMode('text');
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [chatMode]);
 
   // Voice chat hook (only initialize if userId is available)
   const voice = useVoiceChat({
@@ -343,18 +361,29 @@ export default function ChatScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.modeButton}
-              onPress={() => setChatMode('voice')}
-              activeOpacity={0.7}
+              onPress={() => {
+                if (isBackendAvailable) {
+                  setChatMode('voice');
+                }
+              }}
+              activeOpacity={isBackendAvailable ? 0.7 : 1}
             >
               <Ionicons
                 name="mic-outline"
                 size={20}
-                color={chatMode === 'voice' ? Colors.primary : Colors.gray500}
+                color={
+                  !isBackendAvailable
+                    ? Colors.gray300
+                    : chatMode === 'voice'
+                    ? Colors.primary
+                    : Colors.gray500
+                }
               />
               <Text
                 style={[
                   styles.modeButtonText,
                   chatMode === 'voice' && styles.modeButtonTextActive,
+                  !isBackendAvailable && styles.modeButtonTextDisabled,
                 ]}
               >
                 Voice
@@ -362,8 +391,18 @@ export default function ChatScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Demo mode notice */}
+          {!isBackendAvailable && (
+            <View style={styles.demoModeNotice}>
+              <Ionicons name="information-circle-outline" size={16} color={Colors.warning} />
+              <Text style={styles.demoModeText}>
+                Voice mode requires backend connection • Using demo mode for text chat
+              </Text>
+            </View>
+          )}
+
           {/* Voice connection status */}
-          {chatMode === 'voice' && (
+          {chatMode === 'voice' && isBackendAvailable && (
             <View style={styles.voiceStatus}>
               <View
                 style={[
@@ -565,6 +604,25 @@ const styles = StyleSheet.create({
   modeButtonTextActive: {
     color: Colors.primary,
     fontWeight: Typography.semibold,
+  },
+  modeButtonTextDisabled: {
+    color: Colors.gray300,
+  },
+  demoModeNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    backgroundColor: '#fff3cd',
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  demoModeText: {
+    fontSize: Typography.xs,
+    color: '#856404',
+    flex: 1,
   },
   voiceStatus: {
     flexDirection: 'row',
