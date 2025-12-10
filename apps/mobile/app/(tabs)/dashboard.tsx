@@ -5,14 +5,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Animated,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { logout, getStoredUserId } from '../../lib/auth';
 import { getMoodLogs, getGoals } from '../../lib/apiWithFallback';
-import { apiClient } from '../../lib/auth';
 import type { MoodLog, Goal } from '@sports-agent/types';
-import { Card, LoadingScreen } from '../../components/ui';
+import { Card, LoadingScreen, GradientCard } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
 
 export default function DashboardScreen() {
@@ -32,16 +35,14 @@ export default function DashboardScreen() {
       const userId = await getStoredUserId();
       if (!userId) throw new Error('User not logged in');
 
-      // Load mood logs, goals, and stats in parallel
-      const [moodLogsData, goalsData, statsData] = await Promise.all([
-        apiClient.getMoodLogs(userId, 7).catch(() => []),
-        apiClient.getGoals(userId).catch(() => []),
-        apiClient.getMoodStats(userId).catch(() => null),
+      // Load mood logs and goals in parallel (using fallback API)
+      const [moodLogsData, goalsData] = await Promise.all([
+        getMoodLogs(userId, 7),
+        getGoals(userId),
       ]);
 
       setMoodLogs(moodLogsData);
       setGoals(goalsData);
-      setMoodStats(statsData);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -104,31 +105,83 @@ export default function DashboardScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Quick Stats */}
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: Colors.primaryLight }]}>
-            <Ionicons name="happy" size={24} color={Colors.primary} />
-            <Text style={styles.statValue}>
-              {getMoodEmoji(getAverageMood())} {getAverageMood()}/10
-            </Text>
-            <Text style={styles.statLabel}>Avg Mood</Text>
-          </View>
+          <Pressable
+            style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/mood');
+            }}
+          >
+            <LinearGradient
+              colors={['#eff6ff', '#dbeafe']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCardGradient}
+            >
+              <Ionicons name="happy" size={24} color={Colors.primary} />
+              <Text style={styles.statValue}>
+                {getMoodEmoji(getAverageMood())} {getAverageMood()}/10
+              </Text>
+              <Text style={styles.statLabel}>Avg Mood</Text>
+            </LinearGradient>
+          </Pressable>
 
-          <View style={[styles.statCard, { backgroundColor: Colors.successLight }]}>
-            <Ionicons name="trending-up" size={24} color={Colors.success} />
-            <Text style={styles.statValue}>{getAverageConfidence()}/10</Text>
-            <Text style={styles.statLabel}>Confidence</Text>
-          </View>
+          <Pressable
+            style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/mood');
+            }}
+          >
+            <LinearGradient
+              colors={['#d1fae5', '#a7f3d0']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCardGradient}
+            >
+              <Ionicons name="trending-up" size={24} color={Colors.success} />
+              <Text style={styles.statValue}>{getAverageConfidence()}/10</Text>
+              <Text style={styles.statLabel}>Confidence</Text>
+            </LinearGradient>
+          </Pressable>
 
-          <View style={[styles.statCard, { backgroundColor: Colors.warningLight }]}>
-            <Ionicons name="alert-circle" size={24} color={Colors.warning} />
-            <Text style={styles.statValue}>{getAverageStress()}/10</Text>
-            <Text style={styles.statLabel}>Stress</Text>
-          </View>
+          <Pressable
+            style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/mood');
+            }}
+          >
+            <LinearGradient
+              colors={['#fef3c7', '#fde68a']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCardGradient}
+            >
+              <Ionicons name="alert-circle" size={24} color={Colors.warning} />
+              <Text style={styles.statValue}>{getAverageStress()}/10</Text>
+              <Text style={styles.statLabel}>Stress</Text>
+            </LinearGradient>
+          </Pressable>
 
-          <View style={[styles.statCard, { backgroundColor: Colors.errorLight }]}>
-            <Ionicons name="trophy" size={24} color={Colors.error} />
-            <Text style={styles.statValue}>{goals.length}</Text>
-            <Text style={styles.statLabel}>Active Goals</Text>
-          </View>
+          <Pressable
+            style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/goals');
+            }}
+          >
+            <LinearGradient
+              colors={['#fce7f3', '#fbcfe8']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCardGradient}
+            >
+              <Ionicons name="trophy" size={24} color="#ec4899" />
+              <Text style={styles.statValue}>{goals.length}</Text>
+              <Text style={styles.statLabel}>Active Goals</Text>
+            </LinearGradient>
+          </Pressable>
         </View>
 
         {/* Recent Mood Logs */}
@@ -219,50 +272,80 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/chat')}
-            activeOpacity={0.7}
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/(tabs)/chat');
+            }}
           >
-            <View style={[styles.actionIcon, { backgroundColor: Colors.primaryLight }]}>
-              <Ionicons name="chatbubbles" size={24} color={Colors.primary} />
-            </View>
+            <LinearGradient
+              colors={['#2563eb', '#3b82f6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionIconGradient}
+            >
+              <Ionicons name="chatbubbles" size={24} color="#fff" />
+            </LinearGradient>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Start Chat Session</Text>
               <Text style={styles.actionDescription}>Talk to your AI assistant</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/mood')}
-            activeOpacity={0.7}
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/(tabs)/mood');
+            }}
           >
-            <View style={[styles.actionIcon, { backgroundColor: Colors.successLight }]}>
-              <Ionicons name="happy" size={24} color={Colors.success} />
-            </View>
+            <LinearGradient
+              colors={['#10b981', '#34d399']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionIconGradient}
+            >
+              <Ionicons name="happy" size={24} color="#fff" />
+            </LinearGradient>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Daily Check-In</Text>
               <Text style={styles.actionDescription}>Log your mood and feelings</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/goals')}
-            activeOpacity={0.7}
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/(tabs)/goals');
+            }}
           >
-            <View style={[styles.actionIcon, { backgroundColor: Colors.warningLight }]}>
-              <Ionicons name="trophy" size={24} color={Colors.warning} />
-            </View>
+            <LinearGradient
+              colors={['#f59e0b', '#fbbf24']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.actionIconGradient}
+            >
+              <Ionicons name="trophy" size={24} color="#fff" />
+            </LinearGradient>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Manage Goals</Text>
               <Text style={styles.actionDescription}>Track your progress</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={styles.bottomPadding} />
@@ -319,9 +402,17 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    ...Shadows.medium,
+  },
+  statCardGradient: {
+    padding: Spacing.lg,
     alignItems: 'center',
+  },
+  statCardPressed: {
+    transform: [{ scale: 0.97 }],
+    opacity: 0.9,
   },
   statValue: {
     fontSize: Typography.xxxl,
@@ -445,7 +536,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     ...Shadows.small,
   },
-  actionIcon: {
+  actionButtonPressed: {
+    transform: [{ scale: 0.98 }],
+    opacity: 0.95,
+  },
+  actionIconGradient: {
     width: 48,
     height: 48,
     borderRadius: 24,
