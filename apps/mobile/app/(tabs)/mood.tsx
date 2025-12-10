@@ -29,10 +29,10 @@ export default function MoodScreen() {
   };
 
   const getStressColor = (value: number) => {
-    if (value <= 3) return '#10b981';
-    if (value <= 5) return '#f59e0b';
+    if (value <= 3) return Colors.success;
+    if (value <= 5) return Colors.warning;
     if (value <= 7) return '#f97316';
-    return '#ef4444';
+    return Colors.error;
   };
 
   const handleSubmit = async () => {
@@ -240,7 +240,7 @@ export default function MoodScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
   },
   header: {
     paddingHorizontal: 20,
@@ -248,12 +248,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: Colors.gray200,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: Colors.textPrimary,
   },
   scrollView: {
     flex: 1,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   introText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: Colors.textSecondary,
     marginBottom: 24,
     lineHeight: 24,
   },
@@ -287,12 +287,12 @@ const styles = StyleSheet.create({
   sliderLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: Colors.textPrimary,
   },
   sliderValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2563eb',
+    color: Colors.primary,
   },
   slider: {
     width: '100%',
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   sliderLabelText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: Colors.gray400,
   },
   notesContainer: {
     backgroundColor: '#fff',
@@ -321,34 +321,34 @@ const styles = StyleSheet.create({
   notesLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: Colors.textPrimary,
     marginBottom: 12,
   },
   notesInput: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: Colors.gray200,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#1f2937',
+    color: Colors.textPrimary,
     minHeight: 100,
     textAlignVertical: 'top',
   },
   characterCount: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: Colors.gray400,
     textAlign: 'right',
     marginTop: 8,
   },
   submitButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: Colors.primary,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
   submitButtonDisabled: {
-    backgroundColor: '#9ca3af',
+    backgroundColor: Colors.gray400,
   },
   submitButtonText: {
     color: '#fff',
