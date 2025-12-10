@@ -505,21 +505,70 @@ export default function ChatScreen() {
           renderItem={({ item }) => (
             <View
               style={[
-                styles.messageBubble,
-                item.role === 'user' ? styles.userBubble : styles.assistantBubble,
+                styles.messageRow,
+                item.role === 'user' ? styles.messageRowUser : styles.messageRowAssistant,
               ]}
             >
-              <Text
-                style={[
-                  styles.messageText,
-                  item.role === 'user' && styles.userMessageText,
-                ]}
+              {/* Avatar */}
+              <LinearGradient
+                colors={item.role === 'user' ? ['#3b82f6', '#1e40af'] : ['#a855f7', '#7c3aed']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatar}
               >
-                {item.content || '...'}
-              </Text>
+                <Ionicons
+                  name={item.role === 'user' ? 'person' : 'chatbubbles'}
+                  size={24}
+                  color="#fff"
+                />
+              </LinearGradient>
+
+              {/* Message Content */}
+              <View style={styles.messageContent}>
+                {item.role === 'user' ? (
+                  <LinearGradient
+                    colors={['#3b82f6', '#2563eb']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.messageBubble, styles.userBubble]}
+                  >
+                    {item.content ? (
+                      <Text style={styles.userMessageText}>{item.content}</Text>
+                    ) : (
+                      <View style={styles.typingIndicator}>
+                        <View style={[styles.typingDot, { backgroundColor: '#93c5fd' }]} />
+                        <View style={[styles.typingDot, { backgroundColor: '#60a5fa' }]} />
+                        <View style={[styles.typingDot, { backgroundColor: '#3b82f6' }]} />
+                      </View>
+                    )}
+                  </LinearGradient>
+                ) : (
+                  <View style={[styles.messageBubble, styles.assistantBubble]}>
+                    {item.content ? (
+                      <Text style={styles.messageText}>{item.content}</Text>
+                    ) : (
+                      <View style={styles.typingIndicator}>
+                        <View style={[styles.typingDot, { backgroundColor: '#c4b5fd' }]} />
+                        <View style={[styles.typingDot, { backgroundColor: '#a78bfa' }]} />
+                        <View style={[styles.typingDot, { backgroundColor: '#8b5cf6' }]} />
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Timestamp */}
+                <Text
+                  style={[
+                    styles.timestamp,
+                    item.role === 'user' ? styles.timestampUser : styles.timestampAssistant,
+                  ]}
+                >
+                  {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
             </View>
           )}
-          contentContainerStyle={styles.messagesContainer}
+          contentContainerStyle={styles.messagesListContainer}
         />
       )}
 
@@ -774,31 +823,80 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     color: Colors.textSecondary,
   },
+  messagesListContainer: {
+    padding: Spacing.lg,
+    gap: Spacing.lg,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  messageRowUser: {
+    flexDirection: 'row-reverse',
+  },
+  messageRowAssistant: {
+    flexDirection: 'row',
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.medium,
+  },
+  messageContent: {
+    flex: 1,
+    gap: Spacing.xs,
+  },
   messageBubble: {
-    maxWidth: '80%',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
-    marginBottom: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: 24,
+    ...Shadows.medium,
   },
   userBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: Colors.primary,
-    borderBottomRightRadius: 4,
+    borderTopRightRadius: 4,
   },
   assistantBubble: {
-    alignSelf: 'flex-start',
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: Colors.gray200,
-    borderBottomLeftRadius: 4,
+    borderWidth: 2,
+    borderColor: '#e9d5ff',
+    borderTopLeftRadius: 4,
   },
   messageText: {
     fontSize: Typography.base,
     color: Colors.textPrimary,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   userMessageText: {
     color: '#fff',
+    fontSize: Typography.base,
+    lineHeight: 24,
+  },
+  typingIndicator: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+  },
+  typingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    // Animation will be added via Animated.View
+  },
+  timestamp: {
+    fontSize: Typography.xs,
+    fontWeight: '600',
+    paddingHorizontal: Spacing.sm,
+  },
+  timestampUser: {
+    color: '#2563eb',
+    textAlign: 'right',
+  },
+  timestampAssistant: {
+    color: '#7c3aed',
+    textAlign: 'left',
   },
   voiceStateIndicator: {
     backgroundColor: Colors.primaryLight,
