@@ -28,9 +28,9 @@ export async function middleware(request: NextRequest) {
   const isCoachApiRoute = pathname.startsWith('/api/analytics') ||
                           pathname.startsWith('/api/performance') ||
                           pathname.startsWith('/api/coach');
-  const isPublicRoute = pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/api/auth');
+  const isPublicRoute = pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/api');
 
-  // Allow public routes and API routes
+  // Allow public routes and ALL API routes (individual routes handle their own auth)
   if (isPublicRoute) {
     return NextResponse.next();
   }
