@@ -106,15 +106,15 @@ export default function GoalsScreen() {
   const getCategoryColor = (category: Goal['category']) => {
     switch (category) {
       case 'PERFORMANCE':
-        return '#2563eb';
+        return Colors.primary;
       case 'MENTAL':
         return '#8b5cf6';
       case 'ACADEMIC':
-        return '#10b981';
+        return Colors.success;
       case 'PERSONAL':
-        return '#f59e0b';
+        return Colors.warning;
       default:
-        return '#6b7280';
+        return Colors.textSecondary;
     }
   };
 
@@ -313,7 +313,7 @@ export default function GoalsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -324,12 +324,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: Colors.gray200,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: Colors.textPrimary,
   },
   addButton: {
     width: 40,
@@ -353,18 +353,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: Colors.textPrimary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
   createButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1f2937',
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   goalCategory: {
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   goalDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: Colors.textSecondary,
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -430,16 +430,16 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: Colors.textSecondary,
   },
   progressValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1f2937',
+    color: Colors.textPrimary,
   },
   progressBarBackground: {
     height: 8,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: Colors.gray200,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: Colors.gray100,
     alignItems: 'center',
   },
   progressButtonText: {
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   completeButton: {
-    backgroundColor: '#10b981',
+    backgroundColor: Colors.success,
   },
   completeButtonText: {
     color: '#fff',
@@ -483,21 +483,21 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: Colors.gray200,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1f2937',
+    color: Colors.textPrimary,
   },
   modalCancel: {
     fontSize: 16,
-    color: '#6b7280',
+    color: Colors.textSecondary,
   },
   modalSave: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2563eb',
+    color: Colors.primary,
   },
   modalContent: {
     flex: 1,
@@ -506,18 +506,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: Colors.textPrimary,
     marginBottom: 8,
     marginTop: 16,
   },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: Colors.gray200,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#1f2937',
+    color: Colors.textPrimary,
   },
   textArea: {
     minHeight: 100,
@@ -532,9 +532,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: Colors.gray100,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: Colors.gray200,
   },
   categoryButtonText: {
     fontSize: 14,
