@@ -43,9 +43,7 @@ export default function MoodScreen() {
       const userId = await getStoredUserId();
       if (!userId) throw new Error('User not logged in');
 
-      await apiClient.createMoodLog({
-        athleteId: userId,
-        date: new Date(),
+      await createMoodLog(userId, {
         mood,
         confidence,
         stress,
