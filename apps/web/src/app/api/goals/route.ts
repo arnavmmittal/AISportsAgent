@@ -72,8 +72,7 @@ export async function POST(req: NextRequest) {
         description: description || null,
         targetDate: targetDate ? new Date(targetDate) : null,
         category: category || 'PERFORMANCE',
-        progress: progress || 0,
-        status: 'ACTIVE',
+        status: 'IN_PROGRESS',
       },
     });
 

@@ -10,6 +10,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -19,6 +20,7 @@ import { apiClient, getStoredUserId } from '../../lib/auth';
 import { sendChatMessage } from '../../lib/apiWithFallback';
 import { LoadingScreen, ErrorView } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+import { VoiceWebSocketClient } from '../../lib/voice';
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -27,9 +29,20 @@ export default function ChatScreen() {
   const [sessionId, setSessionId] = useState(`session_${Date.now()}`);
   const [userId, setUserId] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [voiceConnected, setVoiceConnected] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const micPulseAnim = useRef(new Animated.Value(1)).current;
+  const voiceClient = useRef<VoiceWebSocketClient | null>(null);
+
+  // Animated values for typing dots
+  const dot1Anim = useRef(new Animated.Value(0)).current;
+  const dot2Anim = useRef(new Animated.Value(0)).current;
+  const dot3Anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     async function init() {
@@ -52,6 +65,44 @@ export default function ChatScreen() {
     }
     init();
   }, []);
+
+  // Animate typing dots when loading
+  useEffect(() => {
+    if (isLoading) {
+      const createDotAnimation = (dotAnim: Animated.Value, delay: number) => {
+        return Animated.loop(
+          Animated.sequence([
+            Animated.delay(delay),
+            Animated.timing(dotAnim, {
+              toValue: -8,
+              duration: 400,
+              useNativeDriver: true,
+            }),
+            Animated.timing(dotAnim, {
+              toValue: 0,
+              duration: 400,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+      };
+
+      const animations = Animated.parallel([
+        createDotAnimation(dot1Anim, 0),
+        createDotAnimation(dot2Anim, 150),
+        createDotAnimation(dot3Anim, 300),
+      ]);
+
+      animations.start();
+
+      return () => {
+        animations.stop();
+        dot1Anim.setValue(0);
+        dot2Anim.setValue(0);
+        dot3Anim.setValue(0);
+      };
+    }
+  }, [isLoading]);
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading || !userId) return;
@@ -156,6 +207,143 @@ export default function ChatScreen() {
     setMessages([]);
     setSessionId(`session_${Date.now()}`);
   };
+
+  const initializeVoiceClient = async () => {
+    if (!userId) return;
+
+    try {
+      const client = new VoiceWebSocketClient({
+        wsUrl: 'ws://10.0.0.127:8000/api/voice/stream',
+        sessionId,
+        athleteId: userId,
+        onTranscript: (transcript) => {
+          console.log('📝 Transcript received:', transcript);
+          // Add user message with transcript
+          const userMessage: Message = {
+            id: `msg_${Date.now()}`,
+            sessionId,
+            role: 'user',
+            content: transcript,
+            createdAt: new Date(),
+          };
+          setMessages((prev) => [...prev, userMessage]);
+        },
+        onResponse: (response) => {
+          console.log('💬 Response received:', response);
+          setIsProcessingVoice(false); // Clear loading state when response arrives
+          // Add assistant message with response
+          const assistantMessage: Message = {
+            id: `msg_${Date.now()}_assistant`,
+            sessionId,
+            role: 'assistant',
+            content: response,
+            createdAt: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: (error) => {
+          console.error('❌ Voice error:', error);
+          setIsProcessingVoice(false); // Clear loading state on error
+          setVoiceError(error);
+          Alert.alert('Voice Error', error);
+        },
+        onCrisisAlert: (severity, message) => {
+          console.warn('⚠️ Crisis alert:', severity, message);
+          Alert.alert('Support Resources Available', message, [
+            { text: 'OK', style: 'default' },
+          ]);
+        },
+        onConnectionChange: (connected) => {
+          setVoiceConnected(connected);
+          console.log(`🔌 Voice connection: ${connected ? 'Connected' : 'Disconnected'}`);
+        },
+      });
+
+      await client.connect();
+      voiceClient.current = client;
+      console.log('✅ Voice client initialized and connected');
+    } catch (error: any) {
+      console.error('Failed to initialize voice client:', error);
+      setVoiceError(error.message || 'Failed to connect to voice service');
+      Alert.alert('Voice Connection Failed', 'Could not connect to voice service. Please try again.');
+    }
+  };
+
+  const toggleRecording = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+    if (isRecording) {
+      // Stop recording
+      try {
+        console.log('🛑 Stopping voice recording...');
+        setIsRecording(false);
+        setIsProcessingVoice(true); // Start processing state
+        Animated.timing(micPulseAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+
+        if (voiceClient.current) {
+          await voiceClient.current.stopRecording();
+          console.log('✅ Voice recording stopped and sent');
+        }
+      } catch (error: any) {
+        console.error('Error stopping recording:', error);
+        setIsProcessingVoice(false); // Clear processing state on error
+        Alert.alert('Recording Error', 'Failed to stop recording. Please try again.');
+      }
+    } else {
+      // Start recording
+      try {
+        console.log('🎤 Starting voice recording...');
+
+        // Initialize voice client if not connected
+        if (!voiceClient.current || !voiceConnected) {
+          await initializeVoiceClient();
+        }
+
+        if (!voiceClient.current) {
+          throw new Error('Voice client not initialized');
+        }
+
+        await voiceClient.current.startRecording();
+        setIsRecording(true);
+
+        // Pulsing animation
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(micPulseAnim, {
+              toValue: 1.3,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(micPulseAnim, {
+              toValue: 1,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+
+        console.log('✅ Voice recording started');
+      } catch (error: any) {
+        console.error('Error starting recording:', error);
+        setIsRecording(false);
+        Alert.alert('Recording Error', error.message || 'Failed to start recording. Please check your microphone permissions.');
+      }
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (voiceClient.current) {
+        voiceClient.current.disconnect();
+      }
+    };
+  }, []);
 
   if (!userId && !initError) {
     return <LoadingScreen message="Initializing chat..." />;
@@ -298,9 +486,24 @@ export default function ChatScreen() {
                       </Text>
                     ) : (
                       <View style={styles.typingIndicator}>
-                        <View style={[styles.typingDot, { backgroundColor: '#a78bfa' }]} />
-                        <View style={[styles.typingDot, { backgroundColor: '#c4b5fd' }]} />
-                        <View style={[styles.typingDot, { backgroundColor: '#ddd6fe' }]} />
+                        <Animated.View
+                          style={[
+                            styles.typingDot,
+                            { backgroundColor: '#a78bfa', transform: [{ translateY: dot1Anim }] }
+                          ]}
+                        />
+                        <Animated.View
+                          style={[
+                            styles.typingDot,
+                            { backgroundColor: '#c4b5fd', transform: [{ translateY: dot2Anim }] }
+                          ]}
+                        />
+                        <Animated.View
+                          style={[
+                            styles.typingDot,
+                            { backgroundColor: '#ddd6fe', transform: [{ translateY: dot3Anim }] }
+                          ]}
+                        />
                       </View>
                     )}
                   </View>
@@ -332,25 +535,36 @@ export default function ChatScreen() {
               placeholderTextColor="rgba(255,255,255,0.4)"
               multiline
               maxLength={2000}
-              editable={!isLoading}
+              editable={!isLoading && !isProcessingVoice}
             />
 
             <View style={styles.inputButtons}>
               {/* Voice/Mic button */}
-              <TouchableOpacity
-                style={styles.voiceButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  // TODO: Implement voice recording
-                }}
-                disabled={isLoading}
+              <Animated.View
+                style={[
+                  styles.voiceButtonWrapper,
+                  { transform: [{ scale: micPulseAnim }] }
+                ]}
               >
-                <Ionicons
-                  name="mic"
-                  size={22}
-                  color={isLoading ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)'}
-                />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.voiceButton,
+                    isRecording && styles.voiceButtonRecording
+                  ]}
+                  onPress={toggleRecording}
+                  disabled={isLoading || isProcessingVoice}
+                >
+                  {isProcessingVoice ? (
+                    <ActivityIndicator color="#8b5cf6" size="small" />
+                  ) : (
+                    <Ionicons
+                      name={isRecording ? "stop-circle" : "mic"}
+                      size={22}
+                      color={isRecording ? '#ec4899' : ((isLoading || isProcessingVoice) ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)')}
+                    />
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
 
               {/* Send button */}
               <TouchableOpacity
@@ -598,12 +812,20 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     alignItems: 'center',
   },
+  voiceButtonWrapper: {
+    // Wrapper for animation
+  },
   voiceButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  voiceButtonRecording: {
+    backgroundColor: 'rgba(236, 72, 153, 0.2)', // Pink glow when recording
+    borderWidth: 1,
+    borderColor: 'rgba(236, 72, 153, 0.4)',
   },
   sendButton: {
     width: 36,
