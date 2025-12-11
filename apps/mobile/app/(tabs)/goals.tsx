@@ -10,16 +10,30 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { Goal } from '@sports-agent/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
-import { Colors } from '../../constants/theme';
+import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+
+interface SuggestedGoal {
+  id: string;
+  title: string;
+  description: string;
+  category: Goal['category'];
+  reason: string;
+  icon: string;
+}
 
 export default function GoalsScreen() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [suggestedGoals, setSuggestedGoals] = useState<SuggestedGoal[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
   const [newGoal, setNewGoal] = useState({
     title: '',
     description: '',
@@ -29,6 +43,7 @@ export default function GoalsScreen() {
 
   useEffect(() => {
     loadGoals();
+    loadSuggestedGoals();
   }, []);
 
   const loadGoals = async () => {
@@ -42,6 +57,57 @@ export default function GoalsScreen() {
       console.error('Failed to load goals:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadSuggestedGoals = async () => {
+    try {
+      // TODO: Replace with actual MCP API call
+      // const userId = await getStoredUserId();
+      // const suggestions = await apiClient.post('/api/mcp/suggest-goals', { userId });
+      // setSuggestedGoals(suggestions);
+
+      // Mock AI-generated suggestions for now
+      const mockSuggestions: SuggestedGoal[] = [
+        {
+          id: 'suggest_1',
+          title: 'Develop Pre-Game Routine',
+          description: 'Create a consistent 15-minute mental preparation routine before games',
+          category: 'MENTAL',
+          reason: 'Based on your recent anxiety patterns',
+          icon: 'leaf-outline',
+        },
+        {
+          id: 'suggest_2',
+          title: 'Improve Free Throw %',
+          description: 'Increase free throw percentage from 72% to 80% by end of season',
+          category: 'PERFORMANCE',
+          reason: 'Identified as key improvement area',
+          icon: 'basketball-outline',
+        },
+        {
+          id: 'suggest_3',
+          title: 'Sleep 8+ Hours',
+          description: 'Get 8 hours of sleep on game nights for optimal recovery',
+          category: 'PERSONAL',
+          reason: 'Your mood is 30% better with 8+ hrs',
+          icon: 'moon-outline',
+        },
+        {
+          id: 'suggest_4',
+          title: 'Maintain 3.5 GPA',
+          description: 'Keep academic performance above 3.5 GPA this semester',
+          category: 'ACADEMIC',
+          reason: 'Staying on track for honors',
+          icon: 'school-outline',
+        },
+      ];
+
+      setSuggestedGoals(mockSuggestions);
+    } catch (error) {
+      console.error('Failed to load suggested goals:', error);
+    } finally {
+      setIsLoadingSuggestions(false);
     }
   };
 
@@ -65,20 +131,54 @@ export default function GoalsScreen() {
         targetDate: newGoal.targetDate ? new Date(newGoal.targetDate) : undefined,
       });
 
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setGoals([goal, ...goals]);
       setIsModalVisible(false);
       setNewGoal({ title: '', description: '', category: 'PERFORMANCE', targetDate: '' });
     } catch (error: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', error.message || 'Failed to create goal');
     }
   };
 
+  const addSuggestedGoal = async (suggestion: SuggestedGoal) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const userId = await getStoredUserId();
+      if (!userId) throw new Error('User not logged in');
+
+      const goal = await apiClient.createGoal({
+        athleteId: userId,
+        title: suggestion.title,
+        description: suggestion.description,
+        category: suggestion.category,
+        status: 'NOT_STARTED',
+        progress: 0,
+      });
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setGoals([goal, ...goals]);
+      setSuggestedGoals(suggestedGoals.filter((s) => s.id !== suggestion.id));
+      Alert.alert('Goal Added!', `"${suggestion.title}" has been added to your goals.`);
+    } catch (error: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', error.message || 'Failed to add suggested goal');
+    }
+  };
+
   const updateGoalProgress = async (goalId: string, progress: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
       const updated = await apiClient.updateGoal(goalId, {
         progress,
-        status: progress === 100 ? 'COMPLETED' : 'IN_PROGRESS',
+        status: progress === 100 ? 'COMPLETED' : progress > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
       });
+
+      if (progress === 100) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
 
       setGoals(goals.map((g) => (g.id === goalId ? updated : g)));
     } catch (error: any) {
@@ -94,6 +194,7 @@ export default function GoalsScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             await apiClient.deleteGoal(goalId);
             setGoals(goals.filter((g) => g.id !== goalId));
           } catch (error: any) {
@@ -104,18 +205,33 @@ export default function GoalsScreen() {
     ]);
   };
 
-  const getCategoryColor = (category: Goal['category']) => {
+  const getCategoryGradient = (category: Goal['category']) => {
     switch (category) {
       case 'PERFORMANCE':
-        return Colors.primary;
+        return ['#8b5cf6', '#a78bfa']; // Purple
       case 'MENTAL':
-        return '#8b5cf6';
+        return ['#ec4899', '#f472b6']; // Pink
       case 'ACADEMIC':
-        return Colors.success;
+        return ['#10b981', '#34d399']; // Emerald
       case 'PERSONAL':
-        return Colors.warning;
+        return ['#f59e0b', '#fbbf24']; // Amber
       default:
-        return Colors.textSecondary;
+        return ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)'];
+    }
+  };
+
+  const getCategoryIcon = (category: Goal['category']) => {
+    switch (category) {
+      case 'PERFORMANCE':
+        return 'trophy';
+      case 'MENTAL':
+        return 'heart';
+      case 'ACADEMIC':
+        return 'school';
+      case 'PERSONAL':
+        return 'person';
+      default:
+        return 'star';
     }
   };
 
@@ -134,96 +250,253 @@ export default function GoalsScreen() {
     }
   };
 
-  const renderGoal = ({ item }: { item: Goal }) => (
-    <View style={styles.goalCard}>
-      <View style={styles.goalHeader}>
-        <View style={styles.goalTitleRow}>
-          <Ionicons
-            name={getStatusIcon(item.status)}
-            size={24}
-            color={getCategoryColor(item.category)}
-          />
-          <View style={styles.goalTitleContainer}>
-            <Text style={styles.goalTitle}>{item.title}</Text>
-            <Text style={[styles.goalCategory, { color: getCategoryColor(item.category) }]}>
-              {item.category}
-            </Text>
+  const renderSuggestedGoal = ({ item }: { item: SuggestedGoal }) => (
+    <View style={styles.suggestionCard}>
+      <LinearGradient
+        colors={getCategoryGradient(item.category)}
+        style={styles.suggestionGradient}
+      >
+        <View style={styles.suggestionContent}>
+          <View style={styles.suggestionHeader}>
+            <View style={styles.suggestionIconContainer}>
+              <Ionicons name={item.icon as any} size={28} color="#fff" />
+            </View>
+            <TouchableOpacity
+              style={styles.addSuggestionButton}
+              onPress={() => addSuggestedGoal(item)}
+            >
+              <Ionicons name="add-circle" size={32} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.suggestionTitle}>{item.title}</Text>
+          <Text style={styles.suggestionDescription}>{item.description}</Text>
+
+          <View style={styles.suggestionFooter}>
+            <View style={styles.suggestionReasonBadge}>
+              <Ionicons name="sparkles" size={12} color="#fbbf24" />
+              <Text style={styles.suggestionReason}>{item.reason}</Text>
+            </View>
+            <Text style={styles.suggestionCategory}>{item.category}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => deleteGoal(item.id)}>
-          <Ionicons name="trash-outline" size={20} color="#ef4444" />
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
+    </View>
+  );
 
-      {item.description && (
-        <Text style={styles.goalDescription}>{item.description}</Text>
-      )}
+  const renderGoal = ({ item }: { item: Goal }) => (
+    <View style={styles.goalCard}>
+      <LinearGradient
+        colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+        style={styles.goalGradient}
+      >
+        <View style={styles.goalContent}>
+          <View style={styles.goalHeader}>
+            <View style={styles.goalTitleRow}>
+              <LinearGradient
+                colors={getCategoryGradient(item.category)}
+                style={styles.categoryIconContainer}
+              >
+                <Ionicons name={getCategoryIcon(item.category)} size={20} color="#fff" />
+              </LinearGradient>
+              <View style={styles.goalTitleContainer}>
+                <Text style={styles.goalTitle}>{item.title}</Text>
+                <Text style={styles.goalCategory}>{item.category}</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => deleteGoal(item.id)} style={styles.deleteButton}>
+              <Ionicons name="trash-outline" size={20} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
 
-      <View style={styles.progressContainer}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.progressLabel}>Progress</Text>
-          <Text style={styles.progressValue}>{item.progress}%</Text>
+          {item.description && <Text style={styles.goalDescription}>{item.description}</Text>}
+
+          <View style={styles.progressContainer}>
+            <View style={styles.progressHeader}>
+              <View style={styles.progressLabelRow}>
+                <Ionicons
+                  name={getStatusIcon(item.status)}
+                  size={16}
+                  color="rgba(255,255,255,0.7)"
+                />
+                <Text style={styles.progressLabel}>Progress</Text>
+              </View>
+              <Text style={styles.progressValue}>{item.progress}%</Text>
+            </View>
+            <View style={styles.progressBarBackground}>
+              <LinearGradient
+                colors={getCategoryGradient(item.category)}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.progressBarFill, { width: `${item.progress}%` }]}
+              />
+            </View>
+          </View>
+
+          <View style={styles.progressButtons}>
+            <TouchableOpacity
+              style={[styles.progressButton, item.progress === 0 && styles.progressButtonDisabled]}
+              onPress={() => updateGoalProgress(item.id, Math.max(0, item.progress - 10))}
+              disabled={item.progress === 0}
+            >
+              <Ionicons
+                name="remove-circle-outline"
+                size={18}
+                color={item.progress === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)'}
+              />
+              <Text
+                style={[
+                  styles.progressButtonText,
+                  item.progress === 0 && styles.progressButtonTextDisabled,
+                ]}
+              >
+                -10%
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.progressButton,
+                item.progress === 100 && styles.progressButtonDisabled,
+              ]}
+              onPress={() => updateGoalProgress(item.id, Math.min(100, item.progress + 10))}
+              disabled={item.progress === 100}
+            >
+              <Ionicons
+                name="add-circle-outline"
+                size={18}
+                color={item.progress === 100 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)'}
+              />
+              <Text
+                style={[
+                  styles.progressButtonText,
+                  item.progress === 100 && styles.progressButtonTextDisabled,
+                ]}
+              >
+                +10%
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.completeButton}
+              onPress={() => updateGoalProgress(item.id, 100)}
+              disabled={item.progress === 100}
+            >
+              <LinearGradient
+                colors={
+                  item.progress === 100
+                    ? ['rgba(16, 185, 129, 0.3)', 'rgba(52, 211, 153, 0.3)']
+                    : ['#10b981', '#34d399']
+                }
+                style={styles.completeButtonGradient}
+              >
+                <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                <Text style={styles.completeButtonText}>
+                  {item.progress === 100 ? 'Done!' : 'Complete'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.progressBarBackground}>
-          <View
-            style={[
-              styles.progressBarFill,
-              { width: `${item.progress}%`, backgroundColor: getCategoryColor(item.category) },
-            ]}
-          />
-        </View>
-      </View>
-
-      <View style={styles.progressButtons}>
-        <TouchableOpacity
-          style={styles.progressButton}
-          onPress={() => updateGoalProgress(item.id, Math.max(0, item.progress - 10))}
-          disabled={item.progress === 0}
-        >
-          <Text style={styles.progressButtonText}>-10%</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.progressButton}
-          onPress={() => updateGoalProgress(item.id, Math.min(100, item.progress + 10))}
-          disabled={item.progress === 100}
-        >
-          <Text style={styles.progressButtonText}>+10%</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.progressButton, styles.completeButton]}
-          onPress={() => updateGoalProgress(item.id, 100)}
-          disabled={item.progress === 100}
-        >
-          <Text style={[styles.progressButtonText, styles.completeButtonText]}>Complete</Text>
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
     </View>
   );
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#0f172a', '#1e293b', '#334155']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#8b5cf6" />
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Dark gradient background */}
+      <LinearGradient
+        colors={['#0f172a', '#1e293b', '#334155']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Header with gradient */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Goals</Text>
-        <TouchableOpacity onPress={() => setIsModalVisible(true)} style={styles.addButton}>
-          <Ionicons name="add" size={24} color="#2563eb" />
-        </TouchableOpacity>
+        <LinearGradient
+          colors={['#8b5cf6', '#d946ef', '#ec4899']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <View style={styles.iconContainer}>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                  style={styles.iconGradient}
+                >
+                  <Ionicons name="trophy" size={28} color="#fff" />
+                </LinearGradient>
+              </View>
+              <View>
+                <Text style={styles.headerTitle}>Goals</Text>
+                <Text style={styles.headerSubtitle}>Track your progress</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsModalVisible(true);
+              }}
+              style={styles.addButton}
+            >
+              <LinearGradient
+                colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                style={styles.addButtonGradient}
+              >
+                <Ionicons name="add" size={24} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
       </View>
 
-      {goals.length === 0 ? (
+      {goals.length === 0 && suggestedGoals.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="trophy-outline" size={64} color="#d1d5db" />
+          <LinearGradient
+            colors={['#8b5cf6', '#d946ef']}
+            style={styles.emptyIconContainer}
+          >
+            <Ionicons name="trophy" size={64} color="#fff" />
+          </LinearGradient>
           <Text style={styles.emptyTitle}>No goals yet</Text>
-          <Text style={styles.emptyText}>Set your first goal to start tracking your progress</Text>
-          <TouchableOpacity style={styles.createButton} onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.createButtonText}>Create Goal</Text>
+          <Text style={styles.emptyText}>
+            Set your first goal to start tracking your progress
+          </Text>
+          <TouchableOpacity
+            style={styles.createButtonContainer}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setIsModalVisible(true);
+            }}
+          >
+            <LinearGradient
+              colors={['#8b5cf6', '#d946ef']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.createButton}
+            >
+              <Ionicons name="add-circle" size={20} color="#fff" />
+              <Text style={styles.createButtonText}>Create Goal</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       ) : (
@@ -232,6 +505,30 @@ export default function GoalsScreen() {
           renderItem={renderGoal}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            suggestedGoals.length > 0 ? (
+              <View style={styles.suggestionsSection}>
+                <View style={styles.suggestionsTitleRow}>
+                  <Ionicons name="sparkles" size={24} color="#fbbf24" />
+                  <Text style={styles.suggestionsTitle}>AI-Suggested Goals</Text>
+                </View>
+                <Text style={styles.suggestionsSubtitle}>
+                  Personalized recommendations based on your profile & recent activity
+                </Text>
+                <FlatList
+                  data={suggestedGoals}
+                  renderItem={renderSuggestedGoal}
+                  keyExtractor={(item) => item.id}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.suggestionsScroll}
+                />
+
+                <Text style={styles.yourGoalsTitle}>Your Goals</Text>
+              </View>
+            ) : null
+          }
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -243,23 +540,39 @@ export default function GoalsScreen() {
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={styles.modalContainer}>
+          <LinearGradient
+            colors={['#0f172a', '#1e293b']}
+            style={StyleSheet.absoluteFill}
+          />
+
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsModalVisible(false);
+              }}
+            >
               <Text style={styles.modalCancel}>Cancel</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>New Goal</Text>
-            <TouchableOpacity onPress={createGoal}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                createGoal();
+              }}
+            >
               <Text style={styles.modalSave}>Save</Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalContent}>
+          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
             <Text style={styles.label}>Title *</Text>
             <TextInput
               style={styles.input}
               value={newGoal.title}
               onChangeText={(text) => setNewGoal({ ...newGoal, title: text })}
               placeholder="e.g., Improve free throw percentage"
+              placeholderTextColor="rgba(255,255,255,0.4)"
               maxLength={100}
             />
 
@@ -269,6 +582,7 @@ export default function GoalsScreen() {
               value={newGoal.description}
               onChangeText={(text) => setNewGoal({ ...newGoal, description: text })}
               placeholder="Details about this goal..."
+              placeholderTextColor="rgba(255,255,255,0.4)"
               multiline
               numberOfLines={4}
               maxLength={500}
@@ -279,20 +593,34 @@ export default function GoalsScreen() {
               {(['PERFORMANCE', 'MENTAL', 'ACADEMIC', 'PERSONAL'] as const).map((cat) => (
                 <TouchableOpacity
                   key={cat}
-                  style={[
-                    styles.categoryButton,
-                    newGoal.category === cat && { backgroundColor: getCategoryColor(cat) },
-                  ]}
-                  onPress={() => setNewGoal({ ...newGoal, category: cat })}
+                  style={styles.categoryButtonContainer}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setNewGoal({ ...newGoal, category: cat });
+                  }}
                 >
-                  <Text
-                    style={[
-                      styles.categoryButtonText,
-                      newGoal.category === cat && styles.categoryButtonTextActive,
-                    ]}
+                  <LinearGradient
+                    colors={
+                      newGoal.category === cat
+                        ? getCategoryGradient(cat)
+                        : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']
+                    }
+                    style={styles.categoryButton}
                   >
-                    {cat}
-                  </Text>
+                    <Ionicons
+                      name={getCategoryIcon(cat)}
+                      size={20}
+                      color={newGoal.category === cat ? '#fff' : 'rgba(255,255,255,0.5)'}
+                    />
+                    <Text
+                      style={[
+                        styles.categoryButtonText,
+                        newGoal.category === cat && styles.categoryButtonTextActive,
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               ))}
             </View>
@@ -303,7 +631,10 @@ export default function GoalsScreen() {
               value={newGoal.targetDate}
               onChangeText={(text) => setNewGoal({ ...newGoal, targetDate: text })}
               placeholder="YYYY-MM-DD"
+              placeholderTextColor="rgba(255,255,255,0.4)"
             />
+
+            <View style={styles.modalBottomPadding} />
           </ScrollView>
         </View>
       </Modal>
@@ -314,31 +645,64 @@ export default function GoalsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundSecondary,
   },
   header: {
+    paddingTop: 60,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerGradient: {
+    paddingBottom: Spacing.lg,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray200,
+    paddingHorizontal: Spacing.lg,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  iconContainer: {
+    borderRadius: 28,
+    overflow: 'hidden',
+  },
+  iconGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
+    fontSize: Typography.xl,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  headerSubtitle: {
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
   },
   addButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  addButtonGradient: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   loadingContainer: {
     flex: 1,
@@ -349,176 +713,341 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 12,
   },
   emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#fff',
+    marginBottom: Spacing.md,
   },
   emptyText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
+    fontSize: Typography.base,
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: Spacing.xxxl,
+    lineHeight: 24,
+  },
+  createButtonContainer: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 12,
   },
   createButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
   },
   createButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.base,
+    fontWeight: '800',
   },
   listContent: {
-    padding: 16,
+    padding: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
   },
+  // AI Suggestions Section
+  suggestionsSection: {
+    marginBottom: Spacing.xl,
+  },
+  suggestionsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  suggestionsTitle: {
+    fontSize: Typography.lg,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  suggestionsSubtitle: {
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: Spacing.md,
+    lineHeight: 20,
+  },
+  suggestionsScroll: {
+    gap: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  suggestionCard: {
+    width: 280,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+  },
+  suggestionGradient: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: BorderRadius.xl,
+  },
+  suggestionContent: {
+    padding: Spacing.lg,
+  },
+  suggestionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  suggestionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addSuggestionButton: {
+    opacity: 0.9,
+  },
+  suggestionTitle: {
+    fontSize: Typography.base,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: Spacing.xs,
+  },
+  suggestionDescription: {
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 20,
+    marginBottom: Spacing.md,
+  },
+  suggestionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  suggestionReasonBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  suggestionReason: {
+    fontSize: Typography.xs,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  suggestionCategory: {
+    fontSize: Typography.xs,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  yourGoalsTitle: {
+    fontSize: Typography.lg,
+    fontWeight: '800',
+    color: '#fff',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
+  // Goal Cards
   goalCard: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+  },
+  goalGradient: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: BorderRadius.xl,
+  },
+  goalContent: {
+    padding: Spacing.lg,
   },
   goalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   goalTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    gap: Spacing.sm,
+  },
+  categoryIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   goalTitleContainer: {
-    marginLeft: 12,
     flex: 1,
   },
   goalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: 4,
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
   },
   goalCategory: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: Typography.xs,
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '600',
     textTransform: 'uppercase',
   },
+  deleteButton: {
+    padding: Spacing.xs,
+  },
   goalDescription: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 12,
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: Spacing.md,
     lineHeight: 20,
   },
   progressContainer: {
-    marginTop: 8,
+    marginBottom: Spacing.md,
   },
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  progressLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   progressLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
   },
   progressValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
+    fontSize: Typography.sm,
+    fontWeight: '800',
+    color: '#fff',
   },
   progressBarBackground: {
-    height: 8,
-    backgroundColor: Colors.gray200,
-    borderRadius: 4,
+    height: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 5,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
   },
   progressButtons: {
     flexDirection: 'row',
-    marginTop: 12,
-    gap: 8,
+    gap: Spacing.sm,
   },
   progressButton: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.gray100,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: Spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  progressButtonDisabled: {
+    opacity: 0.4,
   },
   progressButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontSize: Typography.sm,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.7)',
+  },
+  progressButtonTextDisabled: {
+    color: 'rgba(255,255,255,0.3)',
   },
   completeButton: {
-    backgroundColor: Colors.success,
+    flex: 1,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+  },
+  completeButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: Spacing.sm,
   },
   completeButtonText: {
     color: '#fff',
+    fontSize: Typography.sm,
+    fontWeight: '800',
   },
+  // Modal
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.lg,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray200,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.textPrimary,
+    fontSize: Typography.lg,
+    fontWeight: '800',
+    color: '#fff',
   },
   modalCancel: {
-    fontSize: 16,
-    color: Colors.textSecondary,
+    fontSize: Typography.base,
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '600',
   },
   modalSave: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.primary,
+    fontSize: Typography.base,
+    fontWeight: '800',
+    color: '#8b5cf6',
   },
   modalContent: {
     flex: 1,
-    padding: 20,
+    padding: Spacing.lg,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: 8,
-    marginTop: 16,
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
   },
   input: {
-    backgroundColor: Colors.backgroundSecondary,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: Colors.gray200,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: Colors.textPrimary,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    fontSize: Typography.base,
+    color: '#fff',
   },
   textArea: {
     minHeight: 100,
@@ -527,22 +1056,31 @@ const styles = StyleSheet.create({
   categoryContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
+  },
+  categoryButtonContainer: {
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
   },
   categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-    backgroundColor: Colors.gray100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.gray200,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: BorderRadius.md,
   },
   categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.5)',
   },
   categoryButtonTextActive: {
     color: '#fff',
+  },
+  modalBottomPadding: {
+    height: 40,
   },
 });

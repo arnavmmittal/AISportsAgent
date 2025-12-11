@@ -150,14 +150,82 @@ export class APIClient {
     return this.request(`/api/athlete/${athleteId}`);
   }
 
+  async getConsentSettings(): Promise<{
+    consent: {
+      consentCoachView: boolean;
+      consentChatSummaries: boolean;
+    };
+  }> {
+    return this.request('/api/athlete/consent');
+  }
+
   async updateConsentSettings(data: {
     consentCoachView?: boolean;
     consentChatSummaries?: boolean;
-  }): Promise<void> {
+  }): Promise<{
+    consent: {
+      consentCoachView: boolean;
+      consentChatSummaries: boolean;
+    };
+    message: string;
+  }> {
     return this.request('/api/athlete/consent', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ========== Assignments ==========
+
+  async getAssignments(): Promise<any> {
+    return this.request('/api/assignments');
+  }
+
+  async getAssignment(id: string): Promise<any> {
+    return this.request(`/api/assignments/${id}`);
+  }
+
+  async createAssignment(data: {
+    title: string;
+    description: string;
+    dueDate?: string;
+    targetAthleteIds?: string[];
+    targetSport?: string;
+  }): Promise<any> {
+    return this.request('/api/assignments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAssignment(id: string, data: {
+    title?: string;
+    description?: string;
+    dueDate?: string | null;
+    targetAthleteIds?: string[] | null;
+    targetSport?: string | null;
+  }): Promise<any> {
+    return this.request(`/api/assignments/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  async deleteAssignment(id: string): Promise<void> {
+    return this.request(`/api/assignments/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async submitAssignment(id: string, response: string): Promise<any> {
+    return this.request(`/api/assignments/${id}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ response }),
+    });
+  }
+
+  async getAssignmentSubmissions(id: string): Promise<any> {
+    return this.request(`/api/assignments/${id}/submissions`);
   }
 }
 

@@ -248,6 +248,26 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
+        name="assignments"
+        options={{
+          title: 'Tasks',
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon
+              name="clipboard-outline"
+              focusedName="clipboard"
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          },
+        }}
+      />
+
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'You',

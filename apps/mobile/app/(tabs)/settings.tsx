@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Switch,
   Alert,
   Platform,
 } from 'react-native';
@@ -13,78 +14,175 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors, Spacing, Typography, BorderRadius, Shadows } from '@/constants/theme';
+import { Colors, Spacing, Typography, BorderRadius } from '@/constants/theme';
+import { apiClient } from '../../lib/auth';
 
 export default function SettingsScreen() {
+  const [consentChatSummaries, setConsentChatSummaries] = useState(false);
+  const [consentCoachView, setConsentCoachView] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadConsentSettings();
+  }, []);
+
+  const loadConsentSettings = async () => {
+    try {
+      // Fetch athlete consent settings from API
+      const response = await apiClient.getConsentSettings();
+      setConsentChatSummaries(response.consent.consentChatSummaries);
+      setConsentCoachView(response.consent.consentCoachView);
+    } catch (error) {
+      console.error('Failed to load consent settings:', error);
+      Alert.alert('Error', 'Failed to load privacy settings. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateConsent = async (field: 'consentChatSummaries' | 'consentCoachView', value: boolean) => {
+    try {
+      const response = await apiClient.updateConsentSettings({
+        [field]: value,
+      });
+
+      // Update local state with response
+      setConsentChatSummaries(response.consent.consentChatSummaries);
+      setConsentCoachView(response.consent.consentCoachView);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Failed to update consent:', error);
+      Alert.alert('Error', 'Failed to update privacy settings. Please try again.');
+    }
+  };
+
+  const handleChatSummaryToggle = (value: boolean) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (value) {
+      // Turning ON - show explanation
+      Alert.alert(
+        'Share Chat Summaries',
+        'This allows your coach to view weekly summaries of your chat sessions. Individual messages remain private - only high-level summaries (themes, emotional state) are shared.\n\nYou can turn this off anytime.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Allow',
+            onPress: () => updateConsent('consentChatSummaries', true),
+          },
+        ]
+      );
+    } else {
+      // Turning OFF - confirm
+      Alert.alert(
+        'Stop Sharing Summaries',
+        'Your coach will no longer see weekly summaries of your chat sessions.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Stop Sharing',
+            style: 'destructive',
+            onPress: () => updateConsent('consentChatSummaries', false),
+          },
+        ]
+      );
+    }
+  };
+
+  const handleCoachViewToggle = (value: boolean) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (value) {
+      Alert.alert(
+        'Allow Coach Analytics',
+        'This allows your coach to view your mood trends, goal progress, and performance metrics in their dashboard. Chat content remains private.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Allow',
+            onPress: () => updateConsent('consentCoachView', true),
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Hide Analytics from Coach',
+        'Your coach will no longer see your personal metrics and trends.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Hide',
+            style: 'destructive',
+            onPress: () => updateConsent('consentCoachView', false),
+          },
+        ]
+      );
+    }
+  };
+
   const handleLogout = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await AsyncStorage.multiRemove(['authToken', 'userId']);
+            router.replace('/(auth)/login');
+          } catch (error) {
+            console.error('Logout error:', error);
+          }
         },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.multiRemove(['authToken', 'userId']);
-              router.replace('/(auth)/login');
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   const SettingItem = ({
     icon,
+    iconColor = 'rgba(255,255,255,0.7)',
     title,
     subtitle,
     onPress,
     showChevron = true,
     destructive = false,
+    rightComponent,
   }: {
     icon: any;
+    iconColor?: string;
     title: string;
     subtitle?: string;
-    onPress: () => void;
+    onPress?: () => void;
     showChevron?: boolean;
     destructive?: boolean;
+    rightComponent?: React.ReactNode;
   }) => (
     <TouchableOpacity
       style={styles.settingItem}
       onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
+        if (onPress) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }
       }}
-      activeOpacity={0.7}
+      activeOpacity={onPress ? 0.7 : 1}
+      disabled={!onPress}
     >
-      <View style={[styles.iconCircle, destructive && styles.iconCircleDestructive]}>
-        <Ionicons
-          name={icon}
-          size={22}
-          color={destructive ? Colors.error : Colors.primary}
-        />
+      <View style={styles.settingLeft}>
+        <Ionicons name={icon} size={24} color={destructive ? '#ef4444' : iconColor} />
+        <View style={styles.settingTextContainer}>
+          <Text style={[styles.settingTitle, destructive && styles.settingTitleDestructive]}>
+            {title}
+          </Text>
+          {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+        </View>
       </View>
-      <View style={styles.settingTextContainer}>
-        <Text style={[styles.settingTitle, destructive && styles.settingTitleDestructive]}>
-          {title}
-        </Text>
-        {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
-      </View>
-      {showChevron && (
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={Colors.gray400}
-        />
+      {rightComponent}
+      {showChevron && !rightComponent && (
+        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
       )}
     </TouchableOpacity>
   );
@@ -95,120 +193,192 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header with Gradient */}
+      {/* Dark gradient background */}
       <LinearGradient
-        colors={['#2563eb', '#3b82f6', '#60a5fa']}
+        colors={['#0f172a', '#1e293b', '#334155']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <Text style={styles.headerTitle}>Settings</Text>
-        <Text style={styles.headerSubtitle}>Manage your account and preferences</Text>
-      </LinearGradient>
+        style={StyleSheet.absoluteFill}
+      />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Profile Section */}
-        <View style={styles.section}>
-          <SectionHeader title="PROFILE" />
-          <View style={styles.card}>
+      {/* Header with gradient */}
+      <View style={styles.header}>
+        <LinearGradient
+          colors={['#8b5cf6', '#d946ef', '#ec4899']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <View style={styles.iconContainer}>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                  style={styles.iconGradient}
+                >
+                  <Ionicons name="person-circle" size={28} color="#fff" />
+                </LinearGradient>
+              </View>
+              <View>
+                <Text style={styles.headerTitle}>Settings</Text>
+                <Text style={styles.headerSubtitle}>Manage your preferences</Text>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Privacy & Coach Consent */}
+        <SectionHeader title="Privacy & Coach Access" />
+        <View style={styles.card}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+            style={styles.cardGradient}
+          >
+            <SettingItem
+              icon="eye-outline"
+              iconColor="#a78bfa"
+              title="Share Chat Summaries"
+              subtitle={
+                consentChatSummaries
+                  ? 'Coach can view weekly summaries'
+                  : 'Coach cannot view summaries (recommended)'
+              }
+              rightComponent={
+                <Switch
+                  value={consentChatSummaries}
+                  onValueChange={handleChatSummaryToggle}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#8b5cf6' }}
+                  thumbColor={consentChatSummaries ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              }
+            />
+            <View style={styles.separator} />
+            <SettingItem
+              icon="analytics-outline"
+              iconColor="#34d399"
+              title="Share Analytics"
+              subtitle={
+                consentCoachView
+                  ? 'Coach can view mood & goal trends'
+                  : 'Analytics are private'
+              }
+              rightComponent={
+                <Switch
+                  value={consentCoachView}
+                  onValueChange={handleCoachViewToggle}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#10b981' }}
+                  thumbColor={consentCoachView ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              }
+            />
+          </LinearGradient>
+        </View>
+
+        {/* Profile */}
+        <SectionHeader title="Profile" />
+        <View style={styles.card}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+            style={styles.cardGradient}
+          >
             <SettingItem
               icon="person-outline"
+              iconColor="#f472b6"
               title="Edit Profile"
-              subtitle="Update your personal information"
+              subtitle="Update your information"
               onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon')}
             />
             <View style={styles.separator} />
             <SettingItem
               icon="school-outline"
+              iconColor="#fbbf24"
               title="Sport & Team"
-              subtitle="Update your sport and position"
+              subtitle="Update sport and position"
               onPress={() => Alert.alert('Coming Soon', 'Sport settings will be available soon')}
             />
-          </View>
+          </LinearGradient>
         </View>
 
         {/* App Settings */}
-        <View style={styles.section}>
-          <SectionHeader title="APP SETTINGS" />
-          <View style={styles.card}>
+        <SectionHeader title="App Settings" />
+        <View style={styles.card}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+            style={styles.cardGradient}
+          >
             <SettingItem
               icon="notifications-outline"
+              iconColor="#60a5fa"
               title="Notifications"
               subtitle="Manage push notifications"
-              onPress={() => Alert.alert('Coming Soon', 'Notification settings will be available soon')}
-            />
-            <View style={styles.separator} />
-            <SettingItem
-              icon="moon-outline"
-              title="Dark Mode"
-              subtitle="Coming soon"
-              onPress={() => Alert.alert('Coming Soon', 'Dark mode will be available soon')}
+              onPress={() =>
+                Alert.alert('Coming Soon', 'Notification settings will be available soon')
+              }
             />
             <View style={styles.separator} />
             <SettingItem
               icon="language-outline"
+              iconColor="#a78bfa"
               title="Language"
               subtitle="English"
               onPress={() => Alert.alert('Coming Soon', 'Language settings will be available soon')}
             />
-          </View>
-        </View>
-
-        {/* Privacy & Security */}
-        <View style={styles.section}>
-          <SectionHeader title="PRIVACY & SECURITY" />
-          <View style={styles.card}>
-            <SettingItem
-              icon="lock-closed-outline"
-              title="Privacy"
-              subtitle="Control your data and privacy"
-              onPress={() => Alert.alert('Coming Soon', 'Privacy settings will be available soon')}
-            />
-            <View style={styles.separator} />
-            <SettingItem
-              icon="shield-checkmark-outline"
-              title="Security"
-              subtitle="Password and authentication"
-              onPress={() => Alert.alert('Coming Soon', 'Security settings will be available soon')}
-            />
-          </View>
+          </LinearGradient>
         </View>
 
         {/* Support */}
-        <View style={styles.section}>
-          <SectionHeader title="SUPPORT" />
-          <View style={styles.card}>
+        <SectionHeader title="Support" />
+        <View style={styles.card}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+            style={styles.cardGradient}
+          >
             <SettingItem
               icon="help-circle-outline"
+              iconColor="#34d399"
               title="Help Center"
               subtitle="Get help and support"
-              onPress={() => Alert.alert('Help Center', 'Contact support@aisportsagent.com')}
+              onPress={() =>
+                Alert.alert('Help Center', 'Contact support@aisportsagent.com for assistance')
+              }
             />
             <View style={styles.separator} />
             <SettingItem
               icon="information-circle-outline"
+              iconColor="#60a5fa"
               title="About"
               subtitle="Version 1.0.0"
-              onPress={() => Alert.alert('AI Sports Agent', 'Version 1.0.0\n\nYour mental performance coach')}
-            />
-            <View style={styles.separator} />
-            <SettingItem
-              icon="document-text-outline"
-              title="Terms of Service"
-              onPress={() => Alert.alert('Coming Soon', 'Terms of service will be available soon')}
+              onPress={() =>
+                Alert.alert(
+                  'AI Sports Agent',
+                  'Version 1.0.0\n\nYour 24/7 mental performance coach powered by AI.\n\nBuilt with evidence-based sports psychology.'
+                )
+              }
             />
             <View style={styles.separator} />
             <SettingItem
               icon="shield-outline"
+              iconColor="#a78bfa"
               title="Privacy Policy"
               onPress={() => Alert.alert('Coming Soon', 'Privacy policy will be available soon')}
             />
-          </View>
+          </LinearGradient>
         </View>
 
         {/* Logout */}
-        <View style={styles.section}>
-          <View style={styles.card}>
+        <View style={styles.card}>
+          <LinearGradient
+            colors={['rgba(239, 68, 68, 0.15)', 'rgba(239, 68, 68, 0.1)']}
+            style={styles.cardGradient}
+          >
             <SettingItem
               icon="log-out-outline"
               title="Log Out"
@@ -216,10 +386,10 @@ export default function SettingsScreen() {
               showChevron={false}
               destructive
             />
-          </View>
+          </LinearGradient>
         </View>
 
-        <View style={{ height: 40 }} />
+        <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
   );
@@ -228,79 +398,113 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: Spacing.xl,
+    paddingTop: 60,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerGradient: {
+    paddingBottom: Spacing.lg,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  iconContainer: {
+    borderRadius: 28,
+    overflow: 'hidden',
+  },
+  iconGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
   headerTitle: {
-    fontSize: Typography['3xl'],
-    fontWeight: Typography.bold,
+    fontSize: Typography.xl,
+    fontWeight: '800',
     color: '#fff',
-    marginBottom: Spacing.xs,
   },
   headerSubtitle: {
     fontSize: Typography.sm,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
   },
-  section: {
-    marginTop: Spacing.lg,
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
   },
   sectionHeader: {
     fontSize: Typography.xs,
-    fontWeight: Typography.bold,
-    color: Colors.gray500,
-    letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
-    marginLeft: Spacing.lg,
+    fontWeight: '800',
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: 1,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+    textTransform: 'uppercase',
   },
   card: {
-    backgroundColor: '#fff',
-    marginHorizontal: Spacing.md,
     borderRadius: BorderRadius.xl,
-    ...Shadows.small,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+  },
+  cardGradient: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: BorderRadius.xl,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
+    justifyContent: 'space-between',
+    padding: Spacing.lg,
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.primaryLight,
+  settingLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  iconCircleDestructive: {
-    backgroundColor: `${Colors.error}15`,
+    flex: 1,
+    gap: Spacing.md,
   },
   settingTextContainer: {
     flex: 1,
   },
   settingTitle: {
     fontSize: Typography.base,
-    fontWeight: Typography.semibold,
-    color: Colors.text,
+    fontWeight: '700',
+    color: '#fff',
     marginBottom: 2,
   },
   settingTitleDestructive: {
-    color: Colors.error,
+    color: '#ef4444',
   },
   settingSubtitle: {
     fontSize: Typography.sm,
-    color: Colors.gray500,
+    color: 'rgba(255,255,255,0.6)',
+    lineHeight: 18,
   },
   separator: {
     height: 1,
-    backgroundColor: Colors.gray200,
-    marginLeft: 68,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginLeft: Spacing.lg + 24 + Spacing.md,
+  },
+  bottomPadding: {
+    height: 40,
   },
 });
