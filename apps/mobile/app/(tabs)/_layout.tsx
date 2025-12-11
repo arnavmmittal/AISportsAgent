@@ -20,13 +20,13 @@ function AnimatedTabIcon({
   focused: boolean;
   gradient?: boolean;
 }) {
-  const scaleAnim = useRef(new Animated.Value(focused ? 1 : 0.9)).current;
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
   const bubbleAnim = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(scaleAnim, {
-        toValue: focused ? 1.1 : 0.9,
+        toValue: focused ? 1.1 : 1,
         friction: 3,
         tension: 40,
         useNativeDriver: true,
