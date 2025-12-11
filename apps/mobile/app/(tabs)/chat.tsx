@@ -78,7 +78,7 @@ export default function ChatScreen() {
   const voice = useVoiceChat({
     sessionId,
     athleteId: userId || '',
-    wsUrl: `ws://10.0.0.127:3000/api/voice`, // TODO: Make this configurable
+    wsUrl: `ws://10.0.0.127:8000/api/voice/ws`, // MCP server WebSocket endpoint
   });
 
   // Animate mode toggle
@@ -326,7 +326,7 @@ export default function ChatScreen() {
         <KeyboardAvoidingView
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={100}
+          keyboardVerticalOffset={0}
         >
           {/* Header */}
           <View style={styles.header}>
