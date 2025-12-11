@@ -49,6 +49,15 @@ export async function GET(request: NextRequest) {
 
 // PUT /api/athlete/consent - Update athlete's consent settings
 export async function PUT(request: NextRequest) {
+  return handleUpdate(request);
+}
+
+// PATCH /api/athlete/consent - Update athlete's consent settings (partial update)
+export async function PATCH(request: NextRequest) {
+  return handleUpdate(request);
+}
+
+async function handleUpdate(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
