@@ -106,6 +106,24 @@ export default async function CoachDashboardPage() {
               </div>
             </Link>
 
+            {/* Assignments Card */}
+            <Link href="/coach/assignments">
+              <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 cursor-pointer border-l-4 border-pink-500">
+                <div className="flex items-center mb-3">
+                  <div className="text-3xl mr-3">📋</div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Assignments
+                  </h3>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Create and manage check-ins, reflections, and journaling exercises for athletes.
+                </p>
+                <div className="mt-4 text-pink-600 font-medium text-sm flex items-center">
+                  Manage Assignments →
+                </div>
+              </div>
+            </Link>
+
           </div>
         </div>
 

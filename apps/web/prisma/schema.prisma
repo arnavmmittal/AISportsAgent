@@ -331,6 +331,55 @@ enum GoalStatus {
 }
 
 // ============================================
+// ASSIGNMENTS (Coach → Athletes)
+// ============================================
+
+model Assignment {
+  id            String      @id @default(cuid())
+  coachId       String
+  title         String
+  description   String
+  dueDate       DateTime?
+
+  // Assignment can be for specific athletes or entire team/sport
+  targetAthleteIds Json?    // Array of athlete IDs, null = all athletes in sport
+  targetSport      String?  // If null, applies to all sports coach manages
+
+  submissions   AssignmentSubmission[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([coachId])
+  @@index([dueDate])
+}
+
+model AssignmentSubmission {
+  id            String      @id @default(cuid())
+  assignmentId  String
+  assignment    Assignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  athleteId     String
+  response      String?     // Athlete's response/submission
+  status        AssignmentStatus @default(PENDING)
+
+  submittedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([assignmentId, athleteId]) // One submission per athlete per assignment
+  @@index([assignmentId])
+  @@index([athleteId])
+  @@index([status])
+}
+
+enum AssignmentStatus {
+  PENDING       // Not yet submitted
+  SUBMITTED     // Submitted by athlete
+  REVIEWED      // Reviewed by coach
+}
+
+// ============================================
 // KNOWLEDGE BASE (for RAG)
 // ============================================
 

@@ -40,6 +40,10 @@ export default async function CoachAthletesPage() {
             orderBy: { createdAt: 'desc' },
             take: 7, // Last 7 days
           },
+          chatSummaries: {
+            orderBy: { generatedAt: 'desc' },
+            take: 1, // Most recent summary
+          },
         },
       },
     },
@@ -295,6 +299,141 @@ export default async function CoachAthletesPage() {
                 <p className="text-gray-500">No athletes found in your school.</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Chat Summaries Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekly Chat Summaries</CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              Summaries are only shown for athletes who have granted consent in their settings.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const athletesWithConsent = sortedAthletes.filter(
+                (a) => a.athlete?.consentChatSummaries === true
+              );
+
+              if (athletesWithConsent.length === 0) {
+                return (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-3">🔒</div>
+                    <p className="text-gray-500">
+                      No athletes have consented to share chat summaries yet.
+                    </p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Athletes can enable sharing in their Settings {'>'} Privacy & Coach Access
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {athletesWithConsent.map((athlete) => {
+                    const latestSummary = athlete.athlete?.chatSummaries?.[0];
+
+                    return (
+                      <div
+                        key={athlete.id}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{athlete.name}</h4>
+                            <p className="text-sm text-gray-500">
+                              {athlete.athlete?.sport} • {athlete.athlete?.year}
+                            </p>
+                          </div>
+                          {latestSummary ? (
+                            <span className="text-xs text-gray-500">
+                              {new Date(latestSummary.generatedAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500">No recent summary</span>
+                          )}
+                        </div>
+
+                        {latestSummary ? (
+                          <>
+                            {/* Summary Text */}
+                            <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                              <p className="text-sm text-gray-700 leading-relaxed">
+                                {latestSummary.summary}
+                              </p>
+                            </div>
+
+                            {/* Key Themes */}
+                            {latestSummary.keyThemes && Array.isArray(latestSummary.keyThemes) && latestSummary.keyThemes.length > 0 && (
+                              <div className="mb-3">
+                                <p className="text-xs font-medium text-gray-500 mb-2">Key Themes:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {(latestSummary.keyThemes as string[]).map((theme, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
+                                    >
+                                      {theme}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Emotional State */}
+                            {latestSummary.emotionalState && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-500">Emotional State:</span>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    latestSummary.emotionalState === 'positive'
+                                      ? 'bg-green-100 text-green-700'
+                                      : latestSummary.emotionalState === 'negative'
+                                      ? 'bg-red-100 text-red-700'
+                                      : latestSummary.emotionalState === 'mixed'
+                                      ? 'bg-yellow-100 text-yellow-700'
+                                      : 'bg-gray-100 text-gray-700'
+                                  }`}
+                                >
+                                  {latestSummary.emotionalState === 'positive' && '😊 Positive'}
+                                  {latestSummary.emotionalState === 'negative' && '😔 Struggling'}
+                                  {latestSummary.emotionalState === 'mixed' && '😐 Mixed'}
+                                  {latestSummary.emotionalState === 'neutral' && '😐 Neutral'}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Action Items */}
+                            {latestSummary.actionItems && Array.isArray(latestSummary.actionItems) && latestSummary.actionItems.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-xs font-medium text-gray-500 mb-2">Follow-up Items:</p>
+                                <ul className="space-y-1">
+                                  {(latestSummary.actionItems as string[]).map((item, idx) => (
+                                    <li key={idx} className="text-xs text-gray-600 flex items-start gap-2">
+                                      <span className="text-purple-500 mt-0.5">•</span>
+                                      <span>{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-gray-500">No chat sessions this week</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
