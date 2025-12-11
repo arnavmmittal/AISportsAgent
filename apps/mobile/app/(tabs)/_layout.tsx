@@ -70,14 +70,15 @@ function AnimatedTabIcon({
           ]}
         >
           <LinearGradient
-            colors={['#2563eb', '#3b82f6', '#60a5fa']}
+            colors={['#8b5cf6', '#d946ef', '#ec4899']} // Purple → Fuchsia → Pink
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.gradientBubble}
           >
+            <View style={styles.glowEffect} />
             <Ionicons
               name={focused ? focusedName : name}
-              size={26}
+              size={28}
               color="#fff"
             />
           </LinearGradient>
@@ -130,33 +131,34 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.gray400,
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
         tabBarStyle: {
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: 'rgba(255, 255, 255, 0.98)',
-          borderTopWidth: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.95)', // Dark slate with transparency
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(255,255,255,0.1)',
           height: Platform.OS === 'ios' ? 90 : 70,
           paddingTop: Spacing.sm,
           paddingBottom: Platform.OS === 'ios' ? Spacing.xl : Spacing.md,
           paddingHorizontal: Spacing.xs,
-          shadowColor: '#000',
+          shadowColor: '#8b5cf6',
           shadowOffset: {
             width: 0,
-            height: -2,
+            height: -4,
           },
-          shadowOpacity: 0.1,
-          shadowRadius: 10,
-          elevation: 20,
+          shadowOpacity: 0.3,
+          shadowRadius: 20,
+          elevation: 24,
         },
         tabBarLabelStyle: {
           fontSize: Typography.xs,
-          fontWeight: Typography.bold,
+          fontWeight: '700',
           marginTop: 4,
-          letterSpacing: 0.3,
+          letterSpacing: 0.5,
         },
         tabBarItemStyle: {
           paddingVertical: Spacing.xs,
@@ -280,36 +282,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bubble: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)', // Purple glass
+    borderWidth: 1.5,
+    borderColor: 'rgba(139, 92, 246, 0.4)',
   },
   bubbleActive: {
-    shadowColor: Colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  gradientBubble: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#2563eb',
+    shadowColor: '#8b5cf6', // Purple glow
     shadowOffset: {
       width: 0,
       height: 6,
     },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 12,
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  gradientBubble: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    shadowColor: '#ec4899', // Pink glow for gradient bubble
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 16,
+  },
+  glowEffect: {
+    position: 'absolute',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
 });
