@@ -34,9 +34,26 @@ export default function DashboardScreen() {
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+  const gradientAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadDashboardData();
+
+    // Animate gradient continuously for visual interest
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(gradientAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(gradientAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
   }, []);
 
   const loadDashboardData = async (isRefresh = false) => {
@@ -48,13 +65,11 @@ export default function DashboardScreen() {
 
       const userId = await getStoredUserId();
       if (!userId) {
-        // User not logged in - redirect to login
         console.log('No user ID found, redirecting to login');
         router.replace('/(auth)/login');
         return;
       }
 
-      // Load mood logs and goals in parallel (using fallback API)
       const [moodLogsData, goalsData] = await Promise.all([
         getMoodLogs(userId, 7),
         getGoals(userId),
@@ -63,17 +78,17 @@ export default function DashboardScreen() {
       setMoodLogs(moodLogsData);
       setGoals(goalsData);
 
-      // Animate in content
       if (!isRefresh) {
         Animated.parallel([
           Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 600,
+            duration: 800,
             useNativeDriver: true,
           }),
-          Animated.timing(slideAnim, {
+          Animated.spring(slideAnim, {
             toValue: 0,
-            duration: 600,
+            friction: 8,
+            tension: 40,
             useNativeDriver: true,
           }),
         ]).start();
@@ -113,12 +128,6 @@ export default function DashboardScreen() {
     return Math.round(sum / moodLogs.length);
   };
 
-  const getGoalsProgress = () => {
-    if (goals.length === 0) return 0;
-    const completed = goals.filter((g) => g.status === 'COMPLETED').length;
-    return Math.round((completed / goals.length) * 100);
-  };
-
   const getMoodEmoji = (value: number) => {
     if (value <= 3) return '😔';
     if (value <= 5) return '😐';
@@ -135,11 +144,11 @@ export default function DashboardScreen() {
 
   const getMotivationalMessage = () => {
     const messages = [
-      'Ready to crush your goals today?',
-      'Let\'s make today count!',
-      'You\'re doing amazing!',
-      'Time to level up!',
-      'Stay focused on your goals!',
+      'Ready to crush your goals today? 💪',
+      'Let\'s make today count! 🔥',
+      'You\'re doing amazing! ⭐',
+      'Time to level up! 🚀',
+      'Stay focused on your goals! 🎯',
     ];
     return messages[Math.floor(Math.random() * messages.length)];
   };
@@ -150,6 +159,14 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Animated Background Gradient Mesh */}
+      <LinearGradient
+        colors={['#0f172a', '#1e293b', '#334155']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -157,12 +174,13 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+            tintColor="#fff"
+            colors={['#60a5fa']}
           />
         }
+        showsVerticalScrollIndicator={false}
       >
-        {/* Hero Section */}
+        {/* Hero Section with Vibrant Gradient */}
         <Animated.View
           style={[
             styles.heroSection,
@@ -173,44 +191,60 @@ export default function DashboardScreen() {
           ]}
         >
           <LinearGradient
-            colors={['#2563eb', '#3b82f6', '#60a5fa']}
+            colors={['#6366f1', '#8b5cf6', '#d946ef', '#ec4899']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroGradient}
           >
-            <View style={styles.heroContent}>
+            {/* Glassmorphic overlay */}
+            <View style={styles.glassOverlay}>
               <View style={styles.heroHeader}>
                 <View style={styles.heroTextContainer}>
                   <Text style={styles.heroGreeting}>{getGreeting()}!</Text>
                   <Text style={styles.heroMessage}>{getMotivationalMessage()}</Text>
                 </View>
-                <TouchableOpacity onPress={handleLogout} style={styles.logoutButtonHero}>
-                  <Ionicons name="log-out-outline" size={20} color="#fff" />
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                    style={styles.logoutButtonGradient}
+                  >
+                    <Ionicons name="log-out-outline" size={22} color="#fff" />
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
 
-              {/* Mini Stats in Hero */}
-              <View style={styles.heroStats}>
-                <View style={styles.heroStatItem}>
+              {/* Enhanced Stats with Glass Cards */}
+              <View style={styles.heroStatsContainer}>
+                <View style={styles.heroStatGlassCard}>
                   <Text style={styles.heroStatValue}>{moodLogs.length}</Text>
                   <Text style={styles.heroStatLabel}>Check-ins</Text>
+                  <View style={styles.statIconBadge}>
+                    <Ionicons name="calendar" size={14} color="#fff" />
+                  </View>
                 </View>
-                <View style={styles.heroStatDivider} />
-                <View style={styles.heroStatItem}>
+                <View style={styles.heroStatGlassCard}>
                   <Text style={styles.heroStatValue}>{goals.filter(g => g.status !== 'COMPLETED').length}</Text>
                   <Text style={styles.heroStatLabel}>Active Goals</Text>
+                  <View style={styles.statIconBadge}>
+                    <Ionicons name="trophy" size={14} color="#fbbf24" />
+                  </View>
                 </View>
-                <View style={styles.heroStatDivider} />
-                <View style={styles.heroStatItem}>
-                  <Text style={styles.heroStatValue}>{getAverageMood()}</Text>
-                  <Text style={styles.heroStatLabel}>Avg Mood</Text>
+                <View style={styles.heroStatGlassCard}>
+                  <Text style={styles.heroStatValue}>{getMoodEmoji(getAverageMood())}</Text>
+                  <Text style={styles.heroStatLabel}>Mood Today</Text>
+                  <View style={styles.statIconBadge}>
+                    <Ionicons name="heart" size={14} color="#f87171" />
+                  </View>
                 </View>
               </View>
             </View>
           </LinearGradient>
         </Animated.View>
-        {/* Quick Stats */}
+
+        {/* Vibrant Stat Cards with Triadic Colors */}
+        <Text style={styles.sectionTitleLight}>Your Stats</Text>
         <View style={styles.statsGrid}>
+          {/* Mood - Purple/Blue */}
           <Pressable
             style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
             onPress={() => {
@@ -219,19 +253,26 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#eff6ff', '#dbeafe']}
+              colors={['#8b5cf6', '#a78bfa', '#c4b5fd']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.statCardGradient}
             >
-              <Ionicons name="happy" size={24} color={Colors.primary} />
-              <Text style={styles.statValue}>
-                {getMoodEmoji(getAverageMood())} {getAverageMood()}/10
-              </Text>
-              <Text style={styles.statLabel}>Avg Mood</Text>
+              <View style={styles.statIconContainer}>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                  style={styles.statIconGlass}
+                >
+                  <Ionicons name="happy" size={28} color="#fff" />
+                </LinearGradient>
+              </View>
+              <Text style={styles.statValueWhite}>{getAverageMood()}/10</Text>
+              <Text style={styles.statLabelWhite}>Average Mood</Text>
+              <Text style={styles.statEmoji}>{getMoodEmoji(getAverageMood())}</Text>
             </LinearGradient>
           </Pressable>
 
+          {/* Confidence - Green/Emerald */}
           <Pressable
             style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
             onPress={() => {
@@ -240,17 +281,26 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#d1fae5', '#a7f3d0']}
+              colors={['#10b981', '#34d399', '#6ee7b7']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.statCardGradient}
             >
-              <Ionicons name="trending-up" size={24} color={Colors.success} />
-              <Text style={styles.statValue}>{getAverageConfidence()}/10</Text>
-              <Text style={styles.statLabel}>Confidence</Text>
+              <View style={styles.statIconContainer}>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                  style={styles.statIconGlass}
+                >
+                  <Ionicons name="trending-up" size={28} color="#fff" />
+                </LinearGradient>
+              </View>
+              <Text style={styles.statValueWhite}>{getAverageConfidence()}/10</Text>
+              <Text style={styles.statLabelWhite}>Confidence</Text>
+              <Text style={styles.statEmoji}>💪</Text>
             </LinearGradient>
           </Pressable>
 
+          {/* Stress - Orange/Amber */}
           <Pressable
             style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
             onPress={() => {
@@ -259,17 +309,26 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#fef3c7', '#fde68a']}
+              colors={['#f59e0b', '#fbbf24', '#fcd34d']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.statCardGradient}
             >
-              <Ionicons name="alert-circle" size={24} color={Colors.warning} />
-              <Text style={styles.statValue}>{getAverageStress()}/10</Text>
-              <Text style={styles.statLabel}>Stress</Text>
+              <View style={styles.statIconContainer}>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                  style={styles.statIconGlass}
+                >
+                  <Ionicons name="flash" size={28} color="#fff" />
+                </LinearGradient>
+              </View>
+              <Text style={styles.statValueWhite}>{getAverageStress()}/10</Text>
+              <Text style={styles.statLabelWhite}>Stress Level</Text>
+              <Text style={styles.statEmoji}>⚡</Text>
             </LinearGradient>
           </Pressable>
 
+          {/* Goals - Pink/Rose */}
           <Pressable
             style={({ pressed }) => [styles.statCard, pressed && styles.statCardPressed]}
             onPress={() => {
@@ -278,136 +337,53 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#fce7f3', '#fbcfe8']}
+              colors={['#ec4899', '#f472b6', '#f9a8d4']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.statCardGradient}
             >
-              <Ionicons name="trophy" size={24} color="#ec4899" />
-              <Text style={styles.statValue}>{goals.length}</Text>
-              <Text style={styles.statLabel}>Active Goals</Text>
+              <View style={styles.statIconContainer}>
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                  style={styles.statIconGlass}
+                >
+                  <Ionicons name="trophy" size={28} color="#fff" />
+                </LinearGradient>
+              </View>
+              <Text style={styles.statValueWhite}>{goals.length}</Text>
+              <Text style={styles.statLabelWhite}>Total Goals</Text>
+              <Text style={styles.statEmoji}>🎯</Text>
             </LinearGradient>
           </Pressable>
         </View>
 
-        {/* Recent Mood Logs */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Check-Ins</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/mood')}>
-              <Text style={styles.sectionLink}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          {moodLogs.length === 0 ? (
-            <Card style={styles.emptyCard}>
-              <Ionicons name="calendar-outline" size={32} color={Colors.gray300} />
-              <Text style={styles.emptyText}>No check-ins yet</Text>
-              <TouchableOpacity
-                style={styles.emptyButton}
-                onPress={() => router.push('/(tabs)/mood')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.emptyButtonText}>Log your first check-in</Text>
-              </TouchableOpacity>
-            </Card>
-          ) : (
-            moodLogs.slice(0, 3).map((log) => (
-              <Card key={log.id} style={styles.activityCard}>
-                <View style={styles.activityIcon}>
-                  <Text style={styles.activityEmoji}>{getMoodEmoji(log.mood)}</Text>
-                </View>
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>
-                    Mood: {log.mood}/10 • Confidence: {log.confidence}/10
-                  </Text>
-                  <Text style={styles.activityDate}>
-                    {new Date(log.date).toLocaleDateString()}
-                  </Text>
-                </View>
-              </Card>
-            ))
-          )}
-        </View>
-
-        {/* Active Goals */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Active Goals</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/goals')}>
-              <Text style={styles.sectionLink}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          {goals.length === 0 ? (
-            <Card style={styles.emptyCard}>
-              <Ionicons name="trophy-outline" size={32} color={Colors.gray300} />
-              <Text style={styles.emptyText}>No goals set</Text>
-              <TouchableOpacity
-                style={styles.emptyButton}
-                onPress={() => router.push('/(tabs)/goals')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.emptyButtonText}>Create your first goal</Text>
-              </TouchableOpacity>
-            </Card>
-          ) : (
-            goals
-              .filter((g) => g.status !== 'COMPLETED')
-              .slice(0, 3)
-              .map((goal) => (
-                <Card key={goal.id} style={styles.goalCard}>
-                  <View style={styles.goalHeader}>
-                    <Text style={styles.goalTitle}>{goal.title}</Text>
-                    <Text style={styles.goalProgress}>{goal.progress}%</Text>
-                  </View>
-                  <View style={styles.progressBar}>
-                    <View
-                      style={[
-                        styles.progressBarFill,
-                        { width: `${goal.progress}%`, backgroundColor: Colors.primary },
-                      ]}
-                    />
-                  </View>
-                </Card>
-              ))
-          )}
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-
+        {/* Quick Actions with Modern Cards */}
+        <Text style={styles.sectionTitleLight}>Quick Actions</Text>
+        <View style={styles.actionsContainer}>
           <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.actionButtonPressed,
-            ]}
+            style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.push('/(tabs)/chat');
             }}
           >
             <LinearGradient
-              colors={['#2563eb', '#3b82f6']}
+              colors={['#3b82f6', '#60a5fa']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.actionIconGradient}
+              style={styles.actionGradient}
             >
-              <Ionicons name="chatbubbles" size={24} color="#fff" />
+              <Ionicons name="chatbubbles" size={26} color="#fff" />
             </LinearGradient>
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Start Chat Session</Text>
-              <Text style={styles.actionDescription}>Talk to your AI assistant</Text>
+              <Text style={styles.actionTitle}>Start Chat</Text>
+              <Text style={styles.actionDescription}>Talk to your AI coach</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+            <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.6)" />
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.actionButtonPressed,
-            ]}
+            style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.push('/(tabs)/mood');
@@ -417,22 +393,19 @@ export default function DashboardScreen() {
               colors={['#10b981', '#34d399']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.actionIconGradient}
+              style={styles.actionGradient}
             >
-              <Ionicons name="happy" size={24} color="#fff" />
+              <Ionicons name="happy" size={26} color="#fff" />
             </LinearGradient>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Daily Check-In</Text>
-              <Text style={styles.actionDescription}>Log your mood and feelings</Text>
+              <Text style={styles.actionDescription}>Log your mood & feelings</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+            <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.6)" />
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.actionButtonPressed,
-            ]}
+            style={({ pressed }) => [styles.actionCard, pressed && styles.actionCardPressed]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.push('/(tabs)/goals');
@@ -442,17 +415,74 @@ export default function DashboardScreen() {
               colors={['#f59e0b', '#fbbf24']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.actionIconGradient}
+              style={styles.actionGradient}
             >
-              <Ionicons name="trophy" size={24} color="#fff" />
+              <Ionicons name="trophy" size={26} color="#fff" />
             </LinearGradient>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Manage Goals</Text>
               <Text style={styles.actionDescription}>Track your progress</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+            <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.6)" />
           </Pressable>
         </View>
+
+        {/* Recent Activity with Glass Cards */}
+        {moodLogs.length > 0 && (
+          <>
+            <Text style={styles.sectionTitleLight}>Recent Check-Ins</Text>
+            <View style={styles.activityContainer}>
+              {moodLogs.slice(0, 3).map((log, index) => (
+                <View key={log.id} style={styles.activityGlassCard}>
+                  <View style={styles.activityIconContainer}>
+                    <Text style={styles.activityEmoji}>{getMoodEmoji(log.mood)}</Text>
+                  </View>
+                  <View style={styles.activityInfo}>
+                    <Text style={styles.activityTitle}>
+                      Mood: {log.mood}/10  •  Confidence: {log.confidence}/10
+                    </Text>
+                    <Text style={styles.activityDate}>
+                      {new Date(log.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* Active Goals with Progress Bars */}
+        {goals.filter(g => g.status !== 'COMPLETED').length > 0 && (
+          <>
+            <Text style={styles.sectionTitleLight}>Active Goals</Text>
+            <View style={styles.goalsContainer}>
+              {goals
+                .filter((g) => g.status !== 'COMPLETED')
+                .slice(0, 3)
+                .map((goal) => (
+                  <View key={goal.id} style={styles.goalGlassCard}>
+                    <View style={styles.goalHeader}>
+                      <Text style={styles.goalTitle}>{goal.title}</Text>
+                      <Text style={styles.goalProgress}>{goal.progress}%</Text>
+                    </View>
+                    <View style={styles.progressBarContainer}>
+                      <View style={styles.progressBarBg}>
+                        <LinearGradient
+                          colors={['#8b5cf6', '#ec4899']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={[styles.progressBarFill, { width: `${goal.progress}%` }]}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          </>
+        )}
 
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -463,7 +493,6 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundSecondary,
   },
   scrollView: {
     flex: 1,
@@ -471,191 +500,27 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: Spacing.xl,
-    gap: Spacing.md,
-  },
-  statCard: {
-    width: '48%',
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    ...Shadows.medium,
-  },
-  statCardGradient: {
-    padding: Spacing.lg,
-    alignItems: 'center',
-  },
-  statCardPressed: {
-    transform: [{ scale: 0.97 }],
-    opacity: 0.9,
-  },
-  statValue: {
-    fontSize: Typography.xxxl,
-    fontWeight: Typography.bold,
-    color: Colors.textPrimary,
-    marginTop: Spacing.sm,
-  },
-  statLabel: {
-    fontSize: Typography.xs,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
-  },
-  section: {
-    marginBottom: Spacing.xl,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  sectionTitle: {
-    fontSize: Typography.lg,
-    fontWeight: Typography.semibold,
-    color: Colors.textPrimary,
-  },
-  sectionLink: {
-    fontSize: Typography.sm,
-    color: Colors.primary,
-    fontWeight: Typography.medium,
-  },
-  emptyCard: {
-    padding: Spacing.xxxl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: Typography.base,
-    color: Colors.textSecondary,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  emptyButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  emptyButtonText: {
-    color: '#fff',
-    fontSize: Typography.sm,
-    fontWeight: Typography.semibold,
-  },
-  activityCard: {
-    flexDirection: 'row',
-    padding: Spacing.lg,
-    marginBottom: Spacing.sm,
-  },
-  activityIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.gray100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
-  activityEmoji: {
-    fontSize: 24,
-  },
-  activityContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  activityTitle: {
-    fontSize: Typography.sm,
-    fontWeight: Typography.medium,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
-  },
-  activityDate: {
-    fontSize: Typography.xs,
-    color: Colors.textTertiary,
-  },
-  goalCard: {
-    padding: Spacing.lg,
-    marginBottom: Spacing.sm,
-  },
-  goalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  goalTitle: {
-    fontSize: Typography.sm,
-    fontWeight: Typography.medium,
-    color: Colors.textPrimary,
-    flex: 1,
-  },
-  goalProgress: {
-    fontSize: Typography.sm,
-    fontWeight: Typography.semibold,
-    color: Colors.primary,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: Colors.gray200,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.md,
-    ...Shadows.small,
-  },
-  actionButtonPressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.95,
-  },
-  actionIconGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionContent: {
-    flex: 1,
-    marginLeft: Spacing.md,
-  },
-  actionTitle: {
-    fontSize: Typography.base,
-    fontWeight: Typography.semibold,
-    color: Colors.textPrimary,
-    marginBottom: 2,
-  },
-  actionDescription: {
-    fontSize: Typography.sm,
-    color: Colors.textSecondary,
-  },
-  bottomPadding: {
-    height: 40,
-  },
-  // Hero Section
+  // Hero Section - Vibrant Gradient
   heroSection: {
     marginTop: -Spacing.lg,
     marginHorizontal: -Spacing.lg,
     marginBottom: Spacing.xl,
+    overflow: 'hidden',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    elevation: 12,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
   },
   heroGradient: {
     paddingTop: 60,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    borderBottomLeftRadius: BorderRadius.xl * 1.5,
-    borderBottomRightRadius: BorderRadius.xl * 1.5,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
   },
-  heroContent: {
-    gap: Spacing.lg,
+  glassOverlay: {
+    gap: Spacing.xl,
   },
   heroHeader: {
     flexDirection: 'row',
@@ -666,51 +531,261 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroGreeting: {
-    fontSize: Typography.xxxl,
-    fontWeight: Typography.bold,
+    fontSize: 32,
+    fontWeight: '900',
     color: '#fff',
-    marginBottom: Spacing.xs,
+    marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   heroMessage: {
-    fontSize: Typography.base,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: Typography.medium,
+    fontSize: Typography.lg,
+    color: 'rgba(255,255,255,0.95)',
+    fontWeight: '600',
   },
-  logoutButtonHero: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  logoutButton: {
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  logoutButtonGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  heroStats: {
+  // Glass Stats Cards in Hero
+  heroStatsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginTop: Spacing.md,
+    gap: Spacing.md,
   },
-  heroStatItem: {
-    alignItems: 'center',
+  heroStatGlassCard: {
     flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+    position: 'relative',
   },
   heroStatValue: {
-    fontSize: Typography.xxl,
-    fontWeight: Typography.bold,
+    fontSize: 28,
+    fontWeight: '900',
     color: '#fff',
     marginBottom: 4,
   },
   heroStatLabel: {
     fontSize: Typography.xs,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: Typography.medium,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  heroStatDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  statIconBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Section Title
+  sectionTitleLight: {
+    fontSize: Typography.xl,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: Spacing.lg,
+    marginTop: Spacing.md,
+  },
+  // Vibrant Stat Cards
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+    marginBottom: Spacing.xxxl,
+  },
+  statCard: {
+    width: '48%',
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+  },
+  statCardGradient: {
+    padding: Spacing.xl,
+    paddingVertical: Spacing.xxxl,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  statCardPressed: {
+    transform: [{ scale: 0.95 }],
+    opacity: 0.9,
+  },
+  statIconContainer: {
+    marginBottom: Spacing.md,
+  },
+  statIconGlass: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  statValueWhite: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#fff',
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  statLabelWhite: {
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  statEmoji: {
+    fontSize: 24,
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+  },
+  // Quick Actions
+  actionsContainer: {
+    gap: Spacing.md,
+    marginBottom: Spacing.xxxl,
+  },
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    gap: Spacing.md,
+  },
+  actionCardPressed: {
+    transform: [{ scale: 0.97 }],
+    opacity: 0.8,
+  },
+  actionGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  actionDescription: {
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+  },
+  // Activity Cards
+  activityContainer: {
+    gap: Spacing.md,
+    marginBottom: Spacing.xxxl,
+  },
+  activityGlassCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    gap: Spacing.md,
+  },
+  activityIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activityEmoji: {
+    fontSize: 26,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  activityDate: {
+    fontSize: Typography.xs,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+  },
+  // Goals
+  goalsContainer: {
+    gap: Spacing.md,
+    marginBottom: Spacing.xxxl,
+  },
+  goalGlassCard: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  goalTitle: {
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: '#fff',
+    flex: 1,
+  },
+  goalProgress: {
+    fontSize: Typography.base,
+    fontWeight: '900',
+    color: '#fff',
+  },
+  progressBarContainer: {
+    marginTop: Spacing.sm,
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  bottomPadding: {
+    height: 60,
   },
 });
