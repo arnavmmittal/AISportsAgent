@@ -80,8 +80,10 @@ Error validating datasource: the URL must start with the protocol file:
 - ✅ Login/signup flow
 
 ### What's NOT Working Yet
-- ⚠️ **Voice chat** - Needs Cartesia API key configuration or backend voice endpoint setup
 - ⚠️ Some settings features are "Coming Soon" placeholders
+
+### ✅ Just Enabled
+- 🎙️ **Voice chat** - Cartesia API configured! Restart servers to activate
 
 ---
 
