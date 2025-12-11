@@ -78,7 +78,7 @@ export default function ChatScreen() {
   const voice = useVoiceChat({
     sessionId,
     athleteId: userId || '',
-    wsUrl: `ws://10.0.0.127:8000/api/voice/ws`, // MCP server WebSocket endpoint
+    wsUrl: `ws://10.0.0.127:8000/api/voice/stream`, // MCP server WebSocket endpoint
   });
 
   // Animate mode toggle
@@ -316,18 +316,17 @@ export default function ChatScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
       <LinearGradient
         colors={['#eff6ff', '#f3e8ff', '#fce7f3']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientContainer}
       >
-        <KeyboardAvoidingView
-          style={styles.keyboardView}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
-        >
           {/* Header */}
           <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -648,9 +647,8 @@ export default function ChatScreen() {
           </Text>
         </View>
       )}
-        </KeyboardAvoidingView>
       </LinearGradient>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

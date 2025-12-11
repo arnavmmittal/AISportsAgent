@@ -58,14 +58,6 @@ function RootLayoutNav() {
     checkAuth();
   }, []);
 
-  // Re-check auth when segments change (navigation occurs)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      checkAuth();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [segments]);
-
   useEffect(() => {
     if (isAuthenticated === null) return;
 
@@ -76,7 +68,7 @@ function RootLayoutNav() {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)/dashboard');
     }
-  }, [isAuthenticated, segments]);
+  }, [isAuthenticated]);
 
   if (isAuthenticated === null) {
     return null;
