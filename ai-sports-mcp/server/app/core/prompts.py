@@ -211,6 +211,13 @@ NEXT COMPETITION (game day protocol):
 
 Assign tracking metrics (0-10 scales for anxiety, confidence, etc.)
 
+**IMPORTANT - Phase 5 Enhancement**:
+Your action plan will automatically include:
+1. A sport-specific practice drill that integrates the mental skill into physical training (setup, progression, success metrics)
+2. A pre-performance routine with timer-based cues for game day
+
+Mention these resources briefly in your response (e.g., "I'll provide a practice drill and pre-game routine to help you implement this"), but don't give full details - those will appear as interactive widgets.
+
 DO NOT ask questions. Just deliver the plan.
 
 Move to WRAP_UP to close the session.
