@@ -742,6 +742,103 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             if not structured_response.kb_citations:
                 structured_response.kb_citations = kb_citation_ids
 
+            # PHASE 5.2: Generate Practice Drill and Routine (PLAN phase only)
+            if (structured_response.session_stage == SessionStage.PLAN and
+                structured_response.selected_protocol):
+                try:
+                    from app.features.practice_integration import (
+                        PracticeDrillGenerator,
+                        get_mental_skill_from_protocol,
+                        PracticeSetting
+                    )
+                    from app.features.routine_builder import (
+                        RoutineBuilder,
+                        RoutinePhase
+                    )
+                    from app.core.structured_response import (
+                        PracticeDrillResponse,
+                        PrePerformanceRoutineResponse,
+                        RoutineCueResponse
+                    )
+
+                    # Generate practice drill
+                    drill_generator = PracticeDrillGenerator()
+                    mental_skill = get_mental_skill_from_protocol(
+                        structured_response.selected_protocol.name
+                    )
+
+                    primary_issue = (structured_response.detected_issue_tags[0]
+                                    if structured_response.detected_issue_tags else None)
+
+                    practice_drill = drill_generator.generate_drill(
+                        mental_skill=mental_skill,
+                        sport=context.sport,
+                        position=context.position,
+                        practice_setting=PracticeSetting.TEAM,
+                        athlete_level="collegiate",
+                        detected_issue=primary_issue
+                    )
+
+                    # Convert to response format
+                    structured_response.practice_drill = PracticeDrillResponse(
+                        name=practice_drill.name,
+                        mental_skill=practice_drill.mental_skill,
+                        setup=practice_drill.setup,
+                        mental_component=practice_drill.mental_component,
+                        physical_component=practice_drill.physical_component,
+                        progression=practice_drill.progression,
+                        success_metrics=practice_drill.success_metrics,
+                        duration_minutes=practice_drill.duration_minutes,
+                        coaching_notes=practice_drill.coaching_notes
+                    )
+
+                    # Generate pre-performance routine
+                    routine_builder = RoutineBuilder()
+
+                    # Determine routine phase based on sport context
+                    routine_phase = RoutinePhase.PRE_GAME
+                    if "pre-game" in structured_response.sport_context.setting.lower():
+                        routine_phase = RoutinePhase.PRE_GAME
+                    elif "warmup" in structured_response.sport_context.setting.lower():
+                        routine_phase = RoutinePhase.WARMUP
+                    elif any(term in structured_response.sport_context.setting.lower()
+                            for term in ["game", "competition", "match"]):
+                        routine_phase = RoutinePhase.FINAL_PREP
+
+                    pre_perf_routine = routine_builder.build_routine(
+                        sport=context.sport,
+                        position=context.position,
+                        phase=routine_phase,
+                        detected_issues=structured_response.detected_issue_tags,
+                        athlete_preferences=None,  # Could load from memory
+                        effective_techniques=context.athlete_memory.get('effectiveTechniques') if context.athlete_memory else None
+                    )
+
+                    # Convert to response format
+                    structured_response.pre_performance_routine = PrePerformanceRoutineResponse(
+                        name=pre_perf_routine.name,
+                        sport=pre_perf_routine.sport,
+                        phase=pre_perf_routine.phase.value,
+                        total_duration_seconds=pre_perf_routine.total_duration_seconds,
+                        cues=[
+                            RoutineCueResponse(
+                                type=cue.type.value,
+                                description=cue.description,
+                                duration_seconds=cue.duration_seconds,
+                                why_included=cue.why_included
+                            )
+                            for cue in pre_perf_routine.cues
+                        ],
+                        customization_notes=pre_perf_routine.customization_notes,
+                        effectiveness_tracking=pre_perf_routine.effectiveness_tracking
+                    )
+
+                    logger.info(f"Generated practice drill and routine for PLAN phase: {practice_drill.name}, {pre_perf_routine.name}")
+
+                except Exception as drill_error:
+                    logger.warning(f"Failed to generate practice drill/routine: {drill_error}")
+                    # Continue without drill/routine - not critical
+
             # Stream the human response from structured data
             human_response = structured_response.human_response
             full_response = human_response
