@@ -90,6 +90,38 @@ class Tracking(BaseModel):
     one_word_debrief: str = Field(default="", description="One-word check-in after competition")
 
 
+class PracticeDrillResponse(BaseModel):
+    """Practice drill that integrates mental skill into physical training (Phase 5.1)."""
+    name: str = Field(..., description="Drill name")
+    mental_skill: str = Field(..., description="Mental skill being trained")
+    setup: str = Field(..., description="Equipment and setup instructions")
+    mental_component: str = Field(..., description="Mental skill integrated into drill")
+    physical_component: str = Field(..., description="Physical actions/reps")
+    progression: List[str] = Field(..., description="4-week progression plan")
+    success_metrics: List[str] = Field(..., description="What to measure")
+    duration_minutes: int = Field(..., description="Estimated drill duration")
+    coaching_notes: str = Field(..., description="Tips for implementation")
+
+
+class RoutineCueResponse(BaseModel):
+    """Single cue in a pre-performance routine."""
+    type: str = Field(..., description="Cue type: physical, mental, environmental, social")
+    description: str = Field(..., description="What to do")
+    duration_seconds: int = Field(..., description="How long this cue takes")
+    why_included: Optional[str] = Field(None, description="Brief explanation of purpose")
+
+
+class PrePerformanceRoutineResponse(BaseModel):
+    """Pre-performance routine with timer-based cues (Phase 5.1)."""
+    name: str = Field(..., description="Routine name")
+    sport: str = Field(..., description="Sport")
+    phase: str = Field(..., description="When routine is used: pre_game, warmup, final_prep, immediate, between_play")
+    total_duration_seconds: int = Field(..., description="Total routine duration")
+    cues: List[RoutineCueResponse] = Field(..., description="Sequential cues")
+    customization_notes: str = Field(..., description="How athlete can personalize")
+    effectiveness_tracking: List[str] = Field(..., description="What to track to measure effectiveness")
+
+
 # ============================================
 # MAIN STRUCTURED RESPONSE
 # ============================================
@@ -164,6 +196,18 @@ class StructuredResponse(BaseModel):
     kb_citations: List[str] = Field(
         default_factory=list,
         description="KB chunk IDs used in response"
+    )
+
+    # Phase 5.1: Practice Integration
+    practice_drill: Optional[PracticeDrillResponse] = Field(
+        None,
+        description="Practice drill integrating mental skill (PLAN phase only)"
+    )
+
+    # Phase 5.1: Routine Builder
+    pre_performance_routine: Optional[PrePerformanceRoutineResponse] = Field(
+        None,
+        description="Pre-performance routine with timer cues (PLAN phase only)"
     )
 
     # Human-readable response
