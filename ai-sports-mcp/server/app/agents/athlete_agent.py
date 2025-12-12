@@ -30,6 +30,7 @@ from app.core.structured_response import (
     validate_structured_response
 )
 from app.core.protocol import ProtocolPhaseManager, InterventionSelector
+from app.core.session import update_athlete_memory
 
 logger = setup_logging()
 
@@ -820,6 +821,19 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
                     logger.info(f"Phase transition: {old_phase} → {next_phase.value}")
 
             self.db.commit()
+
+            # Update athlete memory after successful save
+            try:
+                await update_athlete_memory(
+                    db=self.db,
+                    athlete_id=context.athlete_id,
+                    session_id=context.session_id,
+                    structured_response=structured_response.dict() if structured_response else {},
+                    session_outcome=None  # Could be updated from user feedback later
+                )
+            except Exception as mem_error:
+                logger.warning(f"Failed to update athlete memory: {mem_error}")
+
         except Exception as e:
             logger.warning(f"Failed to save messages to database: {e}")
 
