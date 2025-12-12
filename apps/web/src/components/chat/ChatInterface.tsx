@@ -6,6 +6,8 @@ import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { VoiceButton, AudioVisualizer } from '@/components/voice/VoiceButton';
 import { ActionPlanWidget } from '@/components/chat/ActionPlanWidget';
 import { MetricTrackerWidget } from '@/components/chat/MetricTrackerWidget';
+import { PracticeDrillCard } from '@/components/chat/PracticeDrillCard';
+import { RoutineBuilderWidget } from '@/components/chat/RoutineBuilderWidget';
 
 interface Message {
   id: string;
@@ -60,6 +62,33 @@ interface StructuredMetadata {
   };
   next_prompt: string;
   kb_citations: string[];
+  // Phase 5.1: Practice Integration
+  practice_drill?: {
+    name: string;
+    mental_skill: string;
+    setup: string;
+    mental_component: string;
+    physical_component: string;
+    progression: string[];
+    success_metrics: string[];
+    duration_minutes: number;
+    coaching_notes: string;
+  };
+  // Phase 5.1: Routine Builder
+  pre_performance_routine?: {
+    name: string;
+    sport: string;
+    phase: string;
+    total_duration_seconds: number;
+    cues: Array<{
+      type: string;
+      description: string;
+      duration_seconds: number;
+      why_included?: string;
+    }>;
+    customization_notes: string;
+    effectiveness_tracking: string[];
+  };
   human_response: string;
 }
 
@@ -421,6 +450,36 @@ export function ChatInterface() {
                 onLogMetric={(metricName, value) => {
                   console.log(`Logged ${metricName}: ${value}`);
                   // TODO: Save to database
+                }}
+              />
+            )}
+
+            {/* Practice Drill Card (Phase 5.1) */}
+            {currentMetadata.practice_drill && (
+              <PracticeDrillCard
+                drill={currentMetadata.practice_drill}
+                onStartDrill={() => {
+                  console.log('Starting drill:', currentMetadata.practice_drill?.name);
+                  // TODO: Navigate to drill timer/tracker
+                }}
+                onTrackProgress={(week, notes) => {
+                  console.log(`Week ${week} progress:`, notes);
+                  // TODO: Save progress to database
+                }}
+              />
+            )}
+
+            {/* Pre-Performance Routine Widget (Phase 5.1) */}
+            {currentMetadata.pre_performance_routine && (
+              <RoutineBuilderWidget
+                routine={currentMetadata.pre_performance_routine}
+                onComplete={() => {
+                  console.log('Routine completed!');
+                  // TODO: Log completion, ask for feedback
+                }}
+                onSaveCustomization={(customizedRoutine) => {
+                  console.log('Saving customized routine:', customizedRoutine);
+                  // TODO: Save to athlete memory
                 }}
               />
             )}
