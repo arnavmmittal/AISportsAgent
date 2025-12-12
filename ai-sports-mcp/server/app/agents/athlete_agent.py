@@ -21,6 +21,14 @@ from app.core.logging import setup_logging
 from app.agents.knowledge_agent import KnowledgeAgent
 from app.db import models
 from app.core.session import SessionContext
+from app.core.prompts import build_sports_psych_prompt, get_next_phase
+from app.core.structured_response import (
+    StructuredResponse,
+    SportContext,
+    SessionStage,
+    create_default_structured_response,
+    validate_structured_response
+)
 
 logger = setup_logging()
 
@@ -598,6 +606,171 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             system_msg += f"\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n{knowledge_context}"
 
         return system_msg
+
+    async def chat_stream_with_structured_output(
+        self,
+        user_message: str,
+        context: SessionContext
+    ) -> AsyncGenerator[tuple[str, Optional[StructuredResponse]], None]:
+        """
+        Stream chat response with structured metadata using OpenAI function calling.
+
+        Generates both:
+        1. Streaming human text (for real-time display)
+        2. Structured JSON metadata (session stage, issues, action plans, etc.)
+
+        Args:
+            user_message: The athlete's message
+            context: Pre-loaded SessionContext with full athlete state
+
+        Yields:
+            Tuples of (text_chunk, metadata) where metadata is None until final yield
+        """
+        logger.info(f"Processing structured streaming chat for session {context.session_id}")
+
+        # Retrieve knowledge base context
+        kb_chunks_raw = []
+        try:
+            kb_context_str = self._retrieve_knowledge_context(
+                query=user_message,
+                athlete_sport=context.sport,
+                max_chunks=3
+            )
+            if kb_context_str:
+                kb_chunks_raw = [kb_context_str]
+        except Exception as e:
+            logger.warning(f"Failed to retrieve KB context: {e}")
+            kb_context_str = ""
+
+        # Build elite sports psych system prompt
+        system_message = build_sports_psych_prompt(
+            phase=context.current_phase,
+            sport=context.sport,
+            athlete_memory=context.athlete_memory,
+            kb_chunks=kb_chunks_raw,
+            mood_context=context.recent_mood,
+            goals_context=context.active_goals
+        )
+
+        # Build conversation history from SessionContext
+        conversation_history = []
+        for msg in context.message_history:
+            conversation_history.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+
+        # Build messages for OpenAI
+        openai_messages = [
+            {"role": "system", "content": system_message}
+        ] + conversation_history + [
+            {"role": "user", "content": user_message}
+        ]
+
+        # Define function schema for structured output
+        structured_response_schema = StructuredResponse.model_json_schema()
+
+        # Call OpenAI with function calling for structured output
+        # NOTE: We use a non-streaming call first to get structured data,
+        # then stream the human response separately
+        try:
+            # Get structured response
+            structured_completion = self.openai_client.chat.completions.create(
+                model=settings.OPENAI_MODEL,
+                messages=openai_messages,
+                temperature=settings.OPENAI_TEMPERATURE,
+                max_tokens=settings.OPENAI_MAX_TOKENS,
+                tools=[{
+                    "type": "function",
+                    "function": {
+                        "name": "generate_structured_response",
+                        "description": "Generate sports psychology response with structured metadata",
+                        "parameters": structured_response_schema
+                    }
+                }],
+                tool_choice={"type": "function", "function": {"name": "generate_structured_response"}}
+            )
+
+            # Parse structured response
+            tool_call = structured_completion.choices[0].message.tool_calls[0]
+            structured_data = json.loads(tool_call.function.arguments)
+            structured_response = validate_structured_response(structured_data)
+
+            # Stream the human response from structured data
+            human_response = structured_response.human_response
+            full_response = human_response
+
+            # Yield chunks of human response
+            chunk_size = 20  # Characters per chunk for smooth streaming
+            for i in range(0, len(human_response), chunk_size):
+                chunk = human_response[i:i + chunk_size]
+                yield (chunk, None)  # Stream text, no metadata yet
+
+            # Yield final metadata
+            yield ("", structured_response)
+
+        except Exception as e:
+            logger.error(f"Error generating structured response: {e}")
+            # Fallback: use non-structured streaming
+            stream = self.openai_client.chat.completions.create(
+                model=settings.OPENAI_MODEL,
+                messages=openai_messages,
+                temperature=settings.OPENAI_TEMPERATURE,
+                max_tokens=settings.OPENAI_MAX_TOKENS,
+                stream=True
+            )
+
+            full_response = ""
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    full_response += content
+                    yield (content, None)
+
+            # Create default structured response
+            default_response = create_default_structured_response(
+                human_response=full_response,
+                session_stage=SessionStage(context.current_phase),
+                sport=context.sport,
+                setting="unknown"
+            )
+            yield ("", default_response)
+
+        # Save messages after streaming completes
+        try:
+            user_msg = models.Message(
+                id=f"msg_{datetime.utcnow().timestamp()}_{context.athlete_id}_user",
+                sessionId=context.session_id,
+                role=models.MessageRole.user,
+                content=user_message,
+                createdAt=datetime.utcnow()
+            )
+            self.db.add(user_msg)
+
+            assistant_msg = models.Message(
+                id=f"msg_{datetime.utcnow().timestamp()}_{context.athlete_id}_assistant",
+                sessionId=context.session_id,
+                role=models.MessageRole.assistant,
+                content=full_response,
+                createdAt=datetime.utcnow()
+            )
+            self.db.add(assistant_msg)
+
+            # Update session with new phase if needed
+            session = self.db.query(models.ChatSession).filter(
+                models.ChatSession.id == context.session_id
+            ).first()
+            if session:
+                session.updatedAt = datetime.utcnow()
+                # Update discovery phase based on structured response
+                if hasattr(structured_response, 'session_stage'):
+                    session.discoveryPhase = structured_response.session_stage
+
+            self.db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to save messages to database: {e}")
+
+        logger.info(f"Structured streaming chat complete for session {context.session_id}")
 
     async def generate_response(
         self,

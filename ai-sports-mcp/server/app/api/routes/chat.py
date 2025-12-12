@@ -151,12 +151,18 @@ async def chat_stream(
             if crisis_check.get("final_risk_level") != "LOW":
                 yield f"data: {json.dumps({'type': 'crisis_check', 'data': crisis_check})}\n\n"
 
-            # Stream AI response with full session context
-            async for chunk in athlete_agent.chat_stream_with_context(
+            # Stream AI response with full session context AND structured metadata
+            async for text_chunk, metadata in athlete_agent.chat_stream_with_structured_output(
                 user_message=request.message,
                 context=session_context
             ):
-                yield f"data: {json.dumps({'type': 'content', 'data': chunk})}\n\n"
+                # Stream text chunks
+                if text_chunk:
+                    yield f"data: {json.dumps({'type': 'content', 'data': text_chunk})}\n\n"
+
+                # Send metadata block at end
+                if metadata:
+                    yield f"data: {json.dumps({'type': 'metadata', 'data': metadata.dict()})}\n\n"
 
             yield "data: [DONE]\n\n"
 
