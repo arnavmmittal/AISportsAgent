@@ -1,7 +1,7 @@
 # Elite Sports Psychology System - Implementation Documentation
 
 **Last Updated**: 2025-12-12
-**Status**: Phase 4 Complete, Phase 5 In Progress
+**Status**: Phase 5 Complete (Routine Builder & Practice Integration)
 **Branch**: `feature/elite-sports-psych-system`
 
 ## Table of Contents
@@ -35,6 +35,8 @@ Transform the generic AI chat into an elite sports psychology session system tha
 - ✅ Structured JSON responses with action plans and tracking
 - ✅ Athlete memory system tracking effective techniques
 - ✅ Sport-aware, evidence-based RAG retrieval
+- ✅ **Phase 5**: Practice drills integrating mental skills into physical training
+- ✅ **Phase 5**: Pre-performance routines with timer-based cues
 
 ---
 
@@ -212,6 +214,155 @@ User Message
 - Effective techniques remembered and suggested
 - Smarter RAG with sport/evidence/phase awareness
 - Audit trail for all KB usage
+
+---
+
+### ✅ Phase 5: Routine Builder & Practice Integration (4 commits, +2580 lines)
+
+**Goal**: Convert mental skills into actionable practice drills and pre-performance routines
+
+**Files Created:**
+- `ai-sports-mcp/server/app/features/__init__.py` (9 lines)
+- `ai-sports-mcp/server/app/features/practice_integration.py` (1048 lines)
+- `ai-sports-mcp/server/app/features/routine_builder.py` (1010 lines)
+- `apps/web/src/components/chat/PracticeDrillCard.tsx` (246 lines)
+- `apps/web/src/components/chat/RoutineBuilderWidget.tsx` (396 lines)
+
+**Files Modified:**
+- `ai-sports-mcp/server/app/core/structured_response.py` (+66 lines: PracticeDrillResponse, PrePerformanceRoutineResponse, RoutineCueResponse)
+- `ai-sports-mcp/server/app/agents/athlete_agent.py` (+98 lines: drill/routine generation in PLAN phase)
+- `ai-sports-mcp/server/app/core/prompts.py` (+7 lines: PLAN phase instructions)
+- `apps/web/src/components/chat/ChatInterface.tsx` (+59 lines: metadata interface, widget rendering)
+
+**Key Features - Backend:**
+
+**Practice Integration System**:
+- `PracticeDrillGenerator` class with 8 mental skill categories
+- Sport-specific drill templates for 6 sports (softball/baseball, basketball, soccer, volleyball, golf, tennis)
+- Position-aware customization (pitchers, fielders, guards, forwards, etc.)
+- Drill components:
+  - Setup: Equipment and environment
+  - Mental component: Breathing, self-talk, imagery, etc.
+  - Physical component: Sport-specific reps
+  - 4-week progression: Weekly difficulty escalation
+  - Success metrics: Measurable outcomes
+  - Coaching notes: Implementation tips
+- `get_mental_skill_from_protocol()`: Maps protocol names to skills
+
+**Routine Builder System**:
+- `RoutineBuilder` class with 5 routine phases (PRE_GAME, WARMUP, FINAL_PREP, IMMEDIATE, BETWEEN_PLAY)
+- Timer-based cue sequences with 4 cue types (PHYSICAL, MENTAL, ENVIRONMENTAL, SOCIAL)
+- Sport-specific routines for 6 sports
+- Position-specific variants (e.g., pitcher vs. batter, free throw vs. defensive)
+- Routine components:
+  - Sequential cues with durations (5-600 seconds)
+  - Audio prompts for each step (voice integration ready)
+  - Purpose explanations for each cue
+  - Customization notes
+  - Effectiveness tracking metrics
+- `iterate_routine_based_on_feedback()`: Adaptive routine modification
+
+**Example Drills**:
+- **Softball**: Between-pitch breathing (pitchers), fielding reset (fielders), focused at-bats
+- **Basketball**: Free throw line reset, defensive lock-in drill
+- **Soccer**: Penalty kick calm protocol, pressure possession focus
+- **Golf**: Pre-shot routine (20-35 sec consistent), bad shot reset protocol
+- **Tennis**: Between-point reset (15-20 sec)
+
+**Example Routines**:
+- **Pre-Game** (40-60 min): Arrival → Visualization → Team warmup → Goal-setting → Breathing → Social connection
+- **Final Prep** (5-10 min): Last warmup → Mental rehearsal → Breathing → Focus cue → Equipment check
+- **Between-Play** (8-15 sec): Physical reset → Breathing → Cue word → Visualization → Execute
+
+**AI Integration**:
+- Drills/routines generated automatically in PLAN phase when protocol selected
+- Smart phase detection (pre-game vs. game-day vs. practice)
+- Uses athlete memory for effective techniques
+- Maps detected issues → appropriate mental skills → sport-specific drills
+- Added to structured response metadata (practice_drill, pre_performance_routine)
+
+**Key Features - Frontend:**
+
+**PracticeDrillCard Component**:
+- Expandable/collapsible card with green/teal gradient
+- Header: Mental skill badge + duration
+- Setup section with equipment details
+- Split view: Mental (🧠) vs. Physical (💪) components
+- Interactive 4-week progression:
+  - Visual week selector (1-4)
+  - Checkmark for completed weeks
+  - Progress highlighting (current=teal, completed=green, upcoming=gray)
+- Success metrics list
+- Coaching notes with yellow callout box
+- Progress tracking:
+  - Text area for weekly notes
+  - Week selector
+  - "Log Progress" and "Start Drill" buttons
+  - Callbacks for database save
+
+**RoutineBuilderWidget Component**:
+- Indigo/purple gradient theme
+- **Timer Mode** (when running):
+  - Large MM:SS countdown timer
+  - Progress bar (0-100%)
+  - Current cue highlighted with icon, description, purpose
+  - Auto-advance through steps
+  - Pause/Resume/Stop controls
+  - Step tracker: "Step X of Y"
+  - Duration per cue (e.g., "0:05 / 0:10")
+- **Preview Mode** (when not running):
+  - Start button with total duration
+  - Full step list with:
+    - Icon per cue type (💪🧠🌍👥)
+    - Colored badges (physical=blue, mental=purple, environmental=green, social=orange)
+    - Duration and purpose for each step
+    - Past/current/future visual states
+- Customization notes with yellow callout
+- Effectiveness tracking metrics
+- "Save My Routine" button for athlete memory
+- Callbacks for completion, customization save
+
+**Integration in ChatInterface**:
+- Added to StructuredMetadata interface (practice_drill?, pre_performance_routine?)
+- Conditional rendering when metadata includes these fields
+- Rendered alongside ActionPlanWidget and MetricTrackerWidget
+- TODO placeholders for:
+  - Drill start navigation (timer/tracker page)
+  - Progress logging (save to database)
+  - Routine completion feedback
+  - Customization save to athlete memory
+
+**Impact:**
+- **Action Plans Become Practice Plans**: Athletes get concrete drills to use in team practice
+- **Pre-Game Prep Codified**: Routines provide step-by-step game-day protocols
+- **Mental → Physical Bridge**: Mental skills integrated into physical reps (not separate)
+- **Sport-Specific**: Softball pitchers get different drills than basketball guards
+- **Progressive Training**: 4-week plans build skills systematically
+- **Measurable Success**: Metrics make progress trackable (error rate, breathing adherence, etc.)
+- **Timer-Based Execution**: Routines provide structured timing (no guessing)
+- **Customizable**: Athletes can modify routines based on feedback
+- **Voice Integration Ready**: Audio prompts structured for Phase 6 voice features
+
+**Example User Flow**:
+1. Athlete: "I'm anxious before games"
+2. AI detects issue → selects arousal regulation protocol → moves to PLAN phase
+3. AI generates:
+   - Action plan (TODAY: practice breathing, THIS WEEK: use in practice, NEXT GAME: pre-game routine)
+   - Practice drill (Between-pitch breathing protocol for softball pitchers)
+   - Pre-performance routine (Pre-game softball routine: 45 min, 7 cues)
+4. Athlete sees all three widgets below AI response
+5. Athlete clicks "Start Routine" → timer guides through 7 steps with audio prompts
+6. Athlete tracks progress on drill → logs Week 1 adherence: 85%
+7. Next session: AI references past drill effectiveness from memory
+
+**Technical Debt & TODOs**:
+- Drill/routine database persistence (currently in-memory structured responses)
+- Mobile app equivalents for PracticeDrillCard and RoutineBuilderWidget
+- Audio playback for routine cue prompts (structure ready, audio integration pending)
+- Customization save to AthleteMemory table
+- Drill adherence tracking integration with MoodLog
+- Analytics: most effective drills per sport/issue
+- Routine iteration based on athlete feedback (iterate_routine_based_on_feedback implemented but not integrated)
 
 ---
 
