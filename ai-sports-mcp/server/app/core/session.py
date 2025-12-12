@@ -115,13 +115,15 @@ async def get_session_context(
 
     if not chat_session:
         # Create new session with default discovery phase
+        now = datetime.utcnow()
         chat_session = ChatSession(
             id=session_id,
             athleteId=athlete_id,
             discoveryPhase="check_in",
+            phaseStartedAt=now,  # Track when CHECK_IN phase started
             isActive=True,
-            createdAt=datetime.utcnow(),
-            updatedAt=datetime.utcnow(),
+            createdAt=now,
+            updatedAt=now,
         )
         db.add(chat_session)
         db.commit()
