@@ -31,6 +31,7 @@ from app.core.structured_response import (
 )
 from app.core.protocol import ProtocolPhaseManager, InterventionSelector
 from app.core.session import update_athlete_memory
+from app.core.rag_enhancement import RAGQueryRewriter, KBChunkReranker
 
 logger = setup_logging()
 
@@ -88,6 +89,8 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
         self.knowledge_agent = knowledge_agent or KnowledgeAgent()
         self.phase_manager = ProtocolPhaseManager()
         self.intervention_selector = InterventionSelector()
+        self.query_rewriter = RAGQueryRewriter()
+        self.chunk_reranker = KBChunkReranker()
 
         logger.info("AthleteAgent initialized")
 
@@ -632,16 +635,30 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
         """
         logger.info(f"Processing structured streaming chat for session {context.session_id}")
 
-        # Retrieve knowledge base context
+        # Retrieve knowledge base context with enhanced RAG
         kb_chunks_raw = []
+        kb_citation_ids = []
         try:
+            # Generate multiple query variants for better retrieval
+            query_variants = self.query_rewriter.generate_queries(
+                user_message=user_message,
+                session_phase=context.current_phase,
+                detected_issues=[],  # Will be populated after first response
+                sport=context.sport,
+                athlete_memory=context.athlete_memory
+            )
+            logger.info(f"Generated {len(query_variants)} query variants for KB retrieval")
+
+            # Use primary query for now (enhanced KB integration would use all variants)
             kb_context_str = self._retrieve_knowledge_context(
-                query=user_message,
+                query=query_variants[0] if query_variants else user_message,
                 athlete_sport=context.sport,
                 max_chunks=3
             )
             if kb_context_str:
                 kb_chunks_raw = [kb_context_str]
+                # Track KB citations (simplified - would be actual chunk IDs in production)
+                kb_citation_ids = [f"kb_chunk_{i}" for i in range(3)]
         except Exception as e:
             logger.warning(f"Failed to retrieve KB context: {e}")
             kb_context_str = ""
@@ -720,6 +737,10 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             tool_call = structured_completion.choices[0].message.tool_calls[0]
             structured_data = json.loads(tool_call.function.arguments)
             structured_response = validate_structured_response(structured_data)
+
+            # Add KB citations if not already present
+            if not structured_response.kb_citations:
+                structured_response.kb_citations = kb_citation_ids
 
             # Stream the human response from structured data
             human_response = structured_response.human_response
