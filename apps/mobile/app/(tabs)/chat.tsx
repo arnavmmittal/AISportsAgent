@@ -21,6 +21,7 @@ import { sendChatMessage } from '../../lib/apiWithFallback';
 import { LoadingScreen, ErrorView } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 import { VoiceWebSocketClient } from '../../lib/voice';
+import config from '../../config';
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -213,7 +214,7 @@ export default function ChatScreen() {
 
     try {
       const client = new VoiceWebSocketClient({
-        wsUrl: 'ws://10.0.0.34:8000/api/voice/stream',
+        wsUrl: `${config.voiceUrl}/api/voice/stream`,
         sessionId,
         athleteId: userId,
         onTranscript: (transcript) => {
