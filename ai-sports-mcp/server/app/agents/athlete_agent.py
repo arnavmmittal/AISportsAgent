@@ -29,6 +29,7 @@ from app.core.structured_response import (
     create_default_structured_response,
     validate_structured_response
 )
+from app.core.protocol import ProtocolPhaseManager, InterventionSelector
 
 logger = setup_logging()
 
@@ -84,6 +85,8 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
         self.db = db
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.knowledge_agent = knowledge_agent or KnowledgeAgent()
+        self.phase_manager = ProtocolPhaseManager()
+        self.intervention_selector = InterventionSelector()
 
         logger.info("AthleteAgent initialized")
 
@@ -756,15 +759,32 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             )
             self.db.add(assistant_msg)
 
-            # Update session with new phase if needed
+            # Update session with new phase using phase manager
             session = self.db.query(models.ChatSession).filter(
                 models.ChatSession.id == context.session_id
             ).first()
             if session:
                 session.updatedAt = datetime.utcnow()
-                # Update discovery phase based on structured response
-                if hasattr(structured_response, 'session_stage'):
-                    session.discoveryPhase = structured_response.session_stage
+
+                # Determine if we should transition to next phase
+                # Count turns in current phase (simplified - count messages since phase started)
+                phase_messages = self.db.query(models.Message).filter(
+                    models.Message.sessionId == context.session_id,
+                    models.Message.createdAt >= session.updatedAt
+                ).count()
+                turn_count_in_phase = max(1, phase_messages // 2)  # Divide by 2 for user-assistant pairs
+
+                # Use phase manager to determine next phase
+                current_phase = SessionStage(context.current_phase)
+                next_phase = self.phase_manager.determine_next_phase(
+                    current_phase=current_phase,
+                    turn_count_in_phase=turn_count_in_phase,
+                    structured_response=structured_response
+                )
+
+                # Update session phase
+                session.discoveryPhase = next_phase.value
+                logger.info(f"Phase transition: {current_phase.value} → {next_phase.value}")
 
             self.db.commit()
         except Exception as e:
