@@ -1,9 +1,10 @@
 import * as SecureStore from 'expo-secure-store';
 import { createAPIClient } from '@sports-agent/api-client';
+import config from '../config';
 
-const API_URL = __DEV__
-  ? 'http://10.0.0.34:3000'  // Local dev - use your computer's IP for physical devices
-  : 'https://your-production-url.vercel.app';  // Production
+// Use centralized configuration - no more hardcoded IPs!
+// Update your IP in .env.local file instead
+const API_URL = config.apiUrl;
 
 export const apiClient = createAPIClient(API_URL);
 
