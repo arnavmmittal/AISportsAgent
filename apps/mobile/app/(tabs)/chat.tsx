@@ -213,7 +213,7 @@ export default function ChatScreen() {
 
     try {
       const client = new VoiceWebSocketClient({
-        wsUrl: 'ws://10.0.0.127:8000/api/voice/stream',
+        wsUrl: 'ws://10.0.0.34:8000/api/voice/stream',
         sessionId,
         athleteId: userId,
         onTranscript: (transcript) => {
