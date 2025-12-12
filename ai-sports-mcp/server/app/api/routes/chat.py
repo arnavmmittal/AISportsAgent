@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.agents import AthleteAgent, KnowledgeAgent, GovernanceAgent
 from app.core.logging import setup_logging
+from app.core.session import get_session_context
 
 logger = setup_logging()
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -61,6 +62,13 @@ async def chat(
             message=request.message,
             athlete_id=request.athlete_id,
             session_id=request.session_id
+        )
+
+        # Load full session context (conversation history, athlete profile, memory, mood, goals)
+        session_context = await get_session_context(
+            db=db,
+            session_id=request.session_id,
+            athlete_id=request.athlete_id
         )
 
         # Get AI response
@@ -126,6 +134,13 @@ async def chat_stream(
             session_id=request.session_id
         )
 
+        # Load full session context (conversation history, athlete profile, memory, mood, goals)
+        session_context = await get_session_context(
+            db=db,
+            session_id=request.session_id,
+            athlete_id=request.athlete_id
+        )
+
         # Initialize agents
         knowledge_agent = KnowledgeAgent()
         athlete_agent = AthleteAgent(db=db, knowledge_agent=knowledge_agent)
@@ -136,11 +151,10 @@ async def chat_stream(
             if crisis_check.get("final_risk_level") != "LOW":
                 yield f"data: {json.dumps({'type': 'crisis_check', 'data': crisis_check})}\n\n"
 
-            # Stream AI response
-            async for chunk in athlete_agent.chat_stream(
-                session_id=request.session_id,
+            # Stream AI response with full session context
+            async for chunk in athlete_agent.chat_stream_with_context(
                 user_message=request.message,
-                athlete_id=request.athlete_id
+                context=session_context
             ):
                 yield f"data: {json.dumps({'type': 'content', 'data': chunk})}\n\n"
 
