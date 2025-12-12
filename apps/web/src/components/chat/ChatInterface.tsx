@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { VoiceButton, AudioVisualizer } from '@/components/voice/VoiceButton';
+import { ActionPlanWidget } from '@/components/chat/ActionPlanWidget';
+import { MetricTrackerWidget } from '@/components/chat/MetricTrackerWidget';
 
 interface Message {
   id: string;
@@ -17,6 +19,50 @@ interface CrisisAlert {
   message?: string;
 }
 
+interface StructuredMetadata {
+  session_stage: string;
+  detected_issue_tags: string[];
+  sport_context: {
+    sport: string;
+    position?: string;
+    setting: string;
+    timeline?: string;
+    recent_event?: string;
+  };
+  key_hypotheses: string[];
+  selected_protocol?: {
+    name: string;
+    framework: string;
+    why_chosen: string;
+    confidence: number;
+  };
+  in_chat_exercise?: {
+    name: string;
+    steps: string[];
+    duration_seconds: number;
+    cue_word?: string;
+    sport_context: string;
+  };
+  action_plan: {
+    today: string[];
+    this_week: string[];
+    next_competition: string[];
+  };
+  tracking: {
+    metrics: Array<{
+      name: string;
+      scale: string;
+      target?: number;
+      when_to_log: string;
+    }>;
+    adherence_check: string;
+    one_word_debrief: string;
+  };
+  next_prompt: string;
+  kb_citations: string[];
+  human_response: string;
+}
+
 export function ChatInterface() {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,6 +71,7 @@ export function ChatInterface() {
   const [sessionId, setSessionId] = useState<string>('');
   const [crisisAlert, setCrisisAlert] = useState<CrisisAlert | null>(null);
   const [voiceMode, setVoiceMode] = useState(false);
+  const [currentMetadata, setCurrentMetadata] = useState<StructuredMetadata | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Voice integration
@@ -209,6 +256,10 @@ export function ChatInterface() {
                   }
                   return updated;
                 });
+              } else if (parsed.type === 'metadata') {
+                // Store structured metadata for widgets
+                setCurrentMetadata(parsed.data as StructuredMetadata);
+                console.log('Received structured metadata:', parsed.data);
               }
             } catch (e) {
               // Ignore parse errors for incomplete JSON
@@ -345,6 +396,36 @@ export function ChatInterface() {
           ))
         )}
         <div ref={messagesEndRef} className="h-4" />
+
+        {/* Structured Response Widgets */}
+        {currentMetadata && (
+          <div className="px-4">
+            {/* Action Plan Widget */}
+            {(currentMetadata.action_plan.today.length > 0 ||
+              currentMetadata.action_plan.this_week.length > 0 ||
+              currentMetadata.action_plan.next_competition.length > 0) && (
+              <ActionPlanWidget
+                plan={currentMetadata.action_plan}
+                onCheckItem={(timeframe, index, checked) => {
+                  console.log(`${timeframe}[${index}] checked: ${checked}`);
+                }}
+              />
+            )}
+
+            {/* Metric Tracker Widget */}
+            {currentMetadata.tracking.metrics.length > 0 && (
+              <MetricTrackerWidget
+                metrics={currentMetadata.tracking.metrics}
+                adherence_check={currentMetadata.tracking.adherence_check}
+                one_word_debrief={currentMetadata.tracking.one_word_debrief}
+                onLogMetric={(metricName, value) => {
+                  console.log(`Logged ${metricName}: ${value}`);
+                  // TODO: Save to database
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Input */}
