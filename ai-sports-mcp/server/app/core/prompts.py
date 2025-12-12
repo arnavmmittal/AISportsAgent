@@ -243,7 +243,8 @@ def build_sports_psych_prompt(
     athlete_memory: Optional[Dict[str, Any]] = None,
     kb_chunks: Optional[List[str]] = None,
     mood_context: Optional[Dict[str, Any]] = None,
-    goals_context: Optional[List[Dict[str, Any]]] = None
+    goals_context: Optional[List[Dict[str, Any]]] = None,
+    turn_count_in_phase: int = 0
 ) -> str:
     """
     Build phase-aware system prompt for elite sports psychology sessions.
@@ -255,6 +256,7 @@ def build_sports_psych_prompt(
         kb_chunks: Retrieved knowledge base chunks (evidence-based content)
         mood_context: Recent mood data (3-day average)
         goals_context: Active goals
+        turn_count_in_phase: Number of turns in current phase (for triage guidance)
 
     Returns:
         Complete system prompt with all context
@@ -266,6 +268,12 @@ def build_sports_psych_prompt(
     phase_key = phase.lower()
     if phase_key in PHASE_PROMPTS:
         prompt += f"\n\n{PHASE_PROMPTS[phase_key]}"
+
+    # Add triage guidance for CHECK_IN phase
+    if phase_key == "check_in":
+        triage_guidance = get_triage_guidance(turn_count_in_phase)
+        if triage_guidance:
+            prompt += f"\n\n{triage_guidance}"
 
     # Add sport-specific adaptations
     sport_lower = sport.lower()
@@ -367,3 +375,127 @@ def get_next_phase(current_phase: str, turn_count: int = 0) -> str:
 
     # Stay in current phase if not ready
     return current_phase
+
+
+# ============================================
+# TRIAGE QUESTIONS GENERATOR
+# ============================================
+
+TRIAGE_QUESTION_TEMPLATES = {
+    # Core discovery questions
+    "sport_context": [
+        "What sport do you play, and what position?",
+        "Are you in-season right now, or off-season?",
+        "When's your next competition?",
+    ],
+    "issue_identification": [
+        "What brings you here today? What's on your mind?",
+        "What's been the biggest mental challenge you're facing in your sport right now?",
+        "Is there a specific situation or moment that triggered this?",
+    ],
+    "recent_event": [
+        "Can you tell me about the last time this happened? What was going on?",
+        "Walk me through a recent game or practice where you felt this way.",
+        "What happened recently that made you want to talk about this?",
+    ],
+    "emotional_state": [
+        "How are you feeling about this right now?",
+        "On a scale of 1-10, how much is this affecting you?",
+        "What emotions come up when you think about your next game/competition?",
+    ],
+    "timeline": [
+        "Is this something new, or has it been ongoing?",
+        "How long have you been dealing with this?",
+        "Do you have a big competition coming up soon?",
+    ],
+}
+
+
+def generate_triage_questions(
+    turn_count: int,
+    detected_issues: List[str],
+    sport_known: bool,
+    timeline_known: bool
+) -> List[str]:
+    """
+    Generate targeted triage questions for CHECK_IN phase.
+
+    Args:
+        turn_count: Current turn in CHECK_IN phase
+        detected_issues: Issues detected so far
+        sport_known: Whether sport context is known
+        timeline_known: Whether timeline is known
+
+    Returns:
+        List of 1-3 triage questions to ask
+    """
+    questions = []
+
+    # Turn 1: Always start with issue identification
+    if turn_count == 0:
+        questions.append(TRIAGE_QUESTION_TEMPLATES["issue_identification"][0])
+        if not sport_known:
+            questions.append(TRIAGE_QUESTION_TEMPLATES["sport_context"][0])
+        return questions[:2]  # Max 2 questions on first turn
+
+    # Turn 2: Dig into specifics
+    if turn_count == 1:
+        if not detected_issues:
+            questions.append(TRIAGE_QUESTION_TEMPLATES["issue_identification"][1])
+
+        if not timeline_known:
+            questions.append(TRIAGE_QUESTION_TEMPLATES["timeline"][2])
+
+        questions.append(TRIAGE_QUESTION_TEMPLATES["recent_event"][0])
+        return questions[:3]  # Max 3 questions
+
+    # Turn 3: Final clarification if needed
+    if turn_count == 2:
+        questions.append(TRIAGE_QUESTION_TEMPLATES["emotional_state"][0])
+        if not timeline_known:
+            questions.append(TRIAGE_QUESTION_TEMPLATES["timeline"][0])
+        return questions[:2]
+
+    return []
+
+
+def get_triage_guidance(turn_count: int) -> str:
+    """
+    Get guidance for triage questioning based on turn count.
+
+    Args:
+        turn_count: Current turn in CHECK_IN phase
+
+    Returns:
+        Guidance string to add to prompt
+    """
+    if turn_count == 0:
+        return """
+TRIAGE TURN 1:
+Ask 1-2 questions to understand:
+1. What brings them here today (primary issue)
+2. Their sport and position (if not already known)
+
+Keep it conversational and welcoming. Don't overwhelm with questions.
+"""
+    elif turn_count == 1:
+        return """
+TRIAGE TURN 2:
+Ask 2-3 follow-up questions to clarify:
+1. Specific recent event that triggered this
+2. Timeline (when's next competition? how long has this been going on?)
+3. Dig deeper into the issue they mentioned
+
+Start building hypotheses about what's happening.
+"""
+    elif turn_count >= 2:
+        return """
+TRIAGE TURN 3 (FINAL):
+This should be your last CHECK_IN turn. Ask 1-2 final questions:
+1. Emotional state / intensity
+2. Any missing timeline info
+
+You should have enough to move to CLARIFY phase next turn.
+Summarize what you've learned and transition.
+"""
+    return ""

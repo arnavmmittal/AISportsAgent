@@ -191,6 +191,7 @@ model ChatSession {
 
   // Elite Sports Psych Protocol (NEW)
   discoveryPhase   String?   @default("check_in")  // check_in, clarify, formulation, intervention, plan, wrap_up
+  phaseStartedAt   DateTime? // When current phase started (for turn counting)
   sessionGoals     Json?     // [{type: "anxiety", techniques: ["breathing"]}]
   focusArea        String?   // "pre-game anxiety", "confidence drop", etc.
   systemContext    Json?     // {sport, position, recentMood, upcomingGame, athleteMemory}

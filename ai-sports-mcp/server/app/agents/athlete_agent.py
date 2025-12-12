@@ -645,14 +645,35 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             logger.warning(f"Failed to retrieve KB context: {e}")
             kb_context_str = ""
 
-        # Build elite sports psych system prompt
+        # Calculate turn count in current phase
+        # This helps with triage questions and phase transitions
+        try:
+            session = self.db.query(models.ChatSession).filter(
+                models.ChatSession.id == context.session_id
+            ).first()
+
+            if session:
+                # Count messages since phase started
+                # For simplicity, count all messages in session and divide by 2
+                total_messages = self.db.query(models.Message).filter(
+                    models.Message.sessionId == context.session_id
+                ).count()
+                turn_count_in_phase = max(0, total_messages // 2)
+            else:
+                turn_count_in_phase = 0
+        except Exception as e:
+            logger.warning(f"Failed to calculate turn count: {e}")
+            turn_count_in_phase = 0
+
+        # Build elite sports psych system prompt with turn count
         system_message = build_sports_psych_prompt(
             phase=context.current_phase,
             sport=context.sport,
             athlete_memory=context.athlete_memory,
             kb_chunks=kb_chunks_raw,
             mood_context=context.recent_mood,
-            goals_context=context.active_goals
+            goals_context=context.active_goals,
+            turn_count_in_phase=turn_count_in_phase
         )
 
         # Build conversation history from SessionContext
@@ -766,13 +787,20 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             if session:
                 session.updatedAt = datetime.utcnow()
 
-                # Determine if we should transition to next phase
-                # Count turns in current phase (simplified - count messages since phase started)
-                phase_messages = self.db.query(models.Message).filter(
-                    models.Message.sessionId == context.session_id,
-                    models.Message.createdAt >= session.updatedAt
-                ).count()
-                turn_count_in_phase = max(1, phase_messages // 2)  # Divide by 2 for user-assistant pairs
+                # Determine turn count in current phase
+                # Count messages since phase started (if phaseStartedAt is set)
+                if hasattr(session, 'phaseStartedAt') and session.phaseStartedAt:
+                    phase_messages = self.db.query(models.Message).filter(
+                        models.Message.sessionId == context.session_id,
+                        models.Message.createdAt >= session.phaseStartedAt
+                    ).count()
+                    turn_count_in_phase = max(1, phase_messages // 2)
+                else:
+                    # Fallback: use total messages
+                    total_messages = self.db.query(models.Message).filter(
+                        models.Message.sessionId == context.session_id
+                    ).count()
+                    turn_count_in_phase = max(1, total_messages // 2)
 
                 # Use phase manager to determine next phase
                 current_phase = SessionStage(context.current_phase)
@@ -783,8 +811,13 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
                 )
 
                 # Update session phase
+                old_phase = session.discoveryPhase
                 session.discoveryPhase = next_phase.value
-                logger.info(f"Phase transition: {current_phase.value} → {next_phase.value}")
+
+                # If phase changed, update phaseStartedAt
+                if old_phase != next_phase.value:
+                    session.phaseStartedAt = datetime.utcnow()
+                    logger.info(f"Phase transition: {old_phase} → {next_phase.value}")
 
             self.db.commit()
         except Exception as e:
