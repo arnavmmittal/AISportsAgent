@@ -20,6 +20,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.agents.knowledge_agent import KnowledgeAgent
 from app.db import models
+from app.core.session import SessionContext
 
 logger = setup_logging()
 
@@ -424,6 +425,179 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             logger.warning(f"Failed to save messages to database: {e}")
 
         logger.info(f"Streaming chat complete for session {session_id}")
+
+    async def chat_stream_with_context(
+        self,
+        user_message: str,
+        context: SessionContext
+    ) -> AsyncGenerator[str, None]:
+        """
+        Stream a chat response using pre-loaded SessionContext.
+
+        This method is context-aware and uses conversation history, athlete profile,
+        memory, mood logs, goals, and upcoming games to generate personalized responses.
+
+        Args:
+            user_message: The athlete's message
+            context: Pre-loaded SessionContext with full athlete state
+
+        Yields:
+            Chunks of the assistant's response
+        """
+        logger.info(f"Processing context-aware streaming chat for session {context.session_id}")
+
+        # Retrieve knowledge base context
+        knowledge_context = self._retrieve_knowledge_context(
+            query=user_message,
+            athlete_sport=context.sport,
+            max_chunks=3
+        )
+
+        # Build enhanced system message with full session context
+        system_message = self._build_context_aware_system_message(
+            context=context,
+            knowledge_context=knowledge_context
+        )
+
+        # Build conversation history from SessionContext
+        conversation_history = []
+        for msg in context.message_history:
+            conversation_history.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+
+        # Build messages for OpenAI
+        openai_messages = [
+            {"role": "system", "content": system_message}
+        ] + conversation_history + [
+            {"role": "user", "content": user_message}
+        ]
+
+        # Stream from OpenAI
+        stream = self.openai_client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=openai_messages,
+            temperature=settings.OPENAI_TEMPERATURE,
+            max_tokens=settings.OPENAI_MAX_TOKENS,
+            stream=True
+        )
+
+        # Collect full response for saving
+        full_response = ""
+
+        # Stream chunks
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                content = chunk.choices[0].delta.content
+                full_response += content
+                yield content
+
+        # Save messages after streaming completes
+        try:
+            user_msg = models.Message(
+                id=f"msg_{datetime.utcnow().timestamp()}_{context.athlete_id}_user",
+                sessionId=context.session_id,
+                role=models.MessageRole.user,
+                content=user_message,
+                createdAt=datetime.utcnow()
+            )
+            self.db.add(user_msg)
+
+            assistant_msg = models.Message(
+                id=f"msg_{datetime.utcnow().timestamp()}_{context.athlete_id}_assistant",
+                sessionId=context.session_id,
+                role=models.MessageRole.assistant,
+                content=full_response,
+                createdAt=datetime.utcnow()
+            )
+            self.db.add(assistant_msg)
+
+            # Update session
+            session = self.db.query(models.ChatSession).filter(
+                models.ChatSession.id == context.session_id
+            ).first()
+            if session:
+                session.updatedAt = datetime.utcnow()
+
+            self.db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to save messages to database: {e}")
+
+        logger.info(f"Context-aware streaming chat complete for session {context.session_id}")
+
+    def _build_context_aware_system_message(
+        self,
+        context: SessionContext,
+        knowledge_context: str
+    ) -> str:
+        """
+        Build enhanced system message with full session context.
+
+        Includes athlete profile, memory, recent mood, active goals, and upcoming games.
+
+        Args:
+            context: SessionContext with full athlete state
+            knowledge_context: Retrieved knowledge base context
+
+        Returns:
+            Complete system message with rich context
+        """
+        system_msg = self.SYSTEM_PROMPT
+
+        # Add athlete profile
+        system_msg += f"\n\nATHLETE PROFILE:\n"
+        system_msg += f"- Sport: {context.sport}\n"
+        if context.position:
+            system_msg += f"- Position: {context.position}\n"
+        system_msg += f"- Year: {context.year}\n"
+        system_msg += f"- Current Phase: {context.current_phase}\n"
+
+        # Add recent mood data if available
+        if context.recent_mood:
+            system_msg += f"\n\nRECENT MOOD (Last 3 Days):\n"
+            mood = context.recent_mood
+            if 'mood_avg' in mood:
+                system_msg += f"- Mood: {mood['mood_avg']:.1f}/10 (range: {mood.get('mood_min', 'N/A')}-{mood.get('mood_max', 'N/A')})\n"
+            if 'confidence_avg' in mood:
+                system_msg += f"- Confidence: {mood['confidence_avg']:.1f}/10\n"
+            if 'stress_avg' in mood:
+                system_msg += f"- Stress: {mood['stress_avg']:.1f}/10\n"
+            if 'energy_avg' in mood:
+                system_msg += f"- Energy: {mood['energy_avg']:.1f}/10\n"
+            if 'sleep_avg' in mood:
+                system_msg += f"- Sleep: {mood['sleep_avg']:.1f} hours/night\n"
+
+        # Add active goals
+        if context.active_goals:
+            system_msg += f"\n\nACTIVE GOALS ({len(context.active_goals)}):\n"
+            for goal in context.active_goals[:3]:  # Max 3 goals
+                system_msg += f"- {goal['title']}: {goal.get('description', 'No description')}\n"
+
+        # Add upcoming games
+        if context.upcoming_games:
+            system_msg += f"\n\nUPCOMING COMPETITIONS:\n"
+            for game in context.upcoming_games[:2]:  # Max 2 games
+                system_msg += f"- {game.get('gameDate', 'Unknown date')} vs {game.get('opponentName', 'Unknown opponent')}\n"
+
+        # Add athlete memory insights if available
+        if context.athlete_memory:
+            memory = context.athlete_memory
+            if memory.get('effectiveTechniques'):
+                system_msg += f"\n\nEFFECTIVE TECHNIQUES (from past sessions):\n"
+                for tech in memory['effectiveTechniques'][:3]:
+                    system_msg += f"- {tech.get('name', 'Unknown')}: {tech.get('effectiveness', 'N/A')}/10 effectiveness\n"
+
+            if memory.get('commonTriggers'):
+                system_msg += f"\n\nCOMMON TRIGGERS:\n"
+                for trigger in memory['commonTriggers'][:3]:
+                    system_msg += f"- {trigger}\n"
+
+        # Add knowledge base context
+        if knowledge_context:
+            system_msg += f"\n\nRELEVANT KNOWLEDGE BASE CONTEXT:\n{knowledge_context}"
+
+        return system_msg
 
     async def generate_response(
         self,

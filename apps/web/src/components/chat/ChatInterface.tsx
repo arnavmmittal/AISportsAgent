@@ -65,12 +65,45 @@ export function ChatInterface() {
     },
   });
 
-  // Initialize session ID
+  // Initialize session ID (persistent per user)
   useEffect(() => {
     if (session?.user?.id) {
-      setSessionId(`session_${session.user.id}_${Date.now()}`);
+      // Use persistent session ID based on user ID only (no timestamp)
+      // This allows session history to persist across page refreshes
+      setSessionId(`session_${session.user.id}`);
     }
   }, [session]);
+
+  // Load message history when session ID is set
+  useEffect(() => {
+    if (!sessionId || !session?.user?.id) return;
+
+    const loadHistory = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/chat/${sessionId}/messages`);
+
+        if (response.ok) {
+          const history = await response.json();
+          // Convert to Message format
+          const loadedMessages: Message[] = history.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date(msg.createdAt),
+          }));
+          setMessages(loadedMessages);
+        }
+      } catch (error) {
+        console.error('Failed to load chat history:', error);
+        // Don't show error to user - just start with empty chat
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadHistory();
+  }, [sessionId, session?.user?.id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
