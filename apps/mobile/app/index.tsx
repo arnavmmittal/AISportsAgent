@@ -29,7 +29,8 @@ export default function Index() {
   }
 
   // Redirect to appropriate screen
-  return <Redirect href={isAuthenticated ? '/(tabs)/dashboard' : '/(auth)/login'} />;
+  // Unauthenticated users see welcome screen with login/signup options
+  return <Redirect href={isAuthenticated ? '/(tabs)/dashboard' : '/(auth)/welcome'} />;
 }
 
 const styles = StyleSheet.create({
