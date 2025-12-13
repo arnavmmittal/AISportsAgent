@@ -1,280 +1,261 @@
-# AI Sports Agent - Local Testing Guide
+# Testing Guide - Multi-User Testing Setup
 
-Complete guide to test both web and mobile apps locally.
+**Last Updated**: 2025-12-12
 
-## Prerequisites
-
-- **Node.js** >= 20.9.0
-- **pnpm** installed (`npm install -g pnpm`)
-- For iOS: macOS with Xcode
-- For Android: Android Studio with emulator
-- For Physical Device: **Expo Go app** (download from App Store/Play Store)
+This guide explains how to test the AI Sports Agent with multiple friends without passing your laptop around.
 
 ---
 
-## 🚀 First-Time Setup
+## Quick Comparison: Local vs Cloud Testing
 
-### 1. Install Dependencies
+| Feature | Local Testing | Cloud Testing (Railway) |
+|---------|---------------|-------------------------|
+| **Cost** | FREE | $5-10/month |
+| **Setup Time** | 5 minutes | 30 minutes |
+| **Your Laptop** | Must stay on | Can be off |
+| **Network Required** | Same WiFi | Any internet |
+| **Best For** | 2-3 friends, same location | 5-10+ friends, anywhere |
+| **Recommended?** | Quick tests only | **YES - for real testing** |
 
+**My Recommendation**: Use **Cloud Testing (Railway)** for any serious testing. Worth the $5-10.
+
+---
+
+## Option A: Local Testing (Same WiFi Only)
+
+### How It Works
+```
+Your Laptop (10.0.0.127):
+├─ MCP Server on port 8000
+├─ Web App on port 3000
+└─ ChromaDB (local)
+
+Friend's Phone (same WiFi):
+└─ Connects to http://10.0.0.127:3000
+```
+
+### Quick Steps
+
+1. **Start backend on your laptop:**
 ```bash
-# From project root
 cd /Users/arnavmittal/Desktop/SportsAgent
-
-# Install all packages (web + mobile + shared)
-pnpm install
+pnpm dev:full
 ```
 
-### 2. Configure Web App Database
-
+2. **Find your IP:**
 ```bash
-cd apps/web
-
-# Generate Prisma Client (TypeScript types for database)
-pnpm prisma:generate
-
-# Push schema to SQLite database (creates dev.db file)
-pnpm prisma db push
+ipconfig getifaddr en0
+# Example: 10.0.0.127
 ```
 
-**Important**: These Prisma commands only need to be run:
-- ✅ First time setting up the project
-- ✅ After running `pnpm install` (fresh node_modules)
-- ✅ After changing `prisma/schema.prisma`
-- ❌ NOT every time you start the dev server
-
-### 3. Verify Configuration
-
-**Check Web Environment** (`apps/web/.env.local`):
-```env
-DATABASE_URL=file:./dev.db
-NEXTAUTH_SECRET="your-secret-key"
-NEXTAUTH_URL="http://localhost:3000"
-OPENAI_API_KEY="sk-..."
-```
-
-**Check Mobile API URL** (`apps/mobile/lib/auth.ts`):
-```typescript
-const API_URL = __DEV__
-  ? 'http://10.0.0.127:3000'  // ✅ Your local IP
-  : 'https://your-production-url.vercel.app';
-```
-
----
-
-## 🏃 Running the Apps (Daily Use)
-
-### Terminal 1: Start Web Backend
-
+3. **Update mobile config:**
 ```bash
-cd /Users/arnavmittal/Desktop/SportsAgent/apps/web
-pnpm dev
+# Edit: apps/mobile/.env.local
+EXPO_PUBLIC_API_URL=http://10.0.0.127:3000
+EXPO_PUBLIC_VOICE_URL=ws://10.0.0.127:8000
 ```
 
-✅ **Web app running at: http://localhost:3000**
-
-**Wait for this message:**
-```
-✓ Ready in 1400ms
-```
-
-Leave this terminal running!
-
-### Terminal 2: Start Mobile App
-
-```bash
-cd /Users/arnavmittal/Desktop/SportsAgent/apps/mobile
-pnpm start
-```
-
-**Options:**
-- Press `i` → iOS Simulator
-- Press `a` → Android Emulator
-- Scan QR code with **Expo Go app** on your phone
-
----
-
-## 📱 Testing on Physical Device (Recommended)
-
-### Setup
-1. Download **Expo Go** app on your phone
-2. Make sure your phone and computer are on the **same WiFi**
-3. Your local IP is configured: **10.0.0.127**
-
-### Test Login
-
-**Demo Account (No Database Required)**:
-- Email: `demo@athlete.com`
-- Password: `demo123`
-- Works on both web and mobile immediately!
-
-**Or Create Your Own Account**:
-1. **On Web** (http://localhost:3000):
-   - Click "Sign Up"
-   - Create athlete account: `test@example.com` / `password123`
-
-2. **On Mobile** (Expo Go):
-   - Open the app via QR code
-   - Login with same credentials: `test@example.com` / `password123`
-
-### Test Features
-- ✅ **Chat**: Send message, see AI streaming response
-- ✅ **Mood**: Log mood, confidence, stress, sleep
-- ✅ **Goals**: Create goal, update progress
-- ✅ **Dashboard**: View stats and recent check-ins
-
----
-
-## 🔧 Troubleshooting
-
-### "Unable to connect to server" on Mobile
-
-**Problem**: Mobile app can't reach `http://10.0.0.127:3000`
-
-**Fix**:
-```bash
-# 1. Find your actual local IP
-ipconfig getifaddr en0  # macOS WiFi
-
-# 2. Update apps/mobile/lib/auth.ts
-const API_URL = __DEV__
-  ? 'http://YOUR_ACTUAL_IP:3000'  # Replace with your IP
-  : '...';
-```
-
-### "Prisma Client not initialized" Error
-
-**Problem**: Database client not generated
-
-**Fix**:
-```bash
-cd /Users/arnavmittal/Desktop/SportsAgent/apps/web
-
-# Regenerate Prisma Client
-pnpm prisma:generate
-
-# Sync database schema
-pnpm prisma db push
-
-# Restart dev server
-pnpm dev
-```
-
-### Port 3000 Already in Use
-
-**Problem**: Another process using port 3000
-
-**Fix**:
-```bash
-# Kill process on port 3000
-lsof -ti:3000 | xargs kill
-
-# Or let Next.js use port 3001
-# (Update mobile API URL to :3001)
-```
-
-### Supabase RLS Warnings
-
-**Problem**: Seeing "Table public.Account RLS not enabled"
-
-**Explanation**: You're using SQLite locally, not Supabase. These warnings are safe to ignore for local testing.
-
-**To silence warnings**: Switch `DATABASE_URL` in `.env.local` to:
-```env
-# Uncomment this line and comment out SQLite
-DATABASE_URL=postgresql://postgres:p%3FY83B%3FP%3FuNnP5b@db.ccbcrerrnkqqgxtlqjnm.supabase.co:5432/postgres?sslmode=require
-```
-
-Then run:
-```bash
-pnpm prisma db push
-pnpm dev
-```
-
----
-
-## 📝 Quick Reference Commands
-
-### Web Development
-```bash
-cd apps/web
-pnpm dev              # Start dev server
-pnpm build            # Production build
-pnpm prisma:generate  # Generate Prisma Client
-pnpm prisma db push   # Sync schema to database
-pnpm prisma:studio    # Open database GUI
-```
-
-### Mobile Development
+4. **Start mobile app:**
 ```bash
 cd apps/mobile
-pnpm start            # Start Expo dev server
-pnpm ios              # Run iOS simulator
-pnpm android          # Run Android emulator
+npm run start
 ```
 
-### Database Management
+5. **Friends test:**
+   - Install Expo Go (iOS/Android)
+   - Scan your QR code
+   - Must be on **same WiFi** as you
+   - Login: demo@athlete.com / demo123
+
+**Limitations:**
+- ❌ Your laptop must stay on
+- ❌ Everyone needs same WiFi
+- ❌ Can't test remotely
+
+---
+
+## Option B: Cloud Testing with Railway (Recommended!)
+
+### Why Railway?
+- ✅ Your laptop can be off
+- ✅ Friends test from anywhere
+- ✅ More realistic environment
+- ✅ Only $5-10/month
+
+### Setup (30 minutes)
+
+#### 1. Install Railway CLI
 ```bash
-cd apps/web
+npm install -g @railway/cli
+railway login
+```
 
-# View database in GUI
-pnpm prisma:studio    # Opens http://localhost:5555
+#### 2. Deploy Backend
+```bash
+cd /Users/arnavmittal/Desktop/SportsAgent/ai-sports-mcp/server
+railway init
+# Choose: Project name "ai-sports-mcp"
+railway up
+```
 
-# Reset database (WARNING: deletes all data)
-rm prisma/dev.db
-pnpm prisma db push
+#### 3. Set Environment Variables
 
-# Check database schema
-pnpm prisma:validate
+Go to Railway dashboard (https://railway.app) → Your Project → Variables:
+
+Add these:
+```
+DATABASE_URL = postgresql://postgres:p%3FY83B%3FP%3FuNnP5b@db.ccbcrerrnkqqgxtlqjnm.supabase.co:5432/postgres?sslmode=require
+
+OPENAI_API_KEY = sk-your-key-here
+
+ENVIRONMENT = production
+
+CORS_ORIGINS = *
+```
+
+#### 4. Get Your Public URL
+```bash
+railway domain
+# Example output: https://ai-sports-mcp-production-a1b2.up.railway.app
+```
+
+**Copy this URL!**
+
+#### 5. Update Mobile App
+```bash
+# Edit: apps/mobile/.env.local
+EXPO_PUBLIC_API_URL=https://ai-sports-mcp-production-a1b2.up.railway.app
+EXPO_PUBLIC_VOICE_URL=wss://ai-sports-mcp-production-a1b2.up.railway.app
+```
+
+Note: Use `https://` and `wss://` for Railway
+
+#### 6. Test
+```bash
+cd apps/mobile
+npm run start
+# Scan QR code on your phone
+# Login and send a message
+# Should work! 🎉
+```
+
+#### 7. Share with Friends
+
+Send them:
+1. Screenshot of Expo QR code
+2. Login: demo@athlete.com / demo123
+3. They can test from **anywhere**!
+
+### Railway Costs
+- **Free tier**: $5 credit/month (~10-20 hours)
+- **Starter plan**: $5/month (500 hours, no sleep)
+
+Upgrade at: Railway dashboard → Settings → Plans
+
+### Update Your Code
+```bash
+# When you make changes:
+cd ai-sports-mcp/server
+railway up  # Redeploy
+```
+
+### View Logs
+```bash
+railway logs --tail 50
 ```
 
 ---
 
-## 🎯 Testing Checklist
+## Testing Checklist
 
-### Web App (http://localhost:3000)
-- [ ] Sign up as athlete
-- [ ] Login with credentials
-- [ ] Chat with AI (test streaming)
-- [ ] Log mood entry
-- [ ] Create a goal
-- [ ] View dashboard
+### Before Testing
+- [ ] Set OpenAI limit: https://platform.openai.com/account/limits ($50-100/month)
+- [ ] Choose method (Local or Railway)
+- [ ] Test yourself first
+- [ ] Prepare feedback form
 
-### Mobile App (Expo Go)
-- [ ] Login with same credentials as web
-- [ ] Navigate between tabs (Dashboard, Chat, Mood, Goals)
-- [ ] Send chat message (verify streaming works)
-- [ ] Log mood with sliders
-- [ ] Create goal
-- [ ] Check dashboard shows same data as web
+### During Testing (Weekly)
+- [ ] Check OpenAI usage
+- [ ] Collect feedback
+- [ ] Fix critical bugs
+- [ ] Track engagement
 
-### Cross-Platform Sync
-- [ ] Create goal on web → appears on mobile
-- [ ] Log mood on mobile → appears on web
-- [ ] Chat session continues across devices
+### Metrics to Track
+- Sessions per user per week
+- Average session length
+- Voice vs text usage
+- Most used features
+- Bug frequency
 
 ---
 
-## 🐛 Common Issues
+## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Mobile can't connect | Verify same WiFi, check IP address in `auth.ts` |
-| Prisma error on login | Run `pnpm prisma:generate && pnpm prisma db push` |
-| Port 3000 in use | Kill process with `lsof -ti:3000 \| xargs kill` |
-| Expo QR won't scan | Press `a` or `i` for emulator, or type URL manually |
-| "Module not found" | Run `pnpm install` in project root |
+### "Network request failed"
+
+**Local:**
+- Check IP: `ipconfig getifaddr en0`
+- Update `.env.local` if changed
+- Restart Expo
+
+**Railway:**
+- Check status: `railway status`
+- View logs: `railway logs`
+- Test URL: `https://your-app.railway.app/health`
+
+### "Cannot connect to voice"
+
+- Railway: Use `wss://` (not `ws://`)
+- Local: Use `ws://` (not `wss://`)
+- Check MCP server is running
+
+### Changes not showing
+
+**Local:** Reload app (shake device)
+
+**Railway:** Redeploy → `railway up`
 
 ---
 
-## 🚢 Next Steps
+## Recommended Testing Flow
 
-After testing works:
-1. Review `apps/mobile/README.md` for detailed mobile features
-2. See `MOBILE_APP_DEPLOYMENT.md` for App Store submission
-3. Check `PLAN.md` for project roadmap and completed phases
+### Week 1: You + 2 Friends ($10-30)
+- Deploy to Railway
+- Share QR code
+- 50-100 test conversations
+- Fix major bugs
+
+### Week 2-3: 5-10 Real Athletes ($70-150)
+- Recruit from your team
+- Weekly check-ins
+- 300-500 conversations
+- Validate product-market fit
+
+### Week 4+: Scale or Iterate
+- If engagement high (60%+ weekly active): Scale to 50-100 users
+- If mixed: Iterate on feedback
+- If low: Pivot or redesign
 
 ---
 
-**Local IP**: 10.0.0.127
-**Web Port**: 3000
-**Database**: SQLite (local) / Supabase (production)
+## Next Steps
+
+1. **Choose your method:**
+   - Quick test (2-3 friends, same WiFi) → Local
+   - Real validation (5-10 athletes) → Railway ✅
+
+2. **Follow setup steps above**
+
+3. **Test yourself first**
+
+4. **Invite friends**
+
+5. **Collect feedback**
+
+6. **Iterate!**
+
+**Questions?** Check PRODUCTION_ROADMAP.md or create GitHub Issue
+
+---
+
+**Good luck testing! 🚀**
