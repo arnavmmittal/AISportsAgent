@@ -107,7 +107,7 @@ export default function DashboardScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/(auth)/login');
+    router.replace('/(auth)/welcome');
   };
 
   const getAverageMood = () => {
