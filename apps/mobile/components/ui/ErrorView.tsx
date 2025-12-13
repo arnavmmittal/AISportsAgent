@@ -1,5 +1,6 @@
 /**
  * Error state component with retry action
+ * Full-screen error display for critical failures
  */
 
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
@@ -9,6 +10,7 @@ import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme
 interface ErrorViewProps {
   title?: string;
   message: string;
+  icon?: 'network' | 'server' | 'generic';
   actionLabel?: string;
   onAction?: () => void;
 }
@@ -16,13 +18,21 @@ interface ErrorViewProps {
 export function ErrorView({
   title = 'Something went wrong',
   message,
+  icon = 'generic',
   actionLabel = 'Try Again',
   onAction
 }: ErrorViewProps) {
+  // Icon selection based on error type
+  const iconName = {
+    network: 'cloud-offline-outline' as const,
+    server: 'server-outline' as const,
+    generic: 'alert-circle-outline' as const,
+  }[icon];
+
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
-        <Ionicons name="alert-circle-outline" size={64} color={Colors.error} />
+        <Ionicons name={iconName} size={64} color={Colors.error} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
