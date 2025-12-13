@@ -101,6 +101,13 @@ export default function LoginScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.gradientHeader}
       >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+
         <Animated.View
           style={[
             styles.headerContent,
@@ -229,7 +236,7 @@ export default function LoginScreen() {
         <TouchableOpacity
           style={styles.linkButton}
           onPress={() => {
-            router.push('/(auth)/signup');
+            router.push('/(auth)/welcome');
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }}
           disabled={isLoading}
@@ -252,6 +259,10 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: Spacing.xxxl,
     paddingHorizontal: Spacing.lg,
+  },
+  backButton: {
+    padding: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   headerContent: {
     alignItems: 'center',
