@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AthleteSignupData } from '../../../types/auth';
+import { signupAthlete, getRoleBasedRoute } from '../../../lib/auth';
 
 export default function AthleteSignup() {
   const router = useRouter();
@@ -114,17 +115,16 @@ export default function AthleteSignup() {
     if (!validateStep3()) return;
 
     try {
-      // TODO: Call API to create athlete account
-      // const response = await fetch(`${API_URL}/api/auth/signup/athlete`, {
-      //   method: 'POST',
-      //   body: JSON.stringify(formData)
-      // });
+      const user = await signupAthlete(formData as AthleteSignupData);
 
-      Alert.alert('Success', 'Account created! Please sign in.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
+      Alert.alert('Success', 'Account created successfully!', [
+        {
+          text: 'Get Started',
+          onPress: () => router.replace(getRoleBasedRoute(user.role)),
+        },
       ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
     }
   };
 
