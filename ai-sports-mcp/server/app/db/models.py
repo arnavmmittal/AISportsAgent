@@ -209,6 +209,14 @@ class ChatSession(Base):
     topic = Column(String, nullable=True)
     sentiment = Column(String, nullable=True)
 
+    # Elite Sports Psychology System fields (Phase 1)
+    discoveryPhase = Column(String, default="check_in", nullable=True)
+    phaseStartedAt = Column(DateTime, nullable=True)
+    sessionGoals = Column(Text, nullable=True)  # JSON string
+    focusArea = Column(String, nullable=True)
+    systemContext = Column(Text, nullable=True)  # JSON string
+    isActive = Column(Boolean, default=True, nullable=False)
+
     createdAt = Column(DateTime, default=datetime.utcnow, nullable=False)
     updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
