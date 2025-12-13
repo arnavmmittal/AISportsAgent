@@ -18,27 +18,45 @@ export default function Welcome() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.mainHeading}>Mental Performance</Text>
-          <Text style={styles.subHeading}>Made Accessible</Text>
+          <Text style={styles.mainHeading}>AI Sports Agent</Text>
+          <Text style={styles.subHeading}>Mental Performance Made Accessible</Text>
 
           <Text style={styles.description}>
             Evidence-based mental performance support for collegiate athletes. Available 24/7.
           </Text>
 
-          {/* CTA Buttons */}
-          <View style={styles.ctaContainer}>
+          {/* Role Selection */}
+          <Text style={styles.rolePrompt}>I am a...</Text>
+
+          <View style={styles.roleCardsContainer}>
             <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => router.push('/(auth)/signup')}
+              style={styles.roleCard}
+              onPress={() => router.push('/(auth)/signup/athlete')}
             >
-              <Text style={styles.primaryButtonText}>Get Started Free</Text>
+              <Text style={styles.roleIcon}>🏀</Text>
+              <Text style={styles.roleTitle}>ATHLETE</Text>
+              <Text style={styles.roleDescription}>
+                Get 24/7 mental performance support from AI coach
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => router.push('/(auth)/login')}
+              style={styles.roleCard}
+              onPress={() => router.push('/(auth)/signup/coach')}
             >
-              <Text style={styles.secondaryButtonText}>Sign In</Text>
+              <Text style={styles.roleIcon}>🎓</Text>
+              <Text style={styles.roleTitle}>COACH</Text>
+              <Text style={styles.roleDescription}>
+                Monitor your athletes' mental health and team insights
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Sign In Option */}
+          <View style={styles.signInContainer}>
+            <Text style={styles.signInText}>Already have an account?</Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+              <Text style={styles.signInLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
 
@@ -120,19 +138,25 @@ const styles = StyleSheet.create({
     color: '#e0f2fe',
     textAlign: 'center',
     lineHeight: 28,
-    marginBottom: 40,
+    marginBottom: 32,
     paddingHorizontal: 16,
   },
-  ctaContainer: {
+  rolePrompt: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  roleCardsContainer: {
     width: '100%',
     gap: 16,
-    marginBottom: 24,
+    marginBottom: 32,
   },
-  primaryButton: {
-    backgroundColor: '#ffffff',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+  roleCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 24,
+    borderRadius: 16,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -140,24 +164,38 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  primaryButtonText: {
+  roleIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  roleTitle: {
+    fontSize: 20,
+    fontWeight: '900',
     color: '#1e3a8a',
-    fontSize: 18,
-    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: 1,
   },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+  roleDescription: {
+    fontSize: 14,
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  signInContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
+    gap: 6,
+    marginBottom: 24,
   },
-  secondaryButtonText: {
+  signInText: {
+    fontSize: 16,
+    color: '#e0f2fe',
+  },
+  signInLink: {
+    fontSize: 16,
     color: '#ffffff',
-    fontSize: 18,
     fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   trustIndicator: {
     fontSize: 14,
