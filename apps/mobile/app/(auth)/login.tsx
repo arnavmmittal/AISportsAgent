@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { login } from '../../lib/auth';
+import { login, getRoleBasedRoute } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
 
 export default function LoginScreen() {
@@ -74,12 +74,13 @@ export default function LoginScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
-      await login(email, password);
+      const user = await login(email, password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Force navigation with a small delay to ensure state updates
+      // Navigate to role-based dashboard
+      const route = getRoleBasedRoute(user.role);
       setTimeout(() => {
-        router.replace('/(tabs)/dashboard');
+        router.replace(route as any);
       }, 100);
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');

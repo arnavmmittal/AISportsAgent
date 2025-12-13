@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { CoachSignupData } from '../../../types/auth';
+import { signupCoach, getRoleBasedRoute } from '../../../lib/auth';
 
 export default function CoachSignup() {
   const router = useRouter();
@@ -142,17 +143,16 @@ export default function CoachSignup() {
     if (!validateStep3()) return;
 
     try {
-      // TODO: Call API to create coach account
-      // const response = await fetch(`${API_URL}/api/auth/signup/coach`, {
-      //   method: 'POST',
-      //   body: JSON.stringify(formData)
-      // });
+      const user = await signupCoach(formData as CoachSignupData);
 
-      Alert.alert('Success', 'Account created! Please sign in.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
+      Alert.alert('Success', 'Coach account created successfully!', [
+        {
+          text: 'Get Started',
+          onPress: () => router.replace(getRoleBasedRoute(user.role)),
+        },
       ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
     }
   };
 
