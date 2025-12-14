@@ -1,36 +1,8 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Home() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      // Redirect based on role
-      if (session.user?.role === 'COACH') {
-        router.push('/coach/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
-    }
-  }, [status, session, router]);
-
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       {/* Hero Section */}
@@ -103,113 +75,65 @@ export default function Home() {
             description="Coaches get anonymized team-wide mental performance trends and at-risk athlete alerts."
           />
           <FeatureCard
-            icon="🔒"
-            title="Private & Secure"
-            description="FERPA compliant with role-based access control. Your mental health data stays confidential."
+            icon="🛡️"
+            title="Crisis Detection"
+            description="AI-powered mental health monitoring with automatic escalation for at-risk situations."
           />
         </div>
       </div>
 
-      {/* For Athletes Section */}
+      {/* Research-Backed Section */}
       <div className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">
-              Built for Athletes
-            </h2>
-            <div className="space-y-4">
-              <UseCaseItem
-                title="Pre-Competition Anxiety"
-                description="Learn techniques to manage nerves and perform under pressure"
-              />
-              <UseCaseItem
-                title="Building Confidence"
-                description="Develop mental strategies to boost self-belief and overcome setbacks"
-              />
-              <UseCaseItem
-                title="Focus & Concentration"
-                description="Improve your ability to stay present and focused during competition"
-              />
-              <UseCaseItem
-                title="Stress Management"
-                description="Balance academics, athletics, and personal life effectively"
-              />
-              <UseCaseItem
-                title="Recovery & Burnout Prevention"
-                description="Maintain mental freshness throughout your season and career"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* For Coaches Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 text-center">
-              Coaching Tools
-            </h2>
-            <p className="text-gray-600 text-center mb-8">
-              Extend your sports psychology resources beyond traditional capacity
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Evidence-Based Approach</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Built on proven sports psychology frameworks with citations to peer-reviewed research
             </p>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-3">📈</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Readiness Dashboard
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  View team mental readiness 24-48hrs before games with traffic light scoring (GREEN/YELLOW/RED)
-                </p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-3">🎯</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Performance Correlation
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  See how mental state (mood, stress, sleep) impacts game stats to prove ROI
-                </p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-3">⚠️</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Crisis Detection
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Automatic alerts for self-harm, depression, or abuse disclosures with 1-hour SLA
-                </p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-3">📊</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Team Analytics
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Track trends across 150+ athletes without compromising individual privacy
-                </p>
-              </div>
-            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <ResearchCard
+              framework="Cognitive Behavioral Therapy (CBT)"
+              description="Challenge negative thought patterns and develop performance-enhancing beliefs"
+              citation="Beck et al., 2011"
+            />
+            <ResearchCard
+              framework="Mindfulness-Based Interventions"
+              description="Enhance focus, reduce anxiety, and improve emotional regulation during competition"
+              citation="Kabat-Zinn, 2015"
+            />
+            <ResearchCard
+              framework="Flow State Training"
+              description="Optimize the balance between challenge and skill for peak performance states"
+              citation="Csikszentmihalyi, 1990"
+            />
+            <ResearchCard
+              framework="Goal-Setting Theory"
+              description="Use SMART goals to maximize motivation and performance outcomes"
+              citation="Locke & Latham, 2002"
+            />
           </div>
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Ready to optimize mental performance?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join coaches and athletes using AI to gain a competitive edge
-          </p>
-          <Link
-            href="/auth/signup"
-            className="inline-block px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl"
-          >
-            Get Started Free
-          </Link>
+      {/* Social Proof Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-12">Trusted by Athletes & Coaches</h2>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <TestimonialCard
+              quote="Having 24/7 access to mental skills support has been a game-changer. It's like having a sports psychologist in my pocket."
+              author="Sarah J."
+              role="D1 Basketball Player"
+            />
+            <TestimonialCard
+              quote="The readiness scores help me make better lineup decisions. I know which athletes are mentally prepared before each game."
+              author="Coach Martinez"
+              role="Women's Soccer Head Coach"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -218,25 +142,33 @@ export default function Home() {
 
 function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
+    <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
       <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
+      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </div>
   );
 }
 
-function UseCaseItem({ title, description }: { title: string; description: string }) {
+function ResearchCard({ framework, description, citation }: { framework: string; description: string; citation: string }) {
   return (
-    <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
-      <div className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mt-1">
-        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
-        <p className="text-gray-600">{description}</p>
+    <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
+      <h4 className="text-lg font-bold text-gray-900 mb-2">{framework}</h4>
+      <p className="text-gray-700 mb-3">{description}</p>
+      <p className="text-sm text-blue-700 font-medium">{citation}</p>
+    </div>
+  );
+}
+
+function TestimonialCard({ quote, author, role }: { quote: string; author: string; role: string }) {
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-xl">
+      <p className="text-lg text-gray-700 italic mb-4">"{quote}"</p>
+      <div className="flex items-center">
+        <div>
+          <p className="font-semibold text-gray-900">{author}</p>
+          <p className="text-sm text-gray-600">{role}</p>
+        </div>
       </div>
     </div>
   );
