@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   LineChart,
   Line,
@@ -69,6 +70,7 @@ interface InviteCodeData {
 }
 
 export default function EnhancedDashboard({ userId }: { userId: string }) {
+  const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [inviteCodeData, setInviteCodeData] = useState<InviteCodeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -404,7 +406,8 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
               {atRiskAthletes.map((athlete) => (
                 <div
                   key={athlete.id}
-                  className="border-2 border-red-300 rounded-xl p-6 bg-gradient-to-br from-red-50 to-orange-50 hover:shadow-xl transition-all hover:scale-105 transform"
+                  className="border-2 border-red-300 rounded-xl p-6 bg-gradient-to-br from-red-50 to-orange-50 hover:shadow-xl transition-all hover:scale-105 transform cursor-pointer"
+                  onClick={() => router.push(`/coach/athletes/${athlete.id}`)}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -431,9 +434,26 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                       </div>
                     </div>
                   )}
-                  <button className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:shadow-xl transition-all font-bold hover:scale-105 transform">
-                    📨 Send Check-In
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/coach/athletes/${athlete.id}`);
+                      }}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold text-sm"
+                    >
+                      👁️ View
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/coach/athletes/${athlete.id}`);
+                      }}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:shadow-xl transition-all font-bold text-sm"
+                    >
+                      📨 Check-In
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -451,7 +471,8 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
               {athleteReadiness.map((item) => (
                 <div
                   key={item.athlete.id}
-                  className={`border-2 rounded-xl p-6 ${
+                  onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
+                  className={`border-2 rounded-xl p-6 cursor-pointer ${
                     item.status === 'excellent'
                       ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50'
                       : item.status === 'good'
