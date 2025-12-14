@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
           coachId: user.id,
         },
         include: {
-          submissions: {
+          AssignmentSubmission: {
             select: {
               id: true,
               athleteId: true,
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
           ],
         },
         include: {
-          submissions: {
+          AssignmentSubmission: {
             where: {
               athleteId: user.id,
             },
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         targetSport: data.targetSport || null,
       },
       include: {
-        submissions: true,
+        AssignmentSubmission: true,
       },
     });
 

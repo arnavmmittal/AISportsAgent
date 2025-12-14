@@ -1,0 +1,480 @@
+# 🎯 COACH PORTAL IMPLEMENTATION PROGRESS
+
+## Current Status: Foundation Complete → Moving to Implementation
+
+**Last Updated**: December 13, 2025
+**Current Branch**: (Ready to create `feature/coach-portal-foundation`)
+**Completion**: ~60% Foundation Complete (All base components ✓, ready for Command Center)
+
+---
+
+## ✅ COMPLETED WORK
+
+### 1. Strategic Architecture & Design ✓
+**Location**: This document + `COACH_PORTAL_IMPLEMENTATION_PLAN.md`
+
+**Final Tab Structure (7 Tabs)**:
+1. **COMMAND CENTER** - AI-powered mission control dashboard
+2. **ROSTER** - Athlete management with advanced filtering
+3. **ANALYTICS HUB** - Deep intelligence & cohort analysis
+4. **READINESS COMMAND** - Game-day optimization system
+5. **ASSIGNMENTS & HABITS** - Structured mental skills development
+6. **AI INSIGHTS** - Automated summaries, predictions, recommendations
+7. **SETTINGS & ADMIN** - Team config, notifications, AI tuning
+
+**Key Design Decisions**:
+- Dashboard-first approach (coach sees problems immediately)
+- Privacy-first (clear visual consent indicators)
+- Evidence-based actions (every insight → intervention)
+- Mobile-responsive but desktop-optimized (coaches work on laptops)
+
+---
+
+### 2. TypeScript Type System ✓
+**Location**: `/apps/web/src/types/coach-portal.ts` (700+ lines)
+
+**Comprehensive Interfaces Created**:
+- ✅ Core entities: `Coach`, `Athlete`, `AthleteArchetype`
+- ✅ Readiness system: `ReadinessScore`, `ReadinessDimensions`, `ReadinessForecast`
+- ✅ Risk & crisis: `RiskAssessment`, `RiskFlag`, `CrisisAlert`, `BurnoutPrediction`
+- ✅ Performance: `PerformanceMetric`, `PerformancePrediction`
+- ✅ Mood & wellness: `MoodLog`, `MoodTrend`
+- ✅ Goals & tasks: `Goal`, `Assignment`, `AssignmentSubmission`
+- ✅ AI insights: `AIInsight`, `AIInsightType` (14 types)
+- ✅ Team dynamics: `TeamChemistry`, `SocialNetwork`, `Clique`
+- ✅ Coach actions: `CoachIntervention`, `CoachNote`
+- ✅ Command center: `CommandCenterData`, `PriorityAthlete`
+- ✅ Analytics: `CohortComparison`, `CorrelationAnalysis`, `LongitudinalTrend`
+- ✅ API responses: `APIResponse`, `PaginatedResponse`
+- ✅ Filters & queries: `AthleteFilters`, `AnalyticsQuery`
+
+**Why This Matters**: Type safety prevents bugs, enables autocomplete, documents data contracts.
+
+---
+
+### 3. Git Workflow & Development Plan ✓
+**Location**: `COACH_PORTAL_IMPLEMENTATION_PLAN.md`
+
+**Established**:
+- ✅ Branch naming conventions
+- ✅ 10-week phased development plan
+- ✅ Commit message standards (Conventional Commits)
+- ✅ PR review checklist
+- ✅ CI/CD pipeline configuration
+- ✅ Testing strategy (unit, integration, E2E)
+- ✅ Performance budgets (<2s load, <200kb bundle)
+
+---
+
+### 4. Core UI Components ✓ (COMPLETE)
+**Location**: `/apps/web/src/components/coach/ui/`
+
+**All 8 Components Built**:
+1. ✅ **ReadinessIndicator.tsx** - Traffic light system for readiness
+   - Configurable sizes (sm, md, lg)
+   - Shows score + level + visual dot
+   - Compact variant for tables
+   - Color-coded: Green (90+), Blue (75-89), Amber (60-74), Red (45-59), Dark Red (0-44)
+
+2. ✅ **RiskBadge.tsx** - Risk level visual indicator
+   - 4 severity levels: CRITICAL, HIGH, MODERATE, LOW
+   - Severity-based colors and icons
+   - Optional risk score display
+   - Compact for use in athlete cards
+
+3. ✅ **ArchetypeBadge.tsx** - Psychological archetype indicator
+   - 8 archetypes with emoji icons
+   - Hover tooltip with archetype description and evidence-based coaching tips
+   - Helps coaches adapt communication style
+
+4. ✅ **TrendArrow.tsx** - Delta direction indicators
+   - Up/down/neutral arrows with color coding
+   - Configurable sizes (sm, md, lg)
+   - Inverse mode for metrics where down is good (stress, risk)
+   - Compact and percentage variants
+
+5. ✅ **StatCard.tsx** - Dashboard metric cards
+   - 4 visual variants (default, success, warning, danger)
+   - Optional trend indicators
+   - Icon support with custom backgrounds
+   - Compact variant and grid layout helper
+
+6. ✅ **AthleteAvatar.tsx** - Profile images with fallbacks
+   - 5 sizes (xs, sm, md, lg, xl)
+   - Automatic initials fallback with color-coded backgrounds
+   - Status indicator for readiness level
+   - Avatar group component for multiple athletes
+
+7. ✅ **Skeleton.tsx** - Loading state components
+   - Multiple variants (default, card, text, circle, avatar)
+   - Preset skeletons for common layouts (athlete cards, stat cards, tables, charts, dashboards)
+   - Smooth pulse animation
+
+8. ✅ **EmptyState.tsx** - No data placeholders
+   - Default and compact variants
+   - Optional action buttons
+   - 10 preset empty states (athletes, search, assignments, goals, mood logs, interventions, alerts, notes, charts, consent)
+
+---
+
+### 5. Chart Components Library ✓ (COMPLETE)
+**Location**: `/apps/web/src/components/coach/charts/`
+
+**All 5 Chart Components Built**:
+1. ✅ **LineChart.tsx** - Trend visualization
+   - Customizable multi-line charts with tooltips
+   - Preset configurations: MoodTrend, ReadinessTrend, StressTrend, PerformanceTrend
+   - Recharts integration with custom styling
+
+2. ✅ **BarChart.tsx** - Comparison visualizations
+   - Standard and stacked bar charts
+   - ColoredBarChart variant for custom coloring
+   - Presets: ReadinessDistribution, CohortComparison, SportComparison, GoalCompletion
+
+3. ✅ **RadarChart.tsx** - Multi-dimensional analysis
+   - 6-dimensional readiness visualization
+   - ReadinessRadarChart with single athlete view
+   - Comparison modes: ReadinessComparison, AthleteVsTeam
+   - Generic MultiMetricRadar for any metrics
+
+4. ✅ **HeatMap.tsx** - Grid-based visualizations
+   - Customizable heatmap with readiness color coding
+   - DailyReadinessHeatMap for team snapshot (athletes × days)
+   - CalendarHeatMap (GitHub-style contribution graph)
+   - CorrelationHeatMap for metric relationships
+
+5. ✅ **NetworkGraph.tsx** - Social network visualization
+   - Force-directed graph layout algorithm
+   - TeamChemistryNetwork with athlete connections
+   - CliqueVisualization for social group detection
+   - Interactive nodes with click handlers
+
+---
+
+### 6. Reusable Layouts ✓ (COMPLETE)
+**Location**: `/apps/web/src/components/coach/layouts/`
+
+**All 3 Layout Components Built**:
+1. ✅ **CoachPortalLayout.tsx** - Main portal layout
+   - Collapsible sidebar with 7 navigation items
+   - Top bar with breadcrumbs and quick actions
+   - Footer with coach profile
+   - Tooltip support for collapsed state
+   - Responsive transitions
+
+2. ✅ **DashboardGrid.tsx** - Responsive grid system
+   - Multiple grid variants (default, compact, wide)
+   - GridCell component with configurable spans
+   - TwoColumnLayout and ThreeColumnLayout presets
+   - MasonryGrid for variable height content
+   - StatsGrid optimized for metric cards
+   - DashboardWidget container with variants (default, compact, glass)
+   - DashboardSection for organized content areas
+   - DashboardContainer with max-width control
+   - DashboardSpacer for consistent vertical spacing
+
+3. ✅ **TabNavigation.tsx** - Multi-section page tabs
+   - 3 visual variants (default, pills, underline)
+   - Badge support for notification counts
+   - Icon support
+   - ControlledTabs for external state management
+   - VerticalTabs for sidebar-style navigation
+   - SegmentedControl (iOS-style) for compact options
+
+---
+
+## 🚧 IN PROGRESS
+
+### Foundation Phase Wrap-Up
+**Current Status**: All base components complete! Ready to build actual pages.
+
+**Next Steps**:
+1. ⏳ Document completed foundation work
+2. ⏳ Create git branch and commit foundation components
+3. ⏳ Begin Command Center dashboard implementation
+
+---
+
+## 📋 NEXT STEPS (Ordered by Priority)
+
+### Phase 1: Complete Foundation (Next 2-3 days)
+
+#### A. Finish Core UI Components
+1. Create `TrendArrow.tsx`
+2. Create `StatCard.tsx` for quick stats
+3. Create `AthleteAvatar.tsx`
+4. Create `Skeleton.tsx` loading states
+5. Create `EmptyState.tsx`
+
+#### B. Build Chart Components (`/components/coach/charts/`)
+1. `LineChart.tsx` - Mood trends over time
+2. `BarChart.tsx` - Cohort comparisons
+3. `RadarChart.tsx` - 6-dimensional readiness
+4. `HeatMap.tsx` - Daily readiness snapshot
+5. `NetworkGraph.tsx` - Team chemistry visualization
+
+#### C. Create Reusable Layouts
+1. `CoachPortalLayout.tsx` - Sidebar nav + main content area
+2. `DashboardGrid.tsx` - Responsive grid system
+3. `TabNavigation.tsx` - Sub-page tabs (Analytics Hub)
+
+---
+
+### Phase 2: Command Center (Week 1-2)
+
+**Goal**: Build the most critical page - the daily mission control dashboard
+
+**Components**:
+1. `/app/(coach)/command-center/page.tsx` - Main page
+2. `PriorityAthleteList.tsx` - AI-sorted athlete list
+   - Urgency levels: CRITICAL → URGENT → MONITOR → THRIVING
+   - Top 3 risk factors per athlete
+   - Suggested interventions
+3. `QuickStatsGrid.tsx` - 4-card overview
+   - Team readiness distribution (pie chart)
+   - Active crisis alerts (number + severity)
+   - Assignments due (count)
+   - Week-over-week delta
+4. `ActionFeed.tsx` - Real-time algorithmic flags
+   - Burnout risk detected
+   - Stress spike in 3 athletes
+   - Engagement drop >70%
+5. `InterventionTracker.tsx` - Recent coach actions
+   - Last 5 interventions
+   - Outcomes (if recorded)
+
+**Backend API** (`/api/coach/dashboard`):
+- Endpoint: `GET /api/coach/dashboard`
+- Returns: `CommandCenterData`
+- Algorithms integrated:
+  - Priority sorting (risk + readiness + recency)
+  - Crisis detection
+  - Readiness aggregation
+  - Trend delta calculation
+
+---
+
+### Phase 3: Roster View (Week 2-3)
+
+**Components**:
+1. `/app/(coach)/roster/page.tsx` - Athlete list
+2. `AthleteCard.tsx` - Individual card with readiness + risk
+3. `FilterBar.tsx` - Advanced filtering
+   - By sport, year, risk level, readiness zone, archetype, consent
+4. `ProfileModal.tsx` - Full athlete detail view
+   - 6 tabs: Overview, Readiness, Mood Trends, Goals, Assignments, Notes
+5. `ReadinessRadarChart.tsx` - 6-dimension visualization
+
+**Backend API**:
+- `GET /api/coach/athletes` - Paginated list with filters
+- `GET /api/coach/athletes/:id` - Full athlete profile
+
+---
+
+### Phase 4-8: Analytics, Readiness, Assignments, AI Insights, Settings
+(See full plan in `COACH_PORTAL_IMPLEMENTATION_PLAN.md`)
+
+---
+
+## 🎯 ALGORITHM INTEGRATION MAPPING
+
+### Coach Side → Algorithm Integration
+
+| Algorithm | Coach UI Location | Component | Status |
+|-----------|-------------------|-----------|--------|
+| **Readiness Score (6D)** | Command Center, Roster, Readiness Command | ReadinessIndicator, RadarChart | ⏳ Pending |
+| **Risk Scoring** | Command Center, Roster | RiskBadge, PriorityList | ⏳ Pending |
+| **Crisis Detection** | Command Center (Action Feed) | CrisisAlertCard | ⏳ Pending |
+| **Burnout Prediction** | AI Insights, Athlete Profile | BurnoutForecast | ⏳ Pending |
+| **Archetype Classification** | Roster, AI Insights | ArchetypeBadge | ✅ UI Done |
+| **Goal Suggestion Engine** | Assignments, AI Insights | GoalRecommendations | ⏳ Pending |
+| **Performance Prediction** | Analytics, Readiness Command | PerformanceForecast | ⏳ Pending |
+| **Team Chemistry** | AI Insights | NetworkGraph | ⏳ Pending |
+| **NLP Chat Summarizer** | AI Insights | ChatSummaryCard | ⏳ Pending |
+| **Intervention Outcomes** | Analytics | EffectivenessTable | ⏳ Pending |
+
+---
+
+## 🏃 ATHLETE SIDE CONSIDERATIONS
+
+### Algorithms That Should Also Power Athlete Experience
+
+Based on the coach algorithms, here's what should appear on the **athlete side**:
+
+#### 1. **Personal Readiness Dashboard** (Athlete sees their own 6D readiness)
+**Location**: `/app/(tabs)/readiness` (new tab for athletes)
+
+**Features**:
+- Today's readiness score with traffic light
+- 6-dimensional radar chart (same as coach sees)
+- Top 3 limiters ("Your sleep and stress are lowering your readiness")
+- Recommendations ("Get 8+ hours tonight, practice mindfulness")
+- 7-day historical trend
+- Gamification: "You've been in GREEN zone for 5 days! 🔥"
+
+**Why**: Athletes should own their data. Transparency builds trust. They can optimize themselves.
+
+---
+
+#### 2. **AI Goal Suggestions** (Already exists, enhance it)
+**Location**: `/app/(tabs)/goals`
+
+**Enhancements Needed**:
+- Show archetype-aligned goals
+- Explain WHY this goal is suggested
+  - "Because you're an Overthinker, this pre-game routine will help you..."
+- Track goal effectiveness (did it improve performance?)
+- AI-generated sub-tasks with deadlines
+
+---
+
+#### 3. **Mental Skills Inventory** (New for Athletes)
+**Location**: `/app/(tabs)/skills` (new tab)
+
+**Features**:
+- Self-assessment quiz (12 mental skills)
+- Personalized skill gaps identified
+- Recommended exercises/content per skill
+- Progress tracking over season
+- "You've improved in Self-Talk from 4/10 to 7/10 this month!"
+
+**Coach Integration**: Coach sees aggregate team skill gaps → assigns targeted group sessions
+
+---
+
+#### 4. **Performance Prediction (Athlete View)**
+**Location**: `/app/(tabs)/performance` (new tab) or integrate into Dashboard
+
+**Features**:
+- "Based on your readiness, you're predicted to [perform X] today"
+- Show contributing factors (visual breakdown)
+- Pre-game optimization tips
+  - "Your stress is high. Try this breathing exercise before the game."
+- Post-game reflection: "How did you actually perform?" → improve model
+
+---
+
+#### 5. **Habit Streaks & Consistency Tracking**
+**Location**: `/app/(tabs)/dashboard` or new `/habits` tab
+
+**Features**:
+- Mood log streak ("7 days in a row!")
+- Goal completion streak
+- Assignment completion streak
+- Visual calendar heatmap (GitHub-style)
+- Peer comparison (anonymized): "You're in top 25% for consistency"
+
+**Coach Integration**: Coach sees who has streaks → celebrate in team meetings
+
+---
+
+#### 6. **Burnout Risk Warning** (Athlete sees their own risk)
+**Location**: `/app/(tabs)/dashboard` (alert banner)
+
+**Features**:
+- Private warning: "Your stress has been high for 10+ days. You might be at risk of burnout."
+- Self-care checklist
+- Option to request coach check-in
+- Auto-suggest recovery-focused goals
+
+**Privacy**: Athlete controls if coach gets alerted (consent toggle)
+
+---
+
+#### 7. **Archetype-Aware Chat** (Enhance existing chat)
+**Location**: `/app/(tabs)/chat`
+
+**Enhancements**:
+- AI adapts tone based on athlete's archetype
+  - Overthinker → Simplify, action-focused
+  - Perfectionist → Normalize imperfection
+  - Burnout Risk → Emphasize recovery
+- Show archetype badge in chat header
+- "Your archetype: Momentum Builder. I'll focus on building on your recent wins!"
+
+---
+
+### Summary: Athlete Side Roadmap
+
+**New Tabs to Add**:
+1. `/readiness` - Personal 6D readiness dashboard
+2. `/skills` - Mental skills inventory & development
+3. `/performance` - Performance prediction & pre-game prep
+4. `/habits` - Streak tracking & consistency gamification
+
+**Enhancements to Existing**:
+- `/dashboard` - Add burnout warning, readiness widget
+- `/goals` - Show archetype-aligned AI suggestions with explanations
+- `/chat` - Archetype-aware conversation style
+- `/mood` - Add consistency streak visualization
+
+---
+
+## 📊 METRICS FOR SUCCESS
+
+### Coach Portal KPIs
+1. **Adoption**: % of coaches using weekly
+2. **Engagement**: Avg time in portal per week
+3. **Intervention Rate**: Actions taken per flagged athlete
+4. **Crisis Response Time**: Alert → coach action (target: <1 hour)
+5. **Prediction Accuracy**: Burnout predictions that were correct
+
+### Athlete Side KPIs
+1. **Logging Consistency**: % athletes logging mood 4+ days/week
+2. **Goal Completion**: % goals marked complete
+3. **Assignment Engagement**: % assignments submitted on time
+4. **Readiness Improvement**: Team avg readiness trend over season
+5. **Crisis Prevention**: Detected early vs. escalated to critical
+
+---
+
+## 🔄 DEVELOPMENT LOOP
+
+**Daily**:
+1. Start: Review this doc + update status
+2. Code: Build 1-2 components
+3. Commit: Clear, conventional commit messages
+4. Document: Update this file with progress
+5. End: Push work, plan tomorrow
+
+**Weekly**:
+1. Create PR for completed phase
+2. Get review + merge to main
+3. Plan next week's work
+4. Update timeline if needed
+
+---
+
+## 🚀 IMMEDIATE NEXT ACTIONS (Today)
+
+1. ✅ Create this progress document
+2. ⏳ Finish remaining core UI components
+3. ⏳ Build Command Center page layout
+4. ⏳ Implement PriorityAthleteList component
+5. ⏳ Create mock data for testing
+6. ⏳ Document athlete-side algorithm applications
+
+---
+
+**Git Commands for Next Session**:
+```bash
+# Start foundation branch
+git checkout -b feature/coach-portal-foundation
+
+# Work on components...
+
+# Commit progress
+git add .
+git commit -m "feat(coach-ui): add core reusable components
+
+- ReadinessIndicator with traffic light system
+- RiskBadge with 4 severity levels
+- ArchetypeBadge with coaching tips
+- All components fully typed and documented"
+
+# Continue building...
+```
+
+---
+
+**This document will be updated after every significant milestone to maintain context across sessions.**

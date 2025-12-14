@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Coach Settings Screen
+ * Profile management and app preferences for coaches
+ */
+
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Alert,
   Platform,
 } from 'react-native';
@@ -15,130 +19,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Spacing, Typography, BorderRadius } from '@/constants/theme';
-import { apiClient, getStoredUserRole } from '../../lib/auth';
 
-export default function SettingsScreen() {
-  const [consentChatSummaries, setConsentChatSummaries] = useState(false);
-  const [consentCoachView, setConsentCoachView] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<'ATHLETE' | 'COACH' | 'ADMIN' | null>(null);
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const role = await getStoredUserRole();
-      setUserRole(role);
-
-      // Only load consent settings for athletes
-      if (role === 'ATHLETE') {
-        await loadConsentSettings();
-      } else {
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const loadConsentSettings = async () => {
-    try {
-      // Fetch athlete consent settings from API
-      const response = await apiClient.getConsentSettings();
-      setConsentChatSummaries(response.consent.consentChatSummaries);
-      setConsentCoachView(response.consent.consentCoachView);
-    } catch (error) {
-      console.error('Failed to load consent settings:', error);
-      // Don't show alert - just log the error
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateConsent = async (field: 'consentChatSummaries' | 'consentCoachView', value: boolean) => {
-    try {
-      const response = await apiClient.updateConsentSettings({
-        [field]: value,
-      });
-
-      // Update local state with response
-      setConsentChatSummaries(response.consent.consentChatSummaries);
-      setConsentCoachView(response.consent.consentCoachView);
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (error) {
-      console.error('Failed to update consent:', error);
-      Alert.alert('Error', 'Failed to update privacy settings. Please try again.');
-    }
-  };
-
-  const handleChatSummaryToggle = (value: boolean) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    if (value) {
-      // Turning ON - show explanation
-      Alert.alert(
-        'Share Chat Summaries',
-        'This allows your coach to view weekly summaries of your chat sessions. Individual messages remain private - only high-level summaries (themes, emotional state) are shared.\n\nYou can turn this off anytime.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Allow',
-            onPress: () => updateConsent('consentChatSummaries', true),
-          },
-        ]
-      );
-    } else {
-      // Turning OFF - confirm
-      Alert.alert(
-        'Stop Sharing Summaries',
-        'Your coach will no longer see weekly summaries of your chat sessions.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Stop Sharing',
-            style: 'destructive',
-            onPress: () => updateConsent('consentChatSummaries', false),
-          },
-        ]
-      );
-    }
-  };
-
-  const handleCoachViewToggle = (value: boolean) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    if (value) {
-      Alert.alert(
-        'Allow Coach Analytics',
-        'This allows your coach to view your mood trends, goal progress, and performance metrics in their dashboard. Chat content remains private.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Allow',
-            onPress: () => updateConsent('consentCoachView', true),
-          },
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Hide Analytics from Coach',
-        'Your coach will no longer see your personal metrics and trends.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Hide',
-            style: 'destructive',
-            onPress: () => updateConsent('consentCoachView', false),
-          },
-        ]
-      );
-    }
-  };
-
+export default function CoachSettingsScreen() {
   const handleLogout = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -222,7 +104,7 @@ export default function SettingsScreen() {
       {/* Header with gradient */}
       <View style={styles.header}>
         <LinearGradient
-          colors={['#8b5cf6', '#d946ef', '#ec4899']}
+          colors={['#3b82f6', '#2563eb', '#1e40af']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.headerGradient}
@@ -239,7 +121,7 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={styles.headerTitle}>Settings</Text>
-                <Text style={styles.headerSubtitle}>Manage your preferences</Text>
+                <Text style={styles.headerSubtitle}>Coach preferences</Text>
               </View>
             </View>
           </View>
@@ -251,59 +133,6 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Privacy & Coach Consent - Only show for athletes */}
-        {userRole === 'ATHLETE' && (
-          <>
-            <SectionHeader title="Privacy & Coach Access" />
-            <View style={styles.card}>
-              <LinearGradient
-                colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-                style={styles.cardGradient}
-              >
-                <SettingItem
-                  icon="eye-outline"
-                  iconColor="#a78bfa"
-                  title="Share Chat Summaries"
-                  subtitle={
-                    consentChatSummaries
-                      ? 'Coach can view weekly summaries'
-                      : 'Coach cannot view summaries (recommended)'
-                  }
-                  rightComponent={
-                    <Switch
-                      value={consentChatSummaries}
-                      onValueChange={handleChatSummaryToggle}
-                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#8b5cf6' }}
-                      thumbColor={consentChatSummaries ? '#fff' : '#f4f3f4'}
-                      ios_backgroundColor="rgba(255,255,255,0.2)"
-                    />
-                  }
-                />
-                <View style={styles.separator} />
-                <SettingItem
-                  icon="analytics-outline"
-                  iconColor="#34d399"
-                  title="Share Analytics"
-                  subtitle={
-                    consentCoachView
-                      ? 'Coach can view mood & goal trends'
-                      : 'Analytics are private'
-                  }
-                  rightComponent={
-                    <Switch
-                      value={consentCoachView}
-                      onValueChange={handleCoachViewToggle}
-                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#10b981' }}
-                      thumbColor={consentCoachView ? '#fff' : '#f4f3f4'}
-                      ios_backgroundColor="rgba(255,255,255,0.2)"
-                    />
-                  }
-                />
-              </LinearGradient>
-            </View>
-          </>
-        )}
-
         {/* Profile */}
         <SectionHeader title="Profile" />
         <View style={styles.card}>
@@ -313,7 +142,7 @@ export default function SettingsScreen() {
           >
             <SettingItem
               icon="person-outline"
-              iconColor="#f472b6"
+              iconColor="#60a5fa"
               title="Edit Profile"
               subtitle="Update your information"
               onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon')}
@@ -321,10 +150,47 @@ export default function SettingsScreen() {
             <View style={styles.separator} />
             <SettingItem
               icon="school-outline"
-              iconColor="#fbbf24"
-              title="Sport & Team"
-              subtitle="Update sport and position"
-              onPress={() => Alert.alert('Coming Soon', 'Sport settings will be available soon')}
+              iconColor="#34d399"
+              title="Team & Sport"
+              subtitle="Update sports and team info"
+              onPress={() => Alert.alert('Coming Soon', 'Team settings will be available soon')}
+            />
+          </LinearGradient>
+        </View>
+
+        {/* Coach Tools */}
+        <SectionHeader title="Coach Tools" />
+        <View style={styles.card}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+            style={styles.cardGradient}
+          >
+            <SettingItem
+              icon="notifications-outline"
+              iconColor="#f59e0b"
+              title="Crisis Alerts"
+              subtitle="Manage alert notifications"
+              onPress={() =>
+                Alert.alert('Coming Soon', 'Crisis alert settings will be available soon')
+              }
+            />
+            <View style={styles.separator} />
+            <SettingItem
+              icon="bar-chart-outline"
+              iconColor="#8b5cf6"
+              title="Reports"
+              subtitle="Configure team reports"
+              onPress={() => Alert.alert('Coming Soon', 'Report settings will be available soon')}
+            />
+            <View style={styles.separator} />
+            <SettingItem
+              icon="people-circle-outline"
+              iconColor="#ec4899"
+              title="Athlete Consent"
+              subtitle="View consent status"
+              onPress={() =>
+                Alert.alert('Coming Soon', 'Consent management will be available soon')
+              }
             />
           </LinearGradient>
         </View>
@@ -381,7 +247,7 @@ export default function SettingsScreen() {
               onPress={() =>
                 Alert.alert(
                   'AI Sports Agent',
-                  'Version 1.0.0\n\nYour 24/7 mental performance coach powered by AI.\n\nBuilt with evidence-based sports psychology.'
+                  'Version 1.0.0\n\nCoach Dashboard\n\nMonitor and support your athletes with AI-powered insights.'
                 )
               }
             />
@@ -423,7 +289,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 60,
-    shadowColor: '#8b5cf6',
+    shadowColor: '#3b82f6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
