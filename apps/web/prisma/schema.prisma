@@ -82,6 +82,7 @@ model Athlete {
   WearableData         WearableData[]
   Task                 Task[]
   TaskPattern          TaskPattern[]
+  CoachAthlete         CoachAthleteRelation[]
 
   @@index([riskLevel])
   @@index([sport])
@@ -153,13 +154,35 @@ model ChatSummary {
 }
 
 model Coach {
-  userId    String      @id
-  sport     String
-  title     String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime
-  User      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  CoachNote CoachNote[]
+  userId        String                 @id
+  sport         String
+  title         String?
+  inviteCode    String?                @unique // Unique code for athletes to join (optional for migration)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  User          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CoachNote     CoachNote[]
+  CoachAthletes CoachAthleteRelation[] // Athletes assigned to this coach
+
+  @@index([inviteCode])
+}
+
+model CoachAthleteRelation {
+  id             String   @id @default(cuid())
+  coachId        String
+  athleteId      String
+  joinedAt       DateTime @default(now())
+  consentGranted Boolean  @default(false) // Athlete consent to share data with coach
+  notes          String?  // Coach's private notes about athlete
+  Coach          Coach    @relation(fields: [coachId], references: [userId], onDelete: Cascade)
+  Athlete        Athlete  @relation(fields: [athleteId], references: [userId], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([coachId, athleteId]) // Prevent duplicate relationships
+  @@index([coachId])
+  @@index([athleteId])
+  @@index([consentGranted])
 }
 
 model CoachNote {

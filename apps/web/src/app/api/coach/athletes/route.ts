@@ -1,6 +1,7 @@
 /**
  * Coach Athletes List API
- * Returns list of athletes with consent for coach viewing
+ * Returns list of athletes connected to coach
+ * SECURITY: Only shows athletes connected via CoachAthleteRelation
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,11 +24,12 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const sport = searchParams.get('sport');
+    const riskLevel = searchParams.get('riskLevel');
+    const consentOnly = searchParams.get('consentOnly') === 'true';
 
-    // Get coach's school
-    const coach = await prisma.user.findUnique({
-      where: { id: user!.id },
-      include: { School: true },
+    // Get coach profile
+    const coach = await prisma.coach.findUnique({
+      where: { userId: user!.id },
     });
 
     if (!coach) {
@@ -37,21 +39,29 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Build athlete filter
+    // Build filter for coach-athlete relationships
     const where: any = {
-      schoolId: coach.schoolId,
-      role: 'ATHLETE',
-      Athlete: {
-        consentCoachView: true,
-        ...(sport && { sport }),
-      },
+      coachId: coach.userId,
     };
 
-    const athletes = await prisma.user.findMany({
+    // Add consent filter if requested
+    if (consentOnly) {
+      where.consentGranted = true;
+    }
+
+    // Get all coach-athlete relationships
+    const relations = await prisma.coachAthleteRelation.findMany({
       where,
       include: {
         Athlete: {
           include: {
+            User: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
             MoodLog: {
               orderBy: { createdAt: 'desc' },
               take: 1,
@@ -65,21 +75,50 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { joinedAt: 'desc' },
     });
+
+    // Apply client-side filters for sport and risk level
+    let filteredRelations = relations;
+
+    if (sport) {
+      filteredRelations = filteredRelations.filter(
+        (r) => r.Athlete.sport === sport
+      );
+    }
+
+    if (riskLevel) {
+      filteredRelations = filteredRelations.filter(
+        (r) => r.Athlete.riskLevel === riskLevel
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      data: athletes.map((a) => ({
-        id: a.id,
-        name: a.name,
-        email: a.email,
-        sport: a.Athlete?.sport,
-        year: a.Athlete?.year,
-        position: a.Athlete?.teamPosition,
-        riskLevel: a.Athlete?.riskLevel,
-        lastMoodLog: a.Athlete?.MoodLog?.[0] || null,
-        activeGoalsCount: a.Athlete?.Goal?.length || 0,
+      data: filteredRelations.map((r) => ({
+        // Relationship info
+        relationId: r.id,
+        joinedAt: r.joinedAt,
+        consentGranted: r.consentGranted,
+        coachNotes: r.notes,
+
+        // Athlete info
+        id: r.Athlete.User.id,
+        name: r.Athlete.User.name,
+        email: r.Athlete.User.email,
+        sport: r.Athlete.sport,
+        year: r.Athlete.year,
+        position: r.Athlete.teamPosition,
+        riskLevel: r.Athlete.riskLevel,
+
+        // Latest mood log (if consent granted)
+        lastMoodLog: r.consentGranted ? r.Athlete.MoodLog?.[0] || null : null,
+
+        // Active goals count (if consent granted)
+        activeGoalsCount: r.consentGranted ? r.Athlete.Goal?.length || 0 : 0,
+
+        // Privacy indicator
+        dataAccessible: r.consentGranted,
       })),
     });
   } catch (error) {
