@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -14,20 +14,15 @@ const createAssignmentSchema = z.object({
 // GET /api/assignments - Get assignments (filtered by role)
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    // Verify authentication
+    const { authorized, user: authUser, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authUser!.id },
       include: {
-        athlete: true,
-        coach: true,
+        Athlete: true,
+        Coach: true,
       },
     });
 
@@ -60,7 +55,7 @@ export async function GET(request: NextRequest) {
       });
 
       return NextResponse.json({ assignments });
-    } else if (user.role === 'ATHLETE' && user.athlete) {
+    } else if (user.role === 'ATHLETE' && user.Athlete) {
       // Athlete: Get assignments targeted to them
       const assignments = await prisma.assignment.findMany({
         where: {
@@ -75,7 +70,7 @@ export async function GET(request: NextRequest) {
             // Assignments for all athletes in their sport
             {
               targetAthleteIds: null,
-              targetSport: user.athlete.sport,
+              targetSport: user.Athlete.sport,
             },
             // Assignments for all athletes (no sport filter)
             {
@@ -121,22 +116,17 @@ export async function GET(request: NextRequest) {
 // POST /api/assignments - Coach creates assignment
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    // Verify authentication
+    const { authorized, user: authUser, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     // Verify user is a coach
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { coach: true },
+      where: { id: authUser!.id },
+      include: { Coach: true },
     });
 
-    if (!user || user.role !== 'COACH' || !user.coach) {
+    if (!user || user.role !== 'COACH' || !user.Coach) {
       return NextResponse.json(
         { error: 'Forbidden - Coach access required' },
         { status: 403 }
