@@ -90,7 +90,7 @@ export async function GET(
           },
         },
         CrisisAlert: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { detectedAt: 'desc' },
           take: 5,
           include: {
             Message: {

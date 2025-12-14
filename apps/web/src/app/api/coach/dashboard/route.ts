@@ -138,8 +138,8 @@ export async function GET(req: NextRequest) {
     const crisisAlerts = await prisma.crisisAlert.findMany({
       where: {
         athleteId: { in: athleteIds },
-        createdAt: { gte: crisisStartDate },
-        resolved: false,
+        detectedAt: { gte: crisisStartDate },
+        reviewed: false,
       },
       include: {
         Athlete: {
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { detectedAt: 'desc' },
       take: 10,
     });
 
