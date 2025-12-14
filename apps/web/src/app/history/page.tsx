@@ -18,22 +18,31 @@ export default async function HistoryPage() {
     redirect('/dashboard');
   }
 
-  // Get athlete's chat sessions
-  const chatSessions = await prisma.chatSession.findMany({
-    where: {
-      athleteId: session.user.id,
-    },
-    include: {
-      messages: {
-        orderBy: { createdAt: 'asc' },
-        take: 1, // Just get first message for preview
-      },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: 50, // Last 50 sessions
-  });
+  // Get athlete's chat sessions (skip DB for demo users)
+  let chatSessions: any[] = [];
+
+  if (!session.user.id.startsWith('demo-')) {
+    try {
+      chatSessions = await prisma.chatSession.findMany({
+        where: {
+          athleteId: session.user.id,
+        },
+        include: {
+          Message: {
+            orderBy: { createdAt: 'asc' },
+            take: 1, // Just get first message for preview
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 50, // Last 50 sessions
+      });
+    } catch (error) {
+      console.error('Error fetching chat sessions:', error);
+      chatSessions = [];
+    }
+  }
 
   return (
     <DashboardLayout>

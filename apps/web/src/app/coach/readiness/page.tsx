@@ -120,54 +120,105 @@ export default async function CoachReadinessPage() {
     redirect('/dashboard');
   }
 
-  // Get coach's school
-  const coach = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { school: true },
-  });
+  // Skip database for demo coach
+  let athletes: any[] = [];
+  let coach: any = {
+    School: { name: 'Demo University' },
+    schoolId: 'demo-school-123',
+  };
 
-  if (!coach) {
-    return <div>Coach not found</div>;
-  }
+  if (!session.user.id.startsWith('demo-')) {
+    try {
+      // Get coach's school
+      const dbCoach = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: { School: true },
+      });
 
-  // Get all athletes with recent data
-  const athletes = await prisma.user.findMany({
-    where: {
-      role: 'ATHLETE',
-      schoolId: coach.schoolId,
-    },
-    include: {
-      athlete: {
+      if (!dbCoach) {
+        return <div>Coach not found</div>;
+      }
+
+      coach = dbCoach;
+
+      // Get all athletes with recent data
+      athletes = await prisma.user.findMany({
+        where: {
+          role: 'ATHLETE',
+          schoolId: coach.schoolId,
+        },
         include: {
-          moodLogs: {
-            orderBy: { createdAt: 'desc' },
-            take: 7, // Last 7 days
-          },
-          sessions: {
-            where: {
-              createdAt: {
-                gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          Athlete: {
+            include: {
+              MoodLog: {
+                orderBy: { createdAt: 'desc' },
+                take: 7, // Last 7 days
+              },
+              ChatSession: {
+                where: {
+                  createdAt: {
+                    gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+                  },
+                },
               },
             },
           },
         },
+        orderBy: { name: 'asc' },
+      });
+    } catch (error) {
+      console.error('Error fetching athletes:', error);
+      athletes = [];
+    }
+  } else {
+    // Mock data for demo coach
+    athletes = [
+      {
+        id: 'athlete-1',
+        name: 'Sarah Johnson',
+        email: 'sarah.j@example.com',
+        Athlete: {
+          sport: 'Basketball',
+          year: 'Junior',
+          teamPosition: 'Point Guard',
+          moodLogs: [
+            { mood: 9, confidence: 9, stress: 2, energy: 9, sleep: 8, createdAt: new Date() },
+            { mood: 8, confidence: 9, stress: 3, energy: 8, sleep: 8, createdAt: new Date(Date.now() - 86400000) },
+            { mood: 9, confidence: 9, stress: 2, energy: 9, sleep: 8, createdAt: new Date(Date.now() - 172800000) },
+          ],
+          sessions: [{ id: 's1', createdAt: new Date() }],
+        },
       },
-    },
-    orderBy: { name: 'asc' },
-  });
+      {
+        id: 'athlete-2',
+        name: 'Mike Chen',
+        email: 'mike.c@example.com',
+        Athlete: {
+          sport: 'Basketball',
+          year: 'Sophomore',
+          teamPosition: 'Shooting Guard',
+          moodLogs: [
+            { mood: 5, confidence: 6, stress: 7, energy: 5, sleep: 6, createdAt: new Date() },
+            { mood: 5, confidence: 5, stress: 8, energy: 4, sleep: 5, createdAt: new Date(Date.now() - 86400000) },
+          ],
+          sessions: [],
+        },
+      },
+    ];
+  }
 
   // Calculate readiness scores for all athletes
   const athleteReadiness = athletes.map((athlete) => {
     // Pass the athlete data with correct structure
     const athleteData = {
-      moodLogs: athlete.athlete?.moodLogs || [],
-      sessions: athlete.athlete?.sessions || [],
+      moodLogs: athlete.Athlete?.moodLogs || [],
+      sessions: athlete.Athlete?.sessions || [],
     };
     const readiness = calculateReadinessScore(athleteData);
     return {
       id: athlete.id,
       name: athlete.name,
-      position: athlete.athlete?.teamPosition,
+      position: athlete.Athlete?.teamPosition,
       ...readiness,
     };
   });
@@ -194,7 +245,7 @@ export default async function CoachReadinessPage() {
                 Pre-Competition Readiness
               </h1>
               <p className="mt-2 text-gray-600">
-                Mental readiness scores for {coach.school.name} athletes
+                Mental readiness scores for {coach.School.name} athletes
               </p>
             </div>
             <Link href="/coach/dashboard">

@@ -22,16 +22,23 @@ export async function middleware(request: NextRequest) {
   // Route categorization
   const isAuthPage = pathname.startsWith('/auth');
   const isCoachRoute = pathname.startsWith('/coach');
-  const isAthleteRoute = ['/chat', '/dashboard', '/mood', '/goals'].some(
+  const isAthleteRoute = ['/chat', '/dashboard', '/student', '/mood', '/goals'].some(
     path => pathname.startsWith(path)
   );
   const isCoachApiRoute = pathname.startsWith('/api/analytics') ||
                           pathname.startsWith('/api/performance') ||
                           pathname.startsWith('/api/coach');
-  const isPublicRoute = pathname === '/' || pathname.startsWith('/_next') || pathname.startsWith('/api');
+  const isPublicRoute = pathname.startsWith('/_next') || pathname.startsWith('/api');
 
-  // Allow public routes and ALL API routes (individual routes handle their own auth)
-  if (isPublicRoute) {
+  // Redirect authenticated users away from home page to their dashboard
+  if (pathname === '/' && token) {
+    const role = token.role as string;
+    const redirectUrl = role === 'COACH' ? '/coach/dashboard' : '/dashboard';
+    return NextResponse.redirect(new URL(redirectUrl, request.url));
+  }
+
+  // Allow home page for unauthenticated users and other public routes
+  if (pathname === '/' || isPublicRoute) {
     return NextResponse.next();
   }
 

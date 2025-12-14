@@ -14,7 +14,7 @@ interface AthleteInsight {
   athleteName: string;
   sport: string;
   currentReadiness: number;
-  archet ype: string;
+  archetype: string;
   summary: string;
   strengths: string[];
   concerns: string[];
