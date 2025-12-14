@@ -92,7 +92,7 @@ export default function ReadinessScreen() {
           <View style={styles.statCard}>
             <LinearGradient colors={['rgba(245, 158, 11, 0.2)', 'rgba(217, 119, 6, 0.1)']} style={styles.statGradient}>
               <Text style={styles.statValue}>2</Text>
-              <Text style={styles.statLabel}>Low (<70)</Text>
+              <Text style={styles.statLabel}>{"Low (<70)"}</Text>
             </LinearGradient>
           </View>
 
