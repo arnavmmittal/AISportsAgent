@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -20,7 +19,6 @@ import { apiClient } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 
 export default function CoachAthletesScreen() {
-  const router = useRouter();
   const [athletes, setAthletes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -123,18 +121,14 @@ export default function CoachAthletesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <LinearGradient
-          colors={['#3b82f6', '#2563eb']}
+          colors={['#3b82f6', '#2563eb', '#1e40af']}
           style={styles.headerGradient}
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Athletes</Text>
-            <Text style={styles.headerSubtitle}>{athletes.length} with consent</Text>
+            <View>
+              <Text style={styles.headerTitle}>My Athletes</Text>
+              <Text style={styles.headerSubtitle}>{athletes.length} athletes with consent</Text>
+            </View>
           </View>
         </LinearGradient>
       </View>
@@ -156,26 +150,27 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 60,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   headerGradient: {
     paddingBottom: Spacing.lg,
-  },
-  backButton: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
   },
   headerContent: {
     paddingHorizontal: Spacing.lg,
   },
   headerTitle: {
-    fontSize: Typography.xxl,
+    fontSize: Typography.xl,
     fontWeight: '800',
     color: '#fff',
   },
   headerSubtitle: {
     fontSize: Typography.sm,
     color: 'rgba(255,255,255,0.9)',
-    marginTop: Spacing.xs,
+    fontWeight: '500',
   },
   listContent: {
     padding: Spacing.lg,
