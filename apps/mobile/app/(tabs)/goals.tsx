@@ -34,6 +34,8 @@ export default function GoalsScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [suggestedGoals, setSuggestedGoals] = useState<SuggestedGoal[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [newGoal, setNewGoal] = useState({
     title: '',
     description: '',
@@ -51,7 +53,11 @@ export default function GoalsScreen() {
       const userId = await getStoredUserId();
       if (!userId) throw new Error('User not logged in');
 
-      const data = await apiClient.getGoals(userId);
+      const filters: any = {};
+      if (selectedCategory !== 'ALL') filters.category = selectedCategory;
+      if (searchQuery.trim()) filters.search = searchQuery.trim();
+
+      const data = await apiClient.getGoals(userId, filters);
       setGoals(data);
     } catch (error) {
       console.error('Failed to load goals:', error);
@@ -60,52 +66,24 @@ export default function GoalsScreen() {
     }
   };
 
+  // Reload goals when filters change
+  useEffect(() => {
+    if (!isLoading) {
+      loadGoals();
+    }
+  }, [selectedCategory, searchQuery]);
+
   const loadSuggestedGoals = async () => {
     try {
-      // TODO: Replace with actual MCP API call
-      // const userId = await getStoredUserId();
-      // const suggestions = await apiClient.post('/api/mcp/suggest-goals', { userId });
-      // setSuggestedGoals(suggestions);
+      const userId = await getStoredUserId();
+      if (!userId) throw new Error('User not logged in');
 
-      // Mock AI-generated suggestions for now
-      const mockSuggestions: SuggestedGoal[] = [
-        {
-          id: 'suggest_1',
-          title: 'Develop Pre-Game Routine',
-          description: 'Create a consistent 15-minute mental preparation routine before games',
-          category: 'MENTAL',
-          reason: 'Based on your recent anxiety patterns',
-          icon: 'leaf-outline',
-        },
-        {
-          id: 'suggest_2',
-          title: 'Improve Free Throw %',
-          description: 'Increase free throw percentage from 72% to 80% by end of season',
-          category: 'PERFORMANCE',
-          reason: 'Identified as key improvement area',
-          icon: 'basketball-outline',
-        },
-        {
-          id: 'suggest_3',
-          title: 'Sleep 8+ Hours',
-          description: 'Get 8 hours of sleep on game nights for optimal recovery',
-          category: 'PERSONAL',
-          reason: 'Your mood is 30% better with 8+ hrs',
-          icon: 'moon-outline',
-        },
-        {
-          id: 'suggest_4',
-          title: 'Maintain 3.5 GPA',
-          description: 'Keep academic performance above 3.5 GPA this semester',
-          category: 'ACADEMIC',
-          reason: 'Staying on track for honors',
-          icon: 'school-outline',
-        },
-      ];
-
-      setSuggestedGoals(mockSuggestions);
+      const suggestions = await apiClient.getGoalSuggestions(userId);
+      setSuggestedGoals(suggestions);
     } catch (error) {
       console.error('Failed to load suggested goals:', error);
+      // Keep empty suggestions on error
+      setSuggestedGoals([]);
     } finally {
       setIsLoadingSuggestions(false);
     }
@@ -469,6 +447,42 @@ export default function GoalsScreen() {
         </LinearGradient>
       </View>
 
+      {/* Search and Filter Bar */}
+      <View style={styles.filterContainer}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="rgba(255,255,255,0.5)" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search goals..."
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="rgba(255,255,255,0.5)" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+          {['ALL', 'PERFORMANCE', 'MENTAL', 'ACADEMIC', 'PERSONAL'].map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedCategory(cat);
+              }}
+            >
+              <Text style={[styles.categoryChipText, selectedCategory === cat && styles.categoryChipTextActive]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       {goals.length === 0 && suggestedGoals.length === 0 ? (
         <View style={styles.emptyContainer}>
           <LinearGradient
@@ -708,6 +722,55 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  filterContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  searchIcon: {
+    marginRight: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: Typography.base,
+    color: '#fff',
+    paddingVertical: Spacing.md,
+  },
+  categoryScroll: {
+    marginBottom: Spacing.sm,
+  },
+  categoryChip: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    marginRight: Spacing.sm,
+  },
+  categoryChipActive: {
+    backgroundColor: '#8b5cf6',
+    borderColor: '#a78bfa',
+  },
+  categoryChipText: {
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+  },
+  categoryChipTextActive: {
+    color: '#fff',
+    fontWeight: '800',
   },
   emptyContainer: {
     flex: 1,

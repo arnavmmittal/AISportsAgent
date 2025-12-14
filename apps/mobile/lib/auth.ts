@@ -24,33 +24,49 @@ export async function login(email: string, password: string): Promise<User> {
 }
 
 export async function signupAthlete(data: AthleteSignupData): Promise<User> {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`${API_URL}/api/auth/signup/athlete`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(data),
-  // });
-  // const { user, token }: AuthResponse = await response.json();
+  console.log('🌐 [API] signupAthlete called');
+  console.log('🔗 [API] Target URL:', `${API_URL}/api/auth/signup`);
 
-  // For now, mock response
-  const user: User = {
-    id: 'athlete-' + Date.now(),
-    email: data.email,
+  const payload = {
     name: data.name,
+    email: data.email,
+    password: data.password,
     role: 'ATHLETE',
-    athlete: {
-      sport: data.sport,
-      position: data.position,
-      year: data.year,
-      team: data.team,
-      age: data.age,
-      consentCoachView: data.consentCoachView,
-    },
-    onboardingCompleted: true,
-    createdAt: new Date().toISOString(),
+    sport: data.sport,
+    year: data.year?.toUpperCase(), // Backend expects UPPERCASE enum values
   };
 
-  const token = 'mock-token-' + Date.now();
+  console.log('📦 [API] Request Payload:', {
+    ...payload,
+    password: '***hidden***'
+  });
+
+  const response = await fetch(`${API_URL}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  console.log('📡 [API] Response Status:', response.status, response.statusText);
+
+  if (!response.ok) {
+    const error = await response.json();
+    console.error('❌ [API] Signup failed with error:', error);
+    console.error('❌ [API] Error message:', error.error);
+    console.error('❌ [API] Validation details:', error.details);
+    console.error('❌ [API] Full error object:', JSON.stringify(error, null, 2));
+    throw new Error(error.error || 'Signup failed');
+  }
+
+  const responseData = await response.json();
+  console.log('✅ [API] Signup successful! Response:', responseData);
+  const { user: createdUser } = responseData;
+
+  console.log('🔐 [API] Now attempting login with credentials...');
+  // Now login to get the token
+  const { user, token } = await apiClient.login(data.email, data.password);
+
+  console.log('✅ [API] Login successful! User:', user);
 
   // Store auth data
   await SecureStore.setItemAsync('auth_token', token);
@@ -60,36 +76,36 @@ export async function signupAthlete(data: AthleteSignupData): Promise<User> {
 
   apiClient.setToken(token);
 
+  console.log('💾 [API] Auth data stored in SecureStore');
   return user;
 }
 
 export async function signupCoach(data: CoachSignupData): Promise<User> {
-  // TODO: Replace with actual API call
-  // const response = await fetch(`${API_URL}/api/auth/signup/coach`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(data),
-  // });
-  // const { user, token }: AuthResponse = await response.json();
-
-  // For now, mock response
-  const user: User = {
-    id: 'coach-' + Date.now(),
-    email: data.email,
-    name: data.name,
-    role: 'COACH',
-    coach: {
-      sportsCoached: data.sportsCoached,
-      organization: data.organization,
+  // Note: Email verification should be handled before signup
+  // For now, we'll proceed with signup directly
+  const response = await fetch(`${API_URL}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: 'COACH',
+      sport: data.sportsCoached[0] || 'Multiple', // Backend expects single sport currently
       title: data.title,
-      yearsExperience: data.yearsExperience,
-      certifications: data.certifications,
-    },
-    onboardingCompleted: true,
-    createdAt: new Date().toISOString(),
-  };
+      // Additional coach-specific fields can be updated via profile API later
+    }),
+  });
 
-  const token = 'mock-token-' + Date.now();
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Signup failed');
+  }
+
+  const { user: createdUser } = await response.json();
+
+  // Now login to get the token
+  const { user, token } = await apiClient.login(data.email, data.password);
 
   // Store auth data
   await SecureStore.setItemAsync('auth_token', token);

@@ -43,6 +43,14 @@ export default function AthleteSignup() {
   };
 
   const validateStep1 = (): boolean => {
+    console.log('🔍 [STEP 1 VALIDATION] Starting validation...');
+    console.log('📝 Form Data:', {
+      name: formData.name,
+      email: formData.email,
+      passwordLength: formData.password?.length,
+      confirmPasswordLength: confirmPassword?.length
+    });
+
     const newErrors: Record<string, string> = {};
 
     if (!formData.name?.trim()) {
@@ -57,16 +65,34 @@ export default function AthleteSignup() {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one number';
     }
     if (formData.password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
+
+    console.log('❌ Validation Errors:', newErrors);
+    console.log('✅ Validation Result:', Object.keys(newErrors).length === 0 ? 'PASSED' : 'FAILED');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = (): boolean => {
+    console.log('🔍 [STEP 2 VALIDATION] Starting validation...');
+    console.log('📝 Form Data:', {
+      sport: formData.sport,
+      position: formData.position,
+      year: formData.year,
+      team: formData.team,
+      age: formData.age
+    });
+
     const newErrors: Record<string, string> = {};
 
     if (!formData.sport?.trim()) {
@@ -79,19 +105,35 @@ export default function AthleteSignup() {
       newErrors.year = 'Year is required';
     }
 
+    console.log('❌ Validation Errors:', newErrors);
+    console.log('✅ Validation Result:', Object.keys(newErrors).length === 0 ? 'PASSED' : 'FAILED');
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep3 = (): boolean => {
+    console.log('🔍 [STEP 3 VALIDATION] Starting validation...');
+    console.log('📝 Consent Data:', {
+      consentCoachView: formData.consentCoachView,
+      consentMoodShare: formData.consentMoodShare,
+      consentGoalsShare: formData.consentGoalsShare,
+      agreedToTerms: formData.agreedToTerms,
+      understoodDisclaimer: formData.understoodDisclaimer
+    });
+
     if (!formData.agreedToTerms) {
+      console.log('❌ Terms not agreed to');
       Alert.alert('Terms Required', 'You must agree to the Terms of Service to continue.');
       return false;
     }
     if (!formData.understoodDisclaimer) {
+      console.log('❌ Disclaimer not acknowledged');
       Alert.alert('Disclaimer Required', 'You must acknowledge the disclaimer to continue.');
       return false;
     }
+
+    console.log('✅ Step 3 validation PASSED');
     return true;
   };
 
@@ -107,15 +149,27 @@ export default function AthleteSignup() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      router.back();
+      router.push('/(auth)/welcome');
     }
   };
 
   const handleSignup = async () => {
-    if (!validateStep3()) return;
+    console.log('🚀 [SIGNUP] Starting signup process...');
+
+    if (!validateStep3()) {
+      console.log('❌ [SIGNUP] Step 3 validation failed, aborting');
+      return;
+    }
+
+    console.log('📤 [SIGNUP] Sending to signupAthlete with data:', {
+      ...formData,
+      password: '***hidden***'
+    });
 
     try {
       const user = await signupAthlete(formData as AthleteSignupData);
+
+      console.log('✅ [SIGNUP] Success! User created:', user);
 
       Alert.alert('Success', 'Account created successfully!', [
         {
@@ -124,7 +178,29 @@ export default function AthleteSignup() {
         },
       ]);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
+      console.error('❌ [SIGNUP] Error during signup:', error);
+      console.error('❌ [SIGNUP] Error message:', error.message);
+      console.error('❌ [SIGNUP] Full error:', JSON.stringify(error, null, 2));
+
+      // Check if account already exists
+      if (error.message?.includes('already exists')) {
+        Alert.alert(
+          'Account Already Exists',
+          'An account with this email is already registered. Would you like to log in instead?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+            {
+              text: 'Log In',
+              onPress: () => router.push('/(auth)/login')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
+      }
     }
   };
 
@@ -220,13 +296,18 @@ function Step1({
           style={[styles.input, errors.password && styles.inputError]}
           value={formData.password}
           onChangeText={(text) => updateField('password', text)}
-          placeholder="••••••••"
+          placeholder="Enter your password"
           placeholderTextColor="#9ca3af"
           secureTextEntry
+          autoComplete="off"
+          textContentType="oneTimeCode"
+          autoCorrect={false}
+          keyboardType="default"
+          spellCheck={false}
         />
         {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
         {!errors.password && (
-          <Text style={styles.helpText}>Must be at least 8 characters</Text>
+          <Text style={styles.helpText}>Must be 8+ characters with uppercase, lowercase, and number</Text>
         )}
       </View>
 
@@ -236,9 +317,14 @@ function Step1({
           style={[styles.input, errors.confirmPassword && styles.inputError]}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          placeholder="••••••••"
+          placeholder="Confirm your password"
           placeholderTextColor="#9ca3af"
           secureTextEntry
+          autoComplete="off"
+          textContentType="oneTimeCode"
+          autoCorrect={false}
+          keyboardType="default"
+          spellCheck={false}
         />
         {errors.confirmPassword && (
           <Text style={styles.errorText}>{errors.confirmPassword}</Text>

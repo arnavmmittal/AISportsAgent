@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
       const user = await prisma.user.findUnique({
         where: { email },
         include: {
-          school: true,
-          athlete: true,
-          coach: true,
+          School: true,
+          Athlete: true,
+          Coach: true,
         },
       });
 
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
           name: user.name,
           role: user.role,
           schoolId: user.schoolId,
-          athlete: user.athlete,
-          coach: user.coach,
+          athlete: user.Athlete,
+          coach: user.Coach,
         },
         token,
       });

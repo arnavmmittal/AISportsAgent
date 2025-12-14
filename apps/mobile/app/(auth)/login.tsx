@@ -104,7 +104,7 @@ export default function LoginScreen() {
       >
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push('/(auth)/welcome')}
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
@@ -175,6 +175,11 @@ export default function LoginScreen() {
             }}
             secureTextEntry={!showPassword}
             editable={!isLoading}
+            autoComplete="off"
+            textContentType="oneTimeCode"
+            autoCorrect={false}
+            keyboardType="default"
+            spellCheck={false}
           />
           <TouchableOpacity
             style={styles.eyeIcon}

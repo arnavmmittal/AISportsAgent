@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { CoachSignupData } from '../../../types/auth';
 import { signupCoach, getRoleBasedRoute } from '../../../lib/auth';
+import config from '../../../config';
 
 export default function CoachSignup() {
   const router = useRouter();
@@ -61,6 +62,12 @@ export default function CoachSignup() {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one number';
     }
     if (formData.password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
@@ -109,16 +116,34 @@ export default function CoachSignup() {
 
   const sendVerificationCode = async () => {
     try {
-      // TODO: Call API to send verification code
-      // await fetch(`${API_URL}/api/auth/verify-email`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ email: formData.email })
-      // });
+      const response = await fetch(`${config.apiUrl}/api/auth/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          action: 'coach-signup'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send verification code');
+      }
 
       setVerificationSent(true);
-      Alert.alert('Code Sent', `Verification code sent to ${formData.email}`);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send verification code. Please try again.');
+
+      // In development, show the code
+      if (data.devCode) {
+        Alert.alert(
+          'Code Sent (Dev Mode)',
+          `Verification code sent to ${formData.email}\n\nDev Code: ${data.devCode}`
+        );
+      } else {
+        Alert.alert('Code Sent', `Verification code sent to ${formData.email}`);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send verification code. Please try again.');
     }
   };
 
@@ -135,7 +160,7 @@ export default function CoachSignup() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      router.back();
+      router.push('/(auth)/welcome');
     }
   };
 
@@ -143,6 +168,23 @@ export default function CoachSignup() {
     if (!validateStep3()) return;
 
     try {
+      // First verify the code
+      const verifyResponse = await fetch(`${config.apiUrl}/api/auth/verify-email`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          code: formData.verificationCode,
+        }),
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyResponse.ok) {
+        throw new Error(verifyData.error || 'Invalid verification code');
+      }
+
+      // Code is valid, proceed with signup
       const user = await signupCoach(formData as CoachSignupData);
 
       Alert.alert('Success', 'Coach account created successfully!', [
@@ -152,7 +194,25 @@ export default function CoachSignup() {
         },
       ]);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
+      // Check if account already exists
+      if (error.message?.includes('already exists')) {
+        Alert.alert(
+          'Account Already Exists',
+          'An account with this email is already registered. Would you like to log in instead?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+            {
+              text: 'Log In',
+              onPress: () => router.push('/(auth)/login')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
+      }
     }
   };
 
@@ -253,13 +313,18 @@ function Step1({ formData, confirmPassword, errors, updateField, setConfirmPassw
           style={[styles.input, errors.password && styles.inputError]}
           value={formData.password}
           onChangeText={(text) => updateField('password', text)}
-          placeholder="••••••••"
+          placeholder="Enter your password"
           placeholderTextColor="#9ca3af"
           secureTextEntry
+          autoComplete="off"
+          textContentType="oneTimeCode"
+          autoCorrect={false}
+          keyboardType="default"
+          spellCheck={false}
         />
         {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
         {!errors.password && (
-          <Text style={styles.helpText}>Must be at least 8 characters</Text>
+          <Text style={styles.helpText}>Must be 8+ characters with uppercase, lowercase, and number</Text>
         )}
       </View>
 
@@ -269,9 +334,14 @@ function Step1({ formData, confirmPassword, errors, updateField, setConfirmPassw
           style={[styles.input, errors.confirmPassword && styles.inputError]}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          placeholder="••••••••"
+          placeholder="Confirm your password"
           placeholderTextColor="#9ca3af"
           secureTextEntry
+          autoComplete="off"
+          textContentType="oneTimeCode"
+          autoCorrect={false}
+          keyboardType="default"
+          spellCheck={false}
         />
         {errors.confirmPassword && (
           <Text style={styles.errorText}>{errors.confirmPassword}</Text>
