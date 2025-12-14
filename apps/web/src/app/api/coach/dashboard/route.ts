@@ -28,10 +28,10 @@ export async function GET(req: NextRequest) {
     // Get coach's school
     const coach = await prisma.user.findUnique({
       where: { id: user!.id },
-      include: { coach: true, school: true },
+      include: { Coach: true, School: true },
     });
 
-    if (!coach || !coach.coach) {
+    if (!coach || !coach.Coach) {
       return NextResponse.json(
         { error: 'Coach profile not found' },
         { status: 404 }
@@ -46,23 +46,26 @@ export async function GET(req: NextRequest) {
     const athleteWhere: any = {
       schoolId: coach.schoolId,
       role: 'ATHLETE',
-      athlete: sport ? { sport } : undefined,
+      Athlete: sport ? { sport } : undefined,
     };
 
     // Get all athletes in school/sport
     const athletes = await prisma.user.findMany({
       where: athleteWhere,
       include: {
-        athlete: true,
-        moodLogs: {
-          where: {
-            createdAt: { gte: startDate },
-          },
-          orderBy: { createdAt: 'desc' },
-        },
-        goals: {
-          where: {
-            status: { in: ['NOT_STARTED', 'IN_PROGRESS'] },
+        Athlete: {
+          include: {
+            MoodLog: {
+              where: {
+                createdAt: { gte: startDate },
+              },
+              orderBy: { createdAt: 'desc' },
+            },
+            Goal: {
+              where: {
+                status: { in: ['NOT_STARTED', 'IN_PROGRESS'] },
+              },
+            },
           },
         },
       },
@@ -70,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     // Filter athletes based on consent
     const athletesWithConsent = athletes.filter(
-      (a) => a.athlete?.consentCoachView === true
+      (a) => a.Athlete?.consentCoachView === true
     );
 
     // Calculate aggregate statistics
@@ -78,7 +81,7 @@ export async function GET(req: NextRequest) {
     const athletesWithConsent_count = athletesWithConsent.length;
 
     // Mood statistics (only for athletes with consent)
-    const allMoodLogs = athletesWithConsent.flatMap((a) => a.moodLogs);
+    const allMoodLogs = athletesWithConsent.flatMap((a) => a.Athlete?.MoodLog || []);
     const avgMood =
       allMoodLogs.length > 0
         ? allMoodLogs.reduce((sum, m) => sum + m.mood, 0) / allMoodLogs.length
@@ -94,7 +97,7 @@ export async function GET(req: NextRequest) {
 
     // Identify at-risk athletes (high stress, low mood)
     const atRiskAthletes = athletesWithConsent.filter((a) => {
-      const recentMoodLogs = a.moodLogs.slice(0, 3);
+      const recentMoodLogs = (a.Athlete?.MoodLog || []).slice(0, 3);
       if (recentMoodLogs.length === 0) return false;
 
       const avgStress =
@@ -111,21 +114,24 @@ export async function GET(req: NextRequest) {
 
     const crisisAlerts = await prisma.crisisAlert.findMany({
       where: {
-        athlete: {
-          schoolId: coach.schoolId,
+        Athlete: {
+          User: {
+            schoolId: coach.schoolId,
+          },
         },
         createdAt: { gte: crisisStartDate },
         resolved: false,
       },
       include: {
-        athlete: {
+        Athlete: {
           select: {
-            id: true,
-            name: true,
-            athlete: {
+            userId: true,
+            sport: true,
+            year: true,
+            User: {
               select: {
-                sport: true,
-                year: true,
+                id: true,
+                name: true,
               },
             },
           },
@@ -143,9 +149,11 @@ export async function GET(req: NextRequest) {
 
     const todaysMoodLogs = await prisma.moodLog.findMany({
       where: {
-        athlete: {
-          schoolId: coach.schoolId,
+        Athlete: {
           consentCoachView: true,
+          User: {
+            schoolId: coach.schoolId,
+          },
         },
         createdAt: {
           gte: today,
@@ -153,14 +161,15 @@ export async function GET(req: NextRequest) {
         },
       },
       include: {
-        athlete: {
+        Athlete: {
           select: {
-            id: true,
-            name: true,
-            athlete: {
+            userId: true,
+            sport: true,
+            teamPosition: true,
+            User: {
               select: {
-                sport: true,
-                teamPosition: true,
+                id: true,
+                name: true,
               },
             },
           },
@@ -172,7 +181,12 @@ export async function GET(req: NextRequest) {
     const athleteReadiness = todaysMoodLogs.map((log) => {
       const readiness = (log.mood + log.confidence + (11 - log.stress)) / 3;
       return {
-        athlete: log.athlete,
+        athlete: {
+          id: log.Athlete.User.id,
+          name: log.Athlete.User.name,
+          sport: log.Athlete.sport,
+          teamPosition: log.Athlete.teamPosition,
+        },
         mood: log.mood,
         confidence: log.confidence,
         stress: log.stress,
@@ -208,13 +222,13 @@ export async function GET(req: NextRequest) {
         atRiskAthletes: atRiskAthletes.map((a) => ({
           id: a.id,
           name: a.name,
-          sport: a.athlete?.sport,
-          year: a.athlete?.year,
-          recentMood: a.moodLogs[0]
+          sport: a.Athlete?.sport,
+          year: a.Athlete?.year,
+          recentMood: a.Athlete?.MoodLog && a.Athlete.MoodLog[0]
             ? {
-                mood: a.moodLogs[0].mood,
-                confidence: a.moodLogs[0].confidence,
-                stress: a.moodLogs[0].stress,
+                mood: a.Athlete.MoodLog[0].mood,
+                confidence: a.Athlete.MoodLog[0].confidence,
+                stress: a.Athlete.MoodLog[0].stress,
               }
             : null,
         })),

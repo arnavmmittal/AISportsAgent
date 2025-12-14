@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     // Get coach's school
     const coach = await prisma.user.findUnique({
       where: { id: user!.id },
-      include: { school: true },
+      include: { School: true },
     });
 
     if (!coach) {
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     const where: any = {
       schoolId: coach.schoolId,
       role: 'ATHLETE',
-      athlete: {
+      Athlete: {
         consentCoachView: true,
         ...(sport && { sport }),
       },
@@ -50,16 +50,19 @@ export async function GET(req: NextRequest) {
     const athletes = await prisma.user.findMany({
       where,
       include: {
-        athlete: true,
-        moodLogs: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-        },
-        goals: {
-          where: {
-            status: { in: ['IN_PROGRESS', 'NOT_STARTED'] },
+        Athlete: {
+          include: {
+            MoodLog: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+            Goal: {
+              where: {
+                status: { in: ['IN_PROGRESS', 'NOT_STARTED'] },
+              },
+              take: 3,
+            },
           },
-          take: 3,
         },
       },
       orderBy: { name: 'asc' },
@@ -71,12 +74,12 @@ export async function GET(req: NextRequest) {
         id: a.id,
         name: a.name,
         email: a.email,
-        sport: a.athlete?.sport,
-        year: a.athlete?.year,
-        position: a.athlete?.teamPosition,
-        riskLevel: a.athlete?.riskLevel,
-        lastMoodLog: a.moodLogs[0] || null,
-        activeGoalsCount: a.goals.length,
+        sport: a.Athlete?.sport,
+        year: a.Athlete?.year,
+        position: a.Athlete?.teamPosition,
+        riskLevel: a.Athlete?.riskLevel,
+        lastMoodLog: a.Athlete?.MoodLog?.[0] || null,
+        activeGoalsCount: a.Athlete?.Goal?.length || 0,
       })),
     });
   } catch (error) {
