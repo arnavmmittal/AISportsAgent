@@ -32,7 +32,7 @@ export default function CommandCenterPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/coach/dashboard');
+      const response = await fetch('/api/coach/command-center');
 
       if (!response.ok) {
         throw new Error('Failed to load dashboard data');
