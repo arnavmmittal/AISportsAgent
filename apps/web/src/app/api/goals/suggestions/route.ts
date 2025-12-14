@@ -40,19 +40,19 @@ export async function GET(req: NextRequest) {
     const athlete = await prisma.user.findUnique({
       where: { id: athleteId },
       include: {
-        athlete: true,
-        goals: {
+        Athlete: true,
+        Goal: {
           orderBy: { createdAt: 'desc' },
           take: 5,
         },
-        moodLogs: {
+        MoodLog: {
           orderBy: { createdAt: 'desc' },
           take: 7,
         },
       },
     });
 
-    if (!athlete || !athlete.athlete) {
+    if (!athlete || !athlete.Athlete) {
       return NextResponse.json(
         { error: 'Athlete not found' },
         { status: 404 }
@@ -62,22 +62,22 @@ export async function GET(req: NextRequest) {
     // Build context for AI
     const athleteProfile = {
       name: athlete.name,
-      sport: athlete.athlete.sport,
-      year: athlete.athlete.year,
-      position: athlete.athlete.teamPosition,
+      sport: athlete.Athlete.sport,
+      year: athlete.Athlete.year,
+      position: athlete.Athlete.teamPosition,
     };
 
-    const recentGoals = athlete.goals.map(g => ({
+    const recentGoals = athlete.Goal.map(g => ({
       title: g.title,
       category: g.category,
       status: g.status,
       progress: g.progress,
     }));
 
-    const moodTrends = athlete.moodLogs.length > 0 ? {
-      avgMood: athlete.moodLogs.reduce((sum, m) => sum + m.mood, 0) / athlete.moodLogs.length,
-      avgConfidence: athlete.moodLogs.reduce((sum, m) => sum + m.confidence, 0) / athlete.moodLogs.length,
-      avgStress: athlete.moodLogs.reduce((sum, m) => sum + m.stress, 0) / athlete.moodLogs.length,
+    const moodTrends = athlete.MoodLog.length > 0 ? {
+      avgMood: athlete.MoodLog.reduce((sum, m) => sum + m.mood, 0) / athlete.MoodLog.length,
+      avgConfidence: athlete.MoodLog.reduce((sum, m) => sum + m.confidence, 0) / athlete.MoodLog.length,
+      avgStress: athlete.MoodLog.reduce((sum, m) => sum + m.stress, 0) / athlete.MoodLog.length,
     } : null;
 
     // Use OpenAI only if API key is available
