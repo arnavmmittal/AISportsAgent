@@ -10,6 +10,9 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const athleteId = searchParams.get('athleteId');
+    const category = searchParams.get('category'); // Filter by category
+    const status = searchParams.get('status'); // Filter by status
+    const search = searchParams.get('search'); // Search in title/description
 
     if (!athleteId) {
       return NextResponse.json(
@@ -26,8 +29,26 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Build where clause with filters
+    const where: any = { athleteId };
+
+    if (category && category !== 'ALL') {
+      where.category = category;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
     const goals = await prisma.goal.findMany({
-      where: { athleteId },
+      where,
       orderBy: { createdAt: 'desc' },
     });
 

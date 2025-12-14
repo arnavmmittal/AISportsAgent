@@ -116,8 +116,20 @@ export class APIClient {
 
   // ========== Goals ==========
 
-  async getGoals(athleteId: string): Promise<Goal[]> {
-    const response: any = await this.request(`/api/goals?athleteId=${athleteId}`);
+  async getGoals(
+    athleteId: string,
+    filters?: {
+      category?: string;
+      status?: string;
+      search?: string;
+    }
+  ): Promise<Goal[]> {
+    const queryParams = new URLSearchParams({ athleteId });
+    if (filters?.category) queryParams.append('category', filters.category);
+    if (filters?.status) queryParams.append('status', filters.status);
+    if (filters?.search) queryParams.append('search', filters.search);
+
+    const response: any = await this.request(`/api/goals?${queryParams}`);
     // Backend returns { success: true, data: [...] }
     return response.data || response;
   }
@@ -132,16 +144,24 @@ export class APIClient {
   }
 
   async updateGoal(id: string, data: Partial<Goal>): Promise<Goal> {
-    return this.request(`/api/goals/${id}`, {
-      method: 'PUT',
+    const response: any = await this.request(`/api/goals/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
+    // Backend returns { success: true, data: goal }
+    return response.data || response;
   }
 
   async deleteGoal(id: string): Promise<void> {
     return this.request(`/api/goals/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async getGoalSuggestions(athleteId: string): Promise<any[]> {
+    const response: any = await this.request(`/api/goals/suggestions?athleteId=${athleteId}`);
+    // Backend returns { success: true, data: [...] }
+    return response.data || response;
   }
 
   // ========== Athlete Profile ==========
@@ -226,6 +246,46 @@ export class APIClient {
 
   async getAssignmentSubmissions(id: string): Promise<any> {
     return this.request(`/api/assignments/${id}/submissions`);
+  }
+
+  // ========== Coach Dashboard ==========
+
+  async getCoachDashboard(filters?: {
+    sport?: string;
+    timeRange?: string;
+  }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (filters?.sport) queryParams.append('sport', filters.sport);
+    if (filters?.timeRange) queryParams.append('timeRange', filters.timeRange);
+
+    const response: any = await this.request(`/api/coach/dashboard?${queryParams}`);
+    return response.data || response;
+  }
+
+  async getCoachAthletes(sport?: string): Promise<any[]> {
+    const queryParams = sport ? `?sport=${sport}` : '';
+    const response: any = await this.request(`/api/coach/athletes${queryParams}`);
+    return response.data || response;
+  }
+
+  // ========== Admin Dashboard ==========
+
+  async getAdminDashboard(): Promise<any> {
+    const response: any = await this.request('/api/admin/dashboard');
+    return response.data || response;
+  }
+
+  async getSchools(): Promise<any[]> {
+    const response: any = await this.request('/api/admin/schools');
+    return response.data || response;
+  }
+
+  async createSchool(data: { name: string; division?: string }): Promise<any> {
+    const response: any = await this.request('/api/admin/schools', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data || response;
   }
 }
 
