@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -12,17 +11,12 @@ const updateConsentSchema = z.object({
 // GET /api/athlete/consent - Get athlete's consent settings
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    // Verify authentication
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const athlete = await prisma.athlete.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user!.id },
       select: {
         consentChatSummaries: true,
         consentCoachView: true,
@@ -59,22 +53,17 @@ export async function PATCH(request: NextRequest) {
 
 async function handleUpdate(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    // Verify authentication
+    const { authorized, user: authUser, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     // Verify user is an athlete
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { athlete: true },
+      where: { id: authUser!.id },
+      include: { Athlete: true },
     });
 
-    if (!user || user.role !== 'ATHLETE' || !user.athlete) {
+    if (!user || user.role !== 'ATHLETE' || !user.Athlete) {
       return NextResponse.json(
         { error: 'Forbidden - Athlete access required' },
         { status: 403 }
@@ -107,7 +96,7 @@ async function handleUpdate(request: NextRequest) {
     }
 
     const updatedAthlete = await prisma.athlete.update({
-      where: { userId: session.user.id },
+      where: { userId: authUser!.id },
       data: updateData,
       select: {
         consentChatSummaries: true,
