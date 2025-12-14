@@ -48,8 +48,17 @@ export default function DashboardPage() {
         // TODO: Get real athlete ID from session
         const athleteId = session?.user?.id || 'athlete_test_123';
 
-        const data = await apiClient.getAthleteDashboard(athleteId, 7);
-        setDashboardData(data);
+        // For now, use mock data since API endpoints aren't created yet
+        // const data = await apiClient.getAthleteDashboard(athleteId, 7);
+        const mockData: AthleteDashboard = {
+          athleteId,
+          streak: 0,
+          weeklyGoals: [],
+          recentSessions: [],
+          moodTrend: [],
+          upcomingEvents: [],
+        };
+        setDashboardData(mockData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data');
@@ -68,7 +77,9 @@ export default function DashboardPage() {
       // TODO: Get real athlete ID from session
       const athleteId = session?.user?.id || 'athlete_test_123';
 
-      const response = await apiClient.logMood(athleteId, { mood: moodValue });
+      // For now, mock the response since API endpoints aren't created yet
+      // const response = await apiClient.logMood(athleteId, { mood: moodValue });
+      const response = { streak: (dashboardData?.streak || 0) + 1 };
 
       // Update streak in dashboard data
       if (dashboardData) {
