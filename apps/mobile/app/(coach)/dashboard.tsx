@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -21,7 +20,6 @@ import { apiClient } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 
 export default function CoachDashboard() {
-  const router = useRouter();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -92,18 +90,9 @@ export default function CoachDashboard() {
         >
           <View style={styles.headerContent}>
             <View>
-              <Text style={styles.headerTitle}>Coach Dashboard</Text>
-              <Text style={styles.headerSubtitle}>Team Performance Overview</Text>
+              <Text style={styles.headerTitle}>Team Dashboard</Text>
+              <Text style={styles.headerSubtitle}>Performance & Wellness Overview</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(coach)/athletes');
-              }}
-              style={styles.athletesButton}
-            >
-              <Ionicons name="people" size={24} color="#fff" />
-            </TouchableOpacity>
           </View>
         </LinearGradient>
       </View>
@@ -313,14 +302,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     color: 'rgba(255,255,255,0.9)',
     fontWeight: '500',
-  },
-  athletesButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   scrollView: {
     flex: 1,

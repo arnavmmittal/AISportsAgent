@@ -48,8 +48,48 @@ export default function DashboardPage() {
         // TODO: Get real athlete ID from session
         const athleteId = session?.user?.id || 'athlete_test_123';
 
-        const data = await apiClient.getAthleteDashboard(athleteId, 7);
-        setDashboardData(data);
+        // For now, use mock data since API endpoints aren't created yet
+        // const data = await apiClient.getAthleteDashboard(athleteId, 7);
+        const mockData: any = {
+          athleteId,
+          streak: 5,
+          weeklyGoals: [
+            { id: '1', title: 'Practice mindfulness daily', progress: 85, category: 'MENTAL' },
+            { id: '2', title: 'Improve free throw %', progress: 60, category: 'PERFORMANCE' },
+          ],
+          recentSessions: [
+            { id: '1', date: new Date().toISOString(), topic: 'Pre-game anxiety', messageCount: 12 },
+          ],
+          mood_trend: {
+            mood_values: [3, 4, 3, 5, 4, 4, 5],
+            average: 4.0,
+            trend: 'improving'
+          },
+          goals_progress: {
+            active_goals: 3,
+            overall_progress: 75
+          },
+          recent_sessions: [
+            {
+              id: 'session-1',
+              date: 'Yesterday',
+              duration: '15 min',
+              topic: 'Pre-game anxiety management',
+              message_count: 8
+            },
+            {
+              id: 'session-2',
+              date: '2 days ago',
+              duration: '22 min',
+              topic: 'Performance slump discussion',
+              message_count: 12
+            }
+          ],
+          upcomingEvents: [
+            { id: '1', title: 'Championship Game', date: new Date(Date.now() + 86400000 * 3).toISOString() },
+          ],
+        };
+        setDashboardData(mockData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data');
@@ -68,7 +108,9 @@ export default function DashboardPage() {
       // TODO: Get real athlete ID from session
       const athleteId = session?.user?.id || 'athlete_test_123';
 
-      const response = await apiClient.logMood(athleteId, { mood: moodValue });
+      // For now, mock the response since API endpoints aren't created yet
+      // const response = await apiClient.logMood(athleteId, { mood: moodValue });
+      const response = { streak: (dashboardData?.streak || 0) + 1 };
 
       // Update streak in dashboard data
       if (dashboardData) {
