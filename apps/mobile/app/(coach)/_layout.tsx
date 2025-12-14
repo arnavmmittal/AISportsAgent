@@ -208,6 +208,66 @@ export default function CoachLayout() {
       />
 
       <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Analytics',
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon
+              name="bar-chart-outline"
+              focusedName="bar-chart"
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          },
+        }}
+      />
+
+      <Tabs.Screen
+        name="readiness"
+        options={{
+          title: 'Readiness',
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon
+              name="flash-outline"
+              focusedName="flash"
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          },
+        }}
+      />
+
+      <Tabs.Screen
+        name="insights"
+        options={{
+          title: 'AI Insights',
+          tabBarIcon: ({ color, focused }) => (
+            <AnimatedTabIcon
+              name="bulb-outline"
+              focusedName="bulb"
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          },
+        }}
+      />
+
+      <Tabs.Screen
         name="assignments"
         options={{
           title: 'Assignments',
