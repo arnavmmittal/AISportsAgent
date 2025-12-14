@@ -1,31 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireCoach } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/coach/summaries - Get all chat summaries for athletes who consented
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const { authorized, user, response } = await requireCoach(request);
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
-
-    // Verify user is a coach
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { coach: true },
-    });
-
-    if (!user || user.role !== 'COACH') {
-      return NextResponse.json(
-        { error: 'Forbidden - Coach access required' },
-        { status: 403 }
-      );
+    if (!authorized || !user) {
+      return response;
     }
 
     const schoolId = user.schoolId;

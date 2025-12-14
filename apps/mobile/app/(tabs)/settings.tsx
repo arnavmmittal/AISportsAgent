@@ -15,16 +15,34 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Spacing, Typography, BorderRadius } from '@/constants/theme';
-import { apiClient } from '../../lib/auth';
+import { apiClient, getStoredUserRole } from '../../lib/auth';
 
 export default function SettingsScreen() {
   const [consentChatSummaries, setConsentChatSummaries] = useState(false);
   const [consentCoachView, setConsentCoachView] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<'ATHLETE' | 'COACH' | 'ADMIN' | null>(null);
 
   useEffect(() => {
-    loadConsentSettings();
+    loadUserData();
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      const role = await getStoredUserRole();
+      setUserRole(role);
+
+      // Only load consent settings for athletes
+      if (role === 'ATHLETE') {
+        await loadConsentSettings();
+      } else {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      setIsLoading(false);
+    }
+  };
 
   const loadConsentSettings = async () => {
     try {
@@ -34,7 +52,7 @@ export default function SettingsScreen() {
       setConsentCoachView(response.consent.consentCoachView);
     } catch (error) {
       console.error('Failed to load consent settings:', error);
-      Alert.alert('Error', 'Failed to load privacy settings. Please try again.');
+      // Don't show alert - just log the error
     } finally {
       setIsLoading(false);
     }
@@ -233,54 +251,58 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Privacy & Coach Consent */}
-        <SectionHeader title="Privacy & Coach Access" />
-        <View style={styles.card}>
-          <LinearGradient
-            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-            style={styles.cardGradient}
-          >
-            <SettingItem
-              icon="eye-outline"
-              iconColor="#a78bfa"
-              title="Share Chat Summaries"
-              subtitle={
-                consentChatSummaries
-                  ? 'Coach can view weekly summaries'
-                  : 'Coach cannot view summaries (recommended)'
-              }
-              rightComponent={
-                <Switch
-                  value={consentChatSummaries}
-                  onValueChange={handleChatSummaryToggle}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#8b5cf6' }}
-                  thumbColor={consentChatSummaries ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="rgba(255,255,255,0.2)"
+        {/* Privacy & Coach Consent - Only show for athletes */}
+        {userRole === 'ATHLETE' && (
+          <>
+            <SectionHeader title="Privacy & Coach Access" />
+            <View style={styles.card}>
+              <LinearGradient
+                colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+                style={styles.cardGradient}
+              >
+                <SettingItem
+                  icon="eye-outline"
+                  iconColor="#a78bfa"
+                  title="Share Chat Summaries"
+                  subtitle={
+                    consentChatSummaries
+                      ? 'Coach can view weekly summaries'
+                      : 'Coach cannot view summaries (recommended)'
+                  }
+                  rightComponent={
+                    <Switch
+                      value={consentChatSummaries}
+                      onValueChange={handleChatSummaryToggle}
+                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#8b5cf6' }}
+                      thumbColor={consentChatSummaries ? '#fff' : '#f4f3f4'}
+                      ios_backgroundColor="rgba(255,255,255,0.2)"
+                    />
+                  }
                 />
-              }
-            />
-            <View style={styles.separator} />
-            <SettingItem
-              icon="analytics-outline"
-              iconColor="#34d399"
-              title="Share Analytics"
-              subtitle={
-                consentCoachView
-                  ? 'Coach can view mood & goal trends'
-                  : 'Analytics are private'
-              }
-              rightComponent={
-                <Switch
-                  value={consentCoachView}
-                  onValueChange={handleCoachViewToggle}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#10b981' }}
-                  thumbColor={consentCoachView ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                <View style={styles.separator} />
+                <SettingItem
+                  icon="analytics-outline"
+                  iconColor="#34d399"
+                  title="Share Analytics"
+                  subtitle={
+                    consentCoachView
+                      ? 'Coach can view mood & goal trends'
+                      : 'Analytics are private'
+                  }
+                  rightComponent={
+                    <Switch
+                      value={consentCoachView}
+                      onValueChange={handleCoachViewToggle}
+                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#10b981' }}
+                      thumbColor={consentCoachView ? '#fff' : '#f4f3f4'}
+                      ios_backgroundColor="rgba(255,255,255,0.2)"
+                    />
+                  }
                 />
-              }
-            />
-          </LinearGradient>
-        </View>
+              </LinearGradient>
+            </View>
+          </>
+        )}
 
         {/* Profile */}
         <SectionHeader title="Profile" />

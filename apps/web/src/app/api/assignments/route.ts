@@ -18,6 +18,67 @@ export async function GET(request: NextRequest) {
     const { authorized, user: authUser, response } = await requireAuth(request);
     if (!authorized) return response;
 
+    // Return mock data for demo users
+    if (authUser!.id.startsWith('demo-')) {
+      if (authUser!.role === 'COACH') {
+        // Demo coach assignments
+        const mockAssignments = [
+          {
+            id: 'assign-1',
+            coachId: 'demo-coach-123',
+            title: 'Pre-Game Mental Preparation',
+            description: 'Complete the pre-game visualization exercise and journal about your experience.',
+            dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+            targetAthleteIds: null,
+            targetSport: 'Basketball',
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            AssignmentSubmission: [
+              { id: 'sub-1', athleteId: 'athlete-1', status: 'COMPLETED', submittedAt: new Date().toISOString() },
+              { id: 'sub-2', athleteId: 'athlete-2', status: 'PENDING', submittedAt: null },
+            ],
+          },
+          {
+            id: 'assign-2',
+            coachId: 'demo-coach-123',
+            title: 'Weekly Mood Reflection',
+            description: 'Reflect on your mood patterns this week and identify any triggers.',
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            targetAthleteIds: null,
+            targetSport: null,
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            AssignmentSubmission: [],
+          },
+        ];
+        return NextResponse.json({ assignments: mockAssignments });
+      } else if (authUser!.role === 'ATHLETE') {
+        // Demo athlete assignments
+        const mockAssignments = [
+          {
+            id: 'assign-1',
+            coachId: 'demo-coach-123',
+            title: 'Pre-Game Mental Preparation',
+            description: 'Complete the pre-game visualization exercise and journal about your experience.',
+            dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+            targetAthleteIds: null,
+            targetSport: 'Basketball',
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            AssignmentSubmission: [
+              {
+                id: 'sub-1',
+                status: 'PENDING',
+                response: null,
+                submittedAt: null,
+              },
+            ],
+          },
+        ];
+        return NextResponse.json({ assignments: mockAssignments });
+      }
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: authUser!.id },
       include: {
@@ -40,7 +101,7 @@ export async function GET(request: NextRequest) {
           coachId: user.id,
         },
         include: {
-          submissions: {
+          AssignmentSubmission: {
             select: {
               id: true,
               athleteId: true,
@@ -80,7 +141,7 @@ export async function GET(request: NextRequest) {
           ],
         },
         include: {
-          submissions: {
+          AssignmentSubmission: {
             where: {
               athleteId: user.id,
             },
@@ -160,7 +221,7 @@ export async function POST(request: NextRequest) {
         targetSport: data.targetSport || null,
       },
       include: {
-        submissions: true,
+        AssignmentSubmission: true,
       },
     });
 

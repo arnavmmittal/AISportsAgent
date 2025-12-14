@@ -37,10 +37,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Get athlete data
-    const athlete = await prisma.user.findUnique({
-      where: { id: athleteId },
+    const athleteProfile = await prisma.athlete.findUnique({
+      where: { userId: athleteId },
       include: {
-        Athlete: true,
+        User: true,
         Goal: {
           orderBy: { createdAt: 'desc' },
           take: 5,
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    if (!athlete || !athlete.Athlete) {
+    if (!athleteProfile) {
       return NextResponse.json(
         { error: 'Athlete not found' },
         { status: 404 }
@@ -60,24 +60,24 @@ export async function GET(req: NextRequest) {
     }
 
     // Build context for AI
-    const athleteProfile = {
-      name: athlete.name,
-      sport: athlete.Athlete.sport,
-      year: athlete.Athlete.year,
-      position: athlete.Athlete.teamPosition,
+    const profile = {
+      name: athleteProfile.User.name,
+      sport: athleteProfile.sport,
+      year: athleteProfile.year,
+      position: athleteProfile.teamPosition,
     };
 
-    const recentGoals = athlete.Goal.map(g => ({
+    const recentGoals = athleteProfile.Goal.map(g => ({
       title: g.title,
       category: g.category,
       status: g.status,
-      progress: g.progress,
+      completionPct: g.completionPct,
     }));
 
-    const moodTrends = athlete.MoodLog.length > 0 ? {
-      avgMood: athlete.MoodLog.reduce((sum, m) => sum + m.mood, 0) / athlete.MoodLog.length,
-      avgConfidence: athlete.MoodLog.reduce((sum, m) => sum + m.confidence, 0) / athlete.MoodLog.length,
-      avgStress: athlete.MoodLog.reduce((sum, m) => sum + m.stress, 0) / athlete.MoodLog.length,
+    const moodTrends = athleteProfile.MoodLog.length > 0 ? {
+      avgMood: athleteProfile.MoodLog.reduce((sum, m) => sum + m.mood, 0) / athleteProfile.MoodLog.length,
+      avgConfidence: athleteProfile.MoodLog.reduce((sum, m) => sum + m.confidence, 0) / athleteProfile.MoodLog.length,
+      avgStress: athleteProfile.MoodLog.reduce((sum, m) => sum + m.stress, 0) / athleteProfile.MoodLog.length,
     } : null;
 
     // Use OpenAI only if API key is available
@@ -110,13 +110,13 @@ Return ONLY a JSON array of goals in this exact format:
             {
               role: 'user',
               content: `Athlete Profile:
-- Name: ${athleteProfile.name}
-- Sport: ${athleteProfile.sport}
-- Year: ${athleteProfile.year}
-- Position: ${athleteProfile.position || 'Not specified'}
+- Name: ${profile.name}
+- Sport: ${profile.sport}
+- Year: ${profile.year}
+- Position: ${profile.position || 'Not specified'}
 
 Recent Goals (last 5):
-${recentGoals.length > 0 ? recentGoals.map(g => `- ${g.title} (${g.category}, ${g.status}, ${g.progress}% complete)`).join('\n') : 'No goals yet'}
+${recentGoals.length > 0 ? recentGoals.map(g => `- ${g.title} (${g.category}, ${g.status}, ${g.completionPct}% complete)`).join('\n') : 'No goals yet'}
 
 Recent Mood Trends (last 7 days):
 ${moodTrends ? `- Avg Mood: ${moodTrends.avgMood.toFixed(1)}/10
@@ -149,7 +149,7 @@ Suggest 4 personalized goals.`,
     }
 
     // Fallback: Mock suggestions if OpenAI fails or no API key
-    const mockSuggestions = generateMockSuggestions(athleteProfile, moodTrends);
+    const mockSuggestions = generateMockSuggestions(profile, moodTrends);
 
     return NextResponse.json({
       success: true,

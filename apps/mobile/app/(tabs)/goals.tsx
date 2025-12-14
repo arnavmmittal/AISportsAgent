@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Goal } from '@sports-agent/types';
-import { apiClient, getStoredUserId } from '../../lib/auth';
+import { apiClient, getStoredUserId, getStoredUserRole } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 
 interface SuggestedGoal {
@@ -36,6 +36,7 @@ export default function GoalsScreen() {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [userRole, setUserRole] = useState<'ATHLETE' | 'COACH' | 'ADMIN' | null>(null);
   const [newGoal, setNewGoal] = useState({
     title: '',
     description: '',
@@ -44,9 +45,21 @@ export default function GoalsScreen() {
   });
 
   useEffect(() => {
-    loadGoals();
-    loadSuggestedGoals();
+    initializeScreen();
   }, []);
+
+  const initializeScreen = async () => {
+    const role = await getStoredUserRole();
+    setUserRole(role);
+
+    loadGoals();
+    // Only load suggestions for athletes
+    if (role === 'ATHLETE') {
+      loadSuggestedGoals();
+    } else {
+      setIsLoadingSuggestions(false);
+    }
+  };
 
   const loadGoals = async () => {
     try {

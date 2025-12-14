@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { Header } from "@/components/layout/Header";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -25,6 +26,7 @@ export default function RootLayout({
         <SessionProvider>
           <Header />
           {children}
+          <Toaster />
         </SessionProvider>
       </body>
     </html>
