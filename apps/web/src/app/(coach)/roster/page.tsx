@@ -12,7 +12,16 @@ import FilterBar from '@/components/coach/roster/FilterBar';
 import AthleteGrid from '@/components/coach/roster/AthleteGrid';
 import AthleteProfileModal from '@/components/coach/roster/AthleteProfileModal';
 import { SkeletonAthleteCard } from '@/components/coach/ui/Skeleton';
-import { Athlete, AthleteFilters } from '@/types/coach-portal';
+import { Athlete, AthleteFilters, ReadinessLevel } from '@/types/coach-portal';
+
+function getReadinessLevel(mood: number, confidence: number, stress: number): ReadinessLevel {
+  const score = Math.round(((mood + confidence + (11 - stress)) / 3) * 10);
+  if (score >= 90) return 'OPTIMAL';
+  if (score >= 75) return 'GOOD';
+  if (score >= 60) return 'MODERATE';
+  if (score >= 45) return 'LOW';
+  return 'POOR';
+}
 
 export default function RosterPage() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
@@ -39,8 +48,23 @@ export default function RosterPage() {
         throw new Error('Failed to load athletes');
       }
 
-      const data = await response.json();
-      setAthletes(data.athletes || []);
+      const json = await response.json();
+      // Transform API response to Athlete type
+      const athleteData: Athlete[] = (json.data || []).map((item: any) => ({
+        id: item.id,
+        userId: item.id,
+        name: item.name,
+        sport: item.sport,
+        year: item.year,
+        teamPosition: item.position,
+        profileImageUrl: null,
+        consentCoachView: item.consentGranted,
+        riskLevel: item.riskLevel || 'LOW',
+        readinessScore: item.lastMoodLog ? Math.round(((item.lastMoodLog.mood + item.lastMoodLog.confidence + (11 - item.lastMoodLog.stress)) / 3) * 10) : undefined,
+        readinessLevel: item.lastMoodLog ? getReadinessLevel(item.lastMoodLog.mood, item.lastMoodLog.confidence, item.lastMoodLog.stress) : undefined,
+        archetype: undefined, // TODO: Add archetype
+      }));
+      setAthletes(athleteData);
     } catch (error) {
       console.error('Error loading athletes:', error);
     } finally {
