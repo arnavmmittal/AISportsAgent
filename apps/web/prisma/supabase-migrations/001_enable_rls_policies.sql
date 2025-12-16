@@ -27,6 +27,7 @@ ALTER TABLE "CoachAthleteRelation" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Assignment" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "AssignmentSubmission" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "AuditLog" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "TokenUsage" ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
 -- STEP 2: User Table Policies
@@ -318,6 +319,19 @@ FOR SELECT
 USING (auth.uid()::text = "userId");
 
 -- System can insert audit logs (via service_role)
+
+-- =====================================================
+-- STEP 15: TokenUsage Policies
+-- =====================================================
+
+-- Users can view their own token usage
+CREATE POLICY "Users can view own token usage"
+ON "TokenUsage"
+FOR SELECT
+USING (auth.uid()::text = "userId");
+
+-- System can insert token usage (via service_role or API)
+-- Note: INSERT is handled by application code, not user-facing
 
 -- =====================================================
 -- VERIFICATION QUERIES

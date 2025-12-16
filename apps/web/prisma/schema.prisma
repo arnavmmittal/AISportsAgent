@@ -430,6 +430,23 @@ model User {
   @@index([schoolId])
 }
 
+model TokenUsage {
+  id              String   @id @default(cuid())
+  userId          String
+  sessionId       String?
+  promptTokens    Int
+  completionTokens Int
+  totalTokens     Int
+  model           String?
+  endpoint        String   // e.g., "/api/chat/stream"
+  cost            Float?   // Cost in USD
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([userId, createdAt]) // For efficient daily/monthly queries
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique
