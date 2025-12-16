@@ -99,9 +99,9 @@ export const authOptions: NextAuthConfig = {
           const user = await prisma.user.findUnique({
             where: { email: credentials.email as string },
             include: {
-              school: true,
-              athlete: true,
-              coach: true,
+              School: true,
+              Athlete: true,
+              Coach: true,
             },
           });
 
@@ -121,8 +121,8 @@ export const authOptions: NextAuthConfig = {
             name: user.name ?? '',
             role: user.role,
             schoolId: user.schoolId,
-            athlete: user.athlete,
-            coach: user.coach,
+            athlete: user.Athlete,
+            coach: user.Coach,
           };
         } catch (error) {
           // If database is not available, only demo account works
