@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
+import { checkUserCanMakeRequest } from '@/lib/cost-tracking';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -21,6 +22,28 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
+          },
+        }
+      );
+    }
+
+    // Check cost limits before allowing request
+    const usageCheck = await checkUserCanMakeRequest(user.id);
+    if (!usageCheck.allowed) {
+      console.warn(`[Cost Control] Request blocked for user ${user.id}: ${usageCheck.reason}`);
+      return new Response(
+        encoder.encode('data: ' + JSON.stringify({
+          type: 'error',
+          data: usageCheck.reason,
+          usage: usageCheck.currentUsage,
+        }) + '\n\n'),
+        {
+          status: 429, // Too Many Requests
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Retry-After': '86400', // 24 hours (for daily limit)
           },
         }
       );
