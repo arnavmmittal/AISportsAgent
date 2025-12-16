@@ -2,17 +2,25 @@
 
 This file provides Claude with essential context about the AI Sports Agent project.
 
-## 📋 IMPORTANT: Development Plan & Progress
+## 📋 IMPORTANT: Documentation Structure
 
-**Always check `PLAN.md` first** - This file contains:
-- Current MVP progress and completed work
-- Active branch and sprint goals
-- Blockers and issues
-- Next steps and task breakdown
-- Database connection info
-- Git workflow and commit history context
+The project uses a **streamlined 3-file documentation system**:
 
-`PLAN.md` is maintained continuously across all development sessions to preserve context. **Update it whenever you complete tasks, encounter blockers, or change direction.**
+1. **`README.md`** - Project overview, architecture, tech stack
+2. **`SETUP.md`** - Complete setup guide for new developers
+3. **`MVP_STATUS.md`** - Current progress, production roadmap, MVP checklist
+
+**Always check `MVP_STATUS.md` first** for:
+- What's done vs. what's needed for production
+- Critical gaps (security, cost controls, safety)
+- Current sprint focus
+- Blockers and open questions
+
+**Update `MVP_STATUS.md`** whenever you:
+- Complete MVP checklist items
+- Discover production blockers
+- Make architecture decisions
+- Hit cost/safety milestones
 
 ## Project Overview
 
