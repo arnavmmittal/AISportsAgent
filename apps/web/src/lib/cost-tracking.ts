@@ -43,74 +43,87 @@ export interface TokenUsageData {
  * @returns UsageCheckResult indicating if request is allowed
  */
 export async function checkUserCanMakeRequest(userId: string): Promise<UsageCheckResult> {
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  try {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Check daily message limit
-  const dailyCount = await prisma.tokenUsage.count({
-    where: {
-      userId,
-      createdAt: {
-        gte: todayStart,
+    // Check daily message limit
+    const dailyCount = await prisma.tokenUsage.count({
+      where: {
+        userId,
+        createdAt: {
+          gte: todayStart,
+        },
       },
-    },
-  });
+    });
 
-  if (dailyCount >= DAILY_MESSAGE_LIMIT_PER_USER) {
+    if (dailyCount >= DAILY_MESSAGE_LIMIT_PER_USER) {
+      return {
+        allowed: false,
+        reason: `Daily message limit reached (${DAILY_MESSAGE_LIMIT_PER_USER} messages/day). Try again tomorrow.`,
+        currentUsage: {
+          dailyMessages: dailyCount,
+          monthlyTokens: 0,
+          monthlyBudget: 0,
+        },
+      };
+    }
+
+    // Check monthly token budget
+    const monthlyUsage = await prisma.tokenUsage.aggregate({
+      where: {
+        createdAt: {
+          gte: monthStart,
+        },
+      },
+      _sum: {
+        totalTokens: true,
+        cost: true,
+      },
+    });
+
+    const monthlyTokens = monthlyUsage?._sum?.totalTokens || 0;
+    const monthlyBudget = monthlyUsage?._sum?.cost || 0;
+
+    if (monthlyTokens >= MONTHLY_TOKEN_LIMIT_TOTAL) {
+      return {
+        allowed: false,
+        reason: 'Monthly token budget exceeded. Please contact administrator.',
+        currentUsage: {
+          dailyMessages: dailyCount,
+          monthlyTokens,
+          monthlyBudget,
+        },
+      };
+    }
+
+    // Check if approaching limit (80% threshold)
+    const budgetPercentage = (monthlyTokens / MONTHLY_TOKEN_LIMIT_TOTAL) * 100;
+    if (budgetPercentage >= 80) {
+      console.warn(`[Cost Control] WARNING: Monthly budget at ${budgetPercentage.toFixed(1)}% (${monthlyTokens}/${MONTHLY_TOKEN_LIMIT_TOTAL} tokens, $${monthlyBudget.toFixed(2)})`);
+    }
+
     return {
-      allowed: false,
-      reason: `Daily message limit reached (${DAILY_MESSAGE_LIMIT_PER_USER} messages/day). Try again tomorrow.`,
-      currentUsage: {
-        dailyMessages: dailyCount,
-        monthlyTokens: 0,
-        monthlyBudget: 0,
-      },
-    };
-  }
-
-  // Check monthly token budget
-  const monthlyUsage = await prisma.tokenUsage.aggregate({
-    where: {
-      createdAt: {
-        gte: monthStart,
-      },
-    },
-    _sum: {
-      totalTokens: true,
-      cost: true,
-    },
-  });
-
-  const monthlyTokens = monthlyUsage._sum.totalTokens || 0;
-  const monthlyBudget = monthlyUsage._sum.cost || 0;
-
-  if (monthlyTokens >= MONTHLY_TOKEN_LIMIT_TOTAL) {
-    return {
-      allowed: false,
-      reason: 'Monthly token budget exceeded. Please contact administrator.',
+      allowed: true,
       currentUsage: {
         dailyMessages: dailyCount,
         monthlyTokens,
         monthlyBudget,
       },
     };
+  } catch (error) {
+    console.error('Error checking user request limits:', error);
+    // Allow request on error to avoid blocking users
+    return {
+      allowed: true,
+      currentUsage: {
+        dailyMessages: 0,
+        monthlyTokens: 0,
+        monthlyBudget: 0,
+      },
+    };
   }
-
-  // Check if approaching limit (80% threshold)
-  const budgetPercentage = (monthlyTokens / MONTHLY_TOKEN_LIMIT_TOTAL) * 100;
-  if (budgetPercentage >= 80) {
-    console.warn(`[Cost Control] WARNING: Monthly budget at ${budgetPercentage.toFixed(1)}% (${monthlyTokens}/${MONTHLY_TOKEN_LIMIT_TOTAL} tokens, $${monthlyBudget.toFixed(2)})`);
-  }
-
-  return {
-    allowed: true,
-    currentUsage: {
-      dailyMessages: dailyCount,
-      monthlyTokens,
-      monthlyBudget,
-    },
-  };
 }
 
 /**
