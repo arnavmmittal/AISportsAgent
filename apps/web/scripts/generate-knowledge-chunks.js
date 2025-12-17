@@ -8,8 +8,6 @@ const fs = require('fs');
 const path = require('path');
 const { PDFParse } = require('pdf-parse');
 
-const pdfParse = PDFParse;
-
 const PDF_PATH = path.join(__dirname, '..', 'knowledge_base', 'AI Sports Psych Project.pdf');
 const OUTPUT_PATH = path.join(__dirname, '..', 'knowledge_base', 'chunks.json');
 
@@ -130,16 +128,22 @@ async function generateChunks() {
     }
 
     const dataBuffer = fs.readFileSync(PDF_PATH);
-    console.log('[Generate Chunks] Parsing PDF...');
+    console.log('[Generate Chunks] Parsing PDF with pdf-parse v2...');
 
-    const parser = new pdfParse();
-    const data = await parser.parse(dataBuffer);
+    // Create PDFParse instance with buffer data
+    const parser = new PDFParse({ data: dataBuffer });
+
+    // Get text content
+    const result = await parser.getText();
 
     console.log('[Generate Chunks] PDF parsed successfully');
-    console.log('[Generate Chunks] Pages:', data.numpages);
-    console.log('[Generate Chunks] Text length:', data.text.length);
+    console.log('[Generate Chunks] Text length:', result.text.length);
 
-    const chunks = chunkPDFContent(data.text, data.numpages);
+    // Get page count (if available in metadata)
+    const pageCount = result.numPages || result.numpages || 0;
+    console.log('[Generate Chunks] Pages:', pageCount);
+
+    const chunks = chunkPDFContent(result.text, pageCount);
 
     console.log('[Generate Chunks] Created', chunks.length, 'knowledge chunks');
 
@@ -147,8 +151,8 @@ async function generateChunks() {
     const outputData = {
       generatedAt: new Date().toISOString(),
       source: 'AI Sports Psych Project.pdf',
-      pageCount: data.numpages,
-      characterCount: data.text.length,
+      pageCount: pageCount,
+      characterCount: result.text.length,
       chunkCount: chunks.length,
       chunks,
     };
@@ -158,6 +162,7 @@ async function generateChunks() {
     console.log('[Generate Chunks] ✅ Done!');
   } catch (error) {
     console.error('[Generate Chunks] Error:', error);
+    console.error('[Generate Chunks] Stack:', error.stack);
     process.exit(1);
   }
 }
