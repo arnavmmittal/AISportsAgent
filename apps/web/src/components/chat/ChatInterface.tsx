@@ -8,6 +8,7 @@ import { ActionPlanWidget } from '@/components/chat/ActionPlanWidget';
 import { MetricTrackerWidget } from '@/components/chat/MetricTrackerWidget';
 import { PracticeDrillCard } from '@/components/chat/PracticeDrillCard';
 import { RoutineBuilderWidget } from '@/components/chat/RoutineBuilderWidget';
+import { CrisisResourcesModal } from '@/components/chat/CrisisResourcesModal';
 
 interface Message {
   id: string;
@@ -345,6 +346,12 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl shadow-2xl overflow-hidden">
+      {/* Crisis Resources Modal */}
+      <CrisisResourcesModal
+        crisis={crisisAlert}
+        onClose={() => setCrisisAlert(null)}
+      />
+
       {/* Crisis Alert Banner */}
       {crisisAlert && (
         <div className="bg-gradient-to-r from-red-500 to-pink-500 border-b-4 border-red-600 p-5 animate-in fade-in duration-300 shadow-lg">
