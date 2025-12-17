@@ -92,12 +92,12 @@ export default async function CoachInsightsPage() {
 
   // Calculate team metrics
   const totalAthletes = athletes.length;
-  const activeAthletes = athletes.filter((a) => a.moodLogs.length > 0 || a.sessions.length > 0).length;
-  const avgMoodLogs = athletes.reduce((sum, a) => sum + a.moodLogs.length, 0) / Math.max(totalAthletes, 1);
-  const avgChatSessions = athletes.reduce((sum, a) => sum + a.sessions.length, 0) / Math.max(totalAthletes, 1);
+  const activeAthletes = athletes.filter((a) => a.MoodLog.length > 0 || a.ChatSession.length > 0).length;
+  const avgMoodLogs = athletes.reduce((sum, a) => sum + a.MoodLog.length, 0) / Math.max(totalAthletes, 1);
+  const avgChatSessions = athletes.reduce((sum, a) => sum + a.ChatSession.length, 0) / Math.max(totalAthletes, 1);
 
   // Calculate team mood average
-  const allMoodLogs = athletes.flatMap((a) => a.moodLogs);
+  const allMoodLogs = athletes.flatMap((a) => a.MoodLog);
   const teamAvgMood = allMoodLogs.length > 0
     ? allMoodLogs.reduce((sum, log) => sum + log.mood, 0) / allMoodLogs.length
     : 0;
