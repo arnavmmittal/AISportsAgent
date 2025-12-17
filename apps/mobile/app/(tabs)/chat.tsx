@@ -265,10 +265,10 @@ export default function ChatScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
         onError: (error) => {
-          console.error('❌ Voice error:', error);
+          console.log('Voice not available:', error);
           setIsProcessingVoice(false); // Clear loading state on error
           setVoiceError(error);
-          Alert.alert('Voice Error', error);
+          // Don't show alert for connection errors - voice is optional
         },
         onCrisisAlert: (severity, message) => {
           console.warn('⚠️ Crisis alert:', severity, message);

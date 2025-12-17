@@ -5,8 +5,14 @@
 
 import fs from 'fs';
 import path from 'path';
-// @ts-ignore - pdf-parse has module resolution issues with Next.js
-const pdf = require('pdf-parse');
+
+// Dynamic import to avoid Next.js bundling issues
+let pdfParse: any = null;
+try {
+  pdfParse = require('pdf-parse');
+} catch (e) {
+  console.warn('[PDF Loader] pdf-parse not available, using fallback');
+}
 
 export interface KnowledgeChunk {
   id: string;
@@ -28,6 +34,11 @@ export async function loadPDFKnowledgeBase(): Promise<KnowledgeChunk[]> {
 
   console.log('[PDF Loader] Loading PDF from:', pdfPath);
 
+  // Check if pdf-parse is available
+  if (!pdfParse) {
+    throw new Error('pdf-parse library not available');
+  }
+
   // Check if file exists
   if (!fs.existsSync(pdfPath)) {
     console.error('[PDF Loader] PDF not found at:', pdfPath);
@@ -37,8 +48,8 @@ export async function loadPDFKnowledgeBase(): Promise<KnowledgeChunk[]> {
   // Read PDF file
   const dataBuffer = fs.readFileSync(pdfPath);
 
-  // Parse PDF
-  const data = await pdf(dataBuffer);
+  // Parse PDF - pdfParse is the default export
+  const data = await pdfParse(dataBuffer);
 
   console.log('[PDF Loader] PDF parsed successfully');
   console.log('[PDF Loader] Pages:', data.numpages);
