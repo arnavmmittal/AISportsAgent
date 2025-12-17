@@ -14,16 +14,17 @@ export async function GET(request: NextRequest) {
         athleteId: user!.id,
       },
       orderBy: {
-        createdAt: 'desc',
+        detectedAt: 'desc',
       },
       take: 10, // Last 10 alerts
       select: {
         id: true,
         severity: true,
-        message: true,
-        resolved: true,
-        resolvedAt: true,
-        createdAt: true,
+        reviewed: true,
+        reviewedAt: true,
+        detectedAt: true,
+        escalated: true,
+        notes: true,
       },
     });
 
