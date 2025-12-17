@@ -1,32 +1,10 @@
 /**
  * PDF Knowledge Base Loader
- * Parses custom sports psychology PDF and chunks content for embeddings
+ * Loads pre-generated chunks from JSON instead of parsing PDF at runtime
  */
 
 import fs from 'fs';
 import path from 'path';
-
-/**
- * Lazy-load pdf-parse only when needed to avoid Next.js bundling issues
- */
-async function getPdfParser(): Promise<any> {
-  try {
-    // Dynamic import for Next.js compatibility
-    const pdfModule = await import('pdf-parse');
-    const pdfParse = pdfModule.default || pdfModule;
-
-    if (typeof pdfParse !== 'function') {
-      console.error('[PDF Loader] pdf-parse module structure:', Object.keys(pdfModule));
-      throw new Error('pdf-parse did not export a function');
-    }
-
-    console.log('[PDF Loader] pdf-parse loaded successfully');
-    return pdfParse;
-  } catch (e) {
-    console.error('[PDF Loader] Failed to load pdf-parse:', e);
-    throw new Error('pdf-parse library not available');
-  }
-}
 
 export interface KnowledgeChunk {
   id: string;
@@ -40,158 +18,39 @@ export interface KnowledgeChunk {
 }
 
 /**
- * Load and parse the custom PDF knowledge base
- * Returns chunks of text suitable for embedding
+ * Load pre-generated PDF chunks from JSON
+ * Note: PDF parsing at runtime doesn't work with Next.js webpack
+ * To regenerate chunks, run: node scripts/generate-knowledge-chunks.js
  */
 export async function loadPDFKnowledgeBase(): Promise<KnowledgeChunk[]> {
-  const pdfPath = path.join(process.cwd(), 'knowledge_base', 'AI Sports Psych Project.pdf');
+  const chunksPath = path.join(process.cwd(), 'knowledge_base', 'chunks.json');
 
-  console.log('[PDF Loader] Loading PDF from:', pdfPath);
+  console.log('[PDF Loader] Loading pre-generated chunks from:', chunksPath);
 
-  // Check if file exists
-  if (!fs.existsSync(pdfPath)) {
-    console.error('[PDF Loader] PDF not found at:', pdfPath);
-    throw new Error(`PDF not found at ${pdfPath}`);
+  // Check if chunks.json exists
+  if (!fs.existsSync(chunksPath)) {
+    console.warn('[PDF Loader] chunks.json not found, using fallback');
+    throw new Error('Pre-generated chunks not found. Run: node scripts/generate-knowledge-chunks.js');
   }
 
-  // Get pdf-parse function
-  const pdfParse = await getPdfParser();
-
-  // Read PDF file
-  const dataBuffer = fs.readFileSync(pdfPath);
-
-  // Parse PDF
-  const data = await pdfParse(dataBuffer);
-
-  console.log('[PDF Loader] PDF parsed successfully');
-  console.log('[PDF Loader] Pages:', data.numpages);
-  console.log('[PDF Loader] Text length:', data.text.length);
-
-  // Chunk the content
-  const chunks = chunkPDFContent(data.text, data.numpages);
-
-  console.log('[PDF Loader] Created', chunks.length, 'knowledge chunks');
-
-  return chunks;
-}
-
-/**
- * Chunk PDF content into manageable pieces
- * Each chunk is ~500-1000 tokens (roughly 2000-4000 characters)
- */
-function chunkPDFContent(text: string, numPages: number): KnowledgeChunk[] {
-  const chunks: KnowledgeChunk[] = [];
-
-  // Split by double newlines to preserve paragraph structure
-  const paragraphs = text.split(/\n\n+/).filter((p) => p.trim().length > 50);
-
-  const CHUNK_SIZE = 3000; // characters
-  const OVERLAP = 200; // overlap between chunks for context
-
-  let currentChunk = '';
-  let currentChunkId = 0;
-
-  for (const paragraph of paragraphs) {
-    // If adding this paragraph would exceed chunk size, save current chunk
-    if (currentChunk.length + paragraph.length > CHUNK_SIZE && currentChunk.length > 0) {
-      chunks.push({
-        id: `pdf-chunk-${currentChunkId}`,
-        content: currentChunk.trim(),
-        source: 'AI Sports Psych Project.pdf',
-        metadata: {
-          section: detectSection(currentChunk),
-          topic: detectTopic(currentChunk),
-        },
-      });
-
-      // Start new chunk with overlap from previous chunk
-      const overlapText = currentChunk.slice(-OVERLAP);
-      currentChunk = overlapText + '\n\n' + paragraph;
-      currentChunkId++;
-    } else {
-      // Add paragraph to current chunk
-      currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
-    }
-  }
-
-  // Add final chunk
-  if (currentChunk.trim().length > 0) {
-    chunks.push({
-      id: `pdf-chunk-${currentChunkId}`,
-      content: currentChunk.trim(),
-      source: 'AI Sports Psych Project.pdf',
-      metadata: {
-        section: detectSection(currentChunk),
-        topic: detectTopic(currentChunk),
-      },
+  try {
+    const data = JSON.parse(fs.readFileSync(chunksPath, 'utf-8'));
+    console.log('[PDF Loader] Loaded knowledge base:', {
+      source: data.source,
+      pageCount: data.pageCount,
+      chunkCount: data.chunkCount,
+      generatedAt: data.generatedAt,
     });
-  }
 
-  return chunks;
+    return data.chunks;
+  } catch (error) {
+    console.error('[PDF Loader] Failed to load chunks.json:', error);
+    throw error;
+  }
 }
 
 /**
- * Detect section from content (e.g., Introduction, Methods, Results)
- */
-function detectSection(text: string): string {
-  const lowerText = text.toLowerCase();
-
-  if (lowerText.includes('introduction') || lowerText.includes('background')) {
-    return 'Introduction';
-  }
-  if (lowerText.includes('method') || lowerText.includes('approach')) {
-    return 'Methods';
-  }
-  if (lowerText.includes('result') || lowerText.includes('finding')) {
-    return 'Results';
-  }
-  if (lowerText.includes('discussion') || lowerText.includes('conclusion')) {
-    return 'Discussion';
-  }
-  if (lowerText.includes('intervention') || lowerText.includes('technique')) {
-    return 'Interventions';
-  }
-
-  return 'General';
-}
-
-/**
- * Detect main topic from content
- */
-function detectTopic(text: string): string {
-  const lowerText = text.toLowerCase();
-
-  // Sports psychology topics
-  if (lowerText.includes('anxiety') || lowerText.includes('stress')) {
-    return 'Anxiety & Stress';
-  }
-  if (lowerText.includes('confidence') || lowerText.includes('self-efficacy')) {
-    return 'Confidence';
-  }
-  if (lowerText.includes('motivation') || lowerText.includes('goal')) {
-    return 'Motivation';
-  }
-  if (lowerText.includes('mindfulness') || lowerText.includes('meditation')) {
-    return 'Mindfulness';
-  }
-  if (lowerText.includes('cbt') || lowerText.includes('cognitive behavioral')) {
-    return 'CBT';
-  }
-  if (lowerText.includes('flow') || lowerText.includes('zone')) {
-    return 'Flow State';
-  }
-  if (lowerText.includes('recovery') || lowerText.includes('burnout')) {
-    return 'Recovery';
-  }
-  if (lowerText.includes('team') || lowerText.includes('communication')) {
-    return 'Team Dynamics';
-  }
-
-  return 'General Sports Psychology';
-}
-
-/**
- * Get a quick summary of the PDF for logging
+ * Get a quick summary of the knowledge base
  */
 export async function getPDFSummary(): Promise<{
   pageCount: number;
@@ -199,19 +58,21 @@ export async function getPDFSummary(): Promise<{
   chunkCount: number;
 }> {
   try {
-    const chunks = await loadPDFKnowledgeBase();
-    const pdfPath = path.join(process.cwd(), 'knowledge_base', 'AI Sports Psych Project.pdf');
-    const dataBuffer = fs.readFileSync(pdfPath);
-    const pdfParse = await getPdfParser();
-    const data = await pdfParse(dataBuffer);
+    const chunksPath = path.join(process.cwd(), 'knowledge_base', 'chunks.json');
+
+    if (!fs.existsSync(chunksPath)) {
+      return { pageCount: 0, characterCount: 0, chunkCount: 0 };
+    }
+
+    const data = JSON.parse(fs.readFileSync(chunksPath, 'utf-8'));
 
     return {
-      pageCount: data.numpages,
-      characterCount: data.text.length,
-      chunkCount: chunks.length,
+      pageCount: data.pageCount || 0,
+      characterCount: data.characterCount || 0,
+      chunkCount: data.chunkCount || 0,
     };
   } catch (error) {
     console.error('[PDF Loader] Error getting PDF summary:', error);
-    throw error;
+    return { pageCount: 0, characterCount: 0, chunkCount: 0 };
   }
 }
