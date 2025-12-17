@@ -286,9 +286,9 @@ export default function ChatScreen() {
       voiceClient.current = client;
       console.log('✅ Voice client initialized and connected');
     } catch (error: any) {
-      console.error('Failed to initialize voice client:', error);
-      setVoiceError(error.message || 'Failed to connect to voice service');
-      Alert.alert('Voice Connection Failed', 'Could not connect to voice service. Please try again.');
+      console.log('Voice client initialization skipped (optional feature):', error);
+      setVoiceError(error.message || 'Voice service unavailable');
+      // Don't alert - voice is optional and will be handled when user tries to use it
     }
   };
 
@@ -351,9 +351,9 @@ export default function ChatScreen() {
 
         console.log('✅ Voice recording started');
       } catch (error: any) {
-        console.error('Error starting recording:', error);
+        console.log('Voice recording not available:', error);
         setIsRecording(false);
-        Alert.alert('Recording Error', error.message || 'Failed to start recording. Please check your microphone permissions.');
+        Alert.alert('Voice Not Available', 'Voice input is currently unavailable. Please use text input instead.');
       }
     }
   };
