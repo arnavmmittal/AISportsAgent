@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const crisisAlerts = await prisma.crisisAlert.findMany({
       where: {
         athleteId: { in: athleteIds },
-        resolved: false,
+        reviewed: false,
       },
       include: {
         Athlete: {
@@ -236,12 +236,12 @@ export async function GET(request: NextRequest) {
           sport: alert.Athlete.sport,
           year: alert.Athlete.year,
         },
-        alertType: alert.alertType,
         severity: alert.severity,
-        message: alert.message,
-        createdAt: alert.createdAt.toISOString(),
+        notes: alert.notes,
         detectedAt: alert.detectedAt.toISOString(),
-        resolved: alert.resolved,
+        reviewed: alert.reviewed,
+        reviewedBy: alert.reviewedBy,
+        reviewedAt: alert.reviewedAt?.toISOString(),
       })),
       atRiskAthletes,
       athleteReadiness,
