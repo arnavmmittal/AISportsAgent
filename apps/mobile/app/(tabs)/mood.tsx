@@ -9,14 +9,18 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { LineChart, BarChart } from 'react-native-chart-kit';
 import { getStoredUserId, apiClient } from '../../lib/auth';
-import { createMoodLog } from '../../lib/apiWithFallback';
+import { createMoodLog, getMoodLogs } from '../../lib/apiWithFallback';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+
+const { width } = Dimensions.get('window');
 
 interface MoodLogData {
   id: string;
@@ -39,20 +43,23 @@ export default function MoodScreen() {
   const [pastWeekLogs, setPastWeekLogs] = useState<MoodLogData[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
-  // Fetch past 7 days of mood logs
+  // Fetch past 30 days of mood logs for charts
   useEffect(() => {
     async function fetchMoodHistory() {
       try {
         const userId = await getStoredUserId();
         if (!userId) return;
 
-        // TODO: Replace with actual API call when endpoint is ready
-        // const response = await apiClient.get(`/api/mood-logs?userId=${userId}&days=7`);
-        // setPastWeekLogs(response.data);
+        // Use real API with fallback to demo data
+        const logs = await getMoodLogs(userId, 30);
 
-        // For now, use mock data to show the UI
-        const mockLogs: MoodLogData[] = generateMockWeekLogs();
-        setPastWeekLogs(mockLogs);
+        // Convert to MoodLogData format with Date objects
+        const formattedLogs = logs.map((log: any) => ({
+          ...log,
+          date: new Date(log.createdAt || log.date),
+        }));
+
+        setPastWeekLogs(formattedLogs);
       } catch (error) {
         console.error('Failed to fetch mood history:', error);
       } finally {
@@ -118,21 +125,24 @@ export default function MoodScreen() {
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('Success', 'Mood log saved successfully!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset form and refresh history
-            setMood(5);
-            setConfidence(5);
-            setStress(5);
-            setEnergy(5);
-            setSleep(7);
-            setNotes('');
-            // TODO: Refresh pastWeekLogs from API
-          },
-        },
-      ]);
+
+      // Reset form and refresh history
+      setMood(5);
+      setConfidence(5);
+      setStress(5);
+      setEnergy(5);
+      setSleep(7);
+      setNotes('');
+
+      // Refresh mood logs to show new entry in charts
+      const refreshedLogs = await getMoodLogs(userId, 30);
+      const formattedLogs = refreshedLogs.map((log: any) => ({
+        ...log,
+        date: new Date(log.createdAt || log.date),
+      }));
+      setPastWeekLogs(formattedLogs);
+
+      Alert.alert('Success', 'Mood log saved successfully!');
     } catch (error: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', error.message || 'Failed to save mood log');
@@ -154,6 +164,42 @@ export default function MoodScreen() {
   };
 
   const days = getLast7Days();
+
+  // Prepare data for mood trend line chart (last 7 days)
+  const getLast7DaysLogs = () => {
+    const last7Days = getLast7Days();
+    return last7Days.map((day) => {
+      const log = pastWeekLogs.find(
+        (l) => l.date.toDateString() === day.toDateString()
+      );
+      return log?.mood || 0;
+    });
+  };
+
+  // Prepare data for average metrics bar chart
+  const getAverageMetrics = () => {
+    if (pastWeekLogs.length === 0) return { mood: 0, confidence: 0, stress: 0, energy: 0 };
+
+    const sum = pastWeekLogs.reduce(
+      (acc, log) => ({
+        mood: acc.mood + log.mood,
+        confidence: acc.confidence + log.confidence,
+        stress: acc.stress + log.stress,
+        energy: acc.energy + (log.energy || 5),
+      }),
+      { mood: 0, confidence: 0, stress: 0, energy: 0 }
+    );
+
+    return {
+      mood: Math.round(sum.mood / pastWeekLogs.length),
+      confidence: Math.round(sum.confidence / pastWeekLogs.length),
+      stress: Math.round(sum.stress / pastWeekLogs.length),
+      energy: Math.round(sum.energy / pastWeekLogs.length),
+    };
+  };
+
+  const averageMetrics = getAverageMetrics();
+  const moodTrendData = getLast7DaysLogs();
 
   return (
     <View style={styles.container}>
@@ -243,6 +289,138 @@ export default function MoodScreen() {
             })}
           </ScrollView>
         </View>
+
+        {/* Mood Trend Line Chart */}
+        {pastWeekLogs.length > 0 && (
+          <View style={styles.chartSection}>
+            <Text style={styles.sectionTitle}>Mood Trend (7 Days)</Text>
+            <View style={styles.chartCard}>
+              <LinearGradient
+                colors={['rgba(139, 92, 246, 0.1)', 'rgba(217, 70, 239, 0.1)']}
+                style={styles.chartGradient}
+              >
+                <LineChart
+                  data={{
+                    labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+                    datasets: [
+                      {
+                        data: moodTrendData.map((m) => (m === 0 ? null : m)),
+                        color: (opacity = 1) => `rgba(139, 92, 246, ${opacity})`,
+                        strokeWidth: 3,
+                      },
+                    ],
+                  }}
+                  width={width - Spacing.lg * 2 - 32} // Container width minus padding
+                  height={220}
+                  yAxisSuffix=""
+                  yAxisInterval={1}
+                  fromZero
+                  segments={5}
+                  chartConfig={{
+                    backgroundColor: 'transparent',
+                    backgroundGradientFrom: 'rgba(0,0,0,0)',
+                    backgroundGradientTo: 'rgba(0,0,0,0)',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.7})`,
+                    style: {
+                      borderRadius: BorderRadius.xl,
+                    },
+                    propsForDots: {
+                      r: '5',
+                      strokeWidth: '2',
+                      stroke: '#8b5cf6',
+                      fill: '#fff',
+                    },
+                    propsForBackgroundLines: {
+                      strokeDasharray: '',
+                      stroke: 'rgba(255,255,255,0.1)',
+                    },
+                  }}
+                  bezier
+                  style={{
+                    borderRadius: BorderRadius.xl,
+                  }}
+                />
+                <View style={styles.chartLegend}>
+                  <Ionicons name="trending-up" size={16} color="#8b5cf6" />
+                  <Text style={styles.chartLegendText}>
+                    {pastWeekLogs.length} check-ins this week
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+        )}
+
+        {/* Average Metrics Bar Chart */}
+        {pastWeekLogs.length > 0 && (
+          <View style={styles.chartSection}>
+            <Text style={styles.sectionTitle}>Average Metrics</Text>
+            <View style={styles.chartCard}>
+              <LinearGradient
+                colors={['rgba(16, 185, 129, 0.1)', 'rgba(52, 211, 153, 0.1)']}
+                style={styles.chartGradient}
+              >
+                <BarChart
+                  data={{
+                    labels: ['Mood', 'Confidence', 'Energy', 'Stress'],
+                    datasets: [
+                      {
+                        data: [
+                          averageMetrics.mood,
+                          averageMetrics.confidence,
+                          averageMetrics.energy,
+                          averageMetrics.stress,
+                        ],
+                        colors: [
+                          (opacity = 1) => `rgba(139, 92, 246, ${opacity})`, // Mood - Purple
+                          (opacity = 1) => `rgba(16, 185, 129, ${opacity})`, // Confidence - Green
+                          (opacity = 1) => `rgba(236, 72, 153, ${opacity})`, // Energy - Pink
+                          (opacity = 1) => `rgba(245, 158, 11, ${opacity})`, // Stress - Orange
+                        ],
+                      },
+                    ],
+                  }}
+                  width={width - Spacing.lg * 2 - 32}
+                  height={220}
+                  yAxisSuffix=""
+                  yAxisLabel=""
+                  fromZero
+                  segments={5}
+                  chartConfig={{
+                    backgroundColor: 'transparent',
+                    backgroundGradientFrom: 'rgba(0,0,0,0)',
+                    backgroundGradientTo: 'rgba(0,0,0,0)',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.7})`,
+                    style: {
+                      borderRadius: BorderRadius.xl,
+                    },
+                    propsForBackgroundLines: {
+                      strokeDasharray: '',
+                      stroke: 'rgba(255,255,255,0.1)',
+                    },
+                  }}
+                  withCustomBarColorFromData
+                  flatColor
+                  showBarTops={false}
+                  showValuesOnTopOfBars
+                  style={{
+                    borderRadius: BorderRadius.xl,
+                  }}
+                />
+                <View style={styles.chartLegend}>
+                  <Ionicons name="bar-chart" size={16} color="#10b981" />
+                  <Text style={styles.chartLegendText}>
+                    Based on last {pastWeekLogs.length} check-ins
+                  </Text>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+        )}
 
         {/* Today's Check-In */}
         <Text style={styles.sectionTitle}>Today's Check-In</Text>
@@ -728,5 +906,31 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  // Charts
+  chartSection: {
+    marginBottom: Spacing.xl,
+  },
+  chartCard: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+  },
+  chartGradient: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.md,
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  chartLegendText: {
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
   },
 });
