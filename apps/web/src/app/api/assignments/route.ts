@@ -56,28 +56,8 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ assignments });
     } else if (user.role === 'ATHLETE' && user.Athlete) {
-      // Athlete: Get assignments targeted to them
-      const assignments = await prisma.assignment.findMany({
-        where: {
-          OR: [
-            // Assignments specifically for this athlete
-            {
-              targetAthleteIds: {
-                array_contains: user.id,
-              },
-            },
-            // Assignments for all athletes in their sport
-            {
-              targetAthleteIds: null,
-              targetSport: user.Athlete.sport,
-            },
-            // Assignments for all athletes (no sport filter)
-            {
-              targetAthleteIds: null,
-              targetSport: null,
-            },
-          ],
-        },
+      // Athlete: Get all assignments and filter in code (JSON array queries are complex in Prisma)
+      const allAssignments = await prisma.assignment.findMany({
         include: {
           AssignmentSubmission: {
             where: {
@@ -94,6 +74,27 @@ export async function GET(request: NextRequest) {
         orderBy: {
           dueDate: 'asc',
         },
+      });
+
+      // Filter assignments for this athlete
+      const assignments = allAssignments.filter((assignment) => {
+        // Check if targetAthleteIds includes this user
+        if (assignment.targetAthleteIds) {
+          const athleteIds = assignment.targetAthleteIds as string[];
+          if (athleteIds.includes(user.id)) return true;
+        }
+
+        // Check if assignment is for all athletes in their sport
+        if (!assignment.targetAthleteIds && assignment.targetSport === user.Athlete.sport) {
+          return true;
+        }
+
+        // Check if assignment is for all athletes
+        if (!assignment.targetAthleteIds && !assignment.targetSport) {
+          return true;
+        }
+
+        return false;
       });
 
       return NextResponse.json({ assignments });
