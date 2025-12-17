@@ -38,7 +38,7 @@ VOICE_PORT=8000
 ### Development (Both servers)
 
 ```bash
-npm run dev:all
+pnpm dev:all
 ```
 
 This runs:
@@ -48,15 +48,15 @@ This runs:
 ### Voice Server Only
 
 ```bash
-npm run voice:dev
+pnpm voice:dev
 ```
 
 ### Production
 
 ```bash
 # Build and run Next.js
-npm run build
-npm run start
+pnpm build
+pnpm start
 
 # Run voice server (in separate process)
 tsx server/voice-server.ts
