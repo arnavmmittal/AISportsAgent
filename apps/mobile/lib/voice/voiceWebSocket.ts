@@ -113,7 +113,7 @@ export class VoiceWebSocketClient {
         };
 
         this.ws.onerror = (error) => {
-          console.error('❌ WebSocket error:', error);
+          // Silent error logging - voice is optional
           this.config.onError?.('WebSocket connection error');
           this.isConnected = false;
           this.config.onConnectionChange?.(false);
