@@ -130,7 +130,7 @@ export async function scheduleAssignmentReminder(
       },
     });
 
-    console.log(\`Scheduled assignment reminder: \${notificationId}\`);
+    console.log(`Scheduled assignment reminder: ${notificationId}`);
     return notificationId;
   } catch (error) {
     console.error('Error scheduling assignment reminder:', error);
@@ -151,7 +151,7 @@ export async function scheduleGoalMilestone(
     await Notifications.scheduleNotificationAsync({
       content: {
         title: '🎯 Goal Milestone Reached!',
-        body: \`\${title} - \${progress}% complete\`,
+        body: `${title} - ${progress}% complete`,
         data: {
           type: 'goal_milestone',
           goalId,
@@ -162,7 +162,7 @@ export async function scheduleGoalMilestone(
       trigger: null, // Immediate
     });
 
-    console.log(\`Scheduled goal milestone notification for \${goalId}\`);
+    console.log(`Scheduled goal milestone notification for ${goalId}`);
   } catch (error) {
     console.error('Error scheduling goal milestone:', error);
   }
