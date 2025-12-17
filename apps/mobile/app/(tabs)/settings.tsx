@@ -8,12 +8,16 @@ import {
   Switch,
   Alert,
   Platform,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 import { Colors, Spacing, Typography, BorderRadius } from '@/constants/theme';
 import { apiClient, getStoredUserRole } from '../../lib/auth';
 
@@ -22,6 +26,11 @@ export default function SettingsScreen() {
   const [consentCoachView, setConsentCoachView] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<'ATHLETE' | 'COACH' | 'ADMIN' | null>(null);
+
+  // Profile state
+  const [profile, setProfile] = useState<any>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [editedProfile, setEditedProfile] = useState<any>({});
 
   useEffect(() => {
     loadUserData();
@@ -32,6 +41,9 @@ export default function SettingsScreen() {
       const role = await getStoredUserRole();
       setUserRole(role);
 
+      // Load profile for all users
+      await loadProfile();
+
       // Only load consent settings for athletes
       if (role === 'ATHLETE') {
         await loadConsentSettings();
@@ -41,6 +53,16 @@ export default function SettingsScreen() {
     } catch (error) {
       console.error('Failed to load user data:', error);
       setIsLoading(false);
+    }
+  };
+
+  const loadProfile = async () => {
+    try {
+      const response = await apiClient.getProfile();
+      setProfile(response.profile);
+      setEditedProfile(response.profile);
+    } catch (error) {
+      console.error('Failed to load profile:', error);
     }
   };
 
@@ -136,6 +158,45 @@ export default function SettingsScreen() {
           },
         ]
       );
+    }
+  };
+
+  const handleProfileEdit = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEditedProfile(profile);
+    setShowProfileModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      const updates: any = {};
+      if (editedProfile.name !== profile.name) updates.name = editedProfile.name;
+      if (editedProfile.sport !== profile.sport) updates.sport = editedProfile.sport;
+      if (editedProfile.year !== profile.year) updates.year = editedProfile.year;
+      if (editedProfile.teamPosition !== profile.teamPosition) updates.teamPosition = editedProfile.teamPosition;
+
+      if (Object.keys(updates).length === 0) {
+        setShowProfileModal(false);
+        return;
+      }
+
+      const response = await apiClient.updateProfile(updates);
+      setProfile(response.profile);
+      setShowProfileModal(false);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Success', 'Profile updated successfully');
+
+      // Update stored user data
+      await AsyncStorage.setItem('user_data', JSON.stringify({
+        ...JSON.parse(await AsyncStorage.getItem('user_data') || '{}'),
+        name: response.profile.name,
+      }));
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
 
@@ -315,16 +376,8 @@ export default function SettingsScreen() {
               icon="person-outline"
               iconColor="#f472b6"
               title="Edit Profile"
-              subtitle="Update your information"
-              onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon')}
-            />
-            <View style={styles.separator} />
-            <SettingItem
-              icon="school-outline"
-              iconColor="#fbbf24"
-              title="Sport & Team"
-              subtitle="Update sport and position"
-              onPress={() => Alert.alert('Coming Soon', 'Sport settings will be available soon')}
+              subtitle={profile ? `${profile.name} • ${profile.sport || 'No sport'}` : 'Update your information'}
+              onPress={handleProfileEdit}
             />
           </LinearGradient>
         </View>
@@ -413,6 +466,102 @@ export default function SettingsScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Profile Edit Modal */}
+      <Modal
+        visible={showProfileModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowProfileModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <LinearGradient
+            colors={['#0f172a', '#1e293b', '#334155']}
+            style={styles.modalGradient}
+          >
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={() => setShowProfileModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Ionicons name="close" size={28} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <TouchableOpacity
+                onPress={handleSaveProfile}
+                style={styles.modalSaveButton}
+              >
+                <Text style={styles.modalSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+              {/* Name */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Name</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={editedProfile.name || ''}
+                  onChangeText={(text) => setEditedProfile({ ...editedProfile, name: text })}
+                  placeholder="Your name"
+                  placeholderTextColor="rgba(255,255,255,0.4)"
+                />
+              </View>
+
+              {/* Sport */}
+              {userRole === 'ATHLETE' && (
+                <>
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>Sport</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      value={editedProfile.sport || ''}
+                      onChangeText={(text) => setEditedProfile({ ...editedProfile, sport: text })}
+                      placeholder="Your sport"
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                    />
+                  </View>
+
+                  {/* Year */}
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>Year</Text>
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={editedProfile.year || 'FRESHMAN'}
+                        onValueChange={(value) => setEditedProfile({ ...editedProfile, year: value })}
+                        style={styles.picker}
+                        dropdownIconColor="#fff"
+                      >
+                        <Picker.Item label="Freshman" value="FRESHMAN" />
+                        <Picker.Item label="Sophomore" value="SOPHOMORE" />
+                        <Picker.Item label="Junior" value="JUNIOR" />
+                        <Picker.Item label="Senior" value="SENIOR" />
+                        <Picker.Item label="Graduate" value="GRADUATE" />
+                      </Picker>
+                    </View>
+                  </View>
+
+                  {/* Team Position */}
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>Position / Role</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      value={editedProfile.teamPosition || ''}
+                      onChangeText={(text) => setEditedProfile({ ...editedProfile, teamPosition: text })}
+                      placeholder="Your position or role"
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                    />
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </LinearGradient>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -528,5 +677,80 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+  },
+  modalGradient: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 60,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  modalCloseButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: Typography.xl,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  modalSaveButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    backgroundColor: '#8b5cf6',
+    borderRadius: BorderRadius.lg,
+  },
+  modalSaveText: {
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  modalContent: {
+    flex: 1,
+    padding: Spacing.lg,
+  },
+  formGroup: {
+    marginBottom: Spacing.xl,
+  },
+  formLabel: {
+    fontSize: Typography.sm,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: Spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  formInput: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    fontSize: Typography.base,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  pickerContainer: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  picker: {
+    color: '#fff',
+    backgroundColor: 'transparent',
   },
 });
