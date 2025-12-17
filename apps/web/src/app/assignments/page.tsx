@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -224,7 +225,8 @@ export default function StudentAssignmentsPage() {
     const isSubmitted = status !== 'PENDING';
 
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto space-y-6 p-6">
         {/* Back Button */}
         <Button onClick={handleBack} variant="ghost" className="gap-2">
           <ChevronLeft className="w-4 h-4" />
@@ -320,12 +322,14 @@ export default function StudentAssignmentsPage() {
           </CardContent>
         </Card>
       </div>
+      </DashboardLayout>
     );
   }
 
   // Assignment List View
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <DashboardLayout>
+      <div className="max-w-5xl mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -424,6 +428,7 @@ export default function StudentAssignmentsPage() {
         </CardContent>
       </Card>
     </div>
+    </DashboardLayout>
   );
 }
 

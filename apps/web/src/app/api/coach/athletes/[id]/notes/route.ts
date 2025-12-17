@@ -9,7 +9,7 @@ import { requireAuth } from '@/lib/auth-helpers';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication
@@ -24,7 +24,7 @@ export async function POST(
       );
     }
 
-    const athleteId = params.id;
+    const { id: athleteId } = await params;
     const body = await req.json();
     const { content, category } = body;
 
@@ -90,7 +90,7 @@ export async function POST(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication
@@ -104,6 +104,8 @@ export async function DELETE(
         { status: 403 }
       );
     }
+
+    await params; // Await params even though not used for consistency
 
     const body = await req.json();
     const { noteId } = body;

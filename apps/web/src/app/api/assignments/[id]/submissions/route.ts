@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 // GET /api/assignments/[id]/submissions - Coach views all submissions
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -17,6 +17,8 @@ export async function GET(
         { status: 401 }
       );
     }
+
+    const { id } = await params;
 
     // Verify user is a coach
     const user = await prisma.user.findUnique({
@@ -33,7 +35,7 @@ export async function GET(
 
     // Verify assignment exists and belongs to this coach
     const assignment = await prisma.assignment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         submissions: {
           include: {

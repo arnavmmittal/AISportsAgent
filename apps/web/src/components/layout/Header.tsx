@@ -17,10 +17,10 @@ export function Header() {
   // Links for authenticated athletes
   const athleteLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
-    { href: '/chat', label: 'Chat', icon: '💬' },
+    { href: '/chat', label: 'AI Coach', icon: '💬' },
     { href: '/mood', label: 'Mood', icon: '📊' },
     { href: '/goals', label: 'Goals', icon: '🎯' },
-    { href: '/history', label: 'History', icon: '📜' },
+    { href: '/assignments', label: 'Tasks', icon: '📋' },
   ];
 
   // Links for authenticated coaches
@@ -109,6 +109,13 @@ export function Header() {
                       <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
                       <p className="text-xs text-gray-500">{session.user.email}</p>
                     </div>
+                    <Link
+                      href={session.user?.role === 'COACH' ? '/coach/settings' : '/settings'}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                    >
+                      Settings
+                    </Link>
                     <button
                       onClick={handleSignOut}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -170,6 +177,13 @@ export function Header() {
                   <p className="text-xs text-gray-500">{roleDisplay}</p>
                 </div>
               </div>
+              <Link
+                href={session.user?.role === 'COACH' ? '/coach/settings' : '/settings'}
+                className="block px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Settings
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:bg-red-50"

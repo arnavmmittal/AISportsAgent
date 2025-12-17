@@ -11,7 +11,7 @@ const submitAssignmentSchema = z.object({
 // POST /api/assignments/[id]/submit - Athlete submits response
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -22,6 +22,8 @@ export async function POST(
         { status: 401 }
       );
     }
+
+    const { id } = await params;
 
     // Verify user is an athlete
     const user = await prisma.user.findUnique({
@@ -38,7 +40,7 @@ export async function POST(
 
     // Verify assignment exists
     const assignment = await prisma.assignment.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!assignment) {
@@ -85,7 +87,7 @@ export async function POST(
     const submission = await prisma.assignmentSubmission.upsert({
       where: {
         assignmentId_athleteId: {
-          assignmentId: params.id,
+          assignmentId: id,
           athleteId: user.id,
         },
       },
@@ -95,7 +97,7 @@ export async function POST(
         submittedAt: new Date(),
       },
       create: {
-        assignmentId: params.id,
+        assignmentId: id,
         athleteId: user.id,
         response: data.response,
         status: 'SUBMITTED',

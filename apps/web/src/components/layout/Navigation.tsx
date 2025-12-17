@@ -13,10 +13,11 @@ export function Navigation() {
   const isActive = (path: string) => pathname === path;
 
   const athleteLinks = [
-    { href: '/dashboard', label: 'Chat', icon: '💬' },
-    { href: '/mood', label: 'Mood Check-In', icon: '📊' },
+    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+    { href: '/chat', label: 'AI Coach', icon: '💬' },
+    { href: '/mood', label: 'Mood', icon: '❤️' },
     { href: '/goals', label: 'Goals', icon: '🎯' },
-    { href: '/history', label: 'History', icon: '📜' },
+    { href: '/assignments', label: 'Tasks', icon: '📋' },
   ];
 
   const coachLinks = [

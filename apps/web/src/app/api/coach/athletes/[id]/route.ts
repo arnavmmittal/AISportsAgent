@@ -10,7 +10,7 @@ import { requireAuth } from '@/lib/auth-helpers';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication
@@ -25,7 +25,7 @@ export async function GET(
       );
     }
 
-    const athleteId = params.id;
+    const { id: athleteId } = await params;
 
     // Get coach profile
     const coach = await prisma.coach.findUnique({

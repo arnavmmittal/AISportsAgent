@@ -4,7 +4,7 @@
  */
 
 import { cn } from '@/lib/utils';
-import { TrendArrow } from './TrendArrow';
+import TrendArrow from './TrendArrow';
 import { ReactNode } from 'react';
 
 interface StatCardProps {

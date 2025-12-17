@@ -1,14 +1,18 @@
 /**
- * Knowledge Agent
- * Retrieves relevant sports psychology knowledge using RAG
+ * Knowledge Agent - PRODUCTION-READY
+ * Vector-based RAG system with OpenAI embeddings
+ * Uses custom PDF knowledge base: "AI Sports Psych Project.pdf"
+ * Semantic search with cosine similarity
  */
 
 import { BaseAgent } from '../core/BaseAgent';
 import { AgentContext, AgentResponse, AgentConfig, KnowledgeContext } from '../core/types';
+import OpenAI from 'openai';
+import { loadPDFKnowledgeBase, type KnowledgeChunk } from '@/lib/pdf-knowledge-loader';
 
-// Simplified knowledge base for MVP
-// In production, this would query a vector database (Pinecone, Weaviate, etc.)
-const KNOWLEDGE_BASE = {
+// Fallback knowledge base if PDF fails to load
+// In production, the custom PDF is the primary knowledge source
+const FALLBACK_KNOWLEDGE_BASE = {
   cbt: {
     content: `Cognitive Behavioral Therapy (CBT) for Athletes:
 
@@ -123,16 +127,48 @@ Goal Implementation:
   },
 };
 
+// Type for cached embeddings
+interface EmbeddingCache {
+  [key: string]: {
+    embedding: number[];
+    content: string;
+    source: string;
+    metadata?: {
+      section?: string;
+      topic?: string;
+    };
+  };
+}
+
 export class KnowledgeAgent extends BaseAgent {
+  private client: OpenAI;
+  private embeddingCache: EmbeddingCache | null = null;
+  private useVectorSearch: boolean;
+  private pdfChunks: KnowledgeChunk[] = [];
+  private usePDFKnowledgeBase: boolean;
+
   constructor() {
     const config: AgentConfig = {
-      model: '', // Not used for knowledge retrieval
+      model: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
       temperature: 0,
       maxTokens: 0,
       systemPrompt: '',
     };
 
     super('knowledge', config);
+
+    this.client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
+    });
+
+    // Configuration flags
+    this.useVectorSearch = process.env.ENABLE_VECTOR_SEARCH !== 'false';
+    this.usePDFKnowledgeBase = process.env.USE_PDF_KNOWLEDGE_BASE !== 'false';
+
+    this.log('info', 'KnowledgeAgent initialized', {
+      vectorSearch: this.useVectorSearch,
+      pdfKnowledgeBase: this.usePDFKnowledgeBase,
+    });
   }
 
   /**
@@ -148,14 +184,32 @@ export class KnowledgeAgent extends BaseAgent {
 
   /**
    * Retrieve relevant knowledge based on message content
+   * Uses vector similarity search with fallback to keyword matching
    */
   async retrieve(message: string, context: AgentContext): Promise<KnowledgeContext> {
+    const startTime = Date.now();
+
     try {
-      const relevantDocs = this.searchKnowledge(message);
+      let relevantDocs: Array<{
+        content: string;
+        source: string;
+        relevanceScore: number;
+      }>;
+
+      // Use vector search if enabled, otherwise fall back to keyword matching
+      if (this.useVectorSearch) {
+        relevantDocs = await this.vectorSearch(message);
+      } else {
+        relevantDocs = this.keywordSearch(message);
+      }
+
+      const duration = Date.now() - startTime;
 
       this.log('info', 'Knowledge retrieved', {
         sessionId: context.sessionId,
         docsFound: relevantDocs.length,
+        method: this.useVectorSearch ? 'vector' : 'keyword',
+        duration,
       });
 
       return {
@@ -168,7 +222,19 @@ export class KnowledgeAgent extends BaseAgent {
         sessionId: context.sessionId,
       });
 
-      // Return empty context on failure
+      // Fallback to keyword search if vector search fails
+      if (this.useVectorSearch) {
+        this.log('warn', 'Vector search failed, falling back to keyword search', {
+          sessionId: context.sessionId,
+        });
+        const fallbackDocs = this.keywordSearch(message);
+        return {
+          documents: fallbackDocs,
+          summary: this.summarizeDocuments(fallbackDocs),
+        };
+      }
+
+      // Return empty context on complete failure
       return {
         documents: [],
       };
@@ -176,10 +242,52 @@ export class KnowledgeAgent extends BaseAgent {
   }
 
   /**
-   * Search knowledge base for relevant content
-   * In production, this would use vector similarity search
+   * PRODUCTION: Vector-based semantic search
+   * Uses OpenAI embeddings and cosine similarity
    */
-  private searchKnowledge(query: string): Array<{
+  private async vectorSearch(query: string): Promise<
+    Array<{
+      content: string;
+      source: string;
+      relevanceScore: number;
+    }>
+  > {
+    // Lazy load embeddings on first use
+    if (!this.embeddingCache) {
+      await this.initializeEmbeddings();
+    }
+
+    // Generate query embedding
+    const queryEmbedding = await this.generateEmbedding(query);
+
+    // Calculate cosine similarity with all documents
+    const results: Array<{
+      content: string;
+      source: string;
+      relevanceScore: number;
+    }> = [];
+
+    for (const [key, cached] of Object.entries(this.embeddingCache!)) {
+      const similarity = this.cosineSimilarity(queryEmbedding, cached.embedding);
+      results.push({
+        content: cached.content,
+        source: cached.source,
+        relevanceScore: similarity,
+      });
+    }
+
+    // Sort by similarity (highest first)
+    results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+    // Return top 2 most relevant (threshold: 0.7 similarity)
+    return results.filter((r) => r.relevanceScore > 0.7).slice(0, 2);
+  }
+
+  /**
+   * Fallback: Keyword-based search
+   * Used when vector search is disabled or fails
+   */
+  private keywordSearch(query: string): Array<{
     content: string;
     source: string;
     relevanceScore: number;
@@ -191,8 +299,7 @@ export class KnowledgeAgent extends BaseAgent {
       relevanceScore: number;
     }> = [];
 
-    // Simple keyword matching for MVP
-    // In production, use vector embeddings and cosine similarity
+    // Simple keyword matching (fallback only)
     Object.values(KNOWLEDGE_BASE).forEach((doc) => {
       const matchCount = doc.keywords.filter((keyword) =>
         queryLower.includes(keyword)
@@ -213,6 +320,129 @@ export class KnowledgeAgent extends BaseAgent {
 
     // Return top 2 most relevant documents
     return results.slice(0, 2);
+  }
+
+  /**
+   * Initialize embeddings for knowledge base (lazy loading)
+   * Loads from custom PDF or falls back to built-in knowledge
+   */
+  private async initializeEmbeddings(): Promise<void> {
+    this.log('info', 'Initializing knowledge base embeddings', {
+      source: this.usePDFKnowledgeBase ? 'PDF' : 'Built-in',
+    });
+
+    const cache: EmbeddingCache = {};
+
+    try {
+      if (this.usePDFKnowledgeBase) {
+        // Load from custom PDF
+        this.pdfChunks = await loadPDFKnowledgeBase();
+
+        this.log('info', `Loaded ${this.pdfChunks.length} chunks from PDF`, {});
+
+        // Generate embeddings for PDF chunks
+        for (const chunk of this.pdfChunks) {
+          try {
+            const embedding = await this.generateEmbedding(chunk.content);
+            cache[chunk.id] = {
+              embedding,
+              content: chunk.content,
+              source: chunk.source,
+              metadata: chunk.metadata,
+            };
+          } catch (error) {
+            this.log('warn', `Failed to generate embedding for chunk ${chunk.id}`, {
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
+        }
+
+        this.log('info', `✅ Custom PDF knowledge base loaded: ${Object.keys(cache).length} chunks`, {});
+      } else {
+        // Fallback to built-in knowledge base
+        for (const [key, doc] of Object.entries(FALLBACK_KNOWLEDGE_BASE)) {
+          try {
+            const embedding = await this.generateEmbedding(doc.content);
+            cache[key] = {
+              embedding,
+              content: doc.content,
+              source: doc.source,
+            };
+          } catch (error) {
+            this.log('warn', `Failed to generate embedding for ${key}`, {
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
+        }
+
+        this.log('info', `Embeddings initialized for ${Object.keys(cache).length} built-in documents`, {});
+      }
+    } catch (error) {
+      this.log('error', 'Failed to load PDF knowledge base, falling back to built-in', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      // Fallback to built-in knowledge base
+      for (const [key, doc] of Object.entries(FALLBACK_KNOWLEDGE_BASE)) {
+        try {
+          const embedding = await this.generateEmbedding(doc.content);
+          cache[key] = {
+            embedding,
+            content: doc.content,
+            source: doc.source,
+          };
+        } catch (error) {
+          this.log('warn', `Failed to generate embedding for ${key}`, {
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+    }
+
+    this.embeddingCache = cache;
+    this.log('info', `✅ Knowledge base ready: ${Object.keys(cache).length} documents embedded`, {});
+  }
+
+  /**
+   * Generate OpenAI embedding for text
+   */
+  private async generateEmbedding(text: string): Promise<number[]> {
+    const response = await this.client.embeddings.create({
+      model: this.config.model, // text-embedding-3-small
+      input: text,
+      encoding_format: 'float',
+    });
+
+    return response.data[0].embedding;
+  }
+
+  /**
+   * Calculate cosine similarity between two vectors
+   * Returns value between -1 and 1 (higher = more similar)
+   */
+  private cosineSimilarity(vecA: number[], vecB: number[]): number {
+    if (vecA.length !== vecB.length) {
+      throw new Error('Vectors must have same length');
+    }
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < vecA.length; i++) {
+      dotProduct += vecA[i] * vecB[i];
+      normA += vecA[i] * vecA[i];
+      normB += vecB[i] * vecB[i];
+    }
+
+    normA = Math.sqrt(normA);
+    normB = Math.sqrt(normB);
+
+    if (normA === 0 || normB === 0) {
+      return 0;
+    }
+
+    return dotProduct / (normA * normB);
   }
 
   /**

@@ -12,7 +12,7 @@ import { requireAuth } from '@/lib/auth-helpers';
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication
@@ -27,7 +27,7 @@ export async function PATCH(
       );
     }
 
-    const athleteId = params.id;
+    const { id: athleteId } = await params;
     const body = await req.json();
     const { notes } = body;
 
@@ -93,7 +93,7 @@ export async function PATCH(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication
@@ -108,7 +108,7 @@ export async function POST(
       );
     }
 
-    const athleteId = params.id;
+    const { id: athleteId } = await params;
     const body = await req.json();
     const { message, type } = body;
 

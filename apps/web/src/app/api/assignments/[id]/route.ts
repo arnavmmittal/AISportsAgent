@@ -14,7 +14,7 @@ const updateAssignmentSchema = z.object({
 // GET /api/assignments/[id] - Get single assignment
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -26,8 +26,10 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     const assignment = await prisma.assignment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         submissions: {
           select: {
@@ -109,7 +111,7 @@ export async function GET(
 // PUT /api/assignments/[id] - Update assignment (coach only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -120,6 +122,8 @@ export async function PUT(
         { status: 401 }
       );
     }
+
+    const { id } = await params;
 
     // Verify user is a coach
     const user = await prisma.user.findUnique({
@@ -136,7 +140,7 @@ export async function PUT(
 
     // Verify assignment exists and belongs to this coach
     const existingAssignment = await prisma.assignment.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingAssignment) {
@@ -185,7 +189,7 @@ export async function PUT(
 
     // Update assignment
     const updatedAssignment = await prisma.assignment.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         submissions: true,
@@ -208,7 +212,7 @@ export async function PUT(
 // DELETE /api/assignments/[id] - Delete assignment (coach only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -219,6 +223,8 @@ export async function DELETE(
         { status: 401 }
       );
     }
+
+    const { id } = await params;
 
     // Verify user is a coach
     const user = await prisma.user.findUnique({
@@ -235,7 +241,7 @@ export async function DELETE(
 
     // Verify assignment exists and belongs to this coach
     const existingAssignment = await prisma.assignment.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingAssignment) {
@@ -254,7 +260,7 @@ export async function DELETE(
 
     // Delete assignment (cascades to submissions)
     await prisma.assignment.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({
