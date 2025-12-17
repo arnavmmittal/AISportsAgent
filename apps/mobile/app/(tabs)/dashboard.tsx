@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { logout, getStoredUserId } from '../../lib/auth';
 import { getMoodLogs, getGoals } from '../../lib/apiWithFallback';
+import { apiClient } from '../../lib/auth';
 import type { MoodLog, Goal } from '@sports-agent/types';
 import { Card, LoadingScreen, GradientCard } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
@@ -30,6 +31,8 @@ export default function DashboardScreen() {
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [moodStats, setMoodStats] = useState<any>(null);
+  const [crisisAlerts, setCrisisAlerts] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -70,13 +73,31 @@ export default function DashboardScreen() {
         return;
       }
 
-      const [moodLogsData, goalsData] = await Promise.all([
+      // Fetch all dashboard data in parallel
+      const [moodLogsData, goalsData, assignmentsData] = await Promise.all([
         getMoodLogs(userId, 7),
         getGoals(userId),
+        apiClient.getAssignments().catch(() => []),
       ]);
 
       setMoodLogs(moodLogsData);
       setGoals(goalsData);
+      setAssignments(assignmentsData);
+
+      // Fetch crisis alerts (athlete-specific endpoint)
+      try {
+        const response = await fetch(`${apiClient['baseURL']}/api/athlete/crisis-alerts`, {
+          headers: {
+            Authorization: `Bearer ${await import('../../lib/auth').then(m => m.getStoredToken())}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCrisisAlerts(data.alerts || []);
+        }
+      } catch (error) {
+        console.log('Failed to fetch crisis alerts:', error);
+      }
 
       if (!isRefresh) {
         Animated.parallel([
@@ -240,6 +261,51 @@ export default function DashboardScreen() {
             </View>
           </LinearGradient>
         </Animated.View>
+
+        {/* Crisis Alert Banner */}
+        {crisisAlerts.filter((a) => !a.resolved).length > 0 && (
+          <Animated.View
+            style={[
+              styles.crisisAlertBanner,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <LinearGradient
+              colors={['#dc2626', '#ef4444', '#f87171']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.crisisAlertGradient}
+            >
+              <View style={styles.crisisAlertIconContainer}>
+                <Ionicons name="warning" size={28} color="#fff" />
+              </View>
+              <View style={styles.crisisAlertContent}>
+                <Text style={styles.crisisAlertTitle}>Support Available 24/7</Text>
+                <Text style={styles.crisisAlertMessage}>
+                  We're here for you. If you're in crisis, help is available immediately.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.crisisAlertButton}
+                onPress={() => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  // Open crisis resources (could navigate or show modal)
+                  router.push('/(tabs)/chat');
+                }}
+              >
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                  style={styles.crisisAlertButtonGradient}
+                >
+                  <Ionicons name="chatbubbles" size={20} color="#fff" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
+          </Animated.View>
+        )}
 
         {/* Vibrant Stat Cards with Triadic Colors */}
         <Text style={styles.sectionTitleLight}>Your Stats</Text>
@@ -480,6 +546,55 @@ export default function DashboardScreen() {
                     </View>
                   </View>
                 ))}
+            </View>
+          </>
+        )}
+
+        {/* Upcoming Assignments */}
+        {assignments.length > 0 && (
+          <>
+            <Text style={styles.sectionTitleLight}>Upcoming Assignments</Text>
+            <View style={styles.assignmentsContainer}>
+              {assignments.slice(0, 3).map((assignment) => (
+                <TouchableOpacity
+                  key={assignment.id}
+                  style={styles.assignmentGlassCard}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push('/(tabs)/assignments');
+                  }}
+                >
+                  <View style={styles.assignmentHeader}>
+                    <View style={styles.assignmentIconBadge}>
+                      <Ionicons name="document-text" size={22} color="#fff" />
+                    </View>
+                    <View style={styles.assignmentInfo}>
+                      <Text style={styles.assignmentTitle}>{assignment.title}</Text>
+                      {assignment.dueDate && (
+                        <View style={styles.assignmentDueDate}>
+                          <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.7)" />
+                          <Text style={styles.assignmentDueText}>
+                            Due {new Date(assignment.dueDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    {assignment.status === 'PENDING' && (
+                      <View style={styles.assignmentStatusBadge}>
+                        <Text style={styles.assignmentStatusText}>Todo</Text>
+                      </View>
+                    )}
+                    {assignment.status === 'SUBMITTED' && (
+                      <View style={[styles.assignmentStatusBadge, styles.assignmentStatusComplete]}>
+                        <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
             </View>
           </>
         )}
@@ -787,5 +902,123 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 60,
+  },
+  // Crisis Alert Banner
+  crisisAlertBanner: {
+    marginBottom: Spacing.xl,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+  },
+  crisisAlertGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  crisisAlertIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  crisisAlertContent: {
+    flex: 1,
+  },
+  crisisAlertTitle: {
+    fontSize: Typography.base,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  crisisAlertMessage: {
+    fontSize: Typography.sm,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  crisisAlertButton: {
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  crisisAlertButtonGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  // Assignments
+  assignmentsContainer: {
+    gap: Spacing.md,
+    marginBottom: Spacing.xxxl,
+  },
+  assignmentGlassCard: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  assignmentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  assignmentIconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(139, 92, 246, 0.3)',
+    borderWidth: 2,
+    borderColor: '#8b5cf6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  assignmentInfo: {
+    flex: 1,
+  },
+  assignmentTitle: {
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  assignmentDueDate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  assignmentDueText: {
+    fontSize: Typography.xs,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
+  },
+  assignmentStatusBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+  },
+  assignmentStatusText: {
+    fontSize: Typography.xs,
+    fontWeight: '700',
+    color: '#fbbf24',
+  },
+  assignmentStatusComplete: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: '#10b981',
   },
 });

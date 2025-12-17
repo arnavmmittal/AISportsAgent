@@ -22,6 +22,7 @@ import { LoadingScreen, ErrorView } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 import { VoiceWebSocketClient } from '../../lib/voice';
 import config from '../../config';
+import { CrisisResourcesModal } from '../../components/chat/CrisisResourcesModal';
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,6 +35,7 @@ export default function ChatScreen() {
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [voiceConnected, setVoiceConnected] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [crisisAlert, setCrisisAlert] = useState<any>(null);
 
   const flatListRef = useRef<FlatList>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -158,7 +160,15 @@ export default function ChatScreen() {
 
           try {
             const parsed = JSON.parse(data);
-            if (parsed.type === 'content') {
+
+            // Handle different event types from OpenAI streaming
+            if (parsed.type === 'session') {
+              // Update session ID if provided by backend
+              if (parsed.data?.sessionId) {
+                setSessionId(parsed.data.sessionId);
+              }
+            } else if (parsed.type === 'token' || parsed.type === 'content') {
+              // Handle both new token streaming and legacy content events
               await new Promise(resolve => setTimeout(resolve, 20));
 
               setMessages((prev) => {
@@ -167,11 +177,22 @@ export default function ChatScreen() {
                 if (updated[lastIndex]?.role === 'assistant') {
                   updated[lastIndex] = {
                     ...updated[lastIndex],
-                    content: updated[lastIndex].content + parsed.data,
+                    content: updated[lastIndex].content + (parsed.data?.content || parsed.data),
                   };
                 }
                 return updated;
               });
+            } else if (parsed.type === 'crisis_alert' || parsed.type === 'crisis_check') {
+              // Crisis detected - show resources modal
+              setCrisisAlert({
+                final_risk_level: parsed.data.severity || parsed.data.final_risk_level || 'HIGH',
+                message: parsed.data.message || 'We noticed your message may indicate distress. Professional support is available 24/7.',
+              });
+              // Haptic feedback for crisis alert
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            } else if (parsed.type === 'done') {
+              // Stream complete
+              console.log('✅ Stream complete');
             }
           } catch (e) {
             // Ignore parse errors
@@ -363,6 +384,9 @@ export default function ChatScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Crisis Resources Modal */}
+      <CrisisResourcesModal crisis={crisisAlert} onClose={() => setCrisisAlert(null)} />
+
       {/* Dark gradient background */}
       <LinearGradient
         colors={['#0f172a', '#1e293b', '#334155']}

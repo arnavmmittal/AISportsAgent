@@ -199,13 +199,21 @@ async function createDemoResponse(userMessage: string): Promise<Response> {
   // We'll send it all at once, and the client will process it
   const events: string[] = [];
 
-  // Send each character as a separate event for streaming effect
+  // Send session event (matches web backend format)
+  events.push(
+    `data: ${JSON.stringify({
+      type: 'session',
+      data: { sessionId: `demo_session_${Date.now()}` },
+    })}\n\n`
+  );
+
+  // Send each character as a separate token event (matches OpenAI streaming format)
   for (const char of aiResponse) {
-    events.push(`data: ${JSON.stringify({ type: 'content', data: char })}\n\n`);
+    events.push(`data: ${JSON.stringify({ type: 'token', data: { content: char } })}\n\n`);
   }
 
   // Send done event
-  events.push('data: [DONE]\n\n');
+  events.push(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
 
   const fullBody = events.join('');
 
