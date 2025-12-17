@@ -18,6 +18,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 require('dotenv').config({ path: '.env.local' });
 
 const prisma = new PrismaClient();
@@ -409,6 +410,7 @@ async function main() {
       for (const msg of messages) {
         const message = await prisma.message.create({
           data: {
+            id: crypto.randomUUID(),
             sessionId: session.id,
             role: msg.role,
             content: msg.content,
