@@ -225,7 +225,7 @@ export default async function CoachInsightsPage() {
                             {alert.severity}
                           </Badge>
                           <span className="font-semibold text-gray-900">
-                            {alert.athlete.user.name}
+                            {alert.Athlete.User.name}
                           </span>
                           <span className="text-sm text-gray-500">
                             {new Date(alert.detectedAt).toLocaleDateString()} at{' '}
@@ -236,8 +236,8 @@ export default async function CoachInsightsPage() {
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 italic mb-2">
-                          "{alert.message.content.substring(0, 150)}
-                          {alert.message.content.length > 150 ? '...' : ''}"
+                          "{alert.Message.content.substring(0, 150)}
+                          {alert.Message.content.length > 150 ? '...' : ''}"
                         </p>
                         {alert.reviewed ? (
                           <div className="text-xs text-green-600 font-medium">
