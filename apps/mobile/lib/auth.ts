@@ -119,6 +119,19 @@ export async function signupCoach(data: CoachSignupData): Promise<User> {
 }
 
 export async function logout() {
+  // Unregister push token before logout
+  try {
+    const pushToken = await SecureStore.getItemAsync('push_token');
+    if (pushToken) {
+      await apiClient.unregisterPushToken(pushToken);
+      await SecureStore.deleteItemAsync('push_token');
+      console.log('Push token unregistered on logout');
+    }
+  } catch (error) {
+    console.error('Failed to unregister push token on logout:', error);
+    // Continue with logout even if token unregistration fails
+  }
+
   await SecureStore.deleteItemAsync('auth_token');
   await SecureStore.deleteItemAsync('user_id');
   await SecureStore.deleteItemAsync('user_role');
