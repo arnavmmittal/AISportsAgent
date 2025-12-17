@@ -5,7 +5,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import pdf from 'pdf-parse';
+// @ts-ignore - pdf-parse has module resolution issues with Next.js
+const pdf = require('pdf-parse');
 
 export interface KnowledgeChunk {
   id: string;
