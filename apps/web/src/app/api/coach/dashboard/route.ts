@@ -1,10 +1,11 @@
 /**
  * Coach Dashboard API
- * Returns aggregated team metrics
+ * Returns aggregated team metrics from real database
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCoach } from '@/lib/auth-helpers';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,220 +15,239 @@ export async function GET(request: NextRequest) {
       return response;
     }
 
-    // Return mock data for demo coach
-    if (user.id.startsWith('demo-')) {
-      const mockData = {
-        overview: {
-          totalAthletes: 24,
-          athletesWithConsent: 18,
-          athletesWithoutConsent: 6,
-          atRiskCount: 3,
-          crisisAlertsCount: 1,
-          timeRange: 7,
-        },
-        teamMood: {
-          avgMood: 7.2,
-          avgConfidence: 7.8,
-          avgStress: 4.3,
-          totalLogs: 156,
-        },
-        moodTrend: [
-          {
-            date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-            avgMood: 7.1,
-            avgConfidence: 7.5,
-            avgStress: 4.5,
-            count: 18,
-          },
-          {
-            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            avgMood: 6.8,
-            avgConfidence: 7.3,
-            avgStress: 5.2,
-            count: 20,
-          },
-          {
-            date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-            avgMood: 7.4,
-            avgConfidence: 7.9,
-            avgStress: 3.8,
-            count: 22,
-          },
-          {
-            date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            avgMood: 7.6,
-            avgConfidence: 8.1,
-            avgStress: 4.0,
-            count: 21,
-          },
-          {
-            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            avgMood: 7.3,
-            avgConfidence: 7.7,
-            avgStress: 4.4,
-            count: 19,
-          },
-          {
-            date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            avgMood: 7.5,
-            avgConfidence: 8.0,
-            avgStress: 4.1,
-            count: 23,
-          },
-          {
-            date: new Date().toISOString(),
-            avgMood: 7.2,
-            avgConfidence: 7.8,
-            avgStress: 4.3,
-            count: 18,
-          },
-        ],
-        crisisAlerts: [
-          {
-            id: 'alert-1',
-            athleteId: 'athlete-5',
-            athlete: {
-              id: 'athlete-5',
-              name: 'Taylor Martinez',
-              sport: 'Track',
-              year: 'Sophomore',
-            },
-            alertType: 'HIGH_STRESS',
-            severity: 'high',
-            message: 'Detected language indicating high stress and burnout',
-            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            detectedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            resolved: false,
-          },
-          {
-            id: 'alert-2',
-            athleteId: 'athlete-8',
-            athlete: {
-              id: 'athlete-8',
-              name: 'Jordan Kim',
-              sport: 'Soccer',
-              year: 'Junior',
-            },
-            alertType: 'DECLINING_MOOD',
-            severity: 'medium',
-            message: 'Mood scores declining for 5 consecutive days',
-            createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-            detectedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-            resolved: false,
-          },
-        ],
-        atRiskAthletes: [
-          {
-            id: 'athlete-1',
-            name: 'Mike Chen',
-            sport: 'Basketball',
-            year: 'Sophomore',
-            recentMood: {
-              mood: 5,
-              confidence: 4,
-              stress: 8,
-            },
-          },
-          {
-            id: 'athlete-2',
-            name: 'Emily Rodriguez',
-            sport: 'Soccer',
-            year: 'Junior',
-            recentMood: {
-              mood: 6,
-              confidence: 5,
-              stress: 7,
-            },
-          },
-          {
-            id: 'athlete-3',
-            name: 'Jordan Smith',
-            sport: 'Track',
-            year: 'Freshman',
-            recentMood: {
-              mood: 4,
-              confidence: 3,
-              stress: 9,
-            },
-          },
-        ],
-        athleteReadiness: [
-          {
-            athlete: {
-              id: 'athlete-10',
-              name: 'Sarah Johnson',
-              sport: 'Basketball',
-              teamPosition: 'Point Guard',
-            },
-            mood: 9,
-            confidence: 9,
-            stress: 2,
-            readiness: 95,
-            status: 'excellent' as const,
-          },
-          {
-            athlete: {
-              id: 'athlete-11',
-              name: 'Marcus Williams',
-              sport: 'Basketball',
-              teamPosition: 'Center',
-            },
-            mood: 8,
-            confidence: 8,
-            stress: 3,
-            readiness: 88,
-            status: 'excellent' as const,
-          },
-          {
-            athlete: {
-              id: 'athlete-12',
-              name: 'Alex Turner',
-              sport: 'Soccer',
-              teamPosition: 'Midfielder',
-            },
-            mood: 7,
-            confidence: 7,
-            stress: 4,
-            readiness: 78,
-            status: 'good' as const,
-          },
-          {
-            athlete: {
-              id: 'athlete-13',
-              name: 'Jamie Lee',
-              sport: 'Volleyball',
-              teamPosition: 'Setter',
-            },
-            mood: 6,
-            confidence: 6,
-            stress: 5,
-            readiness: 68,
-            status: 'fair' as const,
-          },
-          {
-            athlete: {
-              id: 'athlete-1',
-              name: 'Mike Chen',
-              sport: 'Basketball',
-              teamPosition: 'Forward',
-            },
-            mood: 5,
-            confidence: 4,
-            stress: 8,
-            readiness: 52,
-            status: 'at-risk' as const,
-          },
-        ],
-      };
+    // Get coach profile
+    const coach = await prisma.coach.findUnique({
+      where: { userId: user.id },
+    });
 
-      return NextResponse.json({ data: mockData });
+    if (!coach) {
+      return NextResponse.json(
+        { error: 'Coach profile not found' },
+        { status: 404 }
+      );
     }
 
-    // For non-demo users, return error (database not fully implemented)
-    return NextResponse.json(
-      { error: 'Dashboard data not available' },
-      { status: 503 }
-    );
+    // Get all coach-athlete relationships
+    const relations = await prisma.coachAthleteRelation.findMany({
+      where: { coachId: coach.userId },
+      include: {
+        Athlete: {
+          include: {
+            User: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            MoodLog: {
+              orderBy: { createdAt: 'desc' },
+              take: 7, // Last 7 days for trends
+            },
+          },
+        },
+      },
+    });
+
+    const totalAthletes = relations.length;
+    const athletesWithConsent = relations.filter((r) => r.consentGranted).length;
+    const athletesWithoutConsent = totalAthletes - athletesWithConsent;
+
+    // Get crisis alerts for athletes with consent
+    const athleteIds = relations
+      .filter((r) => r.consentGranted)
+      .map((r) => r.athleteId);
+
+    const crisisAlerts = await prisma.crisisAlert.findMany({
+      where: {
+        athleteId: { in: athleteIds },
+        resolved: false,
+      },
+      include: {
+        Athlete: {
+          include: {
+            User: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { detectedAt: 'desc' },
+      take: 10,
+    });
+
+    // Calculate team mood metrics (only athletes with consent)
+    const athletesWithMoodData = relations
+      .filter((r) => r.consentGranted && r.Athlete.MoodLog.length > 0)
+      .map((r) => r.Athlete);
+
+    let avgMood = 0;
+    let avgConfidence = 0;
+    let avgStress = 0;
+    let totalLogs = 0;
+
+    if (athletesWithMoodData.length > 0) {
+      // Calculate averages from most recent mood log per athlete
+      athletesWithMoodData.forEach((athlete) => {
+        if (athlete.MoodLog.length > 0) {
+          const latestMood = athlete.MoodLog[0];
+          avgMood += latestMood.mood;
+          avgConfidence += latestMood.confidence;
+          avgStress += latestMood.stress;
+          totalLogs += athlete.MoodLog.length;
+        }
+      });
+
+      avgMood = avgMood / athletesWithMoodData.length;
+      avgConfidence = avgConfidence / athletesWithMoodData.length;
+      avgStress = avgStress / athletesWithMoodData.length;
+    }
+
+    // Calculate mood trends for last 7 days
+    const moodTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      // Get all mood logs for this day
+      const dayMoodLogs = await prisma.moodLog.findMany({
+        where: {
+          athleteId: { in: athleteIds },
+          createdAt: {
+            gte: date,
+            lt: nextDate,
+          },
+        },
+      });
+
+      if (dayMoodLogs.length > 0) {
+        const dayAvgMood =
+          dayMoodLogs.reduce((sum, log) => sum + log.mood, 0) / dayMoodLogs.length;
+        const dayAvgConfidence =
+          dayMoodLogs.reduce((sum, log) => sum + log.confidence, 0) / dayMoodLogs.length;
+        const dayAvgStress =
+          dayMoodLogs.reduce((sum, log) => sum + log.stress, 0) / dayMoodLogs.length;
+
+        moodTrend.push({
+          date: date.toISOString(),
+          avgMood: Math.round(dayAvgMood * 10) / 10,
+          avgConfidence: Math.round(dayAvgConfidence * 10) / 10,
+          avgStress: Math.round(dayAvgStress * 10) / 10,
+          count: dayMoodLogs.length,
+        });
+      } else {
+        // No data for this day
+        moodTrend.push({
+          date: date.toISOString(),
+          avgMood: 0,
+          avgConfidence: 0,
+          avgStress: 0,
+          count: 0,
+        });
+      }
+    }
+
+    // Identify at-risk athletes (low mood, high stress, or crisis alerts)
+    const atRiskAthletes = athletesWithMoodData
+      .filter((athlete) => {
+        if (athlete.MoodLog.length === 0) return false;
+        const latestMood = athlete.MoodLog[0];
+        return (
+          latestMood.mood <= 5 ||
+          latestMood.stress >= 7 ||
+          athlete.riskLevel === 'HIGH' ||
+          athlete.riskLevel === 'CRITICAL'
+        );
+      })
+      .map((athlete) => ({
+        id: athlete.User.id,
+        name: athlete.User.name,
+        sport: athlete.sport,
+        year: athlete.year,
+        recentMood: {
+          mood: athlete.MoodLog[0].mood,
+          confidence: athlete.MoodLog[0].confidence,
+          stress: athlete.MoodLog[0].stress,
+        },
+      }));
+
+    // Calculate athlete readiness scores
+    const athleteReadiness = athletesWithMoodData
+      .map((athlete) => {
+        if (athlete.MoodLog.length === 0) return null;
+
+        const latestMood = athlete.MoodLog[0];
+        // Readiness formula: (mood + confidence + (11 - stress)) / 3 * 10
+        const readiness = Math.round(
+          ((latestMood.mood + latestMood.confidence + (11 - latestMood.stress)) / 3) * 10
+        );
+
+        let status: 'excellent' | 'good' | 'fair' | 'at-risk' = 'good';
+        if (readiness >= 85) status = 'excellent';
+        else if (readiness >= 70) status = 'good';
+        else if (readiness >= 55) status = 'fair';
+        else status = 'at-risk';
+
+        return {
+          athlete: {
+            id: athlete.User.id,
+            name: athlete.User.name,
+            sport: athlete.sport,
+            teamPosition: athlete.teamPosition,
+          },
+          mood: latestMood.mood,
+          confidence: latestMood.confidence,
+          stress: latestMood.stress,
+          readiness,
+          status,
+        };
+      })
+      .filter((a) => a !== null)
+      .sort((a, b) => (b?.readiness || 0) - (a?.readiness || 0)); // Sort by readiness descending
+
+    const dashboardData = {
+      overview: {
+        totalAthletes,
+        athletesWithConsent,
+        athletesWithoutConsent,
+        atRiskCount: atRiskAthletes.length,
+        crisisAlertsCount: crisisAlerts.length,
+        timeRange: 7,
+      },
+      teamMood: {
+        avgMood: Math.round(avgMood * 10) / 10,
+        avgConfidence: Math.round(avgConfidence * 10) / 10,
+        avgStress: Math.round(avgStress * 10) / 10,
+        totalLogs,
+      },
+      moodTrend,
+      crisisAlerts: crisisAlerts.map((alert) => ({
+        id: alert.id,
+        athleteId: alert.athleteId,
+        athlete: {
+          id: alert.Athlete.User.id,
+          name: alert.Athlete.User.name,
+          sport: alert.Athlete.sport,
+          year: alert.Athlete.year,
+        },
+        alertType: alert.alertType,
+        severity: alert.severity,
+        message: alert.message,
+        createdAt: alert.createdAt.toISOString(),
+        detectedAt: alert.detectedAt.toISOString(),
+        resolved: alert.resolved,
+      })),
+      atRiskAthletes,
+      athleteReadiness,
+    };
+
+    return NextResponse.json({ data: dashboardData });
   } catch (error) {
     console.error('Coach dashboard error:', error);
     return NextResponse.json(
