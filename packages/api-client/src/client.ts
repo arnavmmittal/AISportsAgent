@@ -170,6 +170,46 @@ export class APIClient {
     return this.request(`/api/athlete/${athleteId}`);
   }
 
+  async getProfile(): Promise<{
+    profile: {
+      id: string;
+      name: string;
+      email: string;
+      image?: string | null;
+      role: string;
+      sport?: string;
+      year?: string;
+      teamPosition?: string | null;
+    };
+  }> {
+    return this.request('/api/athlete/profile');
+  }
+
+  async updateProfile(data: {
+    name?: string;
+    sport?: string;
+    year?: 'FRESHMAN' | 'SOPHOMORE' | 'JUNIOR' | 'SENIOR' | 'GRADUATE';
+    teamPosition?: string | null;
+    image?: string | null;
+  }): Promise<{
+    profile: {
+      id: string;
+      name: string;
+      email: string;
+      image?: string | null;
+      role: string;
+      sport?: string;
+      year?: string;
+      teamPosition?: string | null;
+    };
+    message: string;
+  }> {
+    return this.request('/api/athlete/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getConsentSettings(): Promise<{
     consent: {
       consentCoachView: boolean;
