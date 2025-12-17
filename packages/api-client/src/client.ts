@@ -235,6 +235,40 @@ export class APIClient {
     });
   }
 
+  async getNotificationSettings(): Promise<{
+    notifications: {
+      pushEnabled: boolean;
+      taskReminders: boolean;
+      assignmentNotifs: boolean;
+      chatMessages: boolean;
+      goalMilestones: boolean;
+    };
+  }> {
+    return this.request('/api/athlete/notifications');
+  }
+
+  async updateNotificationSettings(data: {
+    pushEnabled?: boolean;
+    taskReminders?: boolean;
+    assignmentNotifs?: boolean;
+    chatMessages?: boolean;
+    goalMilestones?: boolean;
+  }): Promise<{
+    notifications: {
+      pushEnabled: boolean;
+      taskReminders: boolean;
+      assignmentNotifs: boolean;
+      chatMessages: boolean;
+      goalMilestones: boolean;
+    };
+    message: string;
+  }> {
+    return this.request('/api/athlete/notifications', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   // ========== Assignments ==========
 
   async getAssignments(): Promise<any> {

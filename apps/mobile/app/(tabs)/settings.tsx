@@ -32,6 +32,15 @@ export default function SettingsScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [editedProfile, setEditedProfile] = useState<any>({});
 
+  // Notification settings state
+  const [notifications, setNotifications] = useState({
+    pushEnabled: true,
+    taskReminders: true,
+    assignmentNotifs: true,
+    chatMessages: false,
+    goalMilestones: true,
+  });
+
   useEffect(() => {
     loadUserData();
   }, []);
@@ -41,8 +50,11 @@ export default function SettingsScreen() {
       const role = await getStoredUserRole();
       setUserRole(role);
 
-      // Load profile for all users
-      await loadProfile();
+      // Load profile and notification settings for all users
+      await Promise.all([
+        loadProfile(),
+        loadNotificationSettings(),
+      ]);
 
       // Only load consent settings for athletes
       if (role === 'ATHLETE') {
@@ -63,6 +75,15 @@ export default function SettingsScreen() {
       setEditedProfile(response.profile);
     } catch (error) {
       console.error('Failed to load profile:', error);
+    }
+  };
+
+  const loadNotificationSettings = async () => {
+    try {
+      const response = await apiClient.getNotificationSettings();
+      setNotifications(response.notifications);
+    } catch (error) {
+      console.error('Failed to load notification settings:', error);
     }
   };
 
@@ -158,6 +179,29 @@ export default function SettingsScreen() {
           },
         ]
       );
+    }
+  };
+
+  const updateNotification = async (field: keyof typeof notifications, value: boolean) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // Optimistic update
+      setNotifications(prev => ({ ...prev, [field]: value }));
+
+      const response = await apiClient.updateNotificationSettings({
+        [field]: value,
+      });
+
+      // Update with server response
+      setNotifications(response.notifications);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Failed to update notification:', error);
+      // Revert on error
+      setNotifications(prev => ({ ...prev, [field]: !value }));
+      Alert.alert('Error', 'Failed to update notification setting. Please try again.');
     }
   };
 
@@ -382,8 +426,8 @@ export default function SettingsScreen() {
           </LinearGradient>
         </View>
 
-        {/* App Settings */}
-        <SectionHeader title="App Settings" />
+        {/* Notifications */}
+        <SectionHeader title="Notifications" />
         <View style={styles.card}>
           <LinearGradient
             colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
@@ -392,13 +436,76 @@ export default function SettingsScreen() {
             <SettingItem
               icon="notifications-outline"
               iconColor="#60a5fa"
-              title="Notifications"
-              subtitle="Manage push notifications"
-              onPress={() =>
-                Alert.alert('Coming Soon', 'Notification settings will be available soon')
+              title="Push Notifications"
+              subtitle={notifications.pushEnabled ? 'Enabled' : 'Disabled'}
+              rightComponent={
+                <Switch
+                  value={notifications.pushEnabled}
+                  onValueChange={(value) => updateNotification('pushEnabled', value)}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#60a5fa' }}
+                  thumbColor={notifications.pushEnabled ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
               }
             />
             <View style={styles.separator} />
+            <SettingItem
+              icon="checkmark-circle-outline"
+              iconColor="#10b981"
+              title="Assignment Reminders"
+              subtitle={notifications.assignmentNotifs ? 'Get notified about assignments' : 'No reminders'}
+              rightComponent={
+                <Switch
+                  value={notifications.assignmentNotifs}
+                  onValueChange={(value) => updateNotification('assignmentNotifs', value)}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#10b981' }}
+                  thumbColor={notifications.assignmentNotifs ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              }
+            />
+            <View style={styles.separator} />
+            <SettingItem
+              icon="trophy-outline"
+              iconColor="#f59e0b"
+              title="Goal Milestones"
+              subtitle={notifications.goalMilestones ? 'Celebrate your progress' : 'No milestone alerts'}
+              rightComponent={
+                <Switch
+                  value={notifications.goalMilestones}
+                  onValueChange={(value) => updateNotification('goalMilestones', value)}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#f59e0b' }}
+                  thumbColor={notifications.goalMilestones ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              }
+            />
+            <View style={styles.separator} />
+            <SettingItem
+              icon="chatbubble-outline"
+              iconColor="#ec4899"
+              title="Chat Messages"
+              subtitle={notifications.chatMessages ? 'Get notified about messages' : 'No chat notifications'}
+              rightComponent={
+                <Switch
+                  value={notifications.chatMessages}
+                  onValueChange={(value) => updateNotification('chatMessages', value)}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#ec4899' }}
+                  thumbColor={notifications.chatMessages ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              }
+            />
+          </LinearGradient>
+        </View>
+
+        {/* App Settings */}
+        <SectionHeader title="App Settings" />
+        <View style={styles.card}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+            style={styles.cardGradient}
+          >
             <SettingItem
               icon="language-outline"
               iconColor="#a78bfa"
