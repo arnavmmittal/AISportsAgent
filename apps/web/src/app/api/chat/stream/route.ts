@@ -106,7 +106,6 @@ export async function POST(req: NextRequest) {
               data: {
                 id: session_id || `session_${athlete_id}`,
                 athleteId: athlete_id,
-                startedAt: new Date(),
               },
               include: { Athlete: { include: { User: true } } },
             });
