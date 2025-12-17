@@ -92,7 +92,7 @@ export class AthleteAgent extends BaseAgent {
         content: message,
       });
 
-      // Call OpenAI API
+      // Call OpenAI API (non-streaming for now, streaming handled separately)
       const response = await this.client.chat.completions.create({
         model: this.config.model,
         messages: [
@@ -101,6 +101,7 @@ export class AthleteAgent extends BaseAgent {
         ],
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
+        stream: false,
       });
 
       const content = response.choices[0]?.message?.content || '';
@@ -264,5 +265,69 @@ Use this research to inform your response, but keep your language conversational
    */
   protected getFallbackResponse(): string {
     return "I'm here to support you. Could you tell me a bit more about what you're experiencing right now?";
+  }
+
+  /**
+   * Process message with streaming support (for real-time token streaming)
+   */
+  async processStream(
+    message: string,
+    context: AgentContext,
+    onChunk: (chunk: string) => void
+  ): Promise<AgentResponse> {
+    if (!message || !context) {
+      return this.handleError(new Error('Invalid context'), context);
+    }
+
+    try {
+      const startTime = Date.now();
+
+      // Format conversation history
+      const messages = this.formatHistory(context.conversationHistory);
+
+      // Add current message
+      messages.push({
+        role: 'user',
+        content: message,
+      });
+
+      // Call OpenAI API with streaming
+      const stream = await this.client.chat.completions.create({
+        model: this.config.model,
+        messages: [
+          { role: 'system', content: this.config.systemPrompt },
+          ...messages,
+        ],
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens,
+        stream: true,
+      });
+
+      let fullContent = '';
+
+      // Process stream
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content || '';
+        if (delta) {
+          fullContent += delta;
+          onChunk(delta); // Send each chunk to callback
+        }
+      }
+
+      this.log('info', 'Generated streaming response', {
+        sessionId: context.sessionId,
+        duration: Date.now() - startTime,
+      });
+
+      return {
+        content: fullContent,
+        metadata: {
+          confidence: 0.8,
+          protocol: this.detectProtocolStep(fullContent),
+        },
+      };
+    } catch (error) {
+      return this.handleError(error as Error, context);
+    }
   }
 }

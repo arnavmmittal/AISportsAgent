@@ -87,54 +87,136 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Chat Agent] Processing message for athlete: ${athlete_id}, session: ${session_id}`);
 
-    // Process message with integrated agent system
-    const chatService = getChatService();
-    const response = await chatService.processMessage(
-      athlete_id,
-      user.id,
-      message,
-      session_id
-    );
-
-    console.log(`[Chat Agent] Response generated, session: ${response.sessionId}`);
-
-    // Stream response in SSE format
-    // Send complete message (agents don't stream yet, but format allows future streaming)
+    // Stream response with real-time tokens from OpenAI
     const stream = new ReadableStream({
-      start(controller) {
-        // Send the complete response
-        const data = {
-          type: 'message',
-          data: {
-            content: response.message.content,
-            role: response.message.role,
-            timestamp: response.message.timestamp,
-          },
-        };
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      async start(controller) {
+        try {
+          // Import dependencies
+          const { getOrchestrator } = await import('@/agents/core/AgentOrchestrator');
+          const { prisma } = await import('@/lib/prisma');
 
-        // Send session info
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({
-            type: 'session',
-            data: { sessionId: response.sessionId },
-          })}\n\n`)
-        );
+          // Get or create session
+          let session = await prisma.chatSession.findUnique({
+            where: { id: session_id || `session_${athlete_id}` },
+            include: { Athlete: { include: { User: true } } },
+          });
 
-        // Send crisis alert if detected
-        if (response.crisisDetected) {
-          console.warn(`[Chat Agent] CRISIS DETECTED - Severity: ${response.crisisDetected.severity}`);
+          if (!session) {
+            session = await prisma.chatSession.create({
+              data: {
+                id: session_id || `session_${athlete_id}`,
+                athleteId: athlete_id,
+                startedAt: new Date(),
+              },
+              include: { Athlete: { include: { User: true } } },
+            });
+          }
+
+          // Send session info first
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({
-              type: 'crisis_alert',
-              data: response.crisisDetected,
+              type: 'session',
+              data: { sessionId: session.id },
             })}\n\n`)
           );
-        }
 
-        // Send done event
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
-        controller.close();
+          // Get conversation history
+          const history = await prisma.message.findMany({
+            where: { sessionId: session.id },
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            select: { role: true, content: true },
+          });
+
+          // Save user message
+          await prisma.message.create({
+            data: {
+              id: `msg_${Date.now()}`,
+              sessionId: session.id,
+              role: 'user',
+              content: message,
+            },
+          });
+
+          // Build context
+          const context = {
+            sessionId: session.id,
+            athleteId: athlete_id,
+            userId: user.id,
+            sport: session.Athlete?.sport,
+            conversationHistory: history.reverse().map((msg) => ({
+              role: msg.role as 'user' | 'assistant',
+              content: msg.content,
+            })),
+            metadata: {
+              athleteName: session.Athlete?.User.name,
+            },
+          };
+
+          const orchestrator = getOrchestrator();
+
+          // Stream tokens as they arrive from OpenAI
+          const result = await orchestrator.processMessageStream(
+            message,
+            context,
+            (chunk) => {
+              // Send each token
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({
+                  type: 'token',
+                  data: { content: chunk },
+                })}\n\n`)
+              );
+            }
+          );
+
+          // Save assistant message
+          await prisma.message.create({
+            data: {
+              id: `msg_${Date.now()}_assistant`,
+              sessionId: session.id,
+              role: 'assistant',
+              content: result.response.content,
+            },
+          });
+
+          // Send crisis alert if detected
+          if (result.crisisDetection?.isCrisis) {
+            console.warn(`[Chat Agent] CRISIS DETECTED - Severity: ${result.crisisDetection.severity}`);
+
+            // Create crisis alert in database
+            await prisma.crisisAlert.create({
+              data: {
+                id: `alert_${Date.now()}`,
+                athleteId: athlete_id,
+                severity: result.crisisDetection.severity,
+                message: result.crisisDetection.message || 'Crisis detected',
+                detectedAt: new Date(),
+                resolved: false,
+              },
+            });
+
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                type: 'crisis_alert',
+                data: result.crisisDetection,
+              })}\n\n`)
+            );
+          }
+
+          // Send done event
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+          controller.close();
+        } catch (error) {
+          console.error('[Chat Stream] Error:', error);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({
+              type: 'error',
+              data: error instanceof Error ? error.message : 'Stream error',
+            })}\n\n`)
+          );
+          controller.close();
+        }
       },
     });
 
