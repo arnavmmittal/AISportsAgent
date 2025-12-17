@@ -9,7 +9,9 @@ import path from 'path';
 // Dynamic import to avoid Next.js bundling issues
 let pdfParse: any = null;
 try {
-  pdfParse = require('pdf-parse');
+  const pdfModule = require('pdf-parse');
+  // Handle both CommonJS default export and direct function export
+  pdfParse = typeof pdfModule === 'function' ? pdfModule : pdfModule.default;
 } catch (e) {
   console.warn('[PDF Loader] pdf-parse not available, using fallback');
 }
@@ -190,7 +192,7 @@ export async function getPDFSummary(): Promise<{
     const chunks = await loadPDFKnowledgeBase();
     const pdfPath = path.join(process.cwd(), 'knowledge_base', 'AI Sports Psych Project.pdf');
     const dataBuffer = fs.readFileSync(pdfPath);
-    const data = await pdf(dataBuffer);
+    const data = await pdfParse(dataBuffer);
 
     return {
       pageCount: data.numpages,
