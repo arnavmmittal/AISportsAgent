@@ -84,7 +84,7 @@ export default async function CoachInsightsPage() {
           },
         },
         include: {
-          messages: true,
+          Message: true,
         },
       },
     },
