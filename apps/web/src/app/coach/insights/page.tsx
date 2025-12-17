@@ -282,7 +282,7 @@ export default async function CoachInsightsPage() {
                   Athletes logging moods regularly
                 </span>
                 <span className="text-lg font-bold text-gray-900">
-                  {athletes.filter((a) => a.moodLogs.length >= 7).length}/{totalAthletes}
+                  {athletes.filter((a) => a.MoodLog && a.MoodLog.length >= 7).length}/{totalAthletes}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -290,7 +290,7 @@ export default async function CoachInsightsPage() {
                   Athletes using AI chat
                 </span>
                 <span className="text-lg font-bold text-gray-900">
-                  {athletes.filter((a) => a.sessions.length > 0).length}/{totalAthletes}
+                  {athletes.filter((a) => a.ChatSession && a.ChatSession.length > 0).length}/{totalAthletes}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -306,7 +306,7 @@ export default async function CoachInsightsPage() {
                   Total chat messages
                 </span>
                 <span className="text-lg font-bold text-gray-900">
-                  {athletes.reduce((sum, a) => sum + a.sessions.reduce((s, sess) => s + sess.messages.length, 0), 0)}
+                  {athletes.reduce((sum, a) => sum + (a.ChatSession?.reduce((s, sess) => s + (sess.Message?.length || 0), 0) || 0), 0)}
                 </span>
               </div>
             </div>

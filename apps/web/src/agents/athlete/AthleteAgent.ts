@@ -11,7 +11,7 @@ import {
   CrisisDetection,
   KnowledgeContext,
 } from '../core/types';
-import { Anthropic } from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 const ATHLETE_SYSTEM_PROMPT = `You are an empathetic sports psychology assistant for collegiate athletes.
 
@@ -55,11 +55,11 @@ IMPORTANT GUIDELINES:
 Your goal is to help athletes develop mental resilience and perform at their best.`;
 
 export class AthleteAgent extends BaseAgent {
-  private client: Anthropic;
+  private client: OpenAI;
 
   constructor() {
     const config: AgentConfig = {
-      model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+      model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
       temperature: 0.7,
       maxTokens: 2048,
       systemPrompt: ATHLETE_SYSTEM_PROMPT,
@@ -67,8 +67,8 @@ export class AthleteAgent extends BaseAgent {
 
     super('athlete', config);
 
-    this.client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY!,
+    this.client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
     });
   }
 
@@ -92,22 +92,22 @@ export class AthleteAgent extends BaseAgent {
         content: message,
       });
 
-      // Call Claude API
-      const response = await this.client.messages.create({
+      // Call OpenAI API
+      const response = await this.client.chat.completions.create({
         model: this.config.model,
-        max_tokens: this.config.maxTokens,
+        messages: [
+          { role: 'system', content: this.config.systemPrompt },
+          ...messages,
+        ],
         temperature: this.config.temperature,
-        system: this.config.systemPrompt,
-        messages: messages as any,
+        max_tokens: this.config.maxTokens,
       });
 
-      const content = response.content[0].type === 'text'
-        ? response.content[0].text
-        : '';
+      const content = response.choices[0]?.message?.content || '';
 
       this.log('info', 'Generated response', {
         sessionId: context.sessionId,
-        tokensUsed: response.usage?.output_tokens || 0,
+        tokensUsed: response.usage?.completion_tokens || 0,
         duration: Date.now() - startTime,
       });
 

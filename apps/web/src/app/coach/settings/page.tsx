@@ -171,9 +171,12 @@ export default async function CoachSettingsPage() {
                   <p className="text-sm text-gray-600 mb-3">
                     How long to retain athlete data after they leave your team
                   </p>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    defaultValue="90 days"
+                  >
                     <option>30 days</option>
-                    <option selected>90 days</option>
+                    <option>90 days</option>
                     <option>1 year</option>
                     <option>Forever (with consent)</option>
                   </select>

@@ -4,14 +4,14 @@ import { requireAuth } from '@/lib/auth-helpers';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication (supports both JWT and session)
     const { authorized, user, response } = await requireAuth(req);
     if (!authorized) return response;
 
-    const goalId = params.id;
+    const { id: goalId } = await params;
     const body = await req.json();
     const { progress, status, title, description, targetDate } = body;
 
@@ -59,14 +59,14 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication (supports both JWT and session)
     const { authorized, user, response } = await requireAuth(req);
     if (!authorized) return response;
 
-    const goalId = params.id;
+    const { id: goalId } = await params;
 
     // Get the goal to verify ownership
     const goal = await prisma.goal.findUnique({

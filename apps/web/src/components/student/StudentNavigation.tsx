@@ -17,7 +17,7 @@ const navItems = [
   { href: '/student/chat', label: 'AI Coach', icon: MessageSquare },
   { href: '/student/mood', label: 'Mood', icon: Heart },
   { href: '/student/goals', label: 'Goals', icon: Target },
-  { href: '/student/assignments', label: 'Assignments', icon: ClipboardList },
+  { href: '/student/assignments', label: 'Tasks', icon: ClipboardList },
   { href: '/student/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -31,9 +31,9 @@ export function StudentNavigation() {
           {/* Logo */}
           <Link href="/student/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">M</span>
+              <span className="text-white font-bold text-lg">AI</span>
             </div>
-            <span className="font-bold text-xl text-gray-900">Mettle</span>
+            <span className="font-bold text-xl text-gray-900">AI Sports Agent</span>
           </Link>
 
           {/* Navigation Links */}

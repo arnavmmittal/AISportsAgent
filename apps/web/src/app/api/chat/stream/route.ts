@@ -1,11 +1,16 @@
+/**
+ * Chat Stream API - PRODUCTION-READY
+ * Uses integrated TypeScript agent system instead of external MCP server
+ * Supports both streaming and non-streaming responses
+ */
+
 import { NextRequest } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
 import { checkUserCanMakeRequest } from '@/lib/cost-tracking';
+import { getChatService } from '@/services/ChatService';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
-
-const MCP_SERVER_URL = process.env.MCP_SERVER_URL || 'http://localhost:8000';
 
 export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
@@ -80,66 +85,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Forward request to MCP server
-    console.log(`[Chat Proxy] Forwarding to MCP server: ${MCP_SERVER_URL}/api/chat/stream`);
-    console.log(`[Chat Proxy] Athlete: ${athlete_id}, Session: ${session_id}`);
+    console.log(`[Chat Agent] Processing message for athlete: ${athlete_id}, session: ${session_id}`);
 
-    const mcpResponse = await fetch(`${MCP_SERVER_URL}/api/chat/stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // Process message with integrated agent system
+    const chatService = getChatService();
+    const response = await chatService.processMessage(
+      athlete_id,
+      user.id,
+      message,
+      session_id
+    );
+
+    console.log(`[Chat Agent] Response generated, session: ${response.sessionId}`);
+
+    // Stream response in SSE format
+    // Send complete message (agents don't stream yet, but format allows future streaming)
+    const stream = new ReadableStream({
+      start(controller) {
+        // Send the complete response
+        const data = {
+          type: 'message',
+          data: {
+            content: response.message.content,
+            role: response.message.role,
+            timestamp: response.message.timestamp,
+          },
+        };
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+
+        // Send session info
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({
+            type: 'session',
+            data: { sessionId: response.sessionId },
+          })}\n\n`)
+        );
+
+        // Send crisis alert if detected
+        if (response.crisisDetected) {
+          console.warn(`[Chat Agent] CRISIS DETECTED - Severity: ${response.crisisDetected.severity}`);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({
+              type: 'crisis_alert',
+              data: response.crisisDetected,
+            })}\n\n`)
+          );
+        }
+
+        // Send done event
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+        controller.close();
       },
-      body: JSON.stringify({
-        session_id,
-        message,
-        athlete_id,
-        stream: true,
-      }),
     });
 
-    if (!mcpResponse.ok) {
-      const errorText = await mcpResponse.text();
-      console.error(`[Chat Proxy] MCP server error: ${mcpResponse.status} ${mcpResponse.statusText}`);
-      console.error(`[Chat Proxy] Error details: ${errorText}`);
-
-      return new Response(
-        encoder.encode('data: ' + JSON.stringify({
-          type: 'error',
-          data: `MCP server error: ${mcpResponse.statusText}`
-        }) + '\n\n'),
-        {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-          },
-        }
-      );
-    }
-
-    // Check if response has a body
-    if (!mcpResponse.body) {
-      console.error('[Chat Proxy] No response body from MCP server');
-      return new Response(
-        encoder.encode('data: ' + JSON.stringify({
-          type: 'error',
-          data: 'No response from MCP server'
-        }) + '\n\n'),
-        {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-          },
-        }
-      );
-    }
-
-    console.log('[Chat Proxy] Streaming response from MCP server');
-
-    // Stream the response from MCP server to client
-    // The MCP server already formats responses as SSE with proper JSON structure
-    return new Response(mcpResponse.body, {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -148,7 +147,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Chat Proxy] Unexpected error:', error);
+    console.error('[Chat Agent] Unexpected error:', error);
     return new Response(
       encoder.encode('data: ' + JSON.stringify({
         type: 'error',
