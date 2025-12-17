@@ -7,6 +7,11 @@
  * Port: 8000 (configurable via VOICE_PORT env var)
  */
 
+// Load environment variables from .env.local
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+
 import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import cors from 'cors';
