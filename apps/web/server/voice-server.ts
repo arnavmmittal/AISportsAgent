@@ -16,7 +16,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import Cartesia from '@cartesia/cartesia-js';
+import { Cartesia } from '@cartesia/cartesia-js';
 import { createServer } from 'http';
 
 const PORT = process.env.VOICE_PORT || 8000;
