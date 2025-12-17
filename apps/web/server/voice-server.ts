@@ -16,7 +16,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import { Cartesia } from '@cartesia/cartesia-js';
+import { CartesiaClient } from '@cartesia/cartesia-js';
 import { createServer } from 'http';
 
 const PORT = process.env.VOICE_PORT || 8000;
@@ -33,7 +33,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-const cartesia = new Cartesia({
+const cartesia = new CartesiaClient({
   apiKey: process.env.CARTESIA_API_KEY!,
 });
 
@@ -299,27 +299,33 @@ async function streamTTS(text: string, ws: WebSocket): Promise<void> {
     console.log('[Cartesia] Generating TTS...');
 
     const response = await cartesia.tts.bytes({
-      model_id: 'sonic-english',
+      modelId: 'sonic-english',
       transcript: text,
       voice: {
         mode: 'id',
         id: '694f9389-aac1-45b6-b726-9d9369183238', // British Lady - warm, professional
       },
-      output_format: {
+      outputFormat: {
         container: 'mp3',
         encoding: 'mp3',
-        sample_rate: 44100,
+        sampleRate: 44100,
       },
     });
 
     console.log('[Cartesia] Streaming audio to client...');
 
-    // Cartesia returns audio as Blob/ArrayBuffer
-    const audioData = await response.arrayBuffer();
+    // Cartesia returns a Readable stream - collect chunks
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of response) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    const audioData = Buffer.concat(chunks);
 
     // Send audio as binary
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(Buffer.from(audioData));
+      ws.send(audioData);
       console.log('[Cartesia] Audio sent:', audioData.byteLength, 'bytes');
     }
   } catch (error) {
