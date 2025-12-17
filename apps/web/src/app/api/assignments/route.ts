@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
             // Assignments specifically for this athlete
             {
               targetAthleteIds: {
-                path: '$',
+                path: ['$'],
                 array_contains: user.id,
               },
             },
