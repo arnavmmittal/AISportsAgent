@@ -269,6 +269,42 @@ export class APIClient {
     });
   }
 
+  // ========== Push Tokens ==========
+
+  async registerPushToken(token: string, deviceType?: string, deviceName?: string): Promise<{
+    success: boolean;
+    tokenId: string;
+    message: string;
+  }> {
+    return this.request('/api/push-tokens', {
+      method: 'POST',
+      body: JSON.stringify({ token, deviceType, deviceName }),
+    });
+  }
+
+  async unregisterPushToken(token: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    return this.request(`/api/push-tokens?token=${encodeURIComponent(token)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getPushTokens(): Promise<{
+    tokens: Array<{
+      id: string;
+      token: string;
+      deviceType?: string;
+      deviceName?: string;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+    count: number;
+  }> {
+    return this.request('/api/push-tokens');
+  }
+
   // ========== Assignments ==========
 
   async getAssignments(): Promise<any> {

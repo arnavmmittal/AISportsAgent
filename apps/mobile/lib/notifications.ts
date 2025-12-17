@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { apiClient } from './auth';
 
@@ -80,12 +81,18 @@ export async function registerForPushNotifications(): Promise<string | null> {
       });
     }
 
-    // Register token with backend (will be implemented)
+    // Register token with backend
     try {
-      // await apiClient.registerPushToken(token, Platform.OS);
-      console.log('Push token registered with backend (TODO: implement endpoint)');
+      const deviceType = Platform.OS === 'ios' ? 'ios' : 'android';
+      const deviceName = await Device.deviceName;
+      await apiClient.registerPushToken(token, deviceType, deviceName || undefined);
+      console.log(`Push token registered with backend: ${deviceType} device`);
+
+      // Store token locally for logout
+      await SecureStore.setItemAsync('push_token', token);
     } catch (error) {
       console.error('Failed to register push token with backend:', error);
+      // Don't throw - continue even if backend registration fails
     }
 
     return token;
