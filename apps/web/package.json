@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
     "voice:dev": "tsx server/voice-server.ts",
-    "dev:all": "concurrently \"npm run dev\" \"npm run voice:dev\"",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm voice:dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
