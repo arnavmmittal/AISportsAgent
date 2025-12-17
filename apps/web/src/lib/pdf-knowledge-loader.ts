@@ -6,14 +6,26 @@
 import fs from 'fs';
 import path from 'path';
 
-// Dynamic import to avoid Next.js bundling issues
-let pdfParse: any = null;
-try {
-  const pdfModule = require('pdf-parse');
-  // Handle both CommonJS default export and direct function export
-  pdfParse = typeof pdfModule === 'function' ? pdfModule : pdfModule.default;
-} catch (e) {
-  console.warn('[PDF Loader] pdf-parse not available, using fallback');
+/**
+ * Lazy-load pdf-parse only when needed to avoid Next.js bundling issues
+ */
+async function getPdfParser(): Promise<any> {
+  try {
+    // Dynamic import for Next.js compatibility
+    const pdfModule = await import('pdf-parse');
+    const pdfParse = pdfModule.default || pdfModule;
+
+    if (typeof pdfParse !== 'function') {
+      console.error('[PDF Loader] pdf-parse module structure:', Object.keys(pdfModule));
+      throw new Error('pdf-parse did not export a function');
+    }
+
+    console.log('[PDF Loader] pdf-parse loaded successfully');
+    return pdfParse;
+  } catch (e) {
+    console.error('[PDF Loader] Failed to load pdf-parse:', e);
+    throw new Error('pdf-parse library not available');
+  }
 }
 
 export interface KnowledgeChunk {
@@ -36,21 +48,19 @@ export async function loadPDFKnowledgeBase(): Promise<KnowledgeChunk[]> {
 
   console.log('[PDF Loader] Loading PDF from:', pdfPath);
 
-  // Check if pdf-parse is available
-  if (!pdfParse) {
-    throw new Error('pdf-parse library not available');
-  }
-
   // Check if file exists
   if (!fs.existsSync(pdfPath)) {
     console.error('[PDF Loader] PDF not found at:', pdfPath);
     throw new Error(`PDF not found at ${pdfPath}`);
   }
 
+  // Get pdf-parse function
+  const pdfParse = await getPdfParser();
+
   // Read PDF file
   const dataBuffer = fs.readFileSync(pdfPath);
 
-  // Parse PDF - pdfParse is the default export
+  // Parse PDF
   const data = await pdfParse(dataBuffer);
 
   console.log('[PDF Loader] PDF parsed successfully');
@@ -192,6 +202,7 @@ export async function getPDFSummary(): Promise<{
     const chunks = await loadPDFKnowledgeBase();
     const pdfPath = path.join(process.cwd(), 'knowledge_base', 'AI Sports Psych Project.pdf');
     const dataBuffer = fs.readFileSync(pdfPath);
+    const pdfParse = await getPdfParser();
     const data = await pdfParse(dataBuffer);
 
     return {
