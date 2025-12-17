@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
+import { NotificationBell } from '@/components/coach/NotificationBell';
 
 export function Header() {
   const { data: session, status } = useSession();
@@ -83,6 +84,9 @@ export function Header() {
 
             {/* Desktop User Menu */}
             <div className="hidden md:flex md:items-center md:space-x-4">
+              {/* Notification Bell (Coach Only) */}
+              {session.user?.role === 'COACH' && <NotificationBell />}
+
               <div className="relative">
                 <button
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
