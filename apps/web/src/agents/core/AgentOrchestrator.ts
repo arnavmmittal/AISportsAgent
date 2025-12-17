@@ -94,6 +94,80 @@ export class AgentOrchestrator {
   }
 
   /**
+   * Process message with streaming support
+   * Returns crisis detection immediately, streams tokens via callback
+   */
+  async processMessageStream(
+    message: string,
+    context: AgentContext,
+    onChunk: (chunk: string) => void
+  ): Promise<{
+    response: AgentResponse;
+    crisisDetection?: CrisisDetection;
+  }> {
+    const startTime = Date.now();
+
+    try {
+      // Step 1: Crisis detection (always runs first for safety)
+      const crisisCheck = await this.governanceAgent.detectCrisis(message, context);
+
+      // If critical crisis, handle immediately (no streaming for crisis responses)
+      if (crisisCheck.isCrisis && crisisCheck.severity === 'CRITICAL') {
+        return {
+          response: await this.athleteAgent.handleCrisis(crisisCheck, context),
+          crisisDetection: crisisCheck,
+        };
+      }
+
+      // Step 2: Retrieve relevant knowledge (RAG)
+      const knowledgeContext = await this.knowledgeAgent.retrieve(message, context);
+
+      // Step 3: Generate streaming response with athlete agent
+      const response = await this.athleteAgent.processStream(
+        message,
+        context,
+        onChunk
+      );
+
+      // Add crisis detection to metadata if present
+      if (crisisCheck.isCrisis) {
+        response.metadata = {
+          ...response.metadata,
+          crisisDetection: crisisCheck,
+        };
+      }
+
+      const duration = Date.now() - startTime;
+      this.log('info', `Streaming orchestration completed in ${duration}ms`, {
+        sessionId: context.sessionId,
+        hasCrisis: crisisCheck.isCrisis,
+        knowledgeDocsUsed: knowledgeContext.documents.length,
+      });
+
+      return {
+        response,
+        crisisDetection: crisisCheck.isCrisis ? crisisCheck : undefined,
+      };
+    } catch (error) {
+      this.log('error', 'Streaming orchestration failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        sessionId: context.sessionId,
+      });
+
+      // Fallback response
+      return {
+        response: {
+          content:
+            "I'm here to help, but I'm having a technical issue right now. Please try again in a moment, or if this is urgent, reach out to your coach directly.",
+          metadata: {
+            confidence: 0,
+          },
+        },
+      };
+    }
+  }
+
+  /**
    * Get athlete agent for direct access (e.g., for testing)
    */
   getAthleteAgent(): AthleteAgent {

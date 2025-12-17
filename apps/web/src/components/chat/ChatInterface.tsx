@@ -267,17 +267,31 @@ export function ChatInterface() {
             try {
               const parsed = JSON.parse(data);
 
-              if (parsed.type === 'crisis_check') {
+              if (parsed.type === 'crisis_alert' || parsed.type === 'crisis_check') {
                 setCrisisAlert({
-                  final_risk_level: parsed.data.final_risk_level || 'HIGH',
+                  final_risk_level: parsed.data.severity || parsed.data.final_risk_level || 'HIGH',
                   message: 'We noticed your message may indicate distress. Professional support is available 24/7 at the National Suicide Prevention Lifeline: 988'
                 });
-              } else if (parsed.type === 'content') {
+              } else if (parsed.type === 'token') {
+                // Real-time token streaming from OpenAI
                 setMessages((prev) => {
                   const updated = [...prev];
                   const lastIndex = updated.length - 1;
                   if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
-                    // Create new message object instead of mutating
+                    // Append each token as it arrives
+                    updated[lastIndex] = {
+                      ...updated[lastIndex],
+                      content: updated[lastIndex].content + parsed.data.content
+                    };
+                  }
+                  return updated;
+                });
+              } else if (parsed.type === 'content') {
+                // Fallback for complete messages
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
                     updated[lastIndex] = {
                       ...updated[lastIndex],
                       content: updated[lastIndex].content + parsed.data
@@ -289,6 +303,9 @@ export function ChatInterface() {
                 // Store structured metadata for widgets
                 setCurrentMetadata(parsed.data as StructuredMetadata);
                 console.log('Received structured metadata:', parsed.data);
+              } else if (parsed.type === 'done') {
+                // Streaming complete
+                console.log('Streaming completed');
               }
             } catch (e) {
               // Ignore parse errors for incomplete JSON
