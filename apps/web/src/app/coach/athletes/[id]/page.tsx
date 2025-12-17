@@ -5,7 +5,7 @@ import AthleteDetailView from '@/components/coach/AthleteDetailView';
 export default async function AthleteDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await auth();
 
@@ -17,5 +17,7 @@ export default async function AthleteDetailPage({
     redirect('/dashboard');
   }
 
-  return <AthleteDetailView athleteId={params.id} />;
+  const { id } = await params;
+
+  return <AthleteDetailView athleteId={id} />;
 }

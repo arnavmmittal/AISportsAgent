@@ -32,8 +32,8 @@ export default async function CoachInsightsPage() {
 
   const crisisAlerts = await prisma.crisisAlert.findMany({
     where: {
-      athlete: {
-        user: {
+      Athlete: {
+        User: {
           schoolId: coach.schoolId,
         },
       },
@@ -42,12 +42,12 @@ export default async function CoachInsightsPage() {
       },
     },
     include: {
-      athlete: {
+      Athlete: {
         include: {
-          user: true,
+          User: true,
         },
       },
-      message: true,
+      Message: true,
     },
     orderBy: {
       detectedAt: 'desc',
@@ -58,26 +58,26 @@ export default async function CoachInsightsPage() {
   // Get all athletes for team metrics
   const athletes = await prisma.athlete.findMany({
     where: {
-      user: {
+      User: {
         schoolId: coach.schoolId,
       },
     },
     include: {
-      user: {
+      User: {
         select: {
           id: true,
           name: true,
           email: true,
         },
       },
-      moodLogs: {
+      MoodLog: {
         where: {
           createdAt: {
             gte: thirtyDaysAgo,
           },
         },
       },
-      sessions: {
+      ChatSession: {
         where: {
           createdAt: {
             gte: thirtyDaysAgo,
