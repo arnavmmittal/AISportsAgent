@@ -1,4 +1,5 @@
 import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
 import { VoiceRecorder } from './voiceRecorder';
 
 export interface VoiceMessage {
@@ -229,39 +230,40 @@ export class VoiceWebSocketClient {
 
         console.log(`🎶 Processing audio chunk: ${audioData.byteLength} bytes`);
 
-        // Create a blob from audio data
-        const blob = new Blob([audioData], { type: 'audio/wav' });
-        console.log(`📦 Created blob: ${blob.size} bytes, type: ${blob.type}`);
+        // Convert ArrayBuffer to base64
+        let base64String = '';
+        const bytes = new Uint8Array(audioData);
+        const chunkSize = 0x8000; // Process in chunks to avoid stack overflow
 
-        // For mobile, we need to convert blob to base64 and play using expo-av
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve, reject) => {
-          reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-              console.log('✅ Converted to base64, length:', reader.result.length);
-              resolve(reader.result);
-            } else {
-              reject(new Error('Failed to convert to base64'));
-            }
-          };
-          reader.onerror = (error) => {
-            console.error('❌ FileReader error:', error);
-            reject(error);
-          };
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+          base64String += String.fromCharCode.apply(null, Array.from(chunk));
+        }
+
+        const base64Audio = btoa(base64String);
+        console.log('✅ Converted to base64, length:', base64Audio.length);
+
+        // Write to temporary file using FileSystem
+        const fileUri = `${FileSystem.cacheDirectory}voice_response_${Date.now()}.wav`;
+        console.log('📝 Writing audio to file:', fileUri);
+
+        await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
+          encoding: FileSystem.EncodingType.Base64,
         });
 
-        reader.readAsDataURL(blob);
-        const base64Audio = await base64Promise;
-
-        console.log('🎧 Creating audio sound...');
+        console.log('🎧 Creating audio sound from file...');
         // Play audio using expo-av
         const { sound } = await Audio.Sound.createAsync(
-          { uri: base64Audio },
+          { uri: fileUri },
           { shouldPlay: true },
           (status) => {
             if (status.isLoaded && status.didJustFinish) {
               console.log('✅ Audio finished playing');
               sound.unloadAsync();
+              // Clean up temp file
+              FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(err =>
+                console.warn('Failed to delete temp audio file:', err)
+              );
             }
           }
         );
