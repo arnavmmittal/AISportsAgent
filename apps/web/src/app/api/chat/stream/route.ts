@@ -16,42 +16,28 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
 
   try {
-    // Verify authentication (supports both JWT and session)
-    const user = await verifyAuthFromRequest(req);
-    if (!user) {
-      return new Response(
-        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Unauthorized' }) + '\n\n'),
-        {
-          status: 401,
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-          },
-        }
-      );
-    }
+    // Check for internal voice service authentication
+    const voiceServiceKey = req.headers.get('x-voice-service-key');
+    const isVoiceService = voiceServiceKey &&
+      voiceServiceKey === (process.env.VOICE_SERVICE_KEY || 'dev-voice-service-key');
 
-    // Check cost limits before allowing request
-    const usageCheck = await checkUserCanMakeRequest(user.id);
-    if (!usageCheck.allowed) {
-      console.warn(`[Cost Control] Request blocked for user ${user.id}: ${usageCheck.reason}`);
-      return new Response(
-        encoder.encode('data: ' + JSON.stringify({
-          type: 'error',
-          data: usageCheck.reason,
-          usage: usageCheck.currentUsage,
-        }) + '\n\n'),
-        {
-          status: 429, // Too Many Requests
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Retry-After': '86400', // 24 hours (for daily limit)
-          },
-        }
-      );
+    // Verify authentication (supports both JWT, session, and internal service key)
+    let user = null;
+    if (!isVoiceService) {
+      user = await verifyAuthFromRequest(req);
+      if (!user) {
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Unauthorized' }) + '\n\n'),
+          {
+            status: 401,
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          }
+        );
+      }
     }
 
     const body = await req.json();
@@ -70,19 +56,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify user can chat as this athlete
-    if (user.id !== athlete_id && user.role !== 'ADMIN') {
-      return new Response(
-        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Forbidden' }) + '\n\n'),
-        {
-          status: 403,
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-          },
-        }
-      );
+    // Only check cost limits and permissions for regular user requests (not voice service)
+    if (!isVoiceService && user) {
+      // Check cost limits before allowing request
+      const usageCheck = await checkUserCanMakeRequest(user.id);
+      if (!usageCheck.allowed) {
+        console.warn(`[Cost Control] Request blocked for user ${user.id}: ${usageCheck.reason}`);
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({
+            type: 'error',
+            data: usageCheck.reason,
+            usage: usageCheck.currentUsage,
+          }) + '\n\n'),
+          {
+            status: 429, // Too Many Requests
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+              'Retry-After': '86400', // 24 hours (for daily limit)
+            },
+          }
+        );
+      }
+
+      // Verify user can chat as this athlete
+      if (user.id !== athlete_id && user.role !== 'ADMIN') {
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Forbidden' }) + '\n\n'),
+          {
+            status: 403,
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          }
+        );
+      }
     }
 
     console.log(`[Chat Agent] Processing message for athlete: ${athlete_id}, session: ${session_id}`);

@@ -221,11 +221,13 @@ async function getChatResponse(
   crisisMessage?: string;
 }> {
   try {
-    // Call the chat API endpoint
+    // Call the chat API endpoint with service role auth
     const response = await fetch('http://localhost:3000/api/chat/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Use internal service key for voice server authentication
+        'x-voice-service-key': process.env.VOICE_SERVICE_KEY || 'dev-voice-service-key',
       },
       body: JSON.stringify({
         session_id: sessionId,
@@ -312,6 +314,7 @@ async function streamTTS(text: string, ws: WebSocket): Promise<void> {
         container: 'mp3',
         encoding: 'mp3',
         sampleRate: 44100,
+        bitRate: 128, // Required for MP3 - 128 kbps is standard quality
       },
     });
 
