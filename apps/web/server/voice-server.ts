@@ -311,10 +311,9 @@ async function streamTTS(text: string, ws: WebSocket): Promise<void> {
         id: '694f9389-aac1-45b6-b726-9d9369183238', // British Lady - warm, professional
       },
       outputFormat: {
-        container: 'mp3',
-        encoding: 'mp3',
-        sampleRate: 44100,
-        bitRate: 128, // Required for MP3 - 128 kbps is standard quality
+        container: 'wav',
+        encoding: 'pcm_s16le',
+        sampleRate: 22050,
       },
     });
 

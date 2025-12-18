@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
           const context = {
             sessionId: session.id,
             athleteId: athlete_id,
-            userId: user.id,
+            userId: user?.id || athlete_id, // Use athlete_id for voice service requests
             sport: session.Athlete?.sport,
             conversationHistory: history.reverse().map((msg) => ({
               role: msg.role as 'user' | 'assistant',
