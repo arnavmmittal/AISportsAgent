@@ -206,7 +206,7 @@ export class VoiceWebSocketClient {
         if (!audioData) continue;
 
         // Create a blob from audio data
-        const blob = new Blob([audioData], { type: 'audio/mpeg' });
+        const blob = new Blob([audioData], { type: 'audio/wav' });
 
         // For mobile, we need to convert blob to base64 and play using expo-av
         const reader = new FileReader();
