@@ -102,11 +102,30 @@ export class VoiceWebSocketClient {
             } catch (error) {
               console.error('Failed to parse message:', error);
             }
-          } else if (event.data instanceof Blob) {
+          } else {
             // Binary audio data (TTS response)
-            console.log('🔊 Received audio chunk');
-            const arrayBuffer = await event.data.arrayBuffer();
-            const audioData = new Uint8Array(arrayBuffer);
+            // In React Native, binary data comes as various types
+            console.log('🔊 Received audio data, type:', typeof event.data, 'constructor:', event.data?.constructor?.name);
+
+            let audioData: Uint8Array;
+
+            if (event.data instanceof Blob) {
+              console.log('📦 Audio is Blob, size:', event.data.size);
+              const arrayBuffer = await event.data.arrayBuffer();
+              audioData = new Uint8Array(arrayBuffer);
+            } else if (event.data instanceof ArrayBuffer) {
+              console.log('📦 Audio is ArrayBuffer, size:', event.data.byteLength);
+              audioData = new Uint8Array(event.data);
+            } else if (typeof event.data === 'object' && event.data !== null) {
+              console.log('📦 Audio is object, attempting to convert');
+              // Try to handle as array-like object
+              audioData = new Uint8Array(event.data);
+            } else {
+              console.error('❌ Unknown binary data type:', typeof event.data);
+              return;
+            }
+
+            console.log(`✅ Audio data processed: ${audioData.byteLength} bytes`);
             this.audioQueue.push(audioData);
             this.playAudioQueue();
           }
@@ -186,13 +205,16 @@ export class VoiceWebSocketClient {
 
   private async playAudioQueue(): Promise<void> {
     if (this.isPlayingAudio || this.audioQueue.length === 0) {
+      console.log(`🔇 Skipping playback: isPlaying=${this.isPlayingAudio}, queueLength=${this.audioQueue.length}`);
       return;
     }
 
+    console.log('🎵 Starting audio playback...');
     this.isPlayingAudio = true;
 
     try {
       // Switch audio mode to playback
+      console.log('🔊 Setting audio mode to playback');
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         playsInSilentModeIOS: true,
@@ -205,36 +227,46 @@ export class VoiceWebSocketClient {
         const audioData = this.audioQueue.shift();
         if (!audioData) continue;
 
+        console.log(`🎶 Processing audio chunk: ${audioData.byteLength} bytes`);
+
         // Create a blob from audio data
         const blob = new Blob([audioData], { type: 'audio/wav' });
+        console.log(`📦 Created blob: ${blob.size} bytes, type: ${blob.type}`);
 
         // For mobile, we need to convert blob to base64 and play using expo-av
         const reader = new FileReader();
         const base64Promise = new Promise<string>((resolve, reject) => {
           reader.onloadend = () => {
             if (typeof reader.result === 'string') {
+              console.log('✅ Converted to base64, length:', reader.result.length);
               resolve(reader.result);
             } else {
               reject(new Error('Failed to convert to base64'));
             }
           };
-          reader.onerror = reject;
+          reader.onerror = (error) => {
+            console.error('❌ FileReader error:', error);
+            reject(error);
+          };
         });
 
         reader.readAsDataURL(blob);
         const base64Audio = await base64Promise;
 
+        console.log('🎧 Creating audio sound...');
         // Play audio using expo-av
         const { sound } = await Audio.Sound.createAsync(
           { uri: base64Audio },
           { shouldPlay: true },
           (status) => {
             if (status.isLoaded && status.didJustFinish) {
+              console.log('✅ Audio finished playing');
               sound.unloadAsync();
             }
           }
         );
 
+        console.log('▶️ Audio sound created, playing...');
         this.sound = sound;
 
         // Wait for audio to finish
@@ -242,6 +274,7 @@ export class VoiceWebSocketClient {
           const checkStatus = async () => {
             const status = await sound.getStatusAsync();
             if (status.isLoaded && status.didJustFinish) {
+              console.log('🎵 Audio playback complete');
               resolve();
             } else {
               setTimeout(checkStatus, 100);
@@ -260,7 +293,8 @@ export class VoiceWebSocketClient {
         playThroughEarpieceAndroid: false,
       });
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error('❌ Error playing audio:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       // Try to restore recording mode even on error
       try {
         await Audio.setAudioModeAsync({
@@ -271,9 +305,10 @@ export class VoiceWebSocketClient {
           playThroughEarpieceAndroid: false,
         });
       } catch (e) {
-        console.error('Failed to restore audio mode:', e);
+        console.error('❌ Failed to restore audio mode:', e);
       }
     } finally {
+      console.log('🎵 Audio playback finished, resetting flag');
       this.isPlayingAudio = false;
     }
   }
