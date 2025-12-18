@@ -66,7 +66,7 @@ tsx server/voice-server.ts
 
 ```
 Client (Web/Mobile)
-    ↓ WebSocket
+    ↓ WebSocket (ws://host:8000/api/voice/stream)
 Voice Server (port 8000)
     ↓ HTTP POST
 Next.js API (port 3000)
@@ -253,7 +253,7 @@ node server/voice-server.ts
 
 Update client to point to voice server URL:
 ```typescript
-const ws = new WebSocket('wss://voice.yourdomain.com');
+const ws = new WebSocket('wss://voice.yourdomain.com/api/voice/stream');
 ```
 
 ### Option 3: Serverless WebSocket (AWS, GCP)

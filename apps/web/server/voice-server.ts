@@ -26,7 +26,10 @@ app.use(cors());
 app.use(express.json());
 
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({
+  server,
+  path: '/api/voice/stream' // Match mobile client's expected path
+});
 
 // Initialize clients
 const openai = new OpenAI({
@@ -345,7 +348,7 @@ async function streamTTS(text: string, ws: WebSocket): Promise<void> {
 server.listen(PORT, () => {
   console.log(`\n🎙️  Voice WebSocket Server running on port ${PORT}`);
   console.log(`   Health check: http://localhost:${PORT}/health`);
-  console.log(`   WebSocket: ws://localhost:${PORT}\n`);
+  console.log(`   WebSocket: ws://localhost:${PORT}/api/voice/stream\n`);
 
   // Check API keys
   if (!process.env.OPENAI_API_KEY) {
