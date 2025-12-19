@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { PDFParse } = require('pdf-parse');
 
-const PDF_PATH = path.join(__dirname, '..', 'knowledge_base', 'AI Sports Psych Project.pdf');
+const PDF_PATH = path.join(__dirname, '..', 'knowledge_base', 'AISportsAgentKnowledgeBase.pdf');
 const OUTPUT_PATH = path.join(__dirname, '..', 'knowledge_base', 'chunks.json');
 
 /**
@@ -88,7 +88,7 @@ function chunkPDFContent(text, numPages) {
       chunks.push({
         id: `pdf-chunk-${currentChunkId}`,
         content: currentChunk.trim(),
-        source: 'AI Sports Psych Project.pdf',
+        source: 'AISportsAgentKnowledgeBase.pdf',
         metadata: {
           section: detectSection(currentChunk),
           topic: detectTopic(currentChunk),
@@ -107,7 +107,7 @@ function chunkPDFContent(text, numPages) {
     chunks.push({
       id: `pdf-chunk-${currentChunkId}`,
       content: currentChunk.trim(),
-      source: 'AI Sports Psych Project.pdf',
+      source: 'AISportsAgentKnowledgeBase.pdf',
       metadata: {
         section: detectSection(currentChunk),
         topic: detectTopic(currentChunk),
@@ -150,7 +150,7 @@ async function generateChunks() {
     // Save to JSON
     const outputData = {
       generatedAt: new Date().toISOString(),
-      source: 'AI Sports Psych Project.pdf',
+      source: 'AISportsAgentKnowledgeBase.pdf',
       pageCount: pageCount,
       characterCount: result.text.length,
       chunkCount: chunks.length,
