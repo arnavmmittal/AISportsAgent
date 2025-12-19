@@ -244,7 +244,8 @@ export class VoiceWebSocketClient {
         console.log('✅ Converted to base64, length:', base64Audio.length);
 
         // Write to temporary file using FileSystem
-        const fileUri = `${FileSystem.cacheDirectory}voice_response_${Date.now()}.wav`;
+        // ElevenLabs returns MP3 format
+        const fileUri = `${FileSystem.cacheDirectory}voice_response_${Date.now()}.mp3`;
         console.log('📝 Writing audio to file:', fileUri);
 
         await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
