@@ -16,7 +16,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import { CartesiaClient } from '@cartesia/cartesia-js';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { createServer } from 'http';
 
 const PORT = process.env.VOICE_PORT || 8000;
@@ -36,8 +36,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-const cartesia = new CartesiaClient({
-  apiKey: process.env.CARTESIA_API_KEY!,
+const elevenlabs = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY!,
 });
 
 interface VoiceMessage {
@@ -297,33 +297,35 @@ async function getChatResponse(
 }
 
 /**
- * Generate and stream TTS audio with Cartesia
+ * Generate and stream TTS audio with ElevenLabs
  */
 async function streamTTS(text: string, ws: WebSocket): Promise<void> {
   try {
-    console.log('[Cartesia] Generating TTS...');
+    console.log('[ElevenLabs] Generating TTS...');
 
-    const response = await cartesia.tts.bytes({
-      modelId: 'sonic-english',
-      transcript: text,
-      voice: {
-        mode: 'id',
-        id: '694f9389-aac1-45b6-b726-9d9369183238', // British Lady - warm, professional
-      },
-      outputFormat: {
-        container: 'wav',
-        encoding: 'pcm_s16le',
-        sampleRate: 22050,
-      },
-    });
+    // Use ElevenLabs' text-to-speech API
+    // Voice: Rachel - warm, clear, professional female voice
+    const audioStream = await elevenlabs.textToSpeech.convert(
+      'EXAVITQu4vr4xnSDxMaL', // Rachel voice ID (or use process.env.ELEVENLABS_VOICE_ID)
+      {
+        text: text,
+        model_id: 'eleven_multilingual_v2', // High quality, natural model
+        voice_settings: {
+          stability: 0.5, // Balance between consistency and expressiveness
+          similarity_boost: 0.75, // How much to match the original voice
+          style: 0.5, // Speaking style intensity
+          use_speaker_boost: true, // Enhance clarity
+        },
+      }
+    );
 
-    console.log('[Cartesia] Streaming audio to client...');
+    console.log('[ElevenLabs] Streaming audio to client...');
 
-    // Cartesia returns a Readable stream - collect chunks
+    // Collect audio chunks
     const chunks: Buffer[] = [];
 
-    for await (const chunk of response) {
-      chunks.push(Buffer.from(chunk));
+    for await (const chunk of audioStream) {
+      chunks.push(chunk);
     }
 
     const audioData = Buffer.concat(chunks);
@@ -331,10 +333,10 @@ async function streamTTS(text: string, ws: WebSocket): Promise<void> {
     // Send audio as binary
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(audioData);
-      console.log('[Cartesia] Audio sent:', audioData.byteLength, 'bytes');
+      console.log('[ElevenLabs] Audio sent:', audioData.byteLength, 'bytes');
     }
   } catch (error) {
-    console.error('[Cartesia] TTS error:', error);
+    console.error('[ElevenLabs] TTS error:', error);
     // Send error to client
     const errorResponse: VoiceResponse = {
       type: 'error',
@@ -356,8 +358,8 @@ server.listen(PORT, () => {
   if (!process.env.OPENAI_API_KEY) {
     console.warn('⚠️  WARNING: OPENAI_API_KEY not set');
   }
-  if (!process.env.CARTESIA_API_KEY) {
-    console.warn('⚠️  WARNING: CARTESIA_API_KEY not set');
+  if (!process.env.ELEVENLABS_API_KEY) {
+    console.warn('⚠️  WARNING: ELEVENLABS_API_KEY not set');
   }
 });
 
