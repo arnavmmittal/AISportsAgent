@@ -23,28 +23,31 @@ Create a native mobile app for collegiate athletes and sports psychology coaches
 ### Color Palette
 ```javascript
 const colors = {
-  // Primary
-  purplePrimary: '#8b5cf6',
-  purpleSecondary: '#d946ef',
-  pinkAccent: '#ec4899',
-  bluePrimary: '#3b82f6',
-  blueSecondary: '#60a5fa',
+  // Primary - Deep Blue (Trust, Focus, Professionalism)
+  bluePrimary: '#1E40AF',        // Deep blue for primary actions
+  blueSecondary: '#3B82F6',      // Bright blue for interactive elements
+  blueAccent: '#60A5FA',         // Light blue for highlights and hover states
 
-  // Backgrounds
-  bgPrimary: '#0f172a',
-  bgSecondary: '#1e293b',
-  bgTertiary: '#334155',
+  // Neutrals - Black & Chrome Silver (Premium, Athletic)
+  black: '#0A0A0A',              // Near-black for depth
+  chromeSilver: '#C0C0C0',       // Metallic silver for accents
+  silverGray: '#94A3B8',         // Muted silver for secondary text
 
-  // Text
-  textPrimary: '#ffffff',
-  textSecondary: 'rgba(255, 255, 255, 0.7)',
-  textMuted: 'rgba(255, 255, 255, 0.5)',
+  // Backgrounds - Dark with subtle blue tint
+  bgPrimary: '#0F1419',          // Very dark blue-black (main background)
+  bgSecondary: '#1E293B',        // Dark slate (cards, elevated surfaces)
+  bgTertiary: '#334155',         // Medium slate (hover states, borders)
 
-  // Status
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#3b82f6',
+  // Text - High contrast for readability
+  textPrimary: '#FFFFFF',        // Pure white for headings
+  textSecondary: '#E2E8F0',      // Off-white for body text
+  textMuted: '#94A3B8',          // Silver gray for subtle text
+
+  // Status - Keep standard semantic colors
+  success: '#10B981',            // Green for success, goals
+  warning: '#F59E0B',            // Amber for warnings
+  error: '#EF4444',              // Red for errors, crisis
+  info: '#3B82F6',               // Blue for info
 };
 ```
 
@@ -55,12 +58,14 @@ const colors = {
 - **Size Scale**: 12, 14, 16, 18, 20, 24, 32, 40
 
 ### Visual Style
-- **Dark mode only** (navy/slate backgrounds)
+- **Dark mode only** (deep blue-black backgrounds with chrome silver accents)
 - **Native feel**: Platform-specific components where appropriate
-- **Gradients**: Purple-to-pink for CTAs
+- **Gradients**: Deep blue to bright blue for CTAs and interactive elements
+- **Metallic accents**: Chrome silver for premium feel (borders, dividers, icons)
 - **Rounded corners**: 12-16px for cards
 - **Shadows**: Elevation on Android, shadows on iOS
 - **Animations**: React Native Animated (smooth, native 60fps)
+- **Athletic aesthetic**: Clean, modern, performance-oriented (inspired by Nike, Whoop, Strava)
 
 ---
 
@@ -124,17 +129,17 @@ Tab Navigator (Coach) - Bottom tabs
 ## 1. WELCOME SCREEN (Landing)
 
 ### Layout
-- Full screen with gradient background (purple to blue)
+- Full screen with gradient background (deep blue to black)
 - Centered content
 
 ### Content
 - **App Logo/Icon** (large, centered)
 - **Title**: "AI Sports Agent"
 - **Tagline**: "Mental performance coaching for athletes"
-- **Illustration**: Abstract athlete/brain graphic
+- **Illustration**: Abstract athlete/brain graphic (blue and silver tones)
 - **CTA Buttons** (bottom):
-  - "Get Started" (purple gradient, full width)
-  - "Sign In" (outline, full width)
+  - "Get Started" (blue gradient with chrome silver border, full width)
+  - "Sign In" (chrome silver outline, full width)
 
 ### Animations
 - Fade in logo
@@ -152,9 +157,9 @@ Tab Navigator (Coach) - Bottom tabs
 ### Form Elements
 - **Email** (TextInput with email keyboard)
 - **Password** (TextInput with secure entry, show/hide toggle)
-- **Remember Me** (Checkbox)
-- **Forgot Password?** (Link)
-- **Sign In Button** (purple gradient, full width)
+- **Remember Me** (Checkbox with blue accent)
+- **Forgot Password?** (Link in light blue)
+- **Sign In Button** (blue gradient, full width)
 
 ### Alternative Sign In
 - Divider: "OR"
@@ -228,10 +233,10 @@ Each card:
 ### Main Content (ScrollView)
 
 **Quick Actions** (2x2 grid)
-- Start Chat (purple)
-- Log Mood (blue)
+- Start Chat (blue gradient)
+- Log Mood (light blue)
 - View Goals (green)
-- Assignments (orange)
+- Assignments (silver with blue accent)
 
 **Mood Trend** (Card)
 - Title: "7-Day Mood"
@@ -256,7 +261,7 @@ Each card:
 ### Floating Action Button
 - Bottom-right
 - Chat icon
-- Purple gradient
+- Blue gradient with chrome silver border
 - Opens chat on tap
 
 ---
@@ -292,8 +297,8 @@ Each card:
 - **Text input** (center, multiline, auto-expand)
   - Placeholder: "Message AI Coach..."
 - **Send button** (right, arrow icon)
-  - Disabled if empty
-  - Purple gradient when active
+  - Disabled if empty (silver gray)
+  - Blue gradient when active
 
 ### Voice Recording UI
 - When recording:
@@ -330,7 +335,7 @@ Each card:
 - **Notes** (expandable textarea)
   - "What's on your mind?"
   - Optional
-- **Submit** button (purple, full width)
+- **Submit** button (blue gradient, full width)
 
 ### This Week (Card)
 - Mini calendar view (7 days)
@@ -659,7 +664,7 @@ Each item:
   - 🚨 Crisis (red)
   - 📊 Report (blue)
   - 🎯 Milestone (green)
-  - 💬 Message (purple)
+  - 💬 Message (light blue)
 - **Title** (bold)
 - **Description**
 - **Timestamp** (relative)
@@ -808,8 +813,8 @@ RootNavigator
 
 ### Tab Bar Icons
 - Use Expo Vector Icons (Ionicons)
-- Active state: Purple gradient
-- Inactive: White 40% opacity
+- Active state: Blue with chrome silver glow
+- Inactive: Silver gray (40% opacity)
 
 ### Mock Auth Context
 ```javascript
