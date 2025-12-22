@@ -1,8 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/summaries/generate",
-      "schedule": "0 2 * * 0"
+      "path": "/api/cron/generate-weekly-summaries",
+      "schedule": "59 23 * * 0"
+    },
+    {
+      "path": "/api/cron/cleanup-summaries",
+      "schedule": "0 2 * * *"
     }
   ]
 }
