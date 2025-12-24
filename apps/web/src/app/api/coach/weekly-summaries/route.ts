@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
 
     // PRIVACY GATE 3: Tenant boundary check (same school)
     if (coach.User.schoolId !== relation.Athlete.User.schoolId) {
-      console.error(\`[Weekly Summaries] Cross-tenant access attempt: Coach \${coach.userId} trying to access athlete \${athleteId}\`);
+      console.error(`[Weekly Summaries] Cross-tenant access attempt: Coach \${coach.userId} trying to access athlete \${athleteId}`);
       return NextResponse.json(
         { error: 'Unauthorized access across institutions' },
         { status: 403 }
@@ -179,7 +179,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    console.log(\`[Weekly Summaries] Coach \${coach.userId} accessed \${decryptedSummaries.length} summaries for athlete \${athleteId}\`);
+    console.log(`[Weekly Summaries] Coach \${coach.userId} accessed \${decryptedSummaries.length} summaries for athlete \${athleteId}`);
 
     return NextResponse.json({
       success: true,

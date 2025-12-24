@@ -39,7 +39,7 @@ export default function WeeklySummaryDrawer({
       setLoading(true);
       setError(null);
 
-      const res = await fetch(\`/api/coach/weekly-summaries?athleteId=\${athleteId}&limit=4\`);
+      const res = await fetch(`/api/coach/weekly-summaries?athleteId=\${athleteId}&limit=4`);
 
       if (!res.ok) {
         const errorData = await res.json();
@@ -60,7 +60,7 @@ export default function WeeklySummaryDrawer({
   const formatWeekRange = (weekStart: Date, weekEnd: Date) => {
     const start = new Date(weekStart);
     const end = new Date(weekEnd);
-    return \`\${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - \${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}\`;
+    return `\${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - \${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   };
 
   // Get score color
@@ -103,7 +103,7 @@ export default function WeeklySummaryDrawer({
           <span className="text-sm font-semibold text-foreground">Weekly Summary</span>
         </div>
         <svg
-          className={\`w-5 h-5 text-muted-foreground transition-transform \${expanded ? 'rotate-180' : ''}\`}
+          className={`w-5 h-5 text-muted-foreground transition-transform \${expanded ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -151,37 +151,37 @@ export default function WeeklySummaryDrawer({
                   {/* Scores Grid */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="text-center">
-                      <div className={\`text-lg font-bold \${getScoreColor(summary.moodScore)}\`}>
+                      <div className={`text-lg font-bold \${getScoreColor(summary.moodScore)}`}>
                         {summary.moodScore ? summary.moodScore.toFixed(1) : '--'}
                       </div>
                       <div className="text-xs text-muted-foreground">Mood</div>
                     </div>
                     <div className="text-center">
-                      <div className={\`text-lg font-bold \${getScoreColor(summary.confidenceScore)}\`}>
+                      <div className={`text-lg font-bold \${getScoreColor(summary.confidenceScore)}`}>
                         {summary.confidenceScore ? summary.confidenceScore.toFixed(1) : '--'}
                       </div>
                       <div className="text-xs text-muted-foreground">Confidence</div>
                     </div>
                     <div className="text-center">
-                      <div className={\`text-lg font-bold \${getScoreColor(summary.sleepQualityScore)}\`}>
+                      <div className={`text-lg font-bold \${getScoreColor(summary.sleepQualityScore)}`}>
                         {summary.sleepQualityScore ? summary.sleepQualityScore.toFixed(1) : '--'}
                       </div>
                       <div className="text-xs text-muted-foreground">Sleep</div>
                     </div>
                     <div className="text-center">
-                      <div className={\`text-lg font-bold \${getScoreColor(summary.stressScore ? 10 - summary.stressScore : null)}\`}>
+                      <div className={`text-lg font-bold \${getScoreColor(summary.stressScore ? 10 - summary.stressScore : null)}`}>
                         {summary.stressScore ? summary.stressScore.toFixed(1) : '--'}
                       </div>
                       <div className="text-xs text-muted-foreground">Stress</div>
                     </div>
                     <div className="text-center">
-                      <div className={\`text-lg font-bold \${getScoreColor(summary.engagementScore)}\`}>
+                      <div className={`text-lg font-bold \${getScoreColor(summary.engagementScore)}`}>
                         {summary.engagementScore ? summary.engagementScore.toFixed(1) : '--'}
                       </div>
                       <div className="text-xs text-muted-foreground">Engagement</div>
                     </div>
                     <div className="text-center">
-                      <div className={\`text-lg font-bold \${getScoreColor(summary.sorenessScore ? 10 - summary.sorenessScore : null)}\`}>
+                      <div className={`text-lg font-bold \${getScoreColor(summary.sorenessScore ? 10 - summary.sorenessScore : null)}`}>
                         {summary.sorenessScore ? summary.sorenessScore.toFixed(1) : '--'}
                       </div>
                       <div className="text-xs text-muted-foreground">Soreness</div>
