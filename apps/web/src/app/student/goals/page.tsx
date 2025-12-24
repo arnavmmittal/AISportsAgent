@@ -240,11 +240,11 @@ export default function StudentGoalsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Target className="w-8 h-8 text-purple-600" />
             Goals & Progress
           </h1>
-          <p className="text-gray-600 mt-1">Set targets and track your progress</p>
+          <p className="text-muted-foreground mt-1">Set targets and track your progress</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -297,7 +297,7 @@ export default function StudentGoalsPage() {
                         className={`p-3 rounded-lg border-2 transition-all ${
                           isSelected
                             ? `bg-gradient-to-br ${CATEGORY_CONFIG[category].gradient} text-white border-transparent`
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            : 'border-border hover:border-gray-300 bg-card'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -395,14 +395,14 @@ export default function StudentGoalsPage() {
                     className={`p-4 rounded-lg bg-gradient-to-br ${CATEGORY_CONFIG[suggestion.category].gradient} text-white`}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                      <div className="w-12 h-12 bg-card/20 rounded-full flex items-center justify-center">
                         <Icon className="w-6 h-6" />
                       </div>
                       <Button
                         onClick={() => addSuggestedGoal(suggestion)}
                         size="sm"
                         variant="secondary"
-                        className="bg-white/20 hover:bg-white/30 text-white border-0"
+                        className="bg-card/20 hover:bg-card/30 text-white border-0"
                       >
                         <Plus className="w-4 h-4 mr-1" />
                         Add
@@ -411,7 +411,7 @@ export default function StudentGoalsPage() {
                     <h4 className="font-bold text-white mb-2">{suggestion.title}</h4>
                     <p className="text-sm text-white/90 mb-3">{suggestion.description}</p>
                     <div className="flex items-center justify-between">
-                      <Badge className="bg-white/20 text-white border-0">
+                      <Badge className="bg-card/20 text-white border-0">
                         <Sparkles className="w-3 h-3 mr-1" />
                         {suggestion.reason}
                       </Badge>
@@ -433,8 +433,8 @@ export default function StudentGoalsPage() {
           <Card>
             <CardContent className="py-12 text-center">
               <Target className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No goals yet</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-lg font-semibold text-foreground mb-2">No goals yet</h3>
+              <p className="text-muted-foreground mb-6">
                 {searchQuery || selectedCategory !== 'ALL'
                   ? 'No goals match your filters'
                   : 'Set your first goal to start tracking your progress'}
@@ -466,7 +466,7 @@ export default function StudentGoalsPage() {
                           <Icon className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-bold text-gray-900 text-lg">{goal.title}</h3>
+                          <h3 className="font-bold text-foreground text-lg">{goal.title}</h3>
                           <Badge
                             variant="secondary"
                             className={CATEGORY_CONFIG[goal.category].color}
@@ -487,7 +487,7 @@ export default function StudentGoalsPage() {
 
                     {/* Description */}
                     {goal.description && (
-                      <p className="text-gray-600 text-sm">{goal.description}</p>
+                      <p className="text-muted-foreground text-sm">{goal.description}</p>
                     )}
 
                     {/* Target Date */}
@@ -507,8 +507,8 @@ export default function StudentGoalsPage() {
                     {/* Progress Bar */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Progress</span>
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-sm font-medium text-muted-foreground">Progress</span>
+                        <span className="text-sm font-bold text-foreground">
                           {goal.progress}%
                         </span>
                       </div>
@@ -563,33 +563,33 @@ export default function StudentGoalsPage() {
       {/* Tips Card */}
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
+          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
             Goal Setting Tips
           </h3>
-          <ul className="space-y-2 text-sm text-gray-700">
+          <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Make it SMART:</strong> Specific, Measurable, Achievable, Relevant,
                 Time-bound
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Focus on process:</strong> Break big goals into smaller daily actions
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Track consistently:</strong> Update progress regularly to maintain
                 momentum
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Celebrate wins:</strong> Acknowledge progress at every milestone
               </span>

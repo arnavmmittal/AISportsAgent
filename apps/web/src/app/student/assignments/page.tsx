@@ -235,7 +235,7 @@ export default function StudentAssignmentsPage() {
         <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-foreground">
                 {selectedAssignment.title}
               </h2>
               {selectedAssignment.dueDate && (
@@ -256,14 +256,14 @@ export default function StudentAssignmentsPage() {
               )}
             </div>
 
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed">
               {selectedAssignment.description}
             </p>
 
             <div className="flex items-center gap-3">
               <Badge className={getStatusColor(status)}>{getStatusText(status)}</Badge>
               {submission?.submittedAt && (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Submitted {new Date(submission.submittedAt).toLocaleDateString()}
                 </span>
               )}
@@ -276,7 +276,7 @@ export default function StudentAssignmentsPage() {
           <CardHeader>
             <CardTitle>Your Response</CardTitle>
             {isSubmitted && (
-              <CardDescription className="text-blue-600">
+              <CardDescription className="text-primary">
                 Tap to edit and resubmit if needed
               </CardDescription>
             )}
@@ -329,11 +329,11 @@ export default function StudentAssignmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <ClipboardList className="w-8 h-8 text-purple-600" />
             Tasks
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             {pendingAssignments.length} pending task
             {pendingAssignments.length !== 1 ? 's' : ''}
           </p>
@@ -344,8 +344,8 @@ export default function StudentAssignmentsPage() {
         <Card>
           <CardContent className="py-16 text-center">
             <ClipboardList className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tasks yet</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-semibold text-foreground mb-2">No tasks yet</h3>
+            <p className="text-muted-foreground">
               Tasks from your coach will appear here
             </p>
           </CardContent>
@@ -389,32 +389,32 @@ export default function StudentAssignmentsPage() {
       {/* Tips Card */}
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
             Task Tips
           </h3>
-          <ul className="space-y-2 text-sm text-gray-700">
+          <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Be honest:</strong> Your responses help your coach understand how to
                 support you better
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Be specific:</strong> Include concrete examples and details
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Take your time:</strong> Thoughtful reflection leads to better insights
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
+              <span className="text-primary font-bold">•</span>
               <span>
                 <strong>Ask questions:</strong> Use tasks as opportunities to discuss
                 challenges with your coach
@@ -506,8 +506,8 @@ function AssignmentCard({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-900 mb-1">{assignment.title}</h3>
-              <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+              <h3 className="font-bold text-foreground mb-1">{assignment.title}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                 {assignment.description}
               </p>
 

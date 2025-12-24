@@ -51,8 +51,8 @@ export default function StudentDashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Welcome back! 👋</h1>
-        <p className="text-gray-600 mt-1">Here's your mental performance overview</p>
+        <h1 className="text-3xl font-bold text-foreground">Welcome back! 👋</h1>
+        <p className="text-muted-foreground mt-1">Here's your mental performance overview</p>
       </div>
 
       {/* Quick Stats */}
@@ -61,8 +61,8 @@ export default function StudentDashboardPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium">Current Streak</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{streak} days</p>
+                <p className="text-sm text-muted-foreground font-medium">Current Streak</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{streak} days</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
                 <Zap className="w-6 h-6 text-white" />
@@ -75,9 +75,9 @@ export default function StudentDashboardPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium">Avg Mood (7d)</p>
+                <p className="text-sm text-muted-foreground font-medium">Avg Mood (7d)</p>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <p className="text-3xl font-bold text-gray-900">{avgMood}</p>
+                  <p className="text-3xl font-bold text-foreground">{avgMood}</p>
                   {moodTrend !== 0 && (
                     <div className="flex items-center gap-1">
                       {moodTrend > 0 ? (
@@ -103,8 +103,8 @@ export default function StudentDashboardPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium">Active Goals</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{activeGoals.length}</p>
+                <p className="text-sm text-muted-foreground font-medium">Active Goals</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{activeGoals.length}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
                 <Target className="w-6 h-6 text-white" />
@@ -117,8 +117,8 @@ export default function StudentDashboardPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium">To Complete</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{recentAssignments.length}</p>
+                <p className="text-sm text-muted-foreground font-medium">To Complete</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{recentAssignments.length}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
                 <Award className="w-6 h-6 text-white" />
@@ -179,15 +179,15 @@ export default function StudentDashboardPage() {
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-sm text-gray-600">Mood</span>
+                <span className="text-sm text-muted-foreground">Mood</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-sm text-gray-600">Confidence</span>
+                <span className="text-sm text-muted-foreground">Confidence</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span className="text-sm text-gray-600">Stress</span>
+                <span className="text-sm text-muted-foreground">Stress</span>
               </div>
             </div>
             <div className="mt-4">
@@ -209,9 +209,9 @@ export default function StudentDashboardPage() {
           <CardContent className="space-y-3">
             <Link href="/student/chat">
               <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
+                <MessageSquare className="w-5 h-5 text-primary" />
                 <div className="text-left">
-                  <div className="font-medium text-gray-900">Talk to AI Coach</div>
+                  <div className="font-medium text-foreground">Talk to AI Coach</div>
                   <div className="text-xs text-gray-500">Get instant mental skills support</div>
                 </div>
               </Button>
@@ -221,7 +221,7 @@ export default function StudentDashboardPage() {
               <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
                 <Heart className="w-5 h-5 text-pink-600" />
                 <div className="text-left">
-                  <div className="font-medium text-gray-900">Log Mood</div>
+                  <div className="font-medium text-foreground">Log Mood</div>
                   <div className="text-xs text-gray-500">Track your emotional state</div>
                 </div>
               </Button>
@@ -231,7 +231,7 @@ export default function StudentDashboardPage() {
               <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
                 <Target className="w-5 h-5 text-green-600" />
                 <div className="text-left">
-                  <div className="font-medium text-gray-900">Set Goals</div>
+                  <div className="font-medium text-foreground">Set Goals</div>
                   <div className="text-xs text-gray-500">Track mental & performance goals</div>
                 </div>
               </Button>
@@ -241,7 +241,7 @@ export default function StudentDashboardPage() {
               <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
                 <Brain className="w-5 h-5 text-purple-600" />
                 <div className="text-left">
-                  <div className="font-medium text-gray-900">Practice Exercises</div>
+                  <div className="font-medium text-foreground">Practice Exercises</div>
                   <div className="text-xs text-gray-500">Build mental skills</div>
                 </div>
               </Button>
@@ -264,13 +264,13 @@ export default function StudentDashboardPage() {
         <CardContent>
           <div className="space-y-4">
             {activeGoals.map((goal) => (
-              <div key={goal.id} className="p-4 bg-gray-50 rounded-lg">
+              <div key={goal.id} className="p-4 bg-background rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{goal.title}</h4>
+                    <h4 className="font-medium text-foreground">{goal.title}</h4>
                     <Badge variant="secondary" className="mt-1">{goal.category}</Badge>
                   </div>
-                  <span className="text-sm font-semibold text-blue-600">{goal.progress}%</span>
+                  <span className="text-sm font-semibold text-primary">{goal.progress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -298,13 +298,13 @@ export default function StudentDashboardPage() {
         <CardContent>
           <div className="space-y-3">
             {recentAssignments.map((assignment) => (
-              <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={assignment.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                     <Award className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900">{assignment.title}</h4>
+                    <h4 className="font-medium text-foreground">{assignment.title}</h4>
                     <p className="text-sm text-gray-500">Due in {assignment.dueDate}</p>
                   </div>
                 </div>

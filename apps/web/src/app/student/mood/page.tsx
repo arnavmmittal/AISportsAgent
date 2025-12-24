@@ -163,11 +163,11 @@ export default function StudentMoodPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Heart className="w-8 h-8 text-pink-600" />
             Daily Mood Tracker
           </h1>
-          <p className="text-gray-600 mt-1">Track your mental state and build self-awareness</p>
+          <p className="text-muted-foreground mt-1">Track your mental state and build self-awareness</p>
         </div>
         <Badge variant="secondary" className="gap-1">
           <Calendar className="w-4 h-4" />
@@ -195,7 +195,7 @@ export default function StudentMoodPage() {
                   className={`p-4 rounded-lg border-2 ${
                     log
                       ? `bg-gradient-to-br ${getMoodColor(log.mood)} text-white border-transparent`
-                      : 'bg-gray-50 border-gray-200'
+                      : 'bg-background border-border'
                   } ${isToday ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
                 >
                   <div className="text-center space-y-1">
@@ -208,7 +208,7 @@ export default function StudentMoodPage() {
                     </p>
                     <p
                       className={`text-2xl font-bold ${
-                        isToday && !log ? 'text-blue-600' : log ? 'text-white' : 'text-gray-400'
+                        isToday && !log ? 'text-primary' : log ? 'text-white' : 'text-gray-400'
                       }`}
                     >
                       {date.getDate()}
@@ -233,12 +233,12 @@ export default function StudentMoodPage() {
           {pastWeekLogs.length > 0 && (
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-blue-600" />
+                <TrendingUp className="w-4 h-4 text-primary" />
                 <h4 className="font-semibold text-blue-900">Weekly Summary</h4>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-600">Avg Mood</p>
+                  <p className="text-muted-foreground">Avg Mood</p>
                   <p className="text-lg font-bold text-blue-900">
                     {(
                       pastWeekLogs.reduce((sum, log) => sum + log.mood, 0) / pastWeekLogs.length
@@ -247,11 +247,11 @@ export default function StudentMoodPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Check-ins</p>
+                  <p className="text-muted-foreground">Check-ins</p>
                   <p className="text-lg font-bold text-blue-900">{pastWeekLogs.length}/7 days</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Avg Sleep</p>
+                  <p className="text-muted-foreground">Avg Sleep</p>
                   <p className="text-lg font-bold text-blue-900">
                     {(
                       pastWeekLogs.reduce((sum, log) => sum + log.sleep, 0) / pastWeekLogs.length
@@ -279,7 +279,7 @@ export default function StudentMoodPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Heart className="w-5 h-5 text-purple-600" />
-                <label className="font-semibold text-gray-900">Mood</label>
+                <label className="font-semibold text-foreground">Mood</label>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-2xl">{getMoodEmoji(mood)}</span>
@@ -305,7 +305,7 @@ export default function StudentMoodPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-green-600" />
-                <label className="font-semibold text-gray-900">Confidence</label>
+                <label className="font-semibold text-foreground">Confidence</label>
               </div>
               <span className="text-lg font-bold text-green-600">{confidence}/10</span>
             </div>
@@ -328,7 +328,7 @@ export default function StudentMoodPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Flame className="w-5 h-5 text-orange-600" />
-                <label className="font-semibold text-gray-900">Stress Level</label>
+                <label className="font-semibold text-foreground">Stress Level</label>
               </div>
               <span className="text-lg font-bold text-orange-600">{stress}/10</span>
             </div>
@@ -351,7 +351,7 @@ export default function StudentMoodPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Battery className="w-5 h-5 text-pink-600" />
-                <label className="font-semibold text-gray-900">Energy Level</label>
+                <label className="font-semibold text-foreground">Energy Level</label>
               </div>
               <span className="text-lg font-bold text-pink-600">{energy}/10</span>
             </div>
@@ -374,7 +374,7 @@ export default function StudentMoodPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Moon className="w-5 h-5 text-indigo-600" />
-                <label className="font-semibold text-gray-900">Sleep</label>
+                <label className="font-semibold text-foreground">Sleep</label>
               </div>
               <span className="text-lg font-bold text-indigo-600">{sleep}h</span>
             </div>
@@ -394,7 +394,7 @@ export default function StudentMoodPage() {
 
           {/* Notes */}
           <div className="space-y-3">
-            <label className="font-semibold text-gray-900 flex items-center gap-2">
+            <label className="font-semibold text-foreground flex items-center gap-2">
               <span>Notes (optional)</span>
               <span className="text-xs font-normal text-gray-500">{notes.length}/500</span>
             </label>
@@ -431,11 +431,11 @@ export default function StudentMoodPage() {
       {/* Tips Card */}
       <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
             <Smile className="w-5 h-5 text-purple-600" />
             Why Track Your Mood?
           </h3>
-          <ul className="space-y-2 text-sm text-gray-700">
+          <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="text-purple-600 font-bold">•</span>
               <span>
