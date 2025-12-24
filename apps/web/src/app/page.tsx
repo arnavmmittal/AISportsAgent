@@ -4,21 +4,21 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen gradient-dark">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">
           <div className="text-center">
             {/* Main Headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 tracking-tight">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 tracking-tight">
               <span className="block">Mental Performance</span>
-              <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="block gradient-primary bg-clip-text text-transparent">
                 Made Accessible
               </span>
             </h1>
 
             {/* Subheadline */}
-            <p className="mt-6 max-w-2xl mx-auto text-xl sm:text-2xl text-gray-600 leading-relaxed">
+            <p className="mt-6 max-w-2xl mx-auto text-xl sm:text-2xl text-muted-foreground leading-relaxed">
               Evidence-based mental performance support for collegiate athletes. Available 24/7.
             </p>
 
@@ -26,20 +26,20 @@ export default function Home() {
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/auth/signup"
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="w-full sm:w-auto px-8 py-4 gradient-primary text-white text-lg font-semibold rounded-lg hover:opacity-90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 blue-glow-sm"
               >
                 Get Started Free
               </Link>
               <Link
                 href="/auth/signin"
-                className="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl border-2 border-blue-600"
+                className="w-full sm:w-auto px-8 py-4 glass-strong text-foreground text-lg font-semibold rounded-lg hover:bg-card transition-all shadow-lg hover:shadow-xl chrome-border"
               >
                 Sign In
               </Link>
             </div>
 
             {/* Trust Indicator */}
-            <p className="mt-8 text-sm text-gray-500">
+            <p className="mt-8 text-sm text-muted-foreground">
               Trusted by student-athletes across Division I programs
             </p>
           </div>
@@ -83,11 +83,11 @@ export default function Home() {
       </div>
 
       {/* Research-Backed Section */}
-      <div className="bg-white py-16">
+      <div className="bg-card py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Evidence-Based Approach</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-foreground mb-4">Evidence-Based Approach</h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Built on proven sports psychology frameworks with citations to peer-reviewed research
             </p>
           </div>
@@ -120,7 +120,7 @@ export default function Home() {
       {/* Social Proof Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12">Trusted by Athletes & Coaches</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-12">Trusted by Athletes & Coaches</h2>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <TestimonialCard
@@ -142,32 +142,32 @@ export default function Home() {
 
 function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+    <div className="glass-strong p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow hover:blue-glow-sm">
       <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
+      <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
+      <p className="text-muted-foreground">{description}</p>
     </div>
   );
 }
 
 function ResearchCard({ framework, description, citation }: { framework: string; description: string; citation: string }) {
   return (
-    <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
-      <h4 className="text-lg font-bold text-gray-900 mb-2">{framework}</h4>
-      <p className="text-gray-700 mb-3">{description}</p>
-      <p className="text-sm text-blue-700 font-medium">{citation}</p>
+    <div className="glass p-6 rounded-lg border-l-4 border-primary">
+      <h4 className="text-lg font-bold text-foreground mb-2">{framework}</h4>
+      <p className="text-muted-foreground mb-3">{description}</p>
+      <p className="text-sm text-primary font-medium">{citation}</p>
     </div>
   );
 }
 
 function TestimonialCard({ quote, author, role }: { quote: string; author: string; role: string }) {
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-xl">
-      <p className="text-lg text-gray-700 italic mb-4">"{quote}"</p>
+    <div className="glass-strong p-8 rounded-xl chrome-border">
+      <p className="text-lg text-foreground italic mb-4">"{quote}"</p>
       <div className="flex items-center">
         <div>
-          <p className="font-semibold text-gray-900">{author}</p>
-          <p className="text-sm text-gray-600">{role}</p>
+          <p className="font-semibold text-foreground">{author}</p>
+          <p className="text-sm text-muted-foreground">{role}</p>
         </div>
       </div>
     </div>
