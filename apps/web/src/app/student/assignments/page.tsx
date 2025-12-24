@@ -163,7 +163,7 @@ export default function StudentAssignmentsPage() {
       case 'REVIEWED':
         return 'bg-purple-100 text-purple-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -343,7 +343,7 @@ export default function StudentAssignmentsPage() {
       {assignments.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
-            <ClipboardList className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <ClipboardList className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">No tasks yet</h3>
             <p className="text-muted-foreground">
               Tasks from your coach will appear here
@@ -469,7 +469,7 @@ function AssignmentCard({
       case 'REVIEWED':
         return 'bg-purple-100 text-purple-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-gray-800';
     }
   };
 
@@ -532,7 +532,7 @@ function AssignmentCard({
             </div>
           </div>
 
-          <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180 flex-shrink-0" />
+          <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 flex-shrink-0" />
         </div>
       </CardContent>
     </Card>

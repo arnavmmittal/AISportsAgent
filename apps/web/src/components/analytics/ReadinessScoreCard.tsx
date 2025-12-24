@@ -173,7 +173,7 @@ export function ReadinessScoreCard({
               <span className={`text-5xl font-bold ${config.text}`}>
                 {data.score}
               </span>
-              <span className="text-2xl text-gray-400">/100</span>
+              <span className="text-2xl text-muted-foreground">/100</span>
             </div>
             <p className={`text-sm font-medium ${config.text} mt-1`}>
               {config.label}
@@ -273,7 +273,7 @@ export function ReadinessScoreCard({
         {onViewDetails && (
           <button
             onClick={onViewDetails}
-            className="w-full mt-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full mt-2 px-4 py-2 bg-card border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-muted transition-colors"
           >
             View Athlete Details
           </button>

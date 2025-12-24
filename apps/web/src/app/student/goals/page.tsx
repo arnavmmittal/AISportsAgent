@@ -344,7 +344,7 @@ export default function StudentGoalsPage() {
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
@@ -432,7 +432,7 @@ export default function StudentGoalsPage() {
         {filteredGoals.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Target className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">No goals yet</h3>
               <p className="text-muted-foreground mb-6">
                 {searchQuery || selectedCategory !== 'ALL'

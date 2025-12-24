@@ -178,13 +178,13 @@ export default function StudentChatPage() {
                   className={`rounded-2xl px-4 py-3 ${
                     message.role === 'user'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
-                      : 'bg-gray-100 text-foreground'
+                      : 'bg-muted text-foreground'
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 </div>
                 <div className="flex items-center gap-2 mt-1 px-2">
-                  <Clock className="w-3 h-3 text-gray-400" />
+                  <Clock className="w-3 h-3 text-muted-foreground" />
                   <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
                 </div>
               </div>
@@ -196,7 +196,7 @@ export default function StudentChatPage() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
                 <Bot className="w-5 h-5 text-white" />
               </div>
-              <div className="bg-gray-100 rounded-2xl px-4 py-3">
+              <div className="bg-muted rounded-2xl px-4 py-3">
                 <div className="flex gap-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
@@ -219,7 +219,7 @@ export default function StudentChatPage() {
                 <button
                   key={prompt}
                   onClick={() => handlePromptClick(prompt)}
-                  className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-muted-foreground transition-colors"
+                  className="text-xs px-3 py-1.5 bg-muted hover:bg-gray-200 rounded-full text-muted-foreground transition-colors"
                 >
                   {prompt}
                 </button>

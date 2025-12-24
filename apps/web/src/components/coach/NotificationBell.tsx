@@ -90,7 +90,7 @@ export function NotificationBell() {
       case 'MEDIUM':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       default:
-        return 'bg-gray-100 text-foreground border-border';
+        return 'bg-muted text-foreground border-border';
     }
   };
 

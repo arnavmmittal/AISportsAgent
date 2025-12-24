@@ -206,7 +206,7 @@ export function RoutineBuilderWidget({
         <>
           {/* Timer Controls (when running) */}
           {isRunning && (
-            <div className="bg-white p-6 rounded-xl mb-4 border-2 border-indigo-400">
+            <div className="bg-card p-6 rounded-xl mb-4 border-2 border-indigo-400">
               <div className="text-center mb-4">
                 <div className="text-5xl font-bold text-indigo-600 mb-2">
                   {formatTime(elapsedSeconds)}
@@ -268,7 +268,7 @@ export function RoutineBuilderWidget({
 
           {/* Start Button (when not running) */}
           {!isRunning && (
-            <div className="bg-white p-4 rounded-xl mb-4 border-2 border-indigo-300">
+            <div className="bg-card p-4 rounded-xl mb-4 border-2 border-indigo-300">
               <div className="text-center">
                 <button
                   onClick={startRoutine}
@@ -304,8 +304,8 @@ export function RoutineBuilderWidget({
                       isCurrentCue
                         ? 'bg-indigo-100 border-indigo-400 shadow-md'
                         : isPastCue
-                        ? 'bg-gray-100 border-gray-300 opacity-60'
-                        : 'bg-white border-gray-200'
+                        ? 'bg-muted border-gray-300 opacity-60'
+                        : 'bg-card border-gray-200'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -347,7 +347,7 @@ export function RoutineBuilderWidget({
           </div>
 
           {/* Effectiveness Tracking */}
-          <div className="bg-white p-4 rounded-lg border-2 border-purple-300">
+          <div className="bg-card p-4 rounded-lg border-2 border-purple-300">
             <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <span>📊</span> Track Effectiveness
             </h4>

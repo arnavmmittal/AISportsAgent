@@ -375,7 +375,7 @@ export default async function CoachAthletesPage() {
                     <p className="text-muted-foreground">
                       No athletes have consented to share chat summaries yet.
                     </p>
-                    <p className="text-sm text-gray-400 mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       Athletes can enable sharing in their Settings {'>'} Privacy & Coach Access
                     </p>
                   </div>
@@ -449,7 +449,7 @@ export default async function CoachAthletesPage() {
                                       ? 'bg-red-100 text-red-700'
                                       : latestSummary.emotionalState === 'mixed'
                                       ? 'bg-yellow-100 text-yellow-700'
-                                      : 'bg-gray-100 text-muted-foreground'
+                                      : 'bg-muted text-muted-foreground'
                                   }`}
                                 >
                                   {latestSummary.emotionalState === 'positive' && '😊 Positive'}

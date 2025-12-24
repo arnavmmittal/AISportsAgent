@@ -118,7 +118,7 @@ export function TeamReadinessTable({
   // Get sort icon for column header
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
     }
     return sortDirection === 'asc'
       ? <ArrowUp className="w-4 h-4 text-gray-700" />
@@ -183,7 +183,7 @@ export function TeamReadinessTable({
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 levelFilter === 'ALL'
                   ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-muted text-gray-700 hover:bg-gray-200'
               }`}
             >
               All ({athletes.length})
@@ -221,7 +221,7 @@ export function TeamReadinessTable({
             {levelFilter !== 'ALL' && (
               <button
                 onClick={() => setLevelFilter('ALL')}
-                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md"
+                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-muted rounded-md"
                 title="Clear filter"
               >
                 <X className="w-4 h-4" />
@@ -248,7 +248,7 @@ export function TeamReadinessTable({
           <TableHeader>
             <TableRow className="bg-gray-50">
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 select-none"
+                className="cursor-pointer hover:bg-muted select-none"
                 onClick={() => handleSort('name')}
               >
                 <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ export function TeamReadinessTable({
                 </div>
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 select-none"
+                className="cursor-pointer hover:bg-muted select-none"
                 onClick={() => handleSort('position')}
               >
                 <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export function TeamReadinessTable({
                 </div>
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 select-none text-center"
+                className="cursor-pointer hover:bg-muted select-none text-center"
                 onClick={() => handleSort('score')}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -275,7 +275,7 @@ export function TeamReadinessTable({
                 </div>
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 select-none text-center"
+                className="cursor-pointer hover:bg-muted select-none text-center"
                 onClick={() => handleSort('level')}
               >
                 <div className="flex items-center justify-center gap-2">

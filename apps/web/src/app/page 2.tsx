@@ -60,7 +60,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/auth/signin"
-                className="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl border-2 border-blue-600"
+                className="w-full sm:w-auto px-8 py-4 bg-card text-blue-600 text-lg font-semibold rounded-lg hover:bg-muted transition-all shadow-lg hover:shadow-xl border-2 border-blue-600"
               >
                 Sign In
               </Link>
@@ -111,7 +111,7 @@ export default function Home() {
       </div>
 
       {/* For Athletes Section */}
-      <div className="bg-white py-16">
+      <div className="bg-card py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">
@@ -154,7 +154,7 @@ export default function Home() {
               Extend your sports psychology resources beyond traditional capacity
             </p>
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="bg-card rounded-xl p-6 shadow-lg">
                 <div className="text-3xl mb-3">📈</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Readiness Dashboard
@@ -163,7 +163,7 @@ export default function Home() {
                   View team mental readiness 24-48hrs before games with traffic light scoring (GREEN/YELLOW/RED)
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="bg-card rounded-xl p-6 shadow-lg">
                 <div className="text-3xl mb-3">🎯</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Performance Correlation
@@ -172,7 +172,7 @@ export default function Home() {
                   See how mental state (mood, stress, sleep) impacts game stats to prove ROI
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="bg-card rounded-xl p-6 shadow-lg">
                 <div className="text-3xl mb-3">⚠️</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Crisis Detection
@@ -181,7 +181,7 @@ export default function Home() {
                   Automatic alerts for self-harm, depression, or abuse disclosures with 1-hour SLA
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
+              <div className="bg-card rounded-xl p-6 shadow-lg">
                 <div className="text-3xl mb-3">📊</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Team Analytics
@@ -206,7 +206,7 @@ export default function Home() {
           </p>
           <Link
             href="/auth/signup"
-            className="inline-block px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl"
+            className="inline-block px-8 py-4 bg-card text-blue-600 text-lg font-semibold rounded-lg hover:bg-muted transition-all shadow-lg hover:shadow-xl"
           >
             Get Started Free
           </Link>
@@ -218,7 +218,7 @@ export default function Home() {
 
 function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
+    <div className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>
@@ -228,7 +228,7 @@ function FeatureCard({ icon, title, description }: { icon: string; title: string
 
 function UseCaseItem({ title, description }: { title: string; description: string }) {
   return (
-    <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+    <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-muted transition-colors">
       <div className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mt-1">
         <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

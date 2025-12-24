@@ -257,9 +257,9 @@ export default async function CoachInsightsPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <AlertTriangle className="size-12 text-gray-300 mx-auto mb-4" />
+                <AlertTriangle className="size-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">No crisis alerts in the last 30 days</p>
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   The system automatically flags concerning language for review
                 </p>
               </div>

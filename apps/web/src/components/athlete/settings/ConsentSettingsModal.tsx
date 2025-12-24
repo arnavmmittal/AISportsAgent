@@ -63,14 +63,14 @@ export default function ConsentSettingsModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="border-b border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">Weekly Chat Summary Privacy Settings</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-muted-foreground hover:text-gray-600 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -175,7 +175,7 @@ export default function ConsentSettingsModal({
                 } \${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}\`}
               >
                 <span
-                  className={\`inline-block h-4 w-4 transform rounded-full bg-white transition-transform \${
+                  className={\`inline-block h-4 w-4 transform rounded-full bg-card transition-transform \${
                     consent ? 'translate-x-6' : 'translate-x-1'
                   }\`}
                 />

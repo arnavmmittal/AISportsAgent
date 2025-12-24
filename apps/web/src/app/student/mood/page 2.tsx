@@ -208,7 +208,7 @@ export default function StudentMoodPage() {
                     </p>
                     <p
                       className={`text-2xl font-bold ${
-                        isToday && !log ? 'text-primary' : log ? 'text-white' : 'text-gray-400'
+                        isToday && !log ? 'text-primary' : log ? 'text-white' : 'text-muted-foreground'
                       }`}
                     >
                       {date.getDate()}
