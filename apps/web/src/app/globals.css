@@ -49,125 +49,103 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  /* Athletic Performance Theme - Light Mode */
-  --background: oklch(0.99 0 0); /* #FCFCFD - Very light neutral */
-  --foreground: oklch(0.18 0.01 265); /* #1E293B - Dark slate */
+  --radius: 0.75rem;
+  /* AI Sports Agent - Premium Athletic Design System (Lovable) */
+  /* Primary - Deep Blue (Trust, Focus, Professionalism) */
+  --primary: 217 91% 40%; /* #1E40AF */
+  --primary-foreground: 210 40% 98%;
 
-  --card: oklch(1 0 0); /* White */
-  --card-foreground: oklch(0.18 0.01 265); /* #1E293B */
+  /* Secondary - Bright Blue */
+  --secondary: 217 91% 60%; /* #3B82F6 */
+  --secondary-foreground: 0 0% 100%;
 
-  --popover: oklch(1 0 0); /* White */
-  --popover-foreground: oklch(0.18 0.01 265); /* #1E293B */
+  /* Accent - Light Blue */
+  --accent: 213 94% 68%;
+  --accent-foreground: 220 47% 11%;
 
-  /* Primary: Deep Blue (#1E40AF) - Trust, focus, calm */
-  --primary: oklch(0.42 0.18 264); /* #1E40AF */
-  --primary-foreground: oklch(0.99 0 0); /* White text on blue */
+  /* Backgrounds - Dark with blue tint */
+  --background: 210 29% 8%; /* #0F1419 */
+  --foreground: 0 0% 100%;
 
-  /* Secondary: Vibrant Orange (#F97316) - Energy, motivation */
-  --secondary: oklch(0.67 0.20 42); /* #F97316 */
-  --secondary-foreground: oklch(0.99 0 0); /* White text on orange */
+  /* Card/Elevated surfaces */
+  --card: 217 33% 17%; /* #1E293B */
+  --card-foreground: 0 0% 100%;
 
-  /* Muted: Light slate gray */
-  --muted: oklch(0.96 0.005 265); /* #F1F5F9 */
-  --muted-foreground: oklch(0.52 0.015 265); /* #64748B */
+  /* Popover */
+  --popover: 217 33% 17%;
+  --popover-foreground: 0 0% 100%;
 
-  /* Accent: Electric Teal (#06B6D4) - Innovation, alert */
-  --accent: oklch(0.70 0.14 200); /* #06B6D4 */
-  --accent-foreground: oklch(0.99 0 0); /* White text on teal */
+  /* Muted surfaces */
+  --muted: 215 25% 27%; /* #334155 */
+  --muted-foreground: 215 20% 65%;
 
-  /* Destructive: Red (#EF4444) - Crisis, urgent */
-  --destructive: oklch(0.62 0.25 29); /* #EF4444 */
-  --destructive-foreground: oklch(0.99 0 0); /* White text on red */
+  /* Chrome Silver */
+  --chrome: 0 0% 75%; /* #C0C0C0 */
+  --chrome-foreground: 220 47% 11%;
 
-  /* Success: Green (#10B981) - Achievement */
-  --success: oklch(0.70 0.17 165); /* #10B981 */
-  --success-foreground: oklch(0.99 0 0);
+  /* Borders */
+  --border: 217 33% 25%;
+  --input: 217 33% 20%;
+  --ring: 217 91% 60%;
 
-  /* Warning: Amber (#F59E0B) - Caution */
-  --warning: oklch(0.75 0.15 75); /* #F59E0B */
-  --warning-foreground: oklch(0.18 0.01 265);
-
-  --border: oklch(0.89 0.005 265); /* #E2E8F0 */
-  --input: oklch(0.89 0.005 265); /* #E2E8F0 */
-  --ring: oklch(0.42 0.18 264); /* Match primary */
+  /* Status Colors */
+  --success: 160 84% 39%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --info: 217 91% 60%;
+  --info-foreground: 0 0% 100%;
 
   /* Chart colors for analytics */
-  --chart-1: oklch(0.42 0.18 264); /* Primary blue */
-  --chart-2: oklch(0.67 0.20 42); /* Secondary orange */
-  --chart-3: oklch(0.70 0.14 200); /* Accent teal */
-  --chart-4: oklch(0.70 0.17 165); /* Success green */
-  --chart-5: oklch(0.75 0.15 75); /* Warning amber */
+  --chart-1: 217 91% 60%; /* Primary blue */
+  --chart-2: 213 94% 68%; /* Accent light blue */
+  --chart-3: 160 84% 39%; /* Success green */
+  --chart-4: 38 92% 50%; /* Warning amber */
+  --chart-5: 0 0% 75%; /* Chrome silver */
 
   /* Sidebar (for coach dashboard) */
-  --sidebar: oklch(0.99 0 0); /* White */
-  --sidebar-foreground: oklch(0.18 0.01 265); /* Dark slate */
-  --sidebar-primary: oklch(0.42 0.18 264); /* Primary blue */
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.005 265); /* Light muted */
-  --sidebar-accent-foreground: oklch(0.18 0.01 265);
-  --sidebar-border: oklch(0.89 0.005 265);
-  --sidebar-ring: oklch(0.42 0.18 264);
+  --sidebar: 210 29% 8%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 33% 17%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 217 33% 25%;
+  --sidebar-ring: 217 91% 60%;
 }
 
 .dark {
-  /* Athletic Performance Theme - Dark Mode */
-  --background: oklch(0.18 0.01 265); /* #1E293B - Dark slate */
-  --foreground: oklch(0.96 0.005 265); /* #F1F5F9 - Light slate */
-
-  --card: oklch(0.23 0.01 265); /* #2D3748 - Darker slate */
-  --card-foreground: oklch(0.96 0.005 265);
-
-  --popover: oklch(0.23 0.01 265);
-  --popover-foreground: oklch(0.96 0.005 265);
-
-  /* Primary: Lighter blue for dark mode */
-  --primary: oklch(0.58 0.20 264); /* Lighter #3B82F6 */
-  --primary-foreground: oklch(0.99 0 0);
-
-  /* Secondary: Slightly muted orange */
-  --secondary: oklch(0.67 0.20 42); /* #F97316 */
-  --secondary-foreground: oklch(0.99 0 0);
-
-  --muted: oklch(0.30 0.01 265); /* #334155 */
-  --muted-foreground: oklch(0.68 0.01 265); /* #94A3B8 */
-
-  /* Accent: Teal (slightly brighter for dark mode) */
-  --accent: oklch(0.70 0.14 200); /* #06B6D4 */
-  --accent-foreground: oklch(0.99 0 0);
-
-  /* Destructive: Red (slightly softer) */
-  --destructive: oklch(0.68 0.22 29); /* Softer red */
-  --destructive-foreground: oklch(0.99 0 0);
-
-  /* Success: Green */
-  --success: oklch(0.70 0.17 165); /* #10B981 */
-  --success-foreground: oklch(0.99 0 0);
-
-  /* Warning: Amber */
-  --warning: oklch(0.75 0.15 75); /* #F59E0B */
-  --warning-foreground: oklch(0.18 0.01 265);
-
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.58 0.20 264);
-
-  /* Chart colors */
-  --chart-1: oklch(0.58 0.20 264); /* Primary blue */
-  --chart-2: oklch(0.67 0.20 42); /* Secondary orange */
-  --chart-3: oklch(0.70 0.14 200); /* Accent teal */
-  --chart-4: oklch(0.70 0.17 165); /* Success green */
-  --chart-5: oklch(0.75 0.15 75); /* Warning amber */
-
-  /* Sidebar */
-  --sidebar: oklch(0.23 0.01 265);
-  --sidebar-foreground: oklch(0.96 0.005 265);
-  --sidebar-primary: oklch(0.58 0.20 264);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.30 0.01 265);
-  --sidebar-accent-foreground: oklch(0.96 0.005 265);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.58 0.20 264);
+  /* AI Sports Agent - Premium Athletic Design System (Lovable) */
+  /* Same colors as light mode - already dark theme */
+  --primary: 217 91% 40%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 217 91% 60%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 213 94% 68%;
+  --accent-foreground: 220 47% 11%;
+  --background: 210 29% 8%;
+  --foreground: 0 0% 100%;
+  --card: 217 33% 17%;
+  --card-foreground: 0 0% 100%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 0 0% 100%;
+  --muted: 215 25% 27%;
+  --muted-foreground: 215 20% 65%;
+  --border: 217 33% 25%;
+  --input: 217 33% 20%;
+  --ring: 217 91% 60%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --sidebar: 210 29% 8%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 33% 17%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 217 33% 25%;
+  --sidebar-ring: 217 91% 60%;
 }
 
 @layer base {
@@ -175,6 +153,78 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  }
+
+  /* Hide scrollbar for mobile feel */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer utilities {
+  /* Gradient backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary to-secondary;
+  }
+
+  .gradient-dark {
+    @apply bg-gradient-to-b from-background via-card to-background;
+  }
+
+  .gradient-hero {
+    @apply bg-gradient-to-br from-primary via-secondary to-accent;
+  }
+
+  /* Glass morphism */
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-strong {
+    @apply bg-card/90 backdrop-blur-2xl border border-chrome/20;
+  }
+
+  /* Chrome/metallic effects */
+  .chrome-border {
+    @apply border border-chrome/30;
+  }
+
+  .chrome-glow {
+    box-shadow: 0 0 20px hsl(var(--chrome) / 0.15);
+  }
+
+  /* Blue glow effect */
+  .blue-glow {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
+  }
+
+  .blue-glow-sm {
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+  }
+
+  /* Safe area for mobile */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+
+  /* Mobile tap highlight */
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth momentum scrolling */
+  .scroll-smooth {
+    -webkit-overflow-scrolling: touch;
   }
 }
