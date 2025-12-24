@@ -3,7 +3,7 @@
  * Automated intelligence, predictions, and pattern detection
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,46 +11,145 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { apiClient } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 
 export default function InsightsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'summary' | 'predictions' | 'patterns'>('summary');
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    // TODO: Fetch AI insights data
-    setTimeout(() => setIsRefreshing(false), 1000);
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setError(null);
+      const response = await apiClient.getCoachDashboard();
+      setDashboardData(response.data);
+    } catch (err: any) {
+      console.error('Failed to load coach dashboard:', err);
+      setError('Failed to load insights. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const weeklyInsights = [
-    'Team readiness stabilized at 78 (±2 points) after previous decline',
-    'Stress levels elevated - likely due to upcoming finals week',
-    'Basketball team showing better cohesion (+12% vs last week)',
-    'Sleep quality decreased 8% team-wide (6.2hrs vs 6.8hrs)',
-  ];
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadDashboardData();
+    setIsRefreshing(false);
+  };
 
-  const recommendations = [
-    { priority: 'HIGH', action: 'Schedule team recovery day Thursday or Friday', rationale: 'Sleep debt accumulating - prevent further readiness decline' },
-    { priority: 'HIGH', action: 'Conduct stress management workshops', rationale: 'Stress 15% above baseline - athletes need exam anxiety techniques' },
-    { priority: 'MEDIUM', action: 'Check in with Mike Chen and Alex Martinez', rationale: 'Both showing declining readiness for 7+ consecutive days' },
-  ];
+  // Generate insights from real data
+  const weeklyInsights = dashboardData
+    ? [
+        `Team readiness averaging ${Math.round((dashboardData.teamMood.avgMood + dashboardData.teamMood.avgConfidence) / 2 * 10)}% across ${dashboardData.overview.totalAthletes} athletes`,
+        dashboardData.teamMood.avgStress > 6
+          ? `Stress levels elevated (${dashboardData.teamMood.avgStress}/10) - monitor closely`
+          : `Stress levels healthy (${dashboardData.teamMood.avgStress}/10)`,
+        `${dashboardData.overview.athletesWithConsent} athletes sharing data, ${dashboardData.overview.athletesWithoutConsent} pending consent`,
+        dashboardData.overview.atRiskCount > 0
+          ? `${dashboardData.overview.atRiskCount} athletes flagged as at-risk - review recommended`
+          : 'No athletes currently flagged as at-risk',
+      ]
+    : [];
 
-  const predictions = [
-    { type: 'RISK', title: 'Burnout Risk: Mike Chen', confidence: 78, impact: 'HIGH', timeframe: '10 days', description: '7-day declining readiness + elevated stress + sleep debt = 78% burnout probability' },
-    { type: 'PERFORMANCE', title: 'Peak Performance: Sarah Johnson', confidence: 92, impact: 'HIGH', timeframe: '5-7 days', description: 'Optimal readiness zone (95) with stable trends - ideal for high-pressure competition' },
-    { type: 'TREND', title: 'Team Stress Spike Forecast', confidence: 88, impact: 'HIGH', timeframe: '5 days', description: 'Predicts 20-25% stress increase during finals week with 8-10 point readiness decline' },
-  ];
+  const recommendations = dashboardData
+    ? [
+        ...(dashboardData.overview.crisisAlertsCount > 0
+          ? [
+              {
+                priority: 'CRITICAL',
+                action: `Review ${dashboardData.overview.crisisAlertsCount} crisis alert${dashboardData.overview.crisisAlertsCount > 1 ? 's' : ''}`,
+                rationale: 'Immediate attention required for athlete safety',
+              },
+            ]
+          : []),
+        ...(dashboardData.overview.atRiskCount > 0
+          ? [
+              {
+                priority: 'HIGH',
+                action: `Check in with ${dashboardData.overview.atRiskCount} at-risk athlete${dashboardData.overview.atRiskCount > 1 ? 's' : ''}`,
+                rationale: 'Declining mood/confidence or elevated stress detected',
+              },
+            ]
+          : []),
+        ...(dashboardData.teamMood.avgStress > 7
+          ? [
+              {
+                priority: 'MEDIUM',
+                action: 'Schedule stress management session',
+                rationale: `Team stress average is ${dashboardData.teamMood.avgStress}/10`,
+              },
+            ]
+          : []),
+      ]
+    : [];
 
-  const patterns = [
-    { category: 'ANOMALY', severity: 'CRITICAL', title: 'Unusual Stress Spike: Basketball Team', description: '35% stress increase across basketball team over 3 days', affectedAthletes: 8 },
-    { category: 'CORRELATION', severity: 'WARNING', title: 'Sleep < 6hrs → Injury Risk', description: '73% of injuries preceded by 2+ nights of <6hr sleep (2.4x risk)', affectedAthletes: 15 },
-    { category: 'TREND', severity: 'INFO', title: 'Meditation Adoption Spreading', description: '18 athletes now meditating without assignment (up from 5)', affectedAthletes: 18 },
-  ];
+  const predictions = dashboardData?.atRiskAthletes
+    ? dashboardData.atRiskAthletes.slice(0, 3).map((athlete: any) => ({
+        type: athlete.recentMood.mood <= 4 ? 'RISK' : 'TREND',
+        title: `Monitor: ${athlete.name}`,
+        confidence: 75,
+        impact: athlete.recentMood.stress >= 8 ? 'HIGH' : 'MEDIUM',
+        timeframe: '7 days',
+        description: `Recent metrics: Mood ${athlete.recentMood.mood}/10, Stress ${athlete.recentMood.stress}/10, Confidence ${athlete.recentMood.confidence}/10`,
+      }))
+    : [];
+
+  const patterns = dashboardData?.moodTrend
+    ? [
+        {
+          category: 'TREND',
+          severity: 'INFO',
+          title: 'Team Mood Trend Analysis',
+          description: `${dashboardData.overview.totalAthletes} athletes tracked over ${dashboardData.overview.timeRange} days`,
+          affectedAthletes: dashboardData.overview.totalAthletes,
+        },
+      ]
+    : [];
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#0f172a', '#1e293b', '#334155']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={styles.loadingText}>Loading insights...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#0f172a', '#1e293b', '#334155']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={48} color="#ef4444" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadDashboardData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -70,7 +169,7 @@ export default function InsightsScreen() {
               <Ionicons name="bulb" size={28} color="#fff" />
               <View style={styles.headerText}>
                 <Text style={styles.headerTitle}>AI Insights</Text>
-                <Text style={styles.headerSubtitle}>Automated intelligence</Text>
+                <Text style={styles.headerSubtitle}>Real-time team intelligence</Text>
               </View>
             </View>
           </View>
@@ -285,6 +384,40 @@ export default function InsightsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: Spacing.md,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: Typography.sizes?.md || 14,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  errorText: {
+    marginTop: Spacing.md,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: Typography.sizes?.md || 14,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: Typography.sizes?.md || 14,
+    fontWeight: '600',
+  },
   header: { paddingTop: 60, shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
   headerGradient: { paddingBottom: Spacing.lg },
   headerContent: { paddingHorizontal: Spacing.lg },
