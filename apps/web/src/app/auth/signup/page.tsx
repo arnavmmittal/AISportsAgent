@@ -56,21 +56,21 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen gradient-dark flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="glass-strong rounded-2xl shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="px-8 pt-8 pb-6 bg-gradient-to-br from-blue-600 to-indigo-600">
+          <div className="px-8 pt-8 pb-6 gradient-primary">
             <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-            <p className="text-blue-100">Join the AI Sports Agent platform</p>
+            <p className="text-white/80">Join the AI Sports Agent platform</p>
           </div>
 
           <div className="px-8 py-6">
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r">
-                <p className="text-sm text-red-700 flex items-center">
+              <div className="mb-6 p-4 bg-destructive/10 border-l-4 border-destructive rounded-r">
+                <p className="text-sm text-destructive flex items-center">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
@@ -83,7 +83,7 @@ export default function SignUpPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
                   Full Name
                 </label>
                 <input
@@ -95,7 +95,7 @@ export default function SignUpPage() {
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
                     fieldErrors.name
                       ? 'border-red-300 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-border focus:ring-primary'
                   }`}
                   placeholder="John Doe"
                 />
@@ -110,7 +110,7 @@ export default function SignUpPage() {
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                   Email Address
                 </label>
                 <input
@@ -122,7 +122,7 @@ export default function SignUpPage() {
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
                     fieldErrors.email
                       ? 'border-red-300 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-border focus:ring-primary'
                   }`}
                   placeholder="athlete@university.edu"
                 />
@@ -137,7 +137,7 @@ export default function SignUpPage() {
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
                   Password
                 </label>
                 <input
@@ -150,11 +150,11 @@ export default function SignUpPage() {
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
                     fieldErrors.password
                       ? 'border-red-300 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-border focus:ring-primary'
                   }`}
                   placeholder="Create a strong password"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Must be 8+ characters with uppercase, lowercase, and number
                 </p>
                 {fieldErrors.password && (
@@ -168,14 +168,14 @@ export default function SignUpPage() {
 
               {/* Role */}
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-2">
                   I am a...
                 </label>
                 <select
                   id="role"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ATHLETE' | 'COACH' })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
                 >
                   <option value="ATHLETE">Student Athlete</option>
                   <option value="COACH">Coach</option>
@@ -184,7 +184,7 @@ export default function SignUpPage() {
 
               {/* Sport */}
               <div>
-                <label htmlFor="sport" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="sport" className="block text-sm font-medium text-foreground mb-2">
                   Sport
                 </label>
                 <input
@@ -193,7 +193,7 @@ export default function SignUpPage() {
                   value={formData.sport}
                   onChange={(e) => setFormData({ ...formData, sport: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
                   placeholder="Basketball, Football, Soccer, etc."
                 />
               </div>
@@ -201,7 +201,7 @@ export default function SignUpPage() {
               {/* Year (only for athletes) */}
               {formData.role === 'ATHLETE' && (
                 <div>
-                  <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="year" className="block text-sm font-medium text-foreground mb-2">
                     Year
                   </label>
                   <select
@@ -209,7 +209,7 @@ export default function SignUpPage() {
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
                   >
                     <option value="">Select Year</option>
                     <option value="FRESHMAN">Freshman</option>
@@ -224,7 +224,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl mt-6"
+                className="w-full gradient-primary text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl mt-6"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
@@ -243,17 +243,17 @@ export default function SignUpPage() {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">Already have an account?</span>
+                <span className="px-4 bg-white text-muted-foreground">Already have an account?</span>
               </div>
             </div>
 
             {/* Sign In Link */}
             <Link
               href="/auth/signin"
-              className="block w-full text-center py-3 px-4 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="block w-full text-center py-3 px-4 chrome-border text-foreground rounded-lg font-semibold hover:bg-muted transition-colors"
             >
               Sign In
             </Link>
