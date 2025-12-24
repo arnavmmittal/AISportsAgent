@@ -47,8 +47,8 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-lg">
-      <p className="text-sm font-medium text-slate-200 mb-2">{label}</p>
+    <div className="glass-strong rounded-lg p-3 shadow-lg">
+      <p className="text-sm font-medium text-foreground mb-2">{label}</p>
       <div className="space-y-1">
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center gap-2">
@@ -56,8 +56,8 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-xs text-slate-300">{entry.name}:</span>
-            <span className="text-xs font-semibold text-white">{entry.value}</span>
+            <span className="text-xs text-muted-foreground">{entry.name}:</span>
+            <span className="text-xs font-semibold text-foreground">{entry.value}</span>
           </div>
         ))}
       </div>
@@ -89,14 +89,14 @@ export default function LineChart({
           margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
         >
           {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
           )}
 
           <XAxis
             dataKey={xAxisKey}
-            stroke="#94a3b8"
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
-            tickLine={{ stroke: '#475569' }}
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--border))' }}
           />
 
           <YAxis
@@ -106,13 +106,13 @@ export default function LineChart({
                     value: yAxisLabel,
                     angle: -90,
                     position: 'insideLeft',
-                    style: { fill: '#94a3b8', fontSize: 12 },
+                    style: { fill: 'hsl(var(--muted-foreground))', fontSize: 12 },
                   }
                 : undefined
             }
-            stroke="#94a3b8"
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
-            tickLine={{ stroke: '#475569' }}
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+            tickLine={{ stroke: 'hsl(var(--border))' }}
           />
 
           <Tooltip content={<CustomTooltip />} />
@@ -122,7 +122,7 @@ export default function LineChart({
               wrapperStyle={{ paddingTop: '20px' }}
               iconType="line"
               formatter={(value) => (
-                <span className="text-sm text-slate-300">{value}</span>
+                <span className="text-sm text-muted-foreground">{value}</span>
               )}
             />
           )}
@@ -158,8 +158,8 @@ export function MoodTrendChart({
     <LineChart
       data={data}
       lines={[
-        { key: 'mood', label: 'Mood', color: '#3b82f6' },
-        { key: 'confidence', label: 'Confidence', color: '#10b981' },
+        { key: 'mood', label: 'Mood', color: '#3B82F6' }, // Secondary blue
+        { key: 'confidence', label: 'Confidence', color: '#10B981' }, // Success green
       ]}
       xAxisKey="date"
       yAxisLabel="Score (1-10)"
@@ -179,7 +179,7 @@ export function ReadinessTrendChart({
   return (
     <LineChart
       data={data}
-      lines={[{ key: 'score', label: 'Readiness Score', color: '#22c55e', strokeWidth: 3 }]}
+      lines={[{ key: 'score', label: 'Readiness Score', color: '#10B981', strokeWidth: 3 }]} // Success green
       xAxisKey="date"
       yAxisLabel="Readiness (0-100)"
       height={height}
@@ -198,7 +198,7 @@ export function StressTrendChart({
   return (
     <LineChart
       data={data}
-      lines={[{ key: 'stress', label: 'Stress Level', color: '#ef4444', strokeWidth: 3 }]}
+      lines={[{ key: 'stress', label: 'Stress Level', color: '#EF4444', strokeWidth: 3 }]} // Destructive red
       xAxisKey="date"
       yAxisLabel="Stress (1-10)"
       height={height}
@@ -215,11 +215,11 @@ export function PerformanceTrendChart({
   height?: number;
 }) {
   const lines: LineConfig[] = [
-    { key: 'performance', label: 'Performance', color: '#8b5cf6', strokeWidth: 3 },
+    { key: 'performance', label: 'Performance', color: '#5BA3F5', strokeWidth: 3 }, // Accent light blue
   ];
 
   if (data.some((d) => d.readiness !== undefined)) {
-    lines.push({ key: 'readiness', label: 'Readiness', color: '#22c55e' });
+    lines.push({ key: 'readiness', label: 'Readiness', color: '#10B981' }); // Success green
   }
 
   return (
