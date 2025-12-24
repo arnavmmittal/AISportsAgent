@@ -133,24 +133,72 @@ model ChatSession {
 }
 
 model ChatSummary {
-  id             String      @id @default(cuid())
-  sessionId      String
-  athleteId      String
-  coachId        String?
-  summary        String
-  keyThemes      Json
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  athleteId String
+  athlete   Athlete      @relation(fields: [athleteId], references: [userId], onDelete: Cascade)
+
+  sessionId String?      // NULL for weekly summaries
+  session   ChatSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  coachId String?
+  coach   Coach?  @relation(fields: [coachId], references: [userId])
+
+  // Summary Type & Period [NEW]
+  summaryType SummaryType @default(SESSION) // SESSION | WEEKLY
+  weekStart   DateTime?   // Start of week (Monday 00:00) - for weekly summaries
+  weekEnd     DateTime?   // End of week (Sunday 23:59) - for weekly summaries
+
+  // Existing qualitative fields
+  summary        String // Human-readable summary text
+  keyThemes      Json   // String[] - encrypted for weekly summaries
   emotionalState String?
   actionItems    Json?
   messageCount   Int
-  generatedAt    DateTime    @default(now())
-  viewedByCoach  Boolean     @default(false)
-  viewedAt       DateTime?
-  Athlete        Athlete     @relation(fields: [athleteId], references: [userId])
-  ChatSession    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  // Structured Numeric Scores [NEW] - NOT encrypted (needed for aggregation)
+  moodScore          Float? // 1-10 average for week
+  stressScore        Float? // 1-10 average for week
+  sleepQualityScore  Float? // 1-10 average for week
+  confidenceScore    Float? // 1-10 average for week
+  sorenessScore      Float? // 0-10 average for week
+  workloadPerception Float? // 1-10 average for week
+
+  // Qualitative Insights [NEW] - encrypted
+  riskFlags            String[] @default([]) // ["elevated stress", "sleep disruption"]
+  recommendedActions   String[] @default([]) // ["breathing exercises", "sleep hygiene"]
+  athleteGoalsProgress Json?    // { "goal_id": { "status": "on_track" } }
+  adherenceNotes       String?  // "Engaged in 3/4 suggested exercises"
+
+  // Summary Metadata [NEW]
+  totalMessages   Int?   // Number of messages in aggregation period
+  sessionCount    Int?   // Number of sessions in week
+  avgResponseTime Float? // Average time between messages (seconds)
+  engagementScore Float? // 1-10 based on frequency/depth
+
+  // Privacy & Redaction [NEW]
+  redactedContent Boolean @default(false) // Always true for weekly summaries
+  redactionReason String? // "Contains sensitive health info"
+
+  // Existing audit fields
+  generatedAt   DateTime @default(now())
+  viewedByCoach Boolean  @default(false)
+  viewedAt      DateTime?
+
+  // Data Retention [NEW]
+  expiresAt DateTime? // Auto-delete after 12 weeks
+  revokedAt DateTime? // When athlete revokes consent
+
+  @@index([athleteId, weekStart, summaryType])
   @@index([athleteId, generatedAt])
   @@index([sessionId])
   @@index([viewedByCoach])
+  @@index([expiresAt]) // For cleanup jobs
+  @@index([summaryType, weekStart])
+  @@map("chat_summaries")
 }
 
 model Coach {
@@ -161,6 +209,7 @@ model Coach {
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   User          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChatSummary   ChatSummary[]
   CoachNote     CoachNote[]
   CoachAthletes CoachAthleteRelation[] // Athletes assigned to this coach
 
@@ -702,4 +751,9 @@ enum Severity {
   HIGH
   MEDIUM
   LOW
+}
+
+enum SummaryType {
+  SESSION // Existing per-session summaries
+  WEEKLY  // New weekly aggregated summaries
 }
