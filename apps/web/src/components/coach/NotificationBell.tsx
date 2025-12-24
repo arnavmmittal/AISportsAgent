@@ -90,7 +90,7 @@ export function NotificationBell() {
       case 'MEDIUM':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-gray-100 text-foreground border-border';
     }
   };
 
@@ -119,10 +119,10 @@ export function NotificationBell() {
 
         <div className="max-h-96 overflow-y-auto">
           {isLoading && notifications.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">Loading...</div>
+            <div className="p-8 text-center text-muted-foreground">Loading...</div>
           ) : notifications.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <Bell className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+            <div className="p-8 text-center text-muted-foreground">
+              <Bell className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
               <p>No notifications</p>
             </div>
           ) : (
@@ -130,7 +130,7 @@ export function NotificationBell() {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 hover:bg-gray-50 transition-colors ${
+                  className={`p-4 hover:bg-background transition-colors ${
                     !notification.read ? 'bg-blue-50' : ''
                   }`}
                 >
@@ -142,7 +142,7 @@ export function NotificationBell() {
                         </div>
                       ) : (
                         <div className="p-2 rounded-full bg-blue-100">
-                          <Bell className="h-4 w-4 text-blue-600" />
+                          <Bell className="h-4 w-4 text-primary" />
                         </div>
                       )}
                     </div>
@@ -153,7 +153,7 @@ export function NotificationBell() {
                         {!notification.read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="text-gray-400 hover:text-gray-600"
+                            className="text-muted-foreground hover:text-muted-foreground"
                             title="Mark as read"
                           >
                             <X className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function NotificationBell() {
                         )}
                       </div>
 
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {notification.message}
                       </p>
 
@@ -172,7 +172,7 @@ export function NotificationBell() {
                         >
                           {notification.severity}
                         </Badge>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           {new Date(notification.createdAt).toLocaleString()}
                         </span>
                       </div>

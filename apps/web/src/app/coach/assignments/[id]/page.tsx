@@ -89,10 +89,10 @@ export default function AssignmentDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-          <p className="mt-4 text-gray-600">Loading assignment...</p>
+          <p className="mt-4 text-muted-foreground">Loading assignment...</p>
         </div>
       </div>
     );
@@ -100,9 +100,9 @@ export default function AssignmentDetailPage() {
 
   if (!assignment) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-xl text-gray-600">Assignment not found</p>
+          <p className="text-xl text-muted-foreground">Assignment not found</p>
           <Link href="/coach/assignments" className="mt-4 inline-block text-purple-600 hover:text-purple-700">
             ← Back to Assignments
           </Link>
@@ -114,9 +114,9 @@ export default function AssignmentDetailPage() {
   const stats = getSubmissionStats();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="glass-strong shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
             href="/coach/assignments"
@@ -130,10 +130,10 @@ export default function AssignmentDetailPage() {
 
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
                 {assignment.title}
               </h1>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 {assignment.description}
               </p>
 
@@ -151,7 +151,7 @@ export default function AssignmentDetailPage() {
                   </span>
                 )}
 
-                <span className="text-gray-500">
+                <span className="text-muted-foreground">
                   Created {formatDate(assignment.createdAt)}
                 </span>
               </div>
@@ -160,9 +160,9 @@ export default function AssignmentDetailPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-gray-500 text-sm font-medium mb-1">Total Athletes</div>
-              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+            <div className="bg-background rounded-lg p-4">
+              <div className="text-muted-foreground text-sm font-medium mb-1">Total Athletes</div>
+              <div className="text-2xl font-bold text-foreground">{stats.total}</div>
             </div>
 
             <div className="bg-green-50 rounded-lg p-4">
@@ -185,20 +185,20 @@ export default function AssignmentDetailPage() {
 
       {/* Submissions List */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold text-foreground mb-4">
           Athlete Responses ({stats.submitted} of {stats.total})
         </h2>
 
         {submissions.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <p className="text-gray-500">No submissions yet</p>
+          <div className="glass-strong rounded-lg shadow p-12 text-center">
+            <p className="text-muted-foreground">No submissions yet</p>
           </div>
         ) : (
           <div className="space-y-4">
             {submissions.map((submission) => (
               <div
                 key={submission.id}
-                className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6"
+                className="glass-strong rounded-lg shadow hover:shadow-md transition-shadow p-6"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
@@ -208,10 +208,10 @@ export default function AssignmentDetailPage() {
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-foreground">
                         {submission.athlete.name}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {submission.athlete.athlete.sport}
                         {submission.athlete.athlete.year && ` • ${submission.athlete.athlete.year}`}
                         {submission.athlete.athlete.teamPosition && ` • ${submission.athlete.athlete.teamPosition}`}
@@ -240,14 +240,14 @@ export default function AssignmentDetailPage() {
 
                 {submission.status !== 'PENDING' && submission.response && (
                   <>
-                    <div className="bg-gray-50 rounded-lg p-4 mb-3">
-                      <p className="text-gray-700 whitespace-pre-wrap">
+                    <div className="bg-background rounded-lg p-4 mb-3">
+                      <p className="text-muted-foreground whitespace-pre-wrap">
                         {submission.response}
                       </p>
                     </div>
 
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500">
+                      <span className="text-muted-foreground">
                         Submitted {formatDate(submission.submittedAt)}
                       </span>
 
@@ -282,7 +282,7 @@ export default function AssignmentDetailPage() {
                 )}
 
                 {submission.status === 'PENDING' && (
-                  <p className="text-gray-500 italic text-sm">
+                  <p className="text-muted-foreground italic text-sm">
                     Waiting for athlete to submit their response
                   </p>
                 )}

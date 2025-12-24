@@ -62,7 +62,7 @@ export default function TabNavigation({
                   // Pills variant
                   variant === 'pills' &&
                     (isActive
-                      ? 'bg-blue-600 text-white rounded-lg'
+                      ? 'bg-primary text-white rounded-lg'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg'),
                   // Underline variant
                   variant === 'underline' &&
@@ -127,7 +127,7 @@ export function ControlledTabs({
                     : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent hover:border-slate-600'),
                 variant === 'pills' &&
                   (isActive
-                    ? 'bg-blue-600 text-white rounded-lg'
+                    ? 'bg-primary text-white rounded-lg'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg'),
                 variant === 'underline' &&
                   (isActive
@@ -190,7 +190,7 @@ export function VerticalTabs({
               className={cn(
                 'w-full px-4 py-3 text-left text-sm font-medium transition-all duration-200 flex items-center gap-3 rounded-lg',
                 isActive
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               )}
             >
@@ -246,7 +246,7 @@ export function SegmentedControl({
             className={cn(
               'px-4 py-2 text-sm font-medium transition-all duration-200 rounded-md flex items-center gap-2',
               isActive
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-primary text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
             )}
           >

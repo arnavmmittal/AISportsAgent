@@ -67,7 +67,7 @@ export default function TeamPulse() {
             onClick={() => setTimeRange(range)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               timeRange === range
-                ? 'bg-blue-600 text-white'
+                ? 'bg-primary text-white'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >

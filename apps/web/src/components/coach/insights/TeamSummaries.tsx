@@ -193,7 +193,7 @@ export default function TeamSummaries() {
             onClick={() => setSelectedPeriod(period.id)}
             className={`px-4 py-2 rounded-lg border transition-all ${
               selectedPeriod === period.id
-                ? 'bg-blue-600 border-blue-500 text-white'
+                ? 'bg-primary border-blue-500 text-white'
                 : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
             }`}
           >

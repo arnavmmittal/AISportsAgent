@@ -65,8 +65,8 @@ export default function ReadinessBreakdown({
           {score}
         </div>
         <div className="flex-1">
-          <div className="text-sm font-semibold text-gray-900">{level}</div>
-          <div className="text-xs text-gray-600">
+          <div className="text-sm font-semibold text-foreground">{level}</div>
+          <div className="text-xs text-muted-foreground">
             Confidence: {confidencePercentage}% • Source: {getSourceIcon(signals.mood.source)}
           </div>
         </div>
@@ -76,9 +76,9 @@ export default function ReadinessBreakdown({
 
   // Expanded view
   return (
-    <div className="border border-gray-200 rounded-lg bg-white shadow-sm">
+    <div className="border border-border rounded-lg glass-strong shadow-sm">
       {/* Header */}
-      <div className={\`p-4 border-b border-gray-200 \${getReadinessColorClass(level)}\`}>
+      <div className={\`p-4 border-b border-border \${getReadinessColorClass(level)}\`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold">Readiness Score: {score}</h3>
@@ -93,14 +93,14 @@ export default function ReadinessBreakdown({
 
       {/* Signal Breakdown */}
       <div className="p-4 space-y-3">
-        <h4 className="text-sm font-semibold text-gray-700">Signal Breakdown:</h4>
+        <h4 className="text-sm font-semibold text-muted-foreground">Signal Breakdown:</h4>
 
         {/* Mood */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-xl">😊</span>
-            <span className="text-sm font-medium text-gray-700">Mood</span>
-            <span className="text-xs text-gray-500">({Math.round(signals.mood.weight * 100)}%)</span>
+            <span className="text-sm font-medium text-muted-foreground">Mood</span>
+            <span className="text-xs text-muted-foreground">({Math.round(signals.mood.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className={\`text-sm font-bold \${getScoreColor(signals.mood.value)}\`}>
@@ -116,8 +116,8 @@ export default function ReadinessBreakdown({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-xl">😰</span>
-            <span className="text-sm font-medium text-gray-700">Stress</span>
-            <span className="text-xs text-gray-500">({Math.round(signals.stress.weight * 100)}%)</span>
+            <span className="text-sm font-medium text-muted-foreground">Stress</span>
+            <span className="text-xs text-muted-foreground">({Math.round(signals.stress.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className={\`text-sm font-bold \${getScoreColor(10 - signals.stress.value)}\`}>
@@ -133,8 +133,8 @@ export default function ReadinessBreakdown({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-xl">💪</span>
-            <span className="text-sm font-medium text-gray-700">Confidence</span>
-            <span className="text-xs text-gray-500">({Math.round(signals.confidence.weight * 100)}%)</span>
+            <span className="text-sm font-medium text-muted-foreground">Confidence</span>
+            <span className="text-xs text-muted-foreground">({Math.round(signals.confidence.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className={\`text-sm font-bold \${getScoreColor(signals.confidence.value)}\`}>
@@ -150,8 +150,8 @@ export default function ReadinessBreakdown({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-xl">😴</span>
-            <span className="text-sm font-medium text-gray-700">Sleep</span>
-            <span className="text-xs text-gray-500">({Math.round(signals.sleep.weight * 100)}%)</span>
+            <span className="text-sm font-medium text-muted-foreground">Sleep</span>
+            <span className="text-xs text-muted-foreground">({Math.round(signals.sleep.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className={\`text-sm font-bold \${getScoreColor(signals.sleep.value)}\`}>
@@ -167,8 +167,8 @@ export default function ReadinessBreakdown({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-xl">🎯</span>
-            <span className="text-sm font-medium text-gray-700">Engagement</span>
-            <span className="text-xs text-gray-500">({Math.round(signals.engagement.weight * 100)}%)</span>
+            <span className="text-sm font-medium text-muted-foreground">Engagement</span>
+            <span className="text-xs text-muted-foreground">({Math.round(signals.engagement.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className={\`text-sm font-bold \${getScoreColor(signals.engagement.value)}\`}>
@@ -183,7 +183,7 @@ export default function ReadinessBreakdown({
 
       {/* Risk Penalties */}
       {signals.riskPenalty > 0 && (
-        <div className="border-t border-gray-200 bg-red-50 p-4">
+        <div className="border-t border-border bg-red-50 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,8 +197,8 @@ export default function ReadinessBreakdown({
       )}
 
       {/* Calculation Summary */}
-      <div className="border-t border-gray-200 bg-gray-50 p-4">
-        <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+      <div className="border-t border-border bg-background p-4">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
           <span>Raw Score:</span>
           <span className="font-mono">{signals.rawScore}</span>
         </div>
@@ -208,14 +208,14 @@ export default function ReadinessBreakdown({
             <span className="font-mono">-{signals.riskPenalty}</span>
           </div>
         )}
-        <div className="flex items-center justify-between text-sm font-semibold text-gray-900 pt-1 border-t border-gray-200">
+        <div className="flex items-center justify-between text-sm font-semibold text-foreground pt-1 border-t border-border">
           <span>Final Score:</span>
           <span className="font-mono">{signals.finalScore}</span>
         </div>
       </div>
 
       {/* Data Source Legend */}
-      <div className="border-t border-gray-200 p-4 bg-blue-50">
+      <div className="border-t border-border p-4 bg-blue-50">
         <div className="text-xs text-blue-800">
           <div className="font-semibold mb-1">Data Sources:</div>
           <div className="space-y-1">

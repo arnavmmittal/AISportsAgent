@@ -234,7 +234,7 @@ export default function SubmissionReview() {
                   <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition-colors">
                     Provide Feedback
                   </button>
-                  <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors">
+                  <button className="px-4 py-2 bg-primary hover:opacity-90 text-white text-sm rounded-md transition-colors">
                     Mark Excellent
                   </button>
                   <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-md transition-colors">

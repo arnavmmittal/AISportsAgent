@@ -106,21 +106,21 @@ export default async function CoachInsightsPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="glass-strong shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 Team Insights
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-muted-foreground">
                 Mental performance trends and crisis alerts
               </p>
             </div>
             <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="px-4 py-2 text-sm font-medium text-muted-foreground glass-strong border border-border rounded-lg hover:bg-background">
                 ← Back to Dashboard
               </button>
             </Link>
@@ -136,8 +136,8 @@ export default async function CoachInsightsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Active Athletes</p>
-                  <p className="text-2xl font-bold text-gray-900">{activeAthletes}/{totalAthletes}</p>
+                  <p className="text-sm text-muted-foreground">Active Athletes</p>
+                  <p className="text-2xl font-bold text-foreground">{activeAthletes}/{totalAthletes}</p>
                 </div>
                 <Users className="size-8 text-blue-500" />
               </div>
@@ -148,8 +148,8 @@ export default async function CoachInsightsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Team Avg Mood</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-muted-foreground">Team Avg Mood</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {teamAvgMood > 0 ? teamAvgMood.toFixed(1) : '--'}/10
                   </p>
                 </div>
@@ -162,8 +162,8 @@ export default async function CoachInsightsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Avg Chat Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">{avgChatSessions.toFixed(1)}</p>
+                  <p className="text-sm text-muted-foreground">Avg Chat Sessions</p>
+                  <p className="text-2xl font-bold text-foreground">{avgChatSessions.toFixed(1)}</p>
                 </div>
                 <MessageCircle className="size-8 text-purple-500" />
               </div>
@@ -174,8 +174,8 @@ export default async function CoachInsightsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Crisis Alerts (30d)</p>
-                  <p className="text-2xl font-bold text-gray-900">{crisisAlerts.length}</p>
+                  <p className="text-sm text-muted-foreground">Crisis Alerts (30d)</p>
+                  <p className="text-2xl font-bold text-foreground">{crisisAlerts.length}</p>
                 </div>
                 <AlertTriangle className="size-8 text-red-500" />
               </div>
@@ -224,10 +224,10 @@ export default async function CoachInsightsPage() {
                           >
                             {alert.severity}
                           </Badge>
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-foreground">
                             {alert.Athlete.User.name}
                           </span>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-muted-foreground">
                             {new Date(alert.detectedAt).toLocaleDateString()} at{' '}
                             {new Date(alert.detectedAt).toLocaleTimeString([], {
                               hour: '2-digit',
@@ -235,7 +235,7 @@ export default async function CoachInsightsPage() {
                             })}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700 italic mb-2">
+                        <p className="text-sm text-muted-foreground italic mb-2">
                           "{alert.Message.content.substring(0, 150)}
                           {alert.Message.content.length > 150 ? '...' : ''}"
                         </p>
@@ -258,7 +258,7 @@ export default async function CoachInsightsPage() {
             ) : (
               <div className="text-center py-12">
                 <AlertTriangle className="size-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No crisis alerts in the last 30 days</p>
+                <p className="text-muted-foreground">No crisis alerts in the last 30 days</p>
                 <p className="text-sm text-gray-400 mt-2">
                   The system automatically flags concerning language for review
                 </p>
@@ -277,35 +277,35 @@ export default async function CoachInsightsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                <span className="text-sm font-medium text-muted-foreground">
                   Athletes logging moods regularly
                 </span>
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-lg font-bold text-foreground">
                   {athletes.filter((a) => a.MoodLog && a.MoodLog.length >= 7).length}/{totalAthletes}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                <span className="text-sm font-medium text-muted-foreground">
                   Athletes using AI chat
                 </span>
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-lg font-bold text-foreground">
                   {athletes.filter((a) => a.ChatSession && a.ChatSession.length > 0).length}/{totalAthletes}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                <span className="text-sm font-medium text-muted-foreground">
                   Total mood logs
                 </span>
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-lg font-bold text-foreground">
                   {allMoodLogs.length}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                <span className="text-sm font-medium text-muted-foreground">
                   Total chat messages
                 </span>
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-lg font-bold text-foreground">
                   {athletes.reduce((sum, a) => sum + (a.ChatSession?.reduce((s, sess) => s + (sess.Message?.length || 0), 0) || 0), 0)}
                 </span>
               </div>
@@ -322,10 +322,10 @@ export default async function CoachInsightsPage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Mood Levels</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Mood Levels</h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">High (7-10)</span>
+                      <span className="text-xs text-muted-foreground">High (7-10)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-green-500 rounded-full h-2"
@@ -334,12 +334,12 @@ export default async function CoachInsightsPage() {
                           }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-foreground">
                         {Math.round((allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100)}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">Medium (4-6)</span>
+                      <span className="text-xs text-muted-foreground">Medium (4-6)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-yellow-500 rounded-full h-2"
@@ -348,12 +348,12 @@ export default async function CoachInsightsPage() {
                           }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-foreground">
                         {Math.round((allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100)}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">Low (1-3)</span>
+                      <span className="text-xs text-muted-foreground">Low (1-3)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-red-500 rounded-full h-2"
@@ -362,7 +362,7 @@ export default async function CoachInsightsPage() {
                           }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-foreground">
                         {Math.round((allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100)}%
                       </span>
                     </div>
@@ -370,10 +370,10 @@ export default async function CoachInsightsPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Stress Levels</h4>
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Stress Levels</h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">Low (1-4)</span>
+                      <span className="text-xs text-muted-foreground">Low (1-4)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-green-500 rounded-full h-2"
@@ -382,12 +382,12 @@ export default async function CoachInsightsPage() {
                           }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-foreground">
                         {Math.round((allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100)}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">Medium (5-7)</span>
+                      <span className="text-xs text-muted-foreground">Medium (5-7)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-yellow-500 rounded-full h-2"
@@ -396,12 +396,12 @@ export default async function CoachInsightsPage() {
                           }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-foreground">
                         {Math.round((allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100)}%
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600">High (8-10)</span>
+                      <span className="text-xs text-muted-foreground">High (8-10)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-red-500 rounded-full h-2"
@@ -410,7 +410,7 @@ export default async function CoachInsightsPage() {
                           }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-foreground">
                         {Math.round((allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100)}%
                       </span>
                     </div>

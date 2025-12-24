@@ -140,7 +140,7 @@ export default function IndividualInsights() {
             onClick={() => setSelectedAthlete(athlete.athleteId)}
             className={`flex-shrink-0 px-4 py-3 rounded-lg border transition-all ${
               selectedAthlete === athlete.athleteId
-                ? 'bg-blue-600 border-blue-500 text-white'
+                ? 'bg-primary border-blue-500 text-white'
                 : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
             }`}
           >

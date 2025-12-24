@@ -194,7 +194,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-6 text-gray-700 font-semibold text-lg">Loading athlete data...</p>
+          <p className="mt-6 text-muted-foreground font-semibold text-lg">Loading athlete data...</p>
         </div>
       </div>
     );
@@ -203,14 +203,14 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
   if (error || !athleteData) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="text-center bg-white rounded-2xl shadow-2xl p-12 max-w-md">
+        <div className="text-center glass-strong rounded-2xl shadow-2xl p-12 max-w-md">
           <div className="text-red-500 text-7xl mb-6">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-foreground mb-4">
             {error || 'Athlete not found'}
           </h2>
           <button
             onClick={() => router.back()}
-            className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold shadow-lg hover:shadow-xl transition-all"
+            className="px-8 py-3 bg-primary text-white rounded-xl hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all"
           >
             Go Back
           </button>
@@ -239,18 +239,18 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
         <div className="max-w-4xl mx-auto px-4 py-8">
           <button
             onClick={() => router.back()}
-            className="mb-6 text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
+            className="mb-6 text-primary hover:text-blue-700 font-semibold flex items-center gap-2"
           >
             ← Back to Athletes
           </button>
 
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center border-2 border-yellow-200">
+          <div className="glass-strong rounded-2xl shadow-xl p-12 text-center border-2 border-yellow-200">
             <div className="text-6xl mb-6">🔒</div>
-            <h2 className="text-3xl font-black text-gray-900 mb-4">
+            <h2 className="text-3xl font-black text-foreground mb-4">
               {athlete.name}
             </h2>
-            <p className="text-gray-600 mb-2">{athlete.sport} • {athlete.year}</p>
-            <p className="text-gray-600 mb-8">{athlete.teamPosition}</p>
+            <p className="text-muted-foreground mb-2">{athlete.sport} • {athlete.year}</p>
+            <p className="text-muted-foreground mb-8">{athlete.teamPosition}</p>
 
             <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mb-8">
               <p className="text-yellow-800 font-semibold">
@@ -261,19 +261,19 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               </p>
             </div>
 
-            <div className="text-left bg-gray-50 rounded-xl p-6">
-              <h3 className="font-bold text-gray-900 mb-3">Relationship Notes</h3>
+            <div className="text-left bg-background rounded-xl p-6">
+              <h3 className="font-bold text-foreground mb-3">Relationship Notes</h3>
               <textarea
                 value={relationshipNotes}
                 onChange={(e) => setRelationshipNotes(e.target.value)}
                 placeholder="Add private notes about this athlete..."
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border-2 border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 rows={4}
               />
               <button
                 onClick={handleUpdateRelationshipNotes}
                 disabled={saving}
-                className="mt-3 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
+                className="mt-3 px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 font-semibold disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Notes'}
               </button>
@@ -290,18 +290,18 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
         {/* Header */}
         <button
           onClick={() => router.back()}
-          className="mb-6 text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2 transition-colors"
+          className="mb-6 text-primary hover:text-blue-700 font-semibold flex items-center gap-2 transition-colors"
         >
           ← Back to Athletes
         </button>
 
         {/* Athlete Profile Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+        <div className="glass-strong rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-black text-gray-900 mb-2">{athlete.name}</h1>
-              <p className="text-xl text-gray-600 mb-3">{athlete.sport} • {athlete.year} • {athlete.teamPosition}</p>
-              <p className="text-sm text-gray-500">{athlete.email}</p>
+              <h1 className="text-4xl font-black text-foreground mb-2">{athlete.name}</h1>
+              <p className="text-xl text-muted-foreground mb-3">{athlete.sport} • {athlete.year} • {athlete.teamPosition}</p>
+              <p className="text-sm text-muted-foreground">{athlete.email}</p>
               <div className="mt-4 flex gap-3">
                 <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
                   athlete.riskLevel === 'LOW'
@@ -364,8 +364,8 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
         {/* Mood Trend Chart */}
         {chartData.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+          <div className="glass-strong rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
               <span className="text-3xl">📊</span>
               Mood History (Last 14 Days)
             </h2>
@@ -400,8 +400,8 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Goals */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+          <div className="glass-strong rounded-2xl shadow-xl p-8 border border-gray-100">
+            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
               <span className="text-3xl">🎯</span>
               Goals
             </h2>
@@ -415,23 +415,23 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                         ? 'border-green-300 bg-green-50'
                         : goal.status === 'IN_PROGRESS'
                         ? 'border-blue-300 bg-blue-50'
-                        : 'border-gray-300 bg-gray-50'
+                        : 'border-border bg-background'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-gray-900">{goal.title}</h3>
+                      <h3 className="font-bold text-foreground">{goal.title}</h3>
                       <span className={`text-xs px-2 py-1 rounded font-bold ${
                         goal.status === 'COMPLETED'
                           ? 'bg-green-200 text-green-800'
                           : goal.status === 'IN_PROGRESS'
                           ? 'bg-blue-200 text-blue-800'
-                          : 'bg-gray-200 text-gray-800'
+                          : 'bg-gray-200 text-foreground'
                       }`}>
                         {goal.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{goal.description}</p>
-                    <div className="flex gap-2 text-xs text-gray-500">
+                    <p className="text-sm text-muted-foreground mb-2">{goal.description}</p>
+                    <div className="flex gap-2 text-xs text-muted-foreground">
                       <span>📌 {goal.type}</span>
                       <span>•</span>
                       <span>🗓️ {new Date(goal.targetDate).toLocaleDateString()}</span>
@@ -439,14 +439,14 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-8">No goals yet</p>
+                <p className="text-muted-foreground text-center py-8">No goals yet</p>
               )}
             </div>
           </div>
 
           {/* Coach Notes */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+          <div className="glass-strong rounded-2xl shadow-xl p-8 border border-gray-100">
+            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
               <span className="text-3xl">📝</span>
               Coach Notes
             </h2>
@@ -455,21 +455,21 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                 coachNotes.map((note) => (
                   <div
                     key={note.id}
-                    className="border-2 border-gray-200 rounded-xl p-4 bg-gray-50"
+                    className="border-2 border-border rounded-xl p-4 bg-background"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <span className="text-xs px-2 py-1 rounded bg-blue-200 text-blue-800 font-bold">
                         {note.category}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(note.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700">{note.content}</p>
+                    <p className="text-sm text-muted-foreground">{note.content}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-8">No notes yet</p>
+                <p className="text-muted-foreground text-center py-8">No notes yet</p>
               )}
             </div>
           </div>
@@ -486,7 +486,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               {crisisAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="bg-white border-2 border-red-300 rounded-xl p-4"
+                  className="glass-strong border-2 border-red-300 rounded-xl p-4"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`text-sm px-3 py-1 rounded-lg font-bold ${
@@ -496,7 +496,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                     }`}>
                       {alert.severity} SEVERITY
                     </span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {new Date(alert.detectedAt).toLocaleString()}
                     </span>
                   </div>
@@ -517,26 +517,26 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       {/* Check-In Modal */}
       {showCheckIn && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <h3 className="text-2xl font-black text-gray-900 mb-4">Send Check-In</h3>
+          <div className="glass-strong rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h3 className="text-2xl font-black text-foreground mb-4">Send Check-In</h3>
             <textarea
               value={checkInMessage}
               onChange={(e) => setCheckInMessage(e.target.value)}
               placeholder="Write your message to the athlete..."
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-4"
+              className="w-full px-4 py-3 border-2 border-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-4"
               rows={6}
             />
             <div className="flex gap-3">
               <button
                 onClick={() => setShowCheckIn(false)}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-colors"
+                className="flex-1 px-6 py-3 border-2 border-border text-muted-foreground rounded-xl hover:bg-background font-semibold transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSendCheckIn}
                 disabled={saving || !checkInMessage.trim()}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold disabled:opacity-50 transition-colors"
+                className="flex-1 px-6 py-3 bg-primary text-white rounded-xl hover:opacity-90 font-semibold disabled:opacity-50 transition-colors"
               >
                 {saving ? 'Sending...' : 'Send'}
               </button>
@@ -548,12 +548,12 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       {/* Add Note Modal */}
       {showAddNote && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <h3 className="text-2xl font-black text-gray-900 mb-4">Add Coach Note</h3>
+          <div className="glass-strong rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h3 className="text-2xl font-black text-foreground mb-4">Add Coach Note</h3>
             <select
               value={noteCategory}
               onChange={(e) => setNoteCategory(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4 font-semibold"
+              className="w-full px-4 py-3 border-2 border-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4 font-semibold"
             >
               <option value="GENERAL">General</option>
               <option value="PERFORMANCE">Performance</option>
@@ -565,13 +565,13 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Write your note..."
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-4"
+              className="w-full px-4 py-3 border-2 border-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-4"
               rows={6}
             />
             <div className="flex gap-3">
               <button
                 onClick={() => setShowAddNote(false)}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-colors"
+                className="flex-1 px-6 py-3 border-2 border-border text-muted-foreground rounded-xl hover:bg-background font-semibold transition-colors"
               >
                 Cancel
               </button>

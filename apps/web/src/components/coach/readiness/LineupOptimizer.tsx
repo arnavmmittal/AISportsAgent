@@ -122,7 +122,7 @@ export default function LineupOptimizer() {
             onClick={() => setSelectedGame(game.id)}
             className={`flex-shrink-0 px-4 py-3 rounded-lg border transition-all ${
               selectedGame === game.id
-                ? 'bg-blue-600 border-blue-500 text-white'
+                ? 'bg-primary border-blue-500 text-white'
                 : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
             }`}
           >
@@ -179,7 +179,7 @@ export default function LineupOptimizer() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {index + 1}
                     </div>
                     <div>
