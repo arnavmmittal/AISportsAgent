@@ -48,21 +48,21 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen gradient-dark flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="glass-strong rounded-2xl shadow-xl overflow-hidden blue-glow">
           {/* Header */}
-          <div className="px-8 pt-8 pb-6 bg-gradient-to-br from-blue-600 to-indigo-600">
+          <div className="px-8 pt-8 pb-6 gradient-primary">
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-blue-100">Sign in to continue your journey</p>
+            <p className="text-white/80">Sign in to continue your journey</p>
           </div>
 
           <div className="px-8 py-6">
             {/* Success Message */}
             {success && (
-              <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r">
-                <p className="text-sm text-green-700 flex items-center">
+              <div className="mb-6 p-4 bg-success/10 border-l-4 border-success rounded-r">
+                <p className="text-sm text-success flex items-center">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
@@ -73,8 +73,8 @@ export default function SignInPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r">
-                <p className="text-sm text-red-700 flex items-center">
+              <div className="mb-6 p-4 bg-destructive/10 border-l-4 border-destructive rounded-r">
+                <p className="text-sm text-destructive flex items-center">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
@@ -86,7 +86,7 @@ export default function SignInPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                   Email Address
                 </label>
                 <input
@@ -95,13 +95,13 @@ export default function SignInPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
                   placeholder="athlete@university.edu"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
                   Password
                 </label>
                 <input
@@ -110,7 +110,7 @@ export default function SignInPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
                   placeholder="Enter your password"
                 />
               </div>
@@ -118,7 +118,7 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                className="w-full gradient-primary text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl blue-glow-sm"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
@@ -137,17 +137,17 @@ export default function SignInPage() {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">New to AI Sports Agent?</span>
+                <span className="px-4 bg-card text-muted-foreground">New to AI Sports Agent?</span>
               </div>
             </div>
 
             {/* Sign Up Link */}
             <Link
               href="/auth/signup"
-              className="block w-full text-center py-3 px-4 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="block w-full text-center py-3 px-4 chrome-border text-foreground rounded-lg font-semibold hover:bg-muted transition-colors"
             >
               Create Account
             </Link>
@@ -155,18 +155,18 @@ export default function SignInPage() {
 
           {/* Demo Account Info */}
           <div className="px-8 pb-6">
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+            <div className="p-4 bg-muted rounded-lg chrome-border">
+              <p className="text-xs font-semibold text-foreground mb-2 flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 Demo Account (For Testing)
               </p>
               <div className="space-y-1">
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   <span className="font-medium">Email:</span> demo@athlete.com
                 </p>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   <span className="font-medium">Password:</span> demo123
                 </p>
               </div>
