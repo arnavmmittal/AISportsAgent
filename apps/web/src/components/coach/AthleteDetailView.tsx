@@ -12,6 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import WeeklySummaryDrawer from './weekly-summary/WeeklySummaryDrawer';
 
 interface AthleteData {
   consentGranted: boolean;
@@ -391,6 +392,11 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             </div>
           </div>
         )}
+
+        {/* Weekly Summaries Section */}
+        <div className="mb-8">
+          <WeeklySummaryDrawer athleteId={athleteId} athleteName={athlete.name} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Goals */}
