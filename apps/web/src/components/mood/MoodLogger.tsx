@@ -68,20 +68,20 @@ export function MoodLogger() {
   if (!session?.user) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Please sign in to log your mood</p>
+        <p className="text-muted-foreground">Please sign in to log your mood</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Daily Check-In</h2>
-        <p className="text-gray-600 mb-6">How are you feeling today?</p>
+      <div className="glass-strong rounded-lg p-6">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Daily Check-In</h2>
+        <p className="text-muted-foreground mb-6">How are you feeling today?</p>
 
         {showSuccess && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800 font-medium">Mood logged successfully!</p>
+          <div className="mb-4 p-4 bg-success/10 border border-success/20 rounded-lg">
+            <p className="text-success font-medium">Mood logged successfully!</p>
           </div>
         )}
 
@@ -136,7 +136,7 @@ export function MoodLogger() {
 
           {/* Sleep Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Hours of Sleep (Optional)
             </label>
             <input
@@ -149,20 +149,20 @@ export function MoodLogger() {
                 const value = e.target.value ? parseFloat(e.target.value) : 0;
                 setFormData((prev) => ({ ...prev, sleep: value || undefined }));
               }}
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-input border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="7.5"
             />
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Notes (Optional)
             </label>
             <textarea
               value={formData.notes || ''}
               onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-input border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               rows={3}
               placeholder="Any specific thoughts or events affecting your mood today?"
             />
@@ -172,7 +172,7 @@ export function MoodLogger() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full gradient-primary text-white py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all blue-glow-sm"
           >
             {isSubmitting ? 'Saving...' : 'Log Mood'}
           </button>
@@ -203,18 +203,32 @@ function SliderField({
   highLabel,
   color,
 }: SliderFieldProps) {
-  const colorClasses = {
-    blue: 'bg-blue-600',
-    green: 'bg-green-600',
-    orange: 'bg-orange-600',
-    purple: 'bg-purple-600',
+  const colorConfig = {
+    blue: {
+      textClass: 'text-primary',
+      hex: '#1E40AF', // Primary blue
+    },
+    green: {
+      textClass: 'text-success',
+      hex: '#10B981', // Success green
+    },
+    orange: {
+      textClass: 'text-warning',
+      hex: '#F59E0B', // Warning amber
+    },
+    purple: {
+      textClass: 'text-accent',
+      hex: '#5BA3F5', // Accent light blue
+    },
   };
+
+  const config = colorConfig[color];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
-        <span className={`text-2xl font-bold ${colorClasses[color].replace('bg-', 'text-')}`}>
+        <label className="text-sm font-medium text-foreground">{label}</label>
+        <span className={`text-2xl font-bold ${config.textClass}`}>
           {value}
         </span>
       </div>
@@ -226,28 +240,12 @@ function SliderField({
         onChange={(e) => onChange(parseInt(e.target.value))}
         className="w-full h-2 rounded-lg appearance-none cursor-pointer"
         style={{
-          background: `linear-gradient(to right, ${
-            color === 'blue'
-              ? '#2563eb'
-              : color === 'green'
-              ? '#16a34a'
-              : color === 'orange'
-              ? '#ea580c'
-              : '#9333ea'
-          } 0%, ${
-            color === 'blue'
-              ? '#2563eb'
-              : color === 'green'
-              ? '#16a34a'
-              : color === 'orange'
-              ? '#ea580c'
-              : '#9333ea'
-          } ${((value - min) / (max - min)) * 100}%, #e5e7eb ${
+          background: `linear-gradient(to right, ${config.hex} 0%, ${config.hex} ${
             ((value - min) / (max - min)) * 100
-          }%, #e5e7eb 100%)`,
+          }%, hsl(var(--muted)) ${((value - min) / (max - min)) * 100}%, hsl(var(--muted)) 100%)`,
         }}
       />
-      <div className="flex justify-between text-xs text-gray-500 mt-1">
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
         <span>{lowLabel}</span>
         <span>{highLabel}</span>
       </div>
