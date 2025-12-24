@@ -235,21 +235,21 @@ export default async function CoachReadinessPage() {
   const atRiskAthletes = sortedAthletes.filter((a) => a.level === 'RED');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="glass-strong shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 Pre-Competition Readiness
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-muted-foreground">
                 Mental readiness scores for {coach.School.name} athletes
               </p>
             </div>
             <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="px-4 py-2 text-sm font-medium text-muted-foreground glass-strong border border-border rounded-lg hover:bg-background">
                 ← Back to Dashboard
               </button>
             </Link>
@@ -265,9 +265,9 @@ export default async function CoachReadinessPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Ready to Compete</p>
+                  <p className="text-sm text-muted-foreground">Ready to Compete</p>
                   <p className="text-3xl font-bold text-green-700">{greenCount}</p>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {athletes.length > 0 ? ((greenCount / athletes.length) * 100).toFixed(0) : 0}% of team
                   </p>
                 </div>
@@ -286,9 +286,9 @@ export default async function CoachReadinessPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Monitor Closely</p>
+                  <p className="text-sm text-muted-foreground">Monitor Closely</p>
                   <p className="text-3xl font-bold text-yellow-700">{yellowCount}</p>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {athletes.length > 0 ? ((yellowCount / athletes.length) * 100).toFixed(0) : 0}% of team
                   </p>
                 </div>
@@ -307,9 +307,9 @@ export default async function CoachReadinessPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Intervention Needed</p>
+                  <p className="text-sm text-muted-foreground">Intervention Needed</p>
                   <p className="text-3xl font-bold text-red-700">{redCount}</p>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {athletes.length > 0 ? ((redCount / athletes.length) * 100).toFixed(0) : 0}% of team
                   </p>
                 </div>
@@ -337,19 +337,19 @@ export default async function CoachReadinessPage() {
             <CardContent>
               <div className="space-y-3">
                 {atRiskAthletes.map((athlete) => (
-                  <div key={athlete.id} className="p-4 bg-white border-2 border-red-200 rounded-lg">
+                  <div key={athlete.id} className="p-4 glass-strong border-2 border-red-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-gray-900">{athlete.name}</h3>
+                          <h3 className="font-semibold text-foreground">{athlete.name}</h3>
                           {athlete.position && (
-                            <span className="text-sm text-gray-500">{athlete.position}</span>
+                            <span className="text-sm text-muted-foreground">{athlete.position}</span>
                           )}
                           <Badge className="bg-red-600 text-white">
                             {athlete.score}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mt-2">
+                        <p className="text-sm text-muted-foreground mt-2">
                           Top factors: {athlete.factors.map((f) => f.label).join(', ')}
                         </p>
                       </div>
@@ -361,7 +361,7 @@ export default async function CoachReadinessPage() {
                           </div>
                         )}
                         {athlete.trend === 'stable' && (
-                          <div className="flex items-center gap-1 text-gray-500 text-sm">
+                          <div className="flex items-center gap-1 text-muted-foreground text-sm">
                             <Minus className="size-4" />
                             <span>Stable</span>
                           </div>
@@ -371,8 +371,8 @@ export default async function CoachReadinessPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-white border border-red-200 rounded-lg">
-                <p className="text-sm text-gray-700">
+              <div className="mt-4 p-3 glass-strong border border-red-200 rounded-lg">
+                <p className="text-sm text-muted-foreground">
                   <strong>Recommended Action:</strong> Schedule 1-on-1 conversations with these athletes before game day. Focus on stress management and sleep optimization.
                 </p>
               </div>
@@ -388,24 +388,24 @@ export default async function CoachReadinessPage() {
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b-2 border-gray-200">
+                <thead className="bg-background border-b-2 border-border">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                       Athlete
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                       Position
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                       Score
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                       Level
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                       Trend
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                       Top Factors
                     </th>
                   </tr>
@@ -414,16 +414,16 @@ export default async function CoachReadinessPage() {
                   {sortedAthletes.map((athlete) => (
                     <tr
                       key={athlete.id}
-                      className={`hover:bg-gray-50 transition-colors ${
+                      className={`hover:bg-background transition-colors ${
                         athlete.level === 'RED' ? 'bg-red-50' :
                         athlete.level === 'YELLOW' ? 'bg-yellow-50' :
                         'bg-green-50'
                       }`}
                     >
                       <td className="px-4 py-4">
-                        <div className="font-medium text-gray-900">{athlete.name}</div>
+                        <div className="font-medium text-foreground">{athlete.name}</div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-700">
+                      <td className="px-4 py-4 text-sm text-muted-foreground">
                         {athlete.position || 'N/A'}
                       </td>
                       <td className="px-4 py-4 text-center">
@@ -460,8 +460,8 @@ export default async function CoachReadinessPage() {
                           )}
                           {athlete.trend === 'stable' && (
                             <>
-                              <Minus className="size-4 text-gray-500" />
-                              <span className="text-xs text-gray-500">Stable</span>
+                              <Minus className="size-4 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">Stable</span>
                             </>
                           )}
                         </div>
@@ -469,7 +469,7 @@ export default async function CoachReadinessPage() {
                       <td className="px-4 py-4">
                         <div className="space-y-1">
                           {athlete.factors.map((factor, index) => (
-                            <div key={index} className="flex items-center gap-2 text-xs text-gray-600">
+                            <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground">
                               {factor.factor === 'mood' && <Brain className="size-3" />}
                               {factor.factor === 'stress' && <Activity className="size-3" />}
                               {factor.factor === 'sleep' && <Moon className="size-3" />}
@@ -499,8 +499,8 @@ export default async function CoachReadinessPage() {
               <div className="flex gap-3">
                 <AlertTriangle className="size-5 text-red-600 mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-gray-900">High Priority</h4>
-                  <p className="text-sm text-gray-700 mt-1">
+                  <h4 className="font-semibold text-foreground">High Priority</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
                     {redCount} athlete{redCount > 1 ? 's' : ''} need immediate intervention.
                     Schedule 1-on-1 meetings to address stress, sleep, and mental state concerns.
                   </p>
@@ -511,8 +511,8 @@ export default async function CoachReadinessPage() {
               <div className="flex gap-3">
                 <TrendingUp className="size-5 text-yellow-600 mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-gray-900">Monitor</h4>
-                  <p className="text-sm text-gray-700 mt-1">
+                  <h4 className="font-semibold text-foreground">Monitor</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
                     {yellowCount} athlete{yellowCount > 1 ? 's' : ''} in yellow status should be monitored closely.
                     Quick check-ins during warm-up recommended.
                   </p>
@@ -522,8 +522,8 @@ export default async function CoachReadinessPage() {
             <div className="flex gap-3">
               <CheckCircle className="size-5 text-green-600 mt-0.5 shrink-0" />
               <div>
-                <h4 className="font-semibold text-gray-900">Team Preparation</h4>
-                <p className="text-sm text-gray-700 mt-1">
+                <h4 className="font-semibold text-foreground">Team Preparation</h4>
+                <p className="text-sm text-muted-foreground mt-1">
                   {greenCount} athlete{greenCount !== 1 ? 's are' : ' is'} mentally ready for peak performance.
                   Focus team meeting on maintaining positive momentum and executing game plan.
                 </p>

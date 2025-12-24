@@ -65,7 +65,7 @@ export default function WeeklySummaryDrawer({
 
   // Get score color
   const getScoreColor = (score: number | null) => {
-    if (!score) return 'text-gray-400';
+    if (!score) return 'text-muted-foreground';
     if (score >= 8) return 'text-green-600';
     if (score >= 6) return 'text-yellow-600';
     return 'text-red-600';
@@ -73,16 +73,16 @@ export default function WeeklySummaryDrawer({
 
   if (!consentGranted) {
     return (
-      <div className="border border-gray-200 rounded-lg bg-gray-50">
+      <div className="border border-border rounded-lg bg-background">
         <div className="p-4 flex items-center justify-between">
           <div className="flex items-center">
-            <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-muted-foreground mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span className="text-sm font-medium text-gray-700">Weekly Summary Not Available</span>
+            <span className="text-sm font-medium text-muted-foreground">Weekly Summary Not Available</span>
           </div>
         </div>
-        <div className="px-4 pb-4 text-sm text-gray-600">
+        <div className="px-4 pb-4 text-sm text-muted-foreground">
           {athleteName} has not enabled weekly chat summaries.
         </div>
       </div>
@@ -90,20 +90,20 @@ export default function WeeklySummaryDrawer({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg bg-white shadow-sm">
+    <div className="border border-border rounded-lg glass-strong shadow-sm">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full p-4 flex items-center justify-between hover:bg-background transition-colors"
       >
         <div className="flex items-center">
-          <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span className="text-sm font-semibold text-gray-900">Weekly Summary</span>
+          <span className="text-sm font-semibold text-foreground">Weekly Summary</span>
         </div>
         <svg
-          className={\`w-5 h-5 text-gray-400 transition-transform \${expanded ? 'rotate-180' : ''}\`}
+          className={\`w-5 h-5 text-muted-foreground transition-transform \${expanded ? 'rotate-180' : ''}\`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -114,24 +114,24 @@ export default function WeeklySummaryDrawer({
 
       {/* Expanded Content */}
       {expanded && (
-        <div className="border-t border-gray-200">
+        <div className="border-t border-border">
           {loading ? (
             <div className="p-6 text-center">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-sm text-gray-600">Loading summaries...</p>
+              <p className="text-sm text-muted-foreground">Loading summaries...</p>
             </div>
           ) : error ? (
             <div className="p-6 text-center">
               <p className="text-sm text-red-600">{error}</p>
               <button
                 onClick={fetchSummaries}
-                className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+                className="mt-2 text-sm text-primary hover:text-blue-700"
               >
                 Retry
               </button>
             </div>
           ) : summaries.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-600">
+            <div className="p-6 text-center text-sm text-muted-foreground">
               No weekly summaries available yet.
             </div>
           ) : (
@@ -140,10 +140,10 @@ export default function WeeklySummaryDrawer({
                 <div key={summary.id} className="p-4 space-y-3">
                   {/* Week Header */}
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {formatWeekRange(summary.weekStart, summary.weekEnd)}
                     </h3>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {summary.sessionCount} session{summary.sessionCount !== 1 ? 's' : ''} • {summary.totalMessages} messages
                     </span>
                   </div>
@@ -154,47 +154,47 @@ export default function WeeklySummaryDrawer({
                       <div className={\`text-lg font-bold \${getScoreColor(summary.moodScore)}\`}>
                         {summary.moodScore ? summary.moodScore.toFixed(1) : '--'}
                       </div>
-                      <div className="text-xs text-gray-600">Mood</div>
+                      <div className="text-xs text-muted-foreground">Mood</div>
                     </div>
                     <div className="text-center">
                       <div className={\`text-lg font-bold \${getScoreColor(summary.confidenceScore)}\`}>
                         {summary.confidenceScore ? summary.confidenceScore.toFixed(1) : '--'}
                       </div>
-                      <div className="text-xs text-gray-600">Confidence</div>
+                      <div className="text-xs text-muted-foreground">Confidence</div>
                     </div>
                     <div className="text-center">
                       <div className={\`text-lg font-bold \${getScoreColor(summary.sleepQualityScore)}\`}>
                         {summary.sleepQualityScore ? summary.sleepQualityScore.toFixed(1) : '--'}
                       </div>
-                      <div className="text-xs text-gray-600">Sleep</div>
+                      <div className="text-xs text-muted-foreground">Sleep</div>
                     </div>
                     <div className="text-center">
                       <div className={\`text-lg font-bold \${getScoreColor(summary.stressScore ? 10 - summary.stressScore : null)}\`}>
                         {summary.stressScore ? summary.stressScore.toFixed(1) : '--'}
                       </div>
-                      <div className="text-xs text-gray-600">Stress</div>
+                      <div className="text-xs text-muted-foreground">Stress</div>
                     </div>
                     <div className="text-center">
                       <div className={\`text-lg font-bold \${getScoreColor(summary.engagementScore)}\`}>
                         {summary.engagementScore ? summary.engagementScore.toFixed(1) : '--'}
                       </div>
-                      <div className="text-xs text-gray-600">Engagement</div>
+                      <div className="text-xs text-muted-foreground">Engagement</div>
                     </div>
                     <div className="text-center">
                       <div className={\`text-lg font-bold \${getScoreColor(summary.sorenessScore ? 10 - summary.sorenessScore : null)}\`}>
                         {summary.sorenessScore ? summary.sorenessScore.toFixed(1) : '--'}
                       </div>
-                      <div className="text-xs text-gray-600">Soreness</div>
+                      <div className="text-xs text-muted-foreground">Soreness</div>
                     </div>
                   </div>
 
                   {/* Key Themes */}
                   {summary.keyThemes && summary.keyThemes.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-semibold text-gray-700 mb-1">Key Themes:</h4>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-1">Key Themes:</h4>
                       <ul className="list-disc list-inside space-y-1">
                         {summary.keyThemes.map((theme, idx) => (
-                          <li key={idx} className="text-xs text-gray-600">
+                          <li key={idx} className="text-xs text-muted-foreground">
                             {theme}
                           </li>
                         ))}
@@ -243,8 +243,8 @@ export default function WeeklySummaryDrawer({
                   {/* Adherence Notes */}
                   {summary.adherenceNotes && (
                     <div>
-                      <h4 className="text-xs font-semibold text-gray-700 mb-1">Engagement Notes:</h4>
-                      <p className="text-xs text-gray-600">{summary.adherenceNotes}</p>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-1">Engagement Notes:</h4>
+                      <p className="text-xs text-muted-foreground">{summary.adherenceNotes}</p>
                     </div>
                   )}
                 </div>

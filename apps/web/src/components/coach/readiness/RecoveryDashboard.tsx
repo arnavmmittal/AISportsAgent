@@ -176,7 +176,7 @@ export default function RecoveryDashboard() {
                 <div className="text-sm text-slate-300">
                   Suggested rest: <strong>{athlete.suggestedRestDays} day(s)</strong>
                 </div>
-                <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors">
+                <button className="px-3 py-1 bg-primary hover:opacity-90 text-white text-xs rounded-md transition-colors">
                   Schedule Rest Day
                 </button>
               </div>
@@ -285,7 +285,7 @@ export default function RecoveryDashboard() {
                   </div>
                   <p className="text-sm text-slate-300">{rec.description}</p>
                 </div>
-                <button className="ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors flex-shrink-0">
+                <button className="ml-4 px-3 py-1 bg-primary hover:opacity-90 text-white text-xs rounded-md transition-colors flex-shrink-0">
                   {rec.action}
                 </button>
               </div>

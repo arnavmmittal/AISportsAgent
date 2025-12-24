@@ -196,7 +196,7 @@ export default function AssignmentLibrary() {
             onClick={() => setSelectedCategory(category.id as AssignmentCategory)}
             className={`flex-shrink-0 px-4 py-2 rounded-lg border transition-all ${
               selectedCategory === category.id
-                ? 'bg-blue-600 border-blue-500 text-white'
+                ? 'bg-primary border-blue-500 text-white'
                 : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
             }`}
           >
@@ -279,7 +279,7 @@ export default function AssignmentLibrary() {
                   <div className="text-xs text-slate-400 mb-3">
                     {template.assignedCount} times assigned
                   </div>
-                  <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors">
+                  <button className="w-full px-4 py-2 bg-primary hover:opacity-90 text-white text-sm rounded-md transition-colors">
                     Assign to Athletes
                   </button>
                 </div>

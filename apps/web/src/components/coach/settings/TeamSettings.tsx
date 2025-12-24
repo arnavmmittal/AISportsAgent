@@ -98,7 +98,7 @@ export default function TeamSettings() {
             </div>
           ))}
         </div>
-        <button className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors">
+        <button className="mt-4 px-4 py-2 bg-primary hover:opacity-90 text-white text-sm rounded-md transition-colors">
           Add Sport
         </button>
       </DashboardSection>

@@ -177,7 +177,7 @@ export default function AthleteProfileModal({ athlete, onClose }: AthleteProfile
           >
             Close
           </button>
-          <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+          <button className="px-4 py-2 bg-primary hover:opacity-90 text-white rounded-md transition-colors">
             Add Note
           </button>
         </div>

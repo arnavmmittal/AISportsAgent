@@ -92,10 +92,10 @@ export default function RecordPerformancePage() {
 
   if (loading || status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -108,19 +108,19 @@ export default function RecordPerformancePage() {
   const sport = session.user.coach?.sport || 'Basketball';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
           <Link
             href="/coach/dashboard"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4"
+            className="inline-flex items-center gap-2 text-primary hover:text-blue-700 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Record Game Performance</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Record Game Performance</h1>
+          <p className="text-muted-foreground mt-2">
             Enter post-game stats to track mental state → performance correlations
           </p>
         </div>
@@ -129,7 +129,7 @@ export default function RecordPerformancePage() {
         <Card className="mb-6 bg-blue-50 border-blue-200">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5" />
+              <TrendingUp className="w-5 h-5 text-primary mt-0.5" />
               <div>
                 <h3 className="font-semibold text-blue-900">
                   Building Your Proprietary Dataset
@@ -161,10 +161,10 @@ export default function RecordPerformancePage() {
         />
 
         {/* Help Text */}
-        <Card className="mt-6 bg-gray-50">
+        <Card className="mt-6 bg-background">
           <CardContent className="pt-6">
-            <h3 className="font-semibold text-gray-900 mb-2">Need bulk import?</h3>
-            <p className="text-sm text-gray-700 mb-3">
+            <h3 className="font-semibold text-foreground mb-2">Need bulk import?</h3>
+            <p className="text-sm text-muted-foreground mb-3">
               If you have historical game data in a spreadsheet, you can use the bulk import feature
               to upload multiple games at once.
             </p>

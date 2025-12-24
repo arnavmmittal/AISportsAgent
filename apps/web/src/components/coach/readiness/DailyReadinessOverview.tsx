@@ -181,7 +181,7 @@ export default function DailyReadinessOverview() {
                     </span>
                   </div>
                 </div>
-                <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors">
+                <button className="px-3 py-1 bg-primary hover:opacity-90 text-white text-xs rounded-md transition-colors">
                   View Details
                 </button>
               </div>

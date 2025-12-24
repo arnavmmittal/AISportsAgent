@@ -199,7 +199,7 @@ export default function ActiveAssignments() {
             onClick={() => setFilterStatus(filter.id)}
             className={`flex-shrink-0 px-4 py-2 rounded-lg border transition-all ${
               filterStatus === filter.id
-                ? 'bg-blue-600 border-blue-500 text-white'
+                ? 'bg-primary border-blue-500 text-white'
                 : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
             }`}
           >
@@ -292,7 +292,7 @@ export default function ActiveAssignments() {
                     </button>
                   )}
                   {(assignment.status === 'pending' || assignment.status === 'in-progress') && (
-                    <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors">
+                    <button className="px-3 py-1 bg-primary hover:opacity-90 text-white text-xs rounded-md transition-colors">
                       Check Progress
                     </button>
                   )}

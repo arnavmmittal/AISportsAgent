@@ -15,21 +15,21 @@ export default async function CoachAnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="glass-strong shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 Team Analytics
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-muted-foreground">
                 Deep dive into performance metrics and trends
               </p>
             </div>
             <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="px-4 py-2 text-sm font-medium text-muted-foreground glass-strong border border-border rounded-lg hover:bg-background">
                 ← Back to Dashboard
               </button>
             </Link>
@@ -48,16 +48,16 @@ export default async function CoachAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Track athlete performance over time with detailed metrics and visualizations.
               </p>
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Weekly Average:</span>
+                  <span className="text-muted-foreground">Weekly Average:</span>
                   <span className="font-semibold text-green-600">+12%</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Monthly Trend:</span>
+                  <span className="text-muted-foreground">Monthly Trend:</span>
                   <span className="font-semibold text-green-600">↑ Improving</span>
                 </div>
               </div>
@@ -72,7 +72,7 @@ export default async function CoachAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Analytics segmented by sport category.
               </p>
               <div className="space-y-3">
@@ -82,7 +82,7 @@ export default async function CoachAnalyticsPage() {
                     <span className="font-semibold">12 athletes</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '60%' }}></div>
                   </div>
                 </div>
                 <div>
@@ -106,20 +106,20 @@ export default async function CoachAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Team-wide mental wellness indicators.
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Avg Mood Score:</span>
+                  <span className="text-muted-foreground">Avg Mood Score:</span>
                   <span className="font-semibold">7.2/10</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Avg Confidence:</span>
+                  <span className="text-muted-foreground">Avg Confidence:</span>
                   <span className="font-semibold">7.8/10</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Avg Stress:</span>
+                  <span className="text-muted-foreground">Avg Stress:</span>
                   <span className="font-semibold text-orange-600">4.3/10</span>
                 </div>
               </div>
@@ -134,20 +134,20 @@ export default async function CoachAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Chat and interaction statistics.
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Active Today:</span>
+                  <span className="text-muted-foreground">Active Today:</span>
                   <span className="font-semibold">18 athletes</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">This Week:</span>
+                  <span className="text-muted-foreground">This Week:</span>
                   <span className="font-semibold">24 athletes</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Engagement Rate:</span>
+                  <span className="text-muted-foreground">Engagement Rate:</span>
                   <span className="font-semibold text-green-600">92%</span>
                 </div>
               </div>
@@ -162,20 +162,20 @@ export default async function CoachAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Team goal completion metrics.
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Active Goals:</span>
+                  <span className="text-muted-foreground">Active Goals:</span>
                   <span className="font-semibold">45</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Completed:</span>
+                  <span className="text-muted-foreground">Completed:</span>
                   <span className="font-semibold text-green-600">37</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Success Rate:</span>
+                  <span className="text-muted-foreground">Success Rate:</span>
                   <span className="font-semibold text-green-600">82%</span>
                 </div>
               </div>
@@ -190,20 +190,20 @@ export default async function CoachAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Identified patterns requiring attention.
               </p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">At-Risk Athletes:</span>
+                  <span className="text-muted-foreground">At-Risk Athletes:</span>
                   <span className="font-semibold text-red-600">3</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Crisis Alerts:</span>
+                  <span className="text-muted-foreground">Crisis Alerts:</span>
                   <span className="font-semibold text-orange-600">2</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Resolved This Week:</span>
+                  <span className="text-muted-foreground">Resolved This Week:</span>
                   <span className="font-semibold text-green-600">5</span>
                 </div>
               </div>

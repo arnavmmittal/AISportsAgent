@@ -63,7 +63,7 @@ export default function UserManagement() {
       <div className="flex justify-end">
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
+          className="px-4 py-2 bg-primary hover:opacity-90 text-white font-medium rounded-md transition-colors"
         >
           + Add User
         </button>
@@ -78,7 +78,7 @@ export default function UserManagement() {
               className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-between hover:bg-slate-800/70 transition-colors"
             >
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
                   {user.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div>
@@ -191,7 +191,7 @@ export default function UserManagement() {
                 >
                   Cancel
                 </button>
-                <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                <button className="flex-1 px-4 py-2 bg-primary hover:opacity-90 text-white rounded-md transition-colors">
                   Add User
                 </button>
               </div>

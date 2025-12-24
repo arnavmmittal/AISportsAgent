@@ -163,21 +163,21 @@ export default async function CoachAthletesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="glass-strong shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 Team Roster
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-muted-foreground">
                 {coach.School.name} - {athletes.length} Athletes
               </p>
             </div>
             <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="px-4 py-2 text-sm font-medium text-muted-foreground glass-strong border border-border rounded-lg hover:bg-background">
                 ← Back to Dashboard
               </button>
             </Link>
@@ -232,45 +232,45 @@ export default async function CoachAthletesPage() {
             {sortedAthletes.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <thead className="bg-background border-b-2 border-border">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                         Athlete
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                         Sport
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
                         Position
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                         Avg Mood (7d)
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                         Avg Stress (7d)
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                         Confidence
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                         Trend
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
                         Risk Level
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {sortedAthletes.map((athlete) => (
-                      <tr key={athlete.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={athlete.id} className="hover:bg-background transition-colors">
                         <td className="px-4 py-4">
-                          <div className="font-medium text-gray-900">{athlete.name}</div>
-                          <div className="text-sm text-gray-500">{athlete.athlete?.year || 'N/A'}</div>
+                          <div className="font-medium text-foreground">{athlete.name}</div>
+                          <div className="text-sm text-muted-foreground">{athlete.athlete?.year || 'N/A'}</div>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-700">
+                        <td className="px-4 py-4 text-sm text-muted-foreground">
                           {athlete.athlete?.sport || 'N/A'}
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-700">
+                        <td className="px-4 py-4 text-sm text-muted-foreground">
                           {athlete.athlete?.teamPosition || 'N/A'}
                         </td>
                         <td className="px-4 py-4 text-center">
@@ -292,7 +292,7 @@ export default async function CoachAthletesPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-center">
-                          <span className="text-sm text-gray-700">
+                          <span className="text-sm text-muted-foreground">
                             {athlete.avgConfidence > 0 ? athlete.avgConfidence.toFixed(1) : '--'}/10
                           </span>
                         </td>
@@ -311,7 +311,7 @@ export default async function CoachAthletesPage() {
                               </div>
                             )}
                             {athlete.trend === 'neutral' && (
-                              <div className="flex items-center gap-1 text-gray-500">
+                              <div className="flex items-center gap-1 text-muted-foreground">
                                 <Minus className="size-4" />
                                 <span className="text-xs font-medium">Stable</span>
                               </div>
@@ -348,7 +348,7 @@ export default async function CoachAthletesPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-500">No athletes found in your school.</p>
+                <p className="text-muted-foreground">No athletes found in your school.</p>
               </div>
             )}
           </CardContent>
@@ -358,7 +358,7 @@ export default async function CoachAthletesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Weekly Chat Summaries</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Summaries are only shown for athletes who have granted consent in their settings.
             </p>
           </CardHeader>
@@ -372,7 +372,7 @@ export default async function CoachAthletesPage() {
                 return (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-3">🔒</div>
-                    <p className="text-gray-500">
+                    <p className="text-muted-foreground">
                       No athletes have consented to share chat summaries yet.
                     </p>
                     <p className="text-sm text-gray-400 mt-2">
@@ -390,32 +390,32 @@ export default async function CoachAthletesPage() {
                     return (
                       <div
                         key={athlete.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors"
+                        className="border border-border rounded-lg p-4 hover:border-purple-300 transition-colors"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <h4 className="font-semibold text-gray-900">{athlete.name}</h4>
-                            <p className="text-sm text-gray-500">
+                            <h4 className="font-semibold text-foreground">{athlete.name}</h4>
+                            <p className="text-sm text-muted-foreground">
                               {athlete.athlete?.sport} • {athlete.athlete?.year}
                             </p>
                           </div>
                           {latestSummary ? (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted-foreground">
                               {new Date(latestSummary.generatedAt).toLocaleDateString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
                               })}
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-500">No recent summary</span>
+                            <span className="text-xs text-muted-foreground">No recent summary</span>
                           )}
                         </div>
 
                         {latestSummary ? (
                           <>
                             {/* Summary Text */}
-                            <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                              <p className="text-sm text-gray-700 leading-relaxed">
+                            <div className="bg-background rounded-lg p-3 mb-3">
+                              <p className="text-sm text-muted-foreground leading-relaxed">
                                 {latestSummary.summary}
                               </p>
                             </div>
@@ -423,7 +423,7 @@ export default async function CoachAthletesPage() {
                             {/* Key Themes */}
                             {latestSummary.keyThemes && Array.isArray(latestSummary.keyThemes) && latestSummary.keyThemes.length > 0 && (
                               <div className="mb-3">
-                                <p className="text-xs font-medium text-gray-500 mb-2">Key Themes:</p>
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Key Themes:</p>
                                 <div className="flex flex-wrap gap-2">
                                   {(latestSummary.keyThemes as string[]).map((theme, idx) => (
                                     <span
@@ -440,7 +440,7 @@ export default async function CoachAthletesPage() {
                             {/* Emotional State */}
                             {latestSummary.emotionalState && (
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-gray-500">Emotional State:</span>
+                                <span className="text-xs font-medium text-muted-foreground">Emotional State:</span>
                                 <span
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                                     latestSummary.emotionalState === 'positive'
@@ -449,7 +449,7 @@ export default async function CoachAthletesPage() {
                                       ? 'bg-red-100 text-red-700'
                                       : latestSummary.emotionalState === 'mixed'
                                       ? 'bg-yellow-100 text-yellow-700'
-                                      : 'bg-gray-100 text-gray-700'
+                                      : 'bg-gray-100 text-muted-foreground'
                                   }`}
                                 >
                                   {latestSummary.emotionalState === 'positive' && '😊 Positive'}
@@ -462,11 +462,11 @@ export default async function CoachAthletesPage() {
 
                             {/* Action Items */}
                             {latestSummary.actionItems && Array.isArray(latestSummary.actionItems) && latestSummary.actionItems.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-gray-200">
-                                <p className="text-xs font-medium text-gray-500 mb-2">Follow-up Items:</p>
+                              <div className="mt-3 pt-3 border-t border-border">
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Follow-up Items:</p>
                                 <ul className="space-y-1">
                                   {(latestSummary.actionItems as string[]).map((item, idx) => (
-                                    <li key={idx} className="text-xs text-gray-600 flex items-start gap-2">
+                                    <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
                                       <span className="text-purple-500 mt-0.5">•</span>
                                       <span>{item}</span>
                                     </li>
@@ -477,7 +477,7 @@ export default async function CoachAthletesPage() {
                           </>
                         ) : (
                           <div className="text-center py-4">
-                            <p className="text-sm text-gray-500">No chat sessions this week</p>
+                            <p className="text-sm text-muted-foreground">No chat sessions this week</p>
                           </div>
                         )}
                       </div>

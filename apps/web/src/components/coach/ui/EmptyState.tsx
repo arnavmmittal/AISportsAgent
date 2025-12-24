@@ -75,7 +75,7 @@ export default function EmptyState({
         <button
           onClick={action.onClick}
           className={cn(
-            'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors',
+            'px-4 py-2 bg-primary hover:opacity-90 text-white font-medium rounded-md transition-colors',
             isCompact && 'text-sm'
           )}
         >

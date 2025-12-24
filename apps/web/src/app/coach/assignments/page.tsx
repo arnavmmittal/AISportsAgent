@@ -62,16 +62,16 @@ export default function CoachAssignmentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="glass-strong shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 Assignments
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-muted-foreground">
                 Create and manage assignments for your athletes
               </p>
             </div>
@@ -90,15 +90,15 @@ export default function CoachAssignmentsPage() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            <p className="mt-4 text-gray-600">Loading assignments...</p>
+            <p className="mt-4 text-muted-foreground">Loading assignments...</p>
           </div>
         ) : assignments.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
+          <div className="glass-strong rounded-lg shadow p-12 text-center">
             <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               No assignments yet
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Create your first assignment to get started with athlete check-ins and journaling.
             </p>
             <button
@@ -118,7 +118,7 @@ export default function CoachAssignmentsPage() {
                 <Link
                   key={assignment.id}
                   href={`/coach/assignments/${assignment.id}`}
-                  className="block bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
+                  className="block glass-strong rounded-lg shadow hover:shadow-lg transition-shadow p-6"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -127,22 +127,22 @@ export default function CoachAssignmentsPage() {
                           <span className="text-2xl">📋</span>
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                          <h3 className="text-lg font-semibold text-foreground mb-1">
                             {assignment.title}
                           </h3>
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
                             {assignment.description}
                           </p>
 
                           <div className="flex flex-wrap items-center gap-3 text-sm">
                             {/* Submission Stats */}
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-500">Submissions:</span>
+                              <span className="text-muted-foreground">Submissions:</span>
                               <span className="font-medium text-green-600">
                                 {stats.submitted}
                               </span>
                               <span className="text-gray-400">/</span>
-                              <span className="font-medium text-gray-700">
+                              <span className="font-medium text-muted-foreground">
                                 {stats.total}
                               </span>
                             </div>
@@ -170,7 +170,7 @@ export default function CoachAssignmentsPage() {
 
                             {/* Target Info */}
                             {assignment.targetSport && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                              <span className="px-2 py-1 bg-gray-100 text-muted-foreground rounded-full text-xs font-medium">
                                 {assignment.targetSport}
                               </span>
                             )}
@@ -279,15 +279,15 @@ function CreateAssignmentModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+      <div className="glass-strong rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-border">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-foreground">
               Create Assignment
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-muted-foreground"
               type="button"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,7 +306,7 @@ function CreateAssignmentModal({
 
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="title" className="block text-sm font-medium text-muted-foreground mb-1">
               Title *
             </label>
             <input
@@ -314,7 +314,7 @@ function CreateAssignmentModal({
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., Pre-Game Visualization Exercise"
               required
             />
@@ -322,14 +322,14 @@ function CreateAssignmentModal({
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="description" className="block text-sm font-medium text-muted-foreground mb-1">
               Description *
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               rows={4}
               placeholder="Describe what you want your athletes to reflect on or do..."
               required
@@ -338,7 +338,7 @@ function CreateAssignmentModal({
 
           {/* Due Date */}
           <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="dueDate" className="block text-sm font-medium text-muted-foreground mb-1">
               Due Date (Optional)
             </label>
             <input
@@ -346,13 +346,13 @@ function CreateAssignmentModal({
               id="dueDate"
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
 
           {/* Target Sport */}
           <div>
-            <label htmlFor="targetSport" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="targetSport" className="block text-sm font-medium text-muted-foreground mb-1">
               Target Sport (Optional)
             </label>
             <input
@@ -360,7 +360,7 @@ function CreateAssignmentModal({
               id="targetSport"
               value={formData.targetSport}
               onChange={(e) => setFormData({ ...formData, targetSport: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="e.g., Basketball, Soccer, Tennis (leave blank for all sports)"
             />
           </div>
@@ -372,12 +372,12 @@ function CreateAssignmentModal({
               id="assignToAll"
               checked={formData.assignToAll}
               onChange={(e) => setFormData({ ...formData, assignToAll: e.target.checked })}
-              className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+              className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-border rounded"
             />
-            <label htmlFor="assignToAll" className="ml-2 block text-sm text-gray-700">
+            <label htmlFor="assignToAll" className="ml-2 block text-sm text-muted-foreground">
               Assign to all athletes
               {formData.targetSport && (
-                <span className="text-gray-500"> in {formData.targetSport}</span>
+                <span className="text-muted-foreground"> in {formData.targetSport}</span>
               )}
             </label>
           </div>
@@ -387,7 +387,7 @@ function CreateAssignmentModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-border text-muted-foreground rounded-lg hover:bg-background transition-colors font-medium"
             >
               Cancel
             </button>

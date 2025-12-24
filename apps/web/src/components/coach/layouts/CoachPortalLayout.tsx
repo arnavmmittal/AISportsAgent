@@ -105,7 +105,7 @@ export default function CoachPortalLayout({
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
                   isActive
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-primary text-white'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 )}
               >
@@ -136,7 +136,7 @@ export default function CoachPortalLayout({
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800">
           {!isSidebarCollapsed ? (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
                 C
               </div>
               <div className="flex-1 min-w-0">
@@ -145,7 +145,7 @@ export default function CoachPortalLayout({
               </div>
             </div>
           ) : (
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold mx-auto">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold mx-auto">
               C
             </div>
           )}
