@@ -48,7 +48,7 @@ export function MetricTrackerWidget({
   }
 
   return (
-    <div className="bg-white border-2 border-blue-300 rounded-2xl p-6 mt-6 shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-500">
+    <div className="bg-card border-2 border-blue-300 rounded-2xl p-6 mt-6 shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center shadow-md">
           <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

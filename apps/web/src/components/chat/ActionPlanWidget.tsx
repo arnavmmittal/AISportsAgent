@@ -99,7 +99,7 @@ function TimeframeSection({
   timeframeKey,
 }: TimeframeSectionProps) {
   return (
-    <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
+    <div className="bg-card rounded-xl p-5 shadow-md border border-gray-200">
       <div className="flex items-center gap-3 mb-4">
         <div className={`w-10 h-10 bg-gradient-to-br ${iconColor} rounded-lg flex items-center justify-center text-xl shadow-sm`}>
           {icon}
@@ -124,7 +124,7 @@ function TimeframeSection({
               <label
                 htmlFor={`action-${key}`}
                 className={`text-base leading-relaxed cursor-pointer transition-all ${
-                  isChecked ? 'text-gray-400 line-through' : 'text-gray-700 group-hover:text-purple-700'
+                  isChecked ? 'text-muted-foreground line-through' : 'text-gray-700 group-hover:text-purple-700'
                 }`}
               >
                 {item}

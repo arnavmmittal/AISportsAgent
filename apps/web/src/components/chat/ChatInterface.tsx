@@ -356,7 +356,7 @@ export function ChatInterface() {
       {crisisAlert && (
         <div className="bg-gradient-to-r from-red-500 to-pink-500 border-b-4 border-red-600 p-5 animate-in fade-in duration-300 shadow-lg">
           <div className="flex items-start gap-4 max-w-4xl mx-auto">
-            <div className="flex-shrink-0 bg-white rounded-full p-2">
+            <div className="flex-shrink-0 bg-card rounded-full p-2">
               <svg className="w-7 h-7 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
@@ -365,7 +365,7 @@ export function ChatInterface() {
               <p className="text-lg font-bold text-white mb-2">Support Available 24/7</p>
               <p className="text-base text-white/95">{crisisAlert.message}</p>
             </div>
-            <button onClick={() => setCrisisAlert(null)} className="text-white/80 hover:text-white transition-colors bg-white/20 rounded-full p-2">
+            <button onClick={() => setCrisisAlert(null)} className="text-white/80 hover:text-white transition-colors bg-card/20 rounded-full p-2">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
@@ -390,22 +390,22 @@ export function ChatInterface() {
               I'm your 24/7 mental performance coach. Whether you're battling pre-game jitters, need a confidence boost, or just want to chat about what's on your mind - I've got your back. Let's unlock your full potential together!
             </p>
             <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
-              <div className="bg-white rounded-2xl p-6 border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div className="bg-card rounded-2xl p-6 border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">🎯</p>
                 <p className="text-lg font-bold text-gray-900 mb-2">Crush Pre-Game Nerves</p>
                 <p className="text-sm text-gray-600">"I get so anxious before games..."</p>
               </div>
-              <div className="bg-white rounded-2xl p-6 border-2 border-purple-200 hover:border-purple-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div className="bg-card rounded-2xl p-6 border-2 border-purple-200 hover:border-purple-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">💪</p>
                 <p className="text-lg font-bold text-gray-900 mb-2">Boost Your Confidence</p>
                 <p className="text-sm text-gray-600">"How do I believe in myself more?"</p>
               </div>
-              <div className="bg-white rounded-2xl p-6 border-2 border-pink-200 hover:border-pink-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div className="bg-card rounded-2xl p-6 border-2 border-pink-200 hover:border-pink-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">🧘</p>
                 <p className="text-lg font-bold text-gray-900 mb-2">Balance Life & Sport</p>
                 <p className="text-sm text-gray-600">"I'm overwhelmed juggling everything..."</p>
               </div>
-              <div className="bg-white rounded-2xl p-6 border-2 border-indigo-200 hover:border-indigo-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div className="bg-card rounded-2xl p-6 border-2 border-indigo-200 hover:border-indigo-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">⚡</p>
                 <p className="text-lg font-bold text-gray-900 mb-2">Find Your Flow State</p>
                 <p className="text-sm text-gray-600">"Help me get in the zone..."</p>
@@ -429,7 +429,7 @@ export function ChatInterface() {
                   )}
                 </div>
                 <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`rounded-3xl px-6 py-4 shadow-xl ${message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-md' : 'bg-white text-gray-900 border-2 border-purple-200 rounded-tl-md'}`}>
+                  <div className={`rounded-3xl px-6 py-4 shadow-xl ${message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-md' : 'bg-card text-gray-900 border-2 border-purple-200 rounded-tl-md'}`}>
                     {message.content ? (
                       <p className="text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
                     ) : (
@@ -512,7 +512,7 @@ export function ChatInterface() {
       </div>
 
       {/* Input */}
-      <div className="border-t-2 border-purple-200 bg-white/90 backdrop-blur-sm p-6 shadow-2xl">
+      <div className="border-t-2 border-purple-200 bg-card/90 backdrop-blur-sm p-6 shadow-2xl">
         <div className="max-w-5xl mx-auto">
           {/* Audio visualizer when listening */}
           {isListening && (
@@ -541,7 +541,7 @@ export function ChatInterface() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={voiceMode ? "🎤 Voice mode active - click mic to speak" : "What's on your mind? I'm here to help..."}
-              className="flex-1 resize-none border-3 border-purple-300 rounded-3xl px-6 py-4 text-lg focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all disabled:bg-gray-100 shadow-lg placeholder:text-gray-400"
+              className="flex-1 resize-none border-3 border-purple-300 rounded-3xl px-6 py-4 text-lg focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all disabled:bg-muted shadow-lg placeholder:text-muted-foreground"
               rows={2}
               disabled={isLoading || voiceMode}
             />

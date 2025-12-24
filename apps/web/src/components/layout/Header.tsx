@@ -153,7 +153,7 @@ export function Header() {
 
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-white">
+          <div className="md:hidden border-t border-border bg-card">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {links.map((link) => (
                 <Link

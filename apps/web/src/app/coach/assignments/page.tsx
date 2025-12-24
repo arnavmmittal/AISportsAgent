@@ -141,7 +141,7 @@ export default function CoachAssignmentsPage() {
                               <span className="font-medium text-green-600">
                                 {stats.submitted}
                               </span>
-                              <span className="text-gray-400">/</span>
+                              <span className="text-muted-foreground">/</span>
                               <span className="font-medium text-muted-foreground">
                                 {stats.total}
                               </span>
@@ -170,7 +170,7 @@ export default function CoachAssignmentsPage() {
 
                             {/* Target Info */}
                             {assignment.targetSport && (
-                              <span className="px-2 py-1 bg-gray-100 text-muted-foreground rounded-full text-xs font-medium">
+                              <span className="px-2 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium">
                                 {assignment.targetSport}
                               </span>
                             )}
@@ -181,7 +181,7 @@ export default function CoachAssignmentsPage() {
 
                     <div className="ml-4">
                       <svg
-                        className="w-6 h-6 text-gray-400"
+                        className="w-6 h-6 text-muted-foreground"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -287,7 +287,7 @@ function CreateAssignmentModal({
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-muted-foreground"
+              className="text-muted-foreground hover:text-muted-foreground"
               type="button"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -80,20 +80,20 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
             <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <span>⚙️</span> Setup
             </h4>
-            <p className="text-gray-600 text-sm bg-white p-3 rounded-lg">
+            <p className="text-gray-600 text-sm bg-card p-3 rounded-lg">
               {drill.setup}
             </p>
           </div>
 
           {/* Mental & Physical Components */}
           <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div className="bg-white p-4 rounded-lg border border-purple-200">
+            <div className="bg-card p-4 rounded-lg border border-purple-200">
               <h4 className="font-semibold text-purple-700 mb-2 flex items-center gap-2">
                 <span>🧠</span> Mental Component
               </h4>
               <p className="text-gray-600 text-sm">{drill.mental_component}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <div className="bg-card p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
                 <span>💪</span> Physical Component
               </h4>
@@ -113,7 +113,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
                   className={`p-3 rounded-lg border-2 transition-all ${
                     currentWeek === index + 1
                       ? 'bg-teal-100 border-teal-400'
-                      : 'bg-white border-gray-200'
+                      : 'bg-card border-gray-200'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -154,7 +154,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
             <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <span>🎯</span> Success Metrics
             </h4>
-            <ul className="bg-white p-4 rounded-lg space-y-2">
+            <ul className="bg-card p-4 rounded-lg space-y-2">
               {drill.success_metrics.map((metric, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
                   <span className="text-teal-500 mt-0.5">•</span>
@@ -175,7 +175,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
           </div>
 
           {/* Track Progress */}
-          <div className="bg-white p-4 rounded-lg border-2 border-teal-300">
+          <div className="bg-card p-4 rounded-lg border-2 border-teal-300">
             <h4 className="font-semibold text-gray-700 mb-3">Track Your Progress</h4>
             <textarea
               value={progressNotes}

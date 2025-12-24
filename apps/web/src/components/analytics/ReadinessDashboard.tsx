@@ -161,7 +161,7 @@ export function ReadinessDashboard({
 
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           {/* Game Date Selector */}
-          <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 bg-card border border-gray-300 rounded-lg px-3 py-2">
             <Calendar className="w-4 h-4 text-gray-500" />
             <input
               type="date"
@@ -188,7 +188,7 @@ export function ReadinessDashboard({
             className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
               autoRefresh
                 ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-muted text-gray-600 hover:bg-gray-200'
             }`}
           >
             <Clock className="w-3 h-3 inline mr-1" />

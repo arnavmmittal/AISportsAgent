@@ -141,7 +141,7 @@ export function CoachDashboard() {
 
       {/* Recommendations */}
       {recommendations.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Recommended Actions</h2>
           <div className="space-y-3">
             {recommendations.map((rec, index) => (
@@ -183,7 +183,7 @@ export function CoachDashboard() {
 
       {/* At-Risk Athletes */}
       {analytics.at_risk_athletes.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Athletes Needing Support</h2>
           <div className="space-y-3">
             {analytics.at_risk_athletes.map((athlete) => (
@@ -217,7 +217,7 @@ export function CoachDashboard() {
       )}
 
       {/* Engagement Stats */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-card rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold mb-4">Platform Engagement</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -275,7 +275,7 @@ function MetricCard({ title, value, max, suffix = '', trend, color, inverse }: M
     : 'text-gray-600';
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-card rounded-lg shadow p-6">
       <h3 className="text-sm font-medium text-gray-600 mb-2">{title}</h3>
       <div className="flex items-baseline gap-2">
         <p className="text-3xl font-bold text-gray-900">
