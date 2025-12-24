@@ -203,7 +203,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
   if (error || !athleteData) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="text-center glass-strong rounded-2xl shadow-2xl p-12 max-w-md">
+        <div className="text-center bg-card rounded-2xl shadow-2xl p-12 max-w-md">
           <div className="text-red-500 text-7xl mb-6">⚠️</div>
           <h2 className="text-2xl font-bold text-foreground mb-4">
             {error || 'Athlete not found'}
@@ -244,7 +244,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             ← Back to Athletes
           </button>
 
-          <div className="glass-strong rounded-2xl shadow-xl p-12 text-center border-2 border-yellow-200">
+          <div className="bg-card rounded-2xl shadow-xl p-12 text-center border-2 border-yellow-200">
             <div className="text-6xl mb-6">🔒</div>
             <h2 className="text-3xl font-black text-foreground mb-4">
               {athlete.name}
@@ -296,7 +296,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
         </button>
 
         {/* Athlete Profile Header */}
-        <div className="glass-strong rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+        <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
               <h1 className="text-4xl font-black text-foreground mb-2">{athlete.name}</h1>
@@ -364,7 +364,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
         {/* Mood Trend Chart */}
         {chartData.length > 0 && (
-          <div className="glass-strong rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+          <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
               <span className="text-3xl">📊</span>
               Mood History (Last 14 Days)
@@ -400,7 +400,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Goals */}
-          <div className="glass-strong rounded-2xl shadow-xl p-8 border border-gray-100">
+          <div className="bg-card rounded-2xl shadow-xl p-8 border border-gray-100">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
               <span className="text-3xl">🎯</span>
               Goals
@@ -445,7 +445,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
           </div>
 
           {/* Coach Notes */}
-          <div className="glass-strong rounded-2xl shadow-xl p-8 border border-gray-100">
+          <div className="bg-card rounded-2xl shadow-xl p-8 border border-gray-100">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
               <span className="text-3xl">📝</span>
               Coach Notes
@@ -486,7 +486,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               {crisisAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="glass-strong border-2 border-red-300 rounded-xl p-4"
+                  className="bg-card border-2 border-red-300 rounded-xl p-4"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`text-sm px-3 py-1 rounded-lg font-bold ${
@@ -517,7 +517,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       {/* Check-In Modal */}
       {showCheckIn && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="glass-strong rounded-2xl shadow-2xl max-w-md w-full p-8">
+          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-8">
             <h3 className="text-2xl font-black text-foreground mb-4">Send Check-In</h3>
             <textarea
               value={checkInMessage}
@@ -548,7 +548,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       {/* Add Note Modal */}
       {showAddNote && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="glass-strong rounded-2xl shadow-2xl max-w-md w-full p-8">
+          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-8">
             <h3 className="text-2xl font-black text-foreground mb-4">Add Coach Note</h3>
             <select
               value={noteCategory}

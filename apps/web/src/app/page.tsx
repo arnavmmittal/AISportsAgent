@@ -32,7 +32,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/auth/signin"
-                className="w-full sm:w-auto px-8 py-4 glass-strong text-foreground text-lg font-semibold rounded-lg hover:bg-card transition-all shadow-lg hover:shadow-xl chrome-border"
+                className="w-full sm:w-auto px-8 py-4 bg-card text-foreground text-lg font-semibold rounded-lg hover:bg-card transition-all shadow-lg hover:shadow-xl chrome-border"
               >
                 Sign In
               </Link>
@@ -142,7 +142,7 @@ export default function Home() {
 
 function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
-    <div className="glass-strong p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow hover:blue-glow-sm">
+    <div className="bg-card p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow hover:blue-glow-sm">
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
       <p className="text-muted-foreground">{description}</p>
@@ -162,7 +162,7 @@ function ResearchCard({ framework, description, citation }: { framework: string;
 
 function TestimonialCard({ quote, author, role }: { quote: string; author: string; role: string }) {
   return (
-    <div className="glass-strong p-8 rounded-xl chrome-border">
+    <div className="bg-card p-8 rounded-xl chrome-border">
       <p className="text-lg text-foreground italic mb-4">"{quote}"</p>
       <div className="flex items-center">
         <div>

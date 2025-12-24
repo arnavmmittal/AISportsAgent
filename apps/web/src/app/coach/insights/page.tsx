@@ -108,7 +108,7 @@ export default async function CoachInsightsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="glass-strong shadow">
+      <div className="bg-card shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -120,7 +120,7 @@ export default async function CoachInsightsPage() {
               </p>
             </div>
             <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground glass-strong border border-border rounded-lg hover:bg-background">
+              <button className="px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-background">
                 ← Back to Dashboard
               </button>
             </Link>

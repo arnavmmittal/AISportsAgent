@@ -237,7 +237,7 @@ export default async function CoachReadinessPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="glass-strong shadow">
+      <div className="bg-card shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -249,7 +249,7 @@ export default async function CoachReadinessPage() {
               </p>
             </div>
             <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground glass-strong border border-border rounded-lg hover:bg-background">
+              <button className="px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-background">
                 ← Back to Dashboard
               </button>
             </Link>
@@ -337,7 +337,7 @@ export default async function CoachReadinessPage() {
             <CardContent>
               <div className="space-y-3">
                 {atRiskAthletes.map((athlete) => (
-                  <div key={athlete.id} className="p-4 glass-strong border-2 border-red-200 rounded-lg">
+                  <div key={athlete.id} className="p-4 bg-card border-2 border-red-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
@@ -371,7 +371,7 @@ export default async function CoachReadinessPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 glass-strong border border-red-200 rounded-lg">
+              <div className="mt-4 p-3 bg-card border border-red-200 rounded-lg">
                 <p className="text-sm text-muted-foreground">
                   <strong>Recommended Action:</strong> Schedule 1-on-1 conversations with these athletes before game day. Focus on stress management and sleep optimization.
                 </p>

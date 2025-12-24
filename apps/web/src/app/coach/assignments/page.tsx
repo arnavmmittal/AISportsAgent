@@ -64,7 +64,7 @@ export default function CoachAssignmentsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="glass-strong shadow">
+      <div className="bg-card shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
@@ -93,7 +93,7 @@ export default function CoachAssignmentsPage() {
             <p className="mt-4 text-muted-foreground">Loading assignments...</p>
           </div>
         ) : assignments.length === 0 ? (
-          <div className="glass-strong rounded-lg shadow p-12 text-center">
+          <div className="bg-card rounded-lg shadow p-12 text-center">
             <div className="text-6xl mb-4">📋</div>
             <h3 className="text-xl font-semibold text-foreground mb-2">
               No assignments yet
@@ -118,7 +118,7 @@ export default function CoachAssignmentsPage() {
                 <Link
                   key={assignment.id}
                   href={`/coach/assignments/${assignment.id}`}
-                  className="block glass-strong rounded-lg shadow hover:shadow-lg transition-shadow p-6"
+                  className="block bg-card rounded-lg shadow hover:shadow-lg transition-shadow p-6"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -279,7 +279,7 @@ function CreateAssignmentModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="glass-strong rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-border">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-foreground">

@@ -76,7 +76,7 @@ export default function ReadinessBreakdown({
 
   // Expanded view
   return (
-    <div className="border border-border rounded-lg glass-strong shadow-sm">
+    <div className="border border-border rounded-lg bg-card shadow-sm">
       {/* Header */}
       <div className={\`p-4 border-b border-border \${getReadinessColorClass(level)}\`}>
         <div className="flex items-center justify-between">

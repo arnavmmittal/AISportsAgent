@@ -90,7 +90,7 @@ export default function WeeklySummaryDrawer({
   }
 
   return (
-    <div className="border border-border rounded-lg glass-strong shadow-sm">
+    <div className="border border-border rounded-lg bg-card shadow-sm">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
