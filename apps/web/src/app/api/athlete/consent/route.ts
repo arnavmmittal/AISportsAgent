@@ -1,118 +1,171 @@
+/**
+ * Athlete Consent Management API
+ *
+ * Handles athlete consent for weekly chat summaries
+ * - Updates Athlete.consentChatSummaries
+ * - Revokes existing summaries when consent is withdrawn
+ * - Logs all consent changes to audit trail
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth-helpers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
+import { logConsentUpdate, logSummaryRevocation } from '@/lib/audit';
 
-const updateConsentSchema = z.object({
-  consentChatSummaries: z.boolean().optional(),
-  consentCoachView: z.boolean().optional(),
-});
-
-// GET /api/athlete/consent - Get athlete's consent settings
-export async function GET(request: NextRequest) {
+/**
+ * PUT /api/athlete/consent
+ *
+ * Updates athlete consent for weekly chat summaries
+ *
+ * Body: { consentChatSummaries: boolean }
+ */
+export async function PUT(req: NextRequest) {
   try {
     // Verify authentication
-    const { authorized, user, response } = await requireAuth(request);
-    if (!authorized) return response;
+    const session = await getServerSession(authOptions);
 
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify user is an athlete
     const athlete = await prisma.athlete.findUnique({
-      where: { userId: user!.id },
+      where: { userId: session.user.id },
       select: {
+        userId: true,
         consentChatSummaries: true,
-        consentCoachView: true,
       },
     });
 
     if (!athlete) {
       return NextResponse.json(
-        { error: 'Athlete profile not found' },
-        { status: 404 }
+        { error: 'User is not an athlete' },
+        { status: 403 }
       );
     }
 
-    return NextResponse.json({ consent: athlete });
+    // Parse request body
+    const body = await req.json();
+    const { consentChatSummaries } = body;
 
-  } catch (error) {
-    console.error('Error fetching consent settings:', error);
+    if (typeof consentChatSummaries !== 'boolean') {
+      return NextResponse.json(
+        { error: 'consentChatSummaries must be a boolean' },
+        { status: 400 }
+      );
+    }
+
+    // Check if this is a change (don't update if same value)
+    if (athlete.consentChatSummaries === consentChatSummaries) {
+      return NextResponse.json({
+        message: 'Consent unchanged',
+        consentChatSummaries,
+      });
+    }
+
+    // Update athlete consent
+    const updatedAthlete = await prisma.athlete.update({
+      where: { userId: session.user.id },
+      data: { consentChatSummaries },
+    });
+
+    console.log(
+      \`[Consent] Athlete \${session.user.id} \${consentChatSummaries ? 'granted' : 'revoked'} consent for chat summaries\`
+    );
+
+    // If revoking consent, mark all existing summaries as revoked
+    if (!consentChatSummaries) {
+      const now = new Date();
+
+      const revokedSummaries = await prisma.chatSummary.updateMany({
+        where: {
+          athleteId: session.user.id,
+          summaryType: 'WEEKLY',
+          revokedAt: null, // Only update summaries not already revoked
+        },
+        data: {
+          revokedAt: now,
+          expiresAt: now, // Immediate deletion by cleanup job
+        },
+      });
+
+      console.log(
+        \`[Consent] Marked \${revokedSummaries.count} summaries as revoked for athlete \${session.user.id}\`
+      );
+
+      // Log revocation to audit trail
+      await logSummaryRevocation(session.user.id, revokedSummaries.count);
+    }
+
+    // Log consent update to audit trail
+    const ipAddress = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'))?.split(',')[0];
+    await logConsentUpdate(
+      session.user.id,
+      consentChatSummaries,
+      ipAddress
+    );
+
+    return NextResponse.json({
+      message: consentChatSummaries
+        ? 'Consent granted for weekly chat summaries'
+        : 'Consent revoked for weekly chat summaries',
+      consentChatSummaries,
+      revokedCount: consentChatSummaries ? 0 : undefined,
+    });
+  } catch (error: any) {
+    console.error('[Consent API] Error updating consent:', error);
+
     return NextResponse.json(
-      { error: 'Failed to fetch consent settings' },
+      {
+        error: 'Failed to update consent',
+        message: error.message,
+      },
       { status: 500 }
     );
   }
 }
 
-// PUT /api/athlete/consent - Update athlete's consent settings
-export async function PUT(request: NextRequest) {
-  return handleUpdate(request);
-}
-
-// PATCH /api/athlete/consent - Update athlete's consent settings (partial update)
-export async function PATCH(request: NextRequest) {
-  return handleUpdate(request);
-}
-
-async function handleUpdate(request: NextRequest) {
+/**
+ * GET /api/athlete/consent
+ *
+ * Retrieves current consent status for the authenticated athlete
+ */
+export async function GET(req: NextRequest) {
   try {
     // Verify authentication
-    const { authorized, user: authUser, response } = await requireAuth(request);
-    if (!authorized) return response;
+    const session = await getServerSession(authOptions);
 
-    // Verify user is an athlete
-    const user = await prisma.user.findUnique({
-      where: { id: authUser!.id },
-      include: { Athlete: true },
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get athlete consent status
+    const athlete = await prisma.athlete.findUnique({
+      where: { userId: session.user.id },
+      select: {
+        consentChatSummaries: true,
+      },
     });
 
-    if (!user || user.role !== 'ATHLETE' || !user.Athlete) {
+    if (!athlete) {
       return NextResponse.json(
-        { error: 'Forbidden - Athlete access required' },
+        { error: 'User is not an athlete' },
         { status: 403 }
       );
     }
 
-    // Parse and validate request body
-    const body = await request.json();
-    const validationResult = updateConsentSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validationResult.error.format()
-        },
-        { status: 400 }
-      );
-    }
-
-    const data = validationResult.data;
-
-    // Update consent settings
-    const updateData: any = {};
-    if (data.consentChatSummaries !== undefined) {
-      updateData.consentChatSummaries = data.consentChatSummaries;
-    }
-    if (data.consentCoachView !== undefined) {
-      updateData.consentCoachView = data.consentCoachView;
-    }
-
-    const updatedAthlete = await prisma.athlete.update({
-      where: { userId: authUser!.id },
-      data: updateData,
-      select: {
-        consentChatSummaries: true,
-        consentCoachView: true,
-      },
-    });
-
     return NextResponse.json({
-      consent: updatedAthlete,
-      message: 'Consent settings updated successfully',
+      consentChatSummaries: athlete.consentChatSummaries,
     });
+  } catch (error: any) {
+    console.error('[Consent API] Error fetching consent:', error);
 
-  } catch (error) {
-    console.error('Error updating consent settings:', error);
     return NextResponse.json(
-      { error: 'Failed to update consent settings' },
+      {
+        error: 'Failed to fetch consent',
+        message: error.message,
+      },
       { status: 500 }
     );
   }

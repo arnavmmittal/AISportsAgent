@@ -783,6 +783,81 @@ export interface CoachSettings {
   };
 }
 
+// ==================== WEEKLY CHAT SUMMARIES ====================
+
+export interface WeeklySummary {
+  id: string;
+  athleteId: string;
+  summaryType: 'WEEKLY';
+
+  // Week Boundaries
+  weekStart: Date;
+  weekEnd: Date;
+
+  // Summary Content
+  summary: string;                      // Human-readable overview
+  keyThemes: string[];                  // Encrypted - high-level themes
+  adherenceNotes: string | null;        // Encrypted - engagement notes
+  recommendedActions: string[];         // Encrypted - suggested interventions
+  riskFlags: string[];                  // Not encrypted - needed for penalties
+
+  // Structured Numeric Scores (1-10 scale, NOT encrypted)
+  moodScore: number | null;
+  stressScore: number | null;
+  sleepQualityScore: number | null;
+  confidenceScore: number | null;
+  sorenessScore: number | null;
+  workloadPerception: number | null;
+
+  // Goal Progress Tracking
+  athleteGoalsProgress: Record<string, {
+    status: 'on_track' | 'struggling' | 'achieved';
+    notes: string;
+    confidence: number;
+  }> | null;
+
+  // Engagement Metrics
+  totalMessages: number | null;
+  sessionCount: number | null;
+  avgResponseTime: number | null;      // Seconds
+  engagementScore: number | null;      // 1-10
+
+  // Privacy & Audit
+  redactedContent: boolean;
+  viewedByCoach: boolean;
+  viewedAt: Date | null;
+  coachId: string | null;
+
+  // Data Retention
+  expiresAt: Date | null;
+  revokedAt: Date | null;
+
+  // Timestamps
+  generatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WeeklySummaryWithConsent extends WeeklySummary {
+  athlete: {
+    name: string;
+    consentChatSummaries: boolean;
+    consentCoachView: boolean;
+  };
+}
+
+export interface WeeklySummaryListResponse {
+  summaries: WeeklySummary[];
+  meta: {
+    athleteId: string;
+    athleteName: string;
+    consentGranted: boolean;
+    weekStart: Date;
+    weekEnd: Date;
+    hasMoreWeeks: boolean;
+  };
+}
+
 // ==================== UTILITY TYPES ====================
 
 export type ID = string;
