@@ -101,11 +101,11 @@ export default function StudentSettingsPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
           <Settings className="w-8 h-8 text-purple-600" />
           Settings
         </h1>
-        <p className="text-gray-600 mt-1">Manage your profile and preferences</p>
+        <p className="text-muted-foreground mt-1">Manage your profile and preferences</p>
       </div>
 
       {/* Profile Information */}
@@ -223,7 +223,7 @@ export default function StudentSettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-blue-600" />
+            <Bell className="w-5 h-5 text-primary" />
             <CardTitle>Notification Preferences</CardTitle>
           </div>
           <CardDescription>Choose what updates you want to receive</CardDescription>
@@ -325,7 +325,7 @@ export default function StudentSettingsPage() {
             <Button
               onClick={handleSaveNotifications}
               variant="outline"
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              className="border-blue-600 text-primary hover:bg-blue-50"
             >
               <Save className="w-4 h-4 mr-2" />
               Save Preferences
@@ -384,7 +384,7 @@ export default function StudentSettingsPage() {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
             <div className="flex gap-3">
-              <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <h4 className="text-sm font-semibold text-blue-900">Your Data is Protected</h4>
                 <p className="text-xs text-blue-800">

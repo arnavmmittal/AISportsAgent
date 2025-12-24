@@ -35,7 +35,7 @@ const QUICK_TOPICS = [
   { icon: Heart, label: 'Pre-Game Anxiety', color: 'text-pink-600 bg-pink-50' },
   { icon: Trophy, label: 'Building Confidence', color: 'text-yellow-600 bg-yellow-50' },
   { icon: Lightbulb, label: 'Mental Toughness', color: 'text-purple-600 bg-purple-50' },
-  { icon: BookOpen, label: 'Visualization', color: 'text-blue-600 bg-blue-50' },
+  { icon: BookOpen, label: 'Visualization', color: 'text-primary bg-blue-50' },
 ];
 
 export default function StudentChatPage() {
@@ -99,11 +99,11 @@ export default function StudentChatPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <Sparkles className="w-8 h-8 text-primary" />
             AI Mental Performance Coach
           </h1>
-          <p className="text-gray-600 mt-1">Evidence-based sports psychology guidance, 24/7</p>
+          <p className="text-muted-foreground mt-1">Evidence-based sports psychology guidance, 24/7</p>
         </div>
         <Badge variant="secondary" className="gap-1">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -125,7 +125,7 @@ export default function StudentChatPage() {
                 <button
                   key={topic.label}
                   onClick={() => handlePromptClick(`Help me with ${topic.label.toLowerCase()}`)}
-                  className={`p-3 rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all ${topic.color}`}
+                  className={`p-3 rounded-lg border-2 border-border hover:border-blue-400 transition-all ${topic.color}`}
                 >
                   <Icon className="w-5 h-5 mx-auto mb-1" />
                   <p className="text-xs font-medium text-center">{topic.label}</p>
@@ -178,7 +178,7 @@ export default function StudentChatPage() {
                   className={`rounded-2xl px-4 py-3 ${
                     message.role === 'user'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
+                      : 'bg-gray-100 text-foreground'
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
@@ -219,7 +219,7 @@ export default function StudentChatPage() {
                 <button
                   key={prompt}
                   onClick={() => handlePromptClick(prompt)}
-                  className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 transition-colors"
+                  className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-muted-foreground transition-colors"
                 >
                   {prompt}
                 </button>
