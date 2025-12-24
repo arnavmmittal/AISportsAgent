@@ -97,7 +97,7 @@ export default function CoachAssignmentsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#0f172a', '#1e293b', '#334155']}
+        colors={[Colors.background, Colors.card, Colors.cardElevated]}
         style={StyleSheet.absoluteFill}
       />
 

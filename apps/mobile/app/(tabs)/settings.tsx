@@ -318,7 +318,7 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       {/* Dark gradient background */}
       <LinearGradient
-        colors={['#0f172a', '#1e293b', '#334155']}
+        colors={[Colors.background, Colors.card, Colors.cardElevated]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -327,7 +327,7 @@ export default function SettingsScreen() {
       {/* Header with gradient */}
       <View style={styles.header}>
         <LinearGradient
-          colors={['#8b5cf6', '#d946ef', '#ec4899']}
+          colors={[Colors.primary, Colors.secondary, Colors.accent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.headerGradient}
@@ -586,7 +586,7 @@ export default function SettingsScreen() {
           style={styles.modalContainer}
         >
           <LinearGradient
-            colors={['#0f172a', '#1e293b', '#334155']}
+            colors={[Colors.background, Colors.card, Colors.cardElevated]}
             style={styles.modalGradient}
           >
             {/* Modal Header */}

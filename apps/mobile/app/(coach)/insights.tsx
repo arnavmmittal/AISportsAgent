@@ -122,7 +122,7 @@ export default function InsightsScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#0f172a', '#1e293b', '#334155']}
+          colors={[Colors.background, Colors.card, Colors.cardElevated]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.loadingContainer}>
@@ -137,7 +137,7 @@ export default function InsightsScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#0f172a', '#1e293b', '#334155']}
+          colors={[Colors.background, Colors.card, Colors.cardElevated]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.errorContainer}>
@@ -154,7 +154,7 @@ export default function InsightsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#0f172a', '#1e293b', '#334155']}
+        colors={[Colors.background, Colors.card, Colors.cardElevated]}
         style={StyleSheet.absoluteFill}
       />
 

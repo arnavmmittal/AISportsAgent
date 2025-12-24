@@ -397,7 +397,7 @@ export default function GoalsScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#0f172a', '#1e293b', '#334155']}
+          colors={[Colors.background, Colors.card, Colors.cardElevated]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -413,7 +413,7 @@ export default function GoalsScreen() {
     <View style={styles.container}>
       {/* Dark gradient background */}
       <LinearGradient
-        colors={['#0f172a', '#1e293b', '#334155']}
+        colors={[Colors.background, Colors.card, Colors.cardElevated]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -422,7 +422,7 @@ export default function GoalsScreen() {
       {/* Header with gradient */}
       <View style={styles.header}>
         <LinearGradient
-          colors={['#8b5cf6', '#d946ef', '#ec4899']}
+          colors={[Colors.primary, Colors.secondary, Colors.accent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.headerGradient}
@@ -499,7 +499,7 @@ export default function GoalsScreen() {
       {goals.length === 0 && suggestedGoals.length === 0 ? (
         <View style={styles.emptyContainer}>
           <LinearGradient
-            colors={['#8b5cf6', '#d946ef']}
+            colors={[Colors.primary, Colors.secondary]}
             style={styles.emptyIconContainer}
           >
             <Ionicons name="trophy" size={64} color="#fff" />
@@ -516,7 +516,7 @@ export default function GoalsScreen() {
             }}
           >
             <LinearGradient
-              colors={['#8b5cf6', '#d946ef']}
+              colors={[Colors.primary, Colors.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.createButton}

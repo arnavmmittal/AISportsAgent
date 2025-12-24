@@ -95,7 +95,7 @@ export default function CoachSettingsScreen() {
     <View style={styles.container}>
       {/* Dark gradient background */}
       <LinearGradient
-        colors={['#0f172a', '#1e293b', '#334155']}
+        colors={[Colors.background, Colors.card, Colors.cardElevated]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}

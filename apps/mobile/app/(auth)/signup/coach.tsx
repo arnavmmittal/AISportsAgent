@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   stepIndicator: { fontSize: 16, fontWeight: '600', color: '#e0f2fe' },
   formContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,

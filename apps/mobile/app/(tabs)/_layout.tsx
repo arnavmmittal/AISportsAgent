@@ -70,7 +70,7 @@ function AnimatedTabIcon({
           ]}
         >
           <LinearGradient
-            colors={['#8b5cf6', '#d946ef', '#ec4899']} // Purple → Fuchsia → Pink
+            colors={[Colors.primary, Colors.secondary, Colors.accent]} // Purple → Fuchsia → Pink
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.gradientBubble}
