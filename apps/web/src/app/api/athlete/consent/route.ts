@@ -71,7 +71,7 @@ export async function PUT(req: NextRequest) {
     });
 
     console.log(
-      \`[Consent] Athlete \${session.user.id} \${consentChatSummaries ? 'granted' : 'revoked'} consent for chat summaries\`
+      `[Consent] Athlete \${session.user.id} \${consentChatSummaries ? 'granted' : 'revoked'} consent for chat summaries`
     );
 
     // If revoking consent, mark all existing summaries as revoked
@@ -91,7 +91,7 @@ export async function PUT(req: NextRequest) {
       });
 
       console.log(
-        \`[Consent] Marked \${revokedSummaries.count} summaries as revoked for athlete \${session.user.id}\`
+        `[Consent] Marked \${revokedSummaries.count} summaries as revoked for athlete \${session.user.id}`
       );
 
       // Log revocation to audit trail
