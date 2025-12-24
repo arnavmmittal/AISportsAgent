@@ -116,7 +116,7 @@ export default function AssignmentDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="glass-strong shadow">
+      <div className="bg-card shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
             href="/coach/assignments"
@@ -190,7 +190,7 @@ export default function AssignmentDetailPage() {
         </h2>
 
         {submissions.length === 0 ? (
-          <div className="glass-strong rounded-lg shadow p-12 text-center">
+          <div className="bg-card rounded-lg shadow p-12 text-center">
             <p className="text-muted-foreground">No submissions yet</p>
           </div>
         ) : (
@@ -198,7 +198,7 @@ export default function AssignmentDetailPage() {
             {submissions.map((submission) => (
               <div
                 key={submission.id}
-                className="glass-strong rounded-lg shadow hover:shadow-md transition-shadow p-6"
+                className="bg-card rounded-lg shadow hover:shadow-md transition-shadow p-6"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">

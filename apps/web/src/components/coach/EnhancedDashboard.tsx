@@ -146,7 +146,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
   if (error || !dashboardData) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="text-center glass-strong rounded-2xl shadow-2xl p-12 max-w-md">
+        <div className="text-center bg-card rounded-2xl shadow-2xl p-12 max-w-md">
           <div className="text-red-500 text-7xl mb-6">⚠️</div>
           <h2 className="text-2xl font-bold text-foreground mb-4">
             {error || 'No data available'}
@@ -167,7 +167,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       {/* Header with Invite Code */}
-      <div className="glass-strong shadow-lg border-b-2 border-blue-100">
+      <div className="bg-card shadow-lg border-b-2 border-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div>
@@ -194,7 +194,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                 <span className="text-3xl">🎯</span>
                 Your Team Invite Code
               </h3>
-              <div className="glass-strong/20 backdrop-blur-md rounded-xl p-6 mb-6 border border-white/30">
+              <div className="bg-card/20 backdrop-blur-md rounded-xl p-6 mb-6 border border-white/30">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
                     <div className="text-xs uppercase tracking-wider opacity-90 mb-2 font-semibold">
@@ -206,7 +206,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                   </div>
                   <button
                     onClick={copyInviteCode}
-                    className="px-6 py-3 glass-strong text-primary rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-lg hover:shadow-xl"
+                    className="px-6 py-3 bg-card text-primary rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-lg hover:shadow-xl"
                   >
                     📋 Copy Code
                   </button>
@@ -224,7 +224,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                   <span className="font-bold text-lg">{inviteCodeData.athleteCount}</span>
                 </div>
               </div>
-              <div className="mt-6 glass-strong/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+              <div className="mt-6 bg-card/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <p className="text-sm leading-relaxed">
                   💡 <strong>How it works:</strong> Athletes enter this code in their mobile app to join your team.
                   They control their data sharing consent, giving you access to their mental performance metrics.
@@ -237,7 +237,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Filters */}
-        <div className="mb-10 flex flex-col md:flex-row gap-6 items-stretch glass-strong rounded-2xl shadow-lg p-6 border border-gray-100">
+        <div className="mb-10 flex flex-col md:flex-row gap-6 items-stretch bg-card rounded-2xl shadow-lg p-6 border border-gray-100">
           <div className="flex-1">
             <label className="block text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
               <span className="text-lg">📅</span>
@@ -246,7 +246,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:glass-strong cursor-pointer"
+              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:bg-card cursor-pointer"
             >
               <option value="7">Last 7 days</option>
               <option value="14">Last 14 days</option>
@@ -262,7 +262,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             <select
               value={sportFilter}
               onChange={(e) => setSportFilter(e.target.value)}
-              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:glass-strong cursor-pointer"
+              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:bg-card cursor-pointer"
             >
               <option value="">All Sports</option>
               <option value="Basketball">🏀 Basketball</option>
@@ -286,7 +286,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                 <div className="text-5xl font-black mb-2">
                   {overview.totalAthletes}
                 </div>
-                <div className="text-sm glass-strong/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
                   {overview.athletesWithConsent} with consent
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                 <div className="text-5xl font-black mb-2">
                   {teamMood.avgMood.toFixed(1)}
                 </div>
-                <div className="text-sm glass-strong/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
                   {teamMood.totalLogs} logs
                 </div>
               </div>
@@ -320,7 +320,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                 <div className="text-5xl font-black mb-2">
                   {overview.atRiskCount}
                 </div>
-                <div className="text-sm glass-strong/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
                   Need attention
                 </div>
               </div>
@@ -337,7 +337,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                 <div className="text-5xl font-black mb-2">
                   {overview.crisisAlertsCount}
                 </div>
-                <div className="text-sm glass-strong/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
                   Unresolved
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* Mood Trend Chart */}
         {chartData.length > 0 && (
-          <div className="glass-strong rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
+          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
               <span className="text-3xl">📈</span>
               Team Mental Performance Trends
@@ -397,7 +397,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* At-Risk Athletes */}
         {atRiskAthletes.length > 0 && (
-          <div className="glass-strong rounded-2xl shadow-xl p-8 mb-10 border-2 border-red-200">
+          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border-2 border-red-200">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
               <span className="text-3xl">⚠️</span>
               At-Risk Athletes
@@ -420,15 +420,15 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                   </div>
                   {athlete.recentMood && (
                     <div className="space-y-3 mb-4">
-                      <div className="flex justify-between items-center glass-strong/60 rounded-lg px-3 py-2">
+                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
                         <span className="text-sm font-semibold text-muted-foreground">Mood:</span>
                         <span className="font-black text-lg">{athlete.recentMood.mood}/10</span>
                       </div>
-                      <div className="flex justify-between items-center glass-strong/60 rounded-lg px-3 py-2">
+                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
                         <span className="text-sm font-semibold text-muted-foreground">Confidence:</span>
                         <span className="font-black text-lg">{athlete.recentMood.confidence}/10</span>
                       </div>
-                      <div className="flex justify-between items-center glass-strong/60 rounded-lg px-3 py-2">
+                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
                         <span className="text-sm font-semibold text-muted-foreground">Stress:</span>
                         <span className="font-black text-lg text-red-600">{athlete.recentMood.stress}/10</span>
                       </div>
@@ -462,7 +462,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* Today's Readiness */}
         {athleteReadiness.length > 0 && (
-          <div className="glass-strong rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
+          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
               <span className="text-3xl">🎯</span>
               Today's Readiness Scores
@@ -520,7 +520,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* Empty State */}
         {overview.totalAthletes === 0 && (
-          <div className="glass-strong rounded-2xl shadow-2xl p-16 text-center border-2 border-dashed border-border">
+          <div className="bg-card rounded-2xl shadow-2xl p-16 text-center border-2 border-dashed border-border">
             <div className="text-8xl mb-6">👋</div>
             <h3 className="text-3xl font-black text-foreground mb-4">
               Welcome to Your Coach Dashboard!

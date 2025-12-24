@@ -51,7 +51,7 @@ export default function SignInPage() {
     <div className="min-h-screen gradient-dark flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="glass-strong rounded-2xl shadow-xl overflow-hidden blue-glow">
+        <div className="bg-card rounded-2xl shadow-xl overflow-hidden blue-glow">
           {/* Header */}
           <div className="px-8 pt-8 pb-6 gradient-primary">
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>

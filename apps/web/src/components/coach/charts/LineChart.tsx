@@ -47,7 +47,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="glass-strong rounded-lg p-3 shadow-lg">
+    <div className="bg-card rounded-lg p-3 shadow-lg">
       <p className="text-sm font-medium text-foreground mb-2">{label}</p>
       <div className="space-y-1">
         {payload.map((entry, index) => (
