@@ -279,7 +279,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.card,
   },
   scrollContent: {
     flexGrow: 1,
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
   },
   roleButtonActive: {
     borderColor: '#2563eb',
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
   },
   button: {
     height: 50,
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     marginBottom: 16,
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '70%',
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#f9fafb',
+    backgroundColor: Colors.backgroundSecondary,
   },
   modalOptionSelected: {
     backgroundColor: '#eff6ff',

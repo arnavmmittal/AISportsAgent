@@ -97,7 +97,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={['#2563eb', '#3b82f6', '#60a5fa']}
+        colors={[Colors.primary, Colors.secondary, Colors.accent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientHeader}
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: BorderRadius.xl * 1.5,
     borderTopRightRadius: BorderRadius.xl * 1.5,
     marginTop: -Spacing.xl,

@@ -389,7 +389,7 @@ export default function ChatScreen() {
 
       {/* Dark gradient background */}
       <LinearGradient
-        colors={['#0f172a', '#1e293b', '#334155']}
+        colors={[Colors.background, Colors.card, Colors.cardElevated]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -403,7 +403,7 @@ export default function ChatScreen() {
         {/* Header */}
         <View style={styles.header}>
           <LinearGradient
-            colors={['#8b5cf6', '#d946ef', '#ec4899']}
+            colors={[Colors.primary, Colors.secondary, Colors.accent]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.headerGradient}
@@ -440,7 +440,7 @@ export default function ChatScreen() {
           {messages.length === 0 ? (
             <View style={styles.emptyState}>
               <LinearGradient
-                colors={['#8b5cf6', '#d946ef']}
+                colors={[Colors.primary, Colors.secondary]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.emptyIconContainer}
@@ -489,7 +489,7 @@ export default function ChatScreen() {
                 >
                   {item.role === 'assistant' && (
                     <LinearGradient
-                      colors={['#8b5cf6', '#d946ef']}
+                      colors={[Colors.primary, Colors.secondary]}
                       style={styles.avatar}
                     >
                       <Ionicons name="chatbubbles" size={20} color="#fff" />

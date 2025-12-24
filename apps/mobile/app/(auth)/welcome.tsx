@@ -6,13 +6,14 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Colors } from '@/constants/theme';
 
 export default function Welcome() {
   const router = useRouter();
 
   return (
     <LinearGradient
-      colors={['#1e3a8a', '#3b82f6', '#60a5fa']}
+      colors={[Colors.primary, Colors.secondary, Colors.accent]}
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   roleCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: Colors.card,
     padding: 24,
     borderRadius: 16,
     alignItems: 'center',
@@ -163,6 +164,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    borderWidth: 1,
+    borderColor: Colors.chrome + '40',
   },
   roleIcon: {
     fontSize: 48,
@@ -171,13 +174,13 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#1e3a8a',
+    color: Colors.secondary,
     marginBottom: 8,
     letterSpacing: 1,
   },
   roleDescription: {
     fontSize: 14,
-    color: '#475569',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
