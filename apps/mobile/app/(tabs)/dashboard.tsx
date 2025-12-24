@@ -403,7 +403,7 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#ec4899', '#f472b6', '#f9a8d4']}
+              colors={[Colors.accent, Colors.secondary, Colors.primary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.statCardGradient}
@@ -434,7 +434,7 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#3b82f6', '#60a5fa']}
+              colors={[Colors.primary, Colors.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.actionGradient}
@@ -456,7 +456,7 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#10b981', '#34d399']}
+              colors={[Colors.success, '#34d399']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.actionGradient}
@@ -478,7 +478,7 @@ export default function DashboardScreen() {
             }}
           >
             <LinearGradient
-              colors={['#f59e0b', '#fbbf24']}
+              colors={[Colors.accent, Colors.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.actionGradient}
