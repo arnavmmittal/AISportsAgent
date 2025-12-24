@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CoachSignupData } from '../../../types/auth';
 import { signupCoach, getRoleBasedRoute } from '../../../lib/auth';
 import config from '../../../config';
+import { Colors } from '../../../constants/theme';
 
 export default function CoachSignup() {
   const router = useRouter();
