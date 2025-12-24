@@ -51,7 +51,7 @@ export function Header() {
     const roleDisplay = session.user?.role === 'COACH' ? 'Coach' : 'Athlete';
 
     return (
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <header className="glass-strong border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             {/* Logo and Desktop Navigation */}
@@ -60,7 +60,7 @@ export function Header() {
                 onClick={handleDashboardRedirect}
                 className="flex-shrink-0 flex items-center group"
               >
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
+                <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
                   AI Sports Agent
                 </span>
               </button>
@@ -71,8 +71,8 @@ export function Header() {
                     href={link.href}
                     className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${
                       isActive(link.href)
-                        ? 'bg-blue-50 text-blue-700 shadow-sm'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-primary/10 text-primary shadow-sm'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
                   >
                     <span className="mr-2 text-base">{link.icon}</span>
@@ -90,32 +90,32 @@ export function Header() {
               <div className="relative">
                 <button
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm">
                       {session.user.name?.charAt(0).toUpperCase()}
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-                      <p className="text-xs text-gray-500">{roleDisplay}</p>
+                      <p className="text-sm font-medium text-foreground">{session.user.name}</p>
+                      <p className="text-xs text-muted-foreground">{roleDisplay}</p>
                     </div>
                   </div>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 {/* Dropdown Menu */}
                 {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-                      <p className="text-xs text-gray-500">{session.user.email}</p>
+                  <div className="absolute right-0 mt-2 w-56 glass rounded-lg shadow-lg border border-border py-1">
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="text-sm font-medium text-foreground">{session.user.name}</p>
+                      <p className="text-xs text-muted-foreground">{session.user.email}</p>
                     </div>
                     <Link
                       href={session.user?.role === 'COACH' ? '/coach/settings' : '/settings'}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="block px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
                       onClick={() => setIsProfileMenuOpen(false)}
                     >
                       Settings
@@ -135,7 +135,7 @@ export function Header() {
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                className="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 hover:bg-muted transition-colors"
               >
                 {isMobileMenuOpen ? (
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,7 +153,7 @@ export function Header() {
 
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
+          <div className="md:hidden border-t border-border bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {links.map((link) => (
                 <Link
@@ -162,8 +162,8 @@ export function Header() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block px-3 py-2 rounded-lg text-base font-medium transition-colors ${
                     isActive(link.href)
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <span className="mr-2">{link.icon}</span>
@@ -171,19 +171,19 @@ export function Header() {
                 </Link>
               ))}
             </div>
-            <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="pt-4 pb-3 border-t border-border">
               <div className="flex items-center px-4 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold">
                   {session.user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-                  <p className="text-xs text-gray-500">{roleDisplay}</p>
+                  <p className="text-sm font-medium text-foreground">{session.user.name}</p>
+                  <p className="text-xs text-muted-foreground">{roleDisplay}</p>
                 </div>
               </div>
               <Link
                 href={session.user?.role === 'COACH' ? '/coach/settings' : '/settings'}
-                className="block px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+                className="block px-4 py-2 text-base font-medium text-muted-foreground hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Settings
@@ -205,12 +205,12 @@ export function Header() {
   const isAuthPage = pathname.startsWith('/auth');
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <header className="glass-strong border-b border-border sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center group">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
               AI Sports Agent
             </span>
           </Link>
@@ -221,13 +221,13 @@ export function Header() {
               <>
                 <Link
                   href="/auth/signin"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-foreground transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white gradient-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
                 >
                   Get Started
                 </Link>
@@ -236,13 +236,13 @@ export function Header() {
               <>
                 <Link
                   href="/"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-foreground transition-colors"
                 >
                   ← Back
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white gradient-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
                 >
                   Sign Up
                 </Link>
@@ -251,13 +251,13 @@ export function Header() {
               <>
                 <Link
                   href="/"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-foreground transition-colors"
                 >
                   ← Back
                 </Link>
                 <Link
                   href="/auth/signin"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white gradient-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
                 >
                   Sign In
                 </Link>
