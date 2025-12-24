@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AthleteSignupData } from '../../../types/auth';
 import { signupAthlete, getRoleBasedRoute } from '../../../lib/auth';
+import { Colors } from '../../../constants/theme';
 
 export default function AthleteSignup() {
   const router = useRouter();

@@ -7,6 +7,7 @@ import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { initializeAuth } from '../lib/auth';
+import { Colors } from '../constants/theme';
 
 export default function Index() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -23,7 +24,7 @@ export default function Index() {
   if (isAuthenticated === null) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color={Colors.secondary} />
       </View>
     );
   }

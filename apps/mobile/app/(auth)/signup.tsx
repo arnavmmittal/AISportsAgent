@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient, login } from '../../lib/auth';
+import { Colors } from '../../constants/theme';
 
 const SPORTS = [
   'Basketball', 'Football', 'Soccer', 'Baseball', 'Softball',
