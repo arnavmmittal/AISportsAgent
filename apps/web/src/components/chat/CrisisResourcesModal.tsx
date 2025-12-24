@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-interface Crisis Alert {
+interface CrisisAlert {
   final_risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   message?: string;
 }
