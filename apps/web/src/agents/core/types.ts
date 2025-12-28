@@ -30,6 +30,9 @@ export interface AgentResponse {
     confidence?: number;
     requiresFollowup?: boolean;
     suggestedActions?: string[];
+    isCrisisResponse?: boolean;
+    crisisSeverity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    crisisDetection?: CrisisDetection;
   };
 }
 

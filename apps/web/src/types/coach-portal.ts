@@ -604,6 +604,7 @@ export interface CommandCenterData {
   };
 
   // Action Feed
+  actionFeed: ActionFeedItem[];
   recentFlags: RiskFlag[];
   newInsights: AIInsight[];
 

@@ -300,7 +300,7 @@ export class KnowledgeAgent extends BaseAgent {
     }> = [];
 
     // Simple keyword matching (fallback only)
-    Object.values(KNOWLEDGE_BASE).forEach((doc) => {
+    Object.values(FALLBACK_KNOWLEDGE_BASE).forEach((doc) => {
       const matchCount = doc.keywords.filter((keyword) =>
         queryLower.includes(keyword)
       ).length;

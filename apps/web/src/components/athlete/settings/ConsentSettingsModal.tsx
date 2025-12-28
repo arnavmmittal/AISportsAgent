@@ -170,14 +170,14 @@ export default function ConsentSettingsModal({
               <button
                 onClick={() => handleToggle(!consent)}
                 disabled={saving}
-                className={\`relative inline-flex h-6 w-11 items-center rounded-full transition-colors \${
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   consent ? 'bg-blue-600' : 'bg-gray-200'
-                } \${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}\`}
+                } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span
-                  className={\`inline-block h-4 w-4 transform rounded-full bg-card transition-transform \${
+                  className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${
                     consent ? 'translate-x-6' : 'translate-x-1'
-                  }\`}
+                  }`}
                 />
               </button>
             </div>
@@ -205,7 +205,7 @@ export default function ConsentSettingsModal({
                 <button
                   onClick={confirmChange}
                   disabled={saving}
-                  className={\`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium \${saving ? 'opacity-50 cursor-not-allowed' : ''}\`}
+                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {saving ? 'Saving...' : 'Confirm'}
                 </button>

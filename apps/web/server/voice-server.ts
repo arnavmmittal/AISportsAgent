@@ -189,8 +189,8 @@ async function transcribeAudio(audioBuffer: Buffer): Promise<string | null> {
   try {
     console.log('[Whisper] Transcribing', audioBuffer.length, 'bytes');
 
-    // Create File object for OpenAI
-    const file = new File([audioBuffer], 'audio.webm', {
+    // Create File object for OpenAI - convert Buffer to Uint8Array for BlobPart compatibility
+    const file = new File([new Uint8Array(audioBuffer)], 'audio.webm', {
       type: 'audio/webm',
     });
 
@@ -309,23 +309,30 @@ async function streamTTS(text: string, ws: WebSocket): Promise<void> {
       'EXAVITQu4vr4xnSDxMaL', // Rachel voice ID (or use process.env.ELEVENLABS_VOICE_ID)
       {
         text: text,
-        model_id: 'eleven_multilingual_v2', // High quality, natural model
-        voice_settings: {
+        modelId: 'eleven_multilingual_v2', // High quality, natural model
+        voiceSettings: {
           stability: 0.5, // Balance between consistency and expressiveness
-          similarity_boost: 0.75, // How much to match the original voice
+          similarityBoost: 0.75, // How much to match the original voice
           style: 0.5, // Speaking style intensity
-          use_speaker_boost: true, // Enhance clarity
+          useSpeakerBoost: true, // Enhance clarity
         },
       }
     );
 
     console.log('[ElevenLabs] Streaming audio to client...');
 
-    // Collect audio chunks
+    // Collect audio chunks using ReadableStream reader
     const chunks: Buffer[] = [];
+    const reader = audioStream.getReader();
 
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(Buffer.from(value));
+      }
+    } finally {
+      reader.releaseLock();
     }
 
     const audioData = Buffer.concat(chunks);

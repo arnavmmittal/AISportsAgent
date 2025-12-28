@@ -61,7 +61,7 @@ export default function ReadinessBreakdown({
     // Compact view
     return (
       <div className="flex items-center space-x-3">
-        <div className={\`px-3 py-1 rounded-lg font-bold text-lg \${getReadinessColorClass(level)}\`}>
+        <div className={`px-3 py-1 rounded-lg font-bold text-lg ${getReadinessColorClass(level)}`}>
           {score}
         </div>
         <div className="flex-1">
@@ -78,7 +78,7 @@ export default function ReadinessBreakdown({
   return (
     <div className="border border-border rounded-lg bg-card shadow-sm">
       {/* Header */}
-      <div className={\`p-4 border-b border-border \${getReadinessColorClass(level)}\`}>
+      <div className={`p-4 border-b border-border ${getReadinessColorClass(level)}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold">Readiness Score: {score}</h3>
@@ -103,7 +103,7 @@ export default function ReadinessBreakdown({
             <span className="text-xs text-muted-foreground">({Math.round(signals.mood.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className={\`text-sm font-bold \${getScoreColor(signals.mood.value)}\`}>
+            <span className={`text-sm font-bold ${getScoreColor(signals.mood.value)}`}>
               {signals.mood.value.toFixed(1)}/10
             </span>
             <span className="text-xs" title={getSourceLabel(signals.mood.source)}>
@@ -120,7 +120,7 @@ export default function ReadinessBreakdown({
             <span className="text-xs text-muted-foreground">({Math.round(signals.stress.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className={\`text-sm font-bold \${getScoreColor(10 - signals.stress.value)}\`}>
+            <span className={`text-sm font-bold ${getScoreColor(10 - signals.stress.value)}`}>
               {signals.stress.value.toFixed(1)}/10
             </span>
             <span className="text-xs" title={getSourceLabel(signals.stress.source)}>
@@ -137,7 +137,7 @@ export default function ReadinessBreakdown({
             <span className="text-xs text-muted-foreground">({Math.round(signals.confidence.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className={\`text-sm font-bold \${getScoreColor(signals.confidence.value)}\`}>
+            <span className={`text-sm font-bold ${getScoreColor(signals.confidence.value)}`}>
               {signals.confidence.value.toFixed(1)}/10
             </span>
             <span className="text-xs" title={getSourceLabel(signals.confidence.source)}>
@@ -154,7 +154,7 @@ export default function ReadinessBreakdown({
             <span className="text-xs text-muted-foreground">({Math.round(signals.sleep.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className={\`text-sm font-bold \${getScoreColor(signals.sleep.value)}\`}>
+            <span className={`text-sm font-bold ${getScoreColor(signals.sleep.value)}`}>
               {signals.sleep.value.toFixed(1)}/10
             </span>
             <span className="text-xs" title={getSourceLabel(signals.sleep.source)}>
@@ -171,7 +171,7 @@ export default function ReadinessBreakdown({
             <span className="text-xs text-muted-foreground">({Math.round(signals.engagement.weight * 100)}%)</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className={\`text-sm font-bold \${getScoreColor(signals.engagement.value)}\`}>
+            <span className={`text-sm font-bold ${getScoreColor(signals.engagement.value)}`}>
               {signals.engagement.value.toFixed(1)}/10
             </span>
             <span className="text-xs" title={getSourceLabel(signals.engagement.source)}>

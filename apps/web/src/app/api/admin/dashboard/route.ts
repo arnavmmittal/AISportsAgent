@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       prisma.school.count(),
       prisma.goal.count(),
       prisma.moodLog.count(),
-      prisma.crisisAlert.count({ where: { resolved: false } }),
+      prisma.crisisAlert.count({ where: { reviewed: false } }),
     ]);
 
     // Get recent activity (last 30 days)
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       include: {
         _count: {
           select: {
-            users: {
+            User: {
               where: { role: 'ATHLETE' },
             },
           },
@@ -73,22 +73,26 @@ export async function GET(req: NextRequest) {
     // Get recent crisis alerts
     const recentCrisisAlerts = await prisma.crisisAlert.findMany({
       where: {
-        createdAt: { gte: thirtyDaysAgo },
+        detectedAt: { gte: thirtyDaysAgo },
       },
       include: {
-        athlete: {
+        Athlete: {
           select: {
-            id: true,
-            name: true,
-            school: {
+            userId: true,
+            User: {
               select: {
                 name: true,
+                School: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { detectedAt: 'desc' },
       take: 10,
     });
 
@@ -136,7 +140,7 @@ export async function GET(req: NextRequest) {
           id: s.id,
           name: s.name,
           division: s.division,
-          athleteCount: s._count.users,
+          athleteCount: s._count.User,
         })),
         usersByRole,
         topSports,

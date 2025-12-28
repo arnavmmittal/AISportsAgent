@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -17,14 +17,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { id } = await params;
 
@@ -51,13 +45,13 @@ export async function GET(
       );
     }
 
-    // Authorization check
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    // Authorization check - user already provided by requireAuth
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user!.id },
       include: { athlete: true },
     });
 
-    if (!user) {
+    if (!fullUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -114,24 +108,18 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { id } = await params;
 
     // Verify user is a coach
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user!.id },
       include: { coach: true },
     });
 
-    if (!user || user.role !== 'COACH' || !user.coach) {
+    if (!fullUser || fullUser.role !== 'COACH' || !fullUser.coach) {
       return NextResponse.json(
         { error: 'Forbidden - Coach access required' },
         { status: 403 }
@@ -215,24 +203,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { id } = await params;
 
     // Verify user is a coach
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user!.id },
       include: { coach: true },
     });
 
-    if (!user || user.role !== 'COACH' || !user.coach) {
+    if (!fullUser || fullUser.role !== 'COACH' || !fullUser.coach) {
       return NextResponse.json(
         { error: 'Forbidden - Coach access required' },
         { status: 403 }

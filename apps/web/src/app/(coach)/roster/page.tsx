@@ -16,11 +16,11 @@ import { Athlete, AthleteFilters, ReadinessLevel } from '@/types/coach-portal';
 
 function getReadinessLevel(mood: number, confidence: number, stress: number): ReadinessLevel {
   const score = Math.round(((mood + confidence + (11 - stress)) / 3) * 10);
-  if (score >= 90) return 'OPTIMAL';
-  if (score >= 75) return 'GOOD';
-  if (score >= 60) return 'MODERATE';
-  if (score >= 45) return 'LOW';
-  return 'POOR';
+  if (score >= 90) return ReadinessLevel.OPTIMAL;
+  if (score >= 75) return ReadinessLevel.GOOD;
+  if (score >= 60) return ReadinessLevel.MODERATE;
+  if (score >= 45) return ReadinessLevel.LOW;
+  return ReadinessLevel.POOR;
 }
 
 export default function RosterPage() {
@@ -86,22 +86,22 @@ export default function RosterPage() {
     }
 
     // Sport filter
-    if (filters.sport) {
-      result = result.filter((athlete) => athlete.sport === filters.sport);
+    if (filters.sport && filters.sport.length > 0) {
+      result = result.filter((athlete) => filters.sport?.includes(athlete.sport));
     }
 
     // Year filter
-    if (filters.year) {
-      result = result.filter((athlete) => athlete.year === filters.year);
+    if (filters.year && filters.year.length > 0) {
+      result = result.filter((athlete) => filters.year?.includes(athlete.year));
     }
 
     // Risk level filter
-    if (filters.riskLevel) {
-      result = result.filter((athlete) => athlete.riskLevel === filters.riskLevel);
+    if (filters.riskLevel && filters.riskLevel.length > 0) {
+      result = result.filter((athlete) => filters.riskLevel?.includes(athlete.riskLevel));
     }
 
     // Readiness zone filter
-    if (filters.readinessZone) {
+    if (filters.readinessZone && filters.readinessZone.length > 0) {
       result = result.filter((athlete) => {
         // This would use actual readiness data
         return true; // Placeholder
@@ -109,13 +109,13 @@ export default function RosterPage() {
     }
 
     // Archetype filter
-    if (filters.archetype) {
-      result = result.filter((athlete) => athlete.archetype === filters.archetype);
+    if (filters.archetype && filters.archetype.length > 0) {
+      result = result.filter((athlete) => athlete.archetype && filters.archetype?.includes(athlete.archetype));
     }
 
     // Consent filter
-    if (filters.consentOnly !== undefined) {
-      result = result.filter((athlete) => athlete.consentCoachView === filters.consentOnly);
+    if (filters.consentGranted !== undefined) {
+      result = result.filter((athlete) => athlete.consentCoachView === filters.consentGranted);
     }
 
     setFilteredAthletes(result);

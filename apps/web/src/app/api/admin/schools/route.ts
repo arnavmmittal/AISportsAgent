@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       include: {
         _count: {
           select: {
-            users: true,
+            User: true,
           },
         },
       },
@@ -63,8 +63,10 @@ export async function POST(req: NextRequest) {
 
     const school = await prisma.school.create({
       data: {
+        id: `school-${Date.now()}`,
         name,
         division: division || 'D1',
+        updatedAt: new Date(),
       },
     });
 
