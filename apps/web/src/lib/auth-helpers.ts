@@ -77,7 +77,7 @@ export async function verifyAuthFromRequest(request: NextRequest): Promise<AuthU
     const token = authHeader.substring(7);
     try {
       const verified = await jwtVerify(token, JWT_SECRET);
-      return verified.payload as AuthUser;
+      return verified.payload as unknown as AuthUser;
     } catch (error) {
       console.error('JWT verification failed:', error);
       return null;

@@ -173,11 +173,10 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * GET /api/admin/cost-usage?userId=xxx
- *
- * Returns detailed usage stats for a specific user
+ * Helper function to get detailed usage stats for a specific user
+ * Not exported as a route handler - used internally or via query params
  */
-export async function getUserDetails(userId: string) {
+async function getUserDetails(userId: string) {
   try {
     const userStats = await getUserUsageStats(userId);
 

@@ -51,7 +51,7 @@ export async function generateWeeklySummaries() {
       consentChatSummaries: true,
     },
     include: {
-      user: {
+      User: {
         select: {
           id: true,
           name: true,
@@ -79,7 +79,7 @@ export async function generateWeeklySummaries() {
 
         // Track high-risk athletes for immediate notification
         if (summary.riskLevel === 'high') {
-          results.highRiskAlerts.push(athlete.user.name || athlete.user.email);
+          results.highRiskAlerts.push(athlete.User.name || athlete.User.email);
         }
       } else {
         results.skipped++;
@@ -105,7 +105,7 @@ export async function generateAthleteWeeklySummary(athleteId: string) {
 
   const sessions = await prisma.chatSession.findMany({
     where: {
-      athlete: {
+      Athlete: {
         userId: athleteId,
       },
       createdAt: {
@@ -113,7 +113,7 @@ export async function generateAthleteWeeklySummary(athleteId: string) {
       },
     },
     include: {
-      messages: {
+      Message: {
         orderBy: {
           createdAt: 'asc',
         },

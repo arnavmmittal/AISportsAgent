@@ -10,7 +10,9 @@ import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import type { Role, User as PrismaUser, Session } from '@prisma/client';
 
-// Extend NextAuth types
+// DEPRECATED: NextAuth types - now using Supabase Auth (see auth-helpers.ts)
+// Keeping file for reference during migration, will be removed in Phase 3
+/*
 declare module 'next-auth' {
   interface User {
     id: string;
@@ -44,6 +46,7 @@ declare module 'next-auth/jwt' {
     coach?: any;
   }
 }
+*/
 
 export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(prisma) as any,
