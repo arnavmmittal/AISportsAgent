@@ -52,7 +52,7 @@ export default function PrivacyConsent() {
           title="Access Denied"
           value={consentStats.denied}
           subtitle="Limited visibility"
-          variant="error"
+          variant="danger"
         />
       </div>
 

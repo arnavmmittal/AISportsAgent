@@ -8,8 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { logConsentUpdate, logSummaryRevocation } from '@/lib/audit';
 
@@ -23,15 +22,12 @@ import { logConsentUpdate, logSummaryRevocation } from '@/lib/audit';
 export async function PUT(req: NextRequest) {
   try {
     // Verify authentication
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { authorized, user, response } = await requireAuth(req);
+    if (!authorized) return response;
 
     // Verify user is an athlete
     const athlete = await prisma.athlete.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user!.id },
       select: {
         userId: true,
         consentChatSummaries: true,
@@ -66,12 +62,12 @@ export async function PUT(req: NextRequest) {
 
     // Update athlete consent
     const updatedAthlete = await prisma.athlete.update({
-      where: { userId: session.user.id },
+      where: { userId: user!.id },
       data: { consentChatSummaries },
     });
 
     console.log(
-      `[Consent] Athlete \${session.user.id} \${consentChatSummaries ? 'granted' : 'revoked'} consent for chat summaries`
+      `[Consent] Athlete ${user!.id} ${consentChatSummaries ? 'granted' : 'revoked'} consent for chat summaries`
     );
 
     // If revoking consent, mark all existing summaries as revoked
@@ -80,7 +76,7 @@ export async function PUT(req: NextRequest) {
 
       const revokedSummaries = await prisma.chatSummary.updateMany({
         where: {
-          athleteId: session.user.id,
+          athleteId: user!.id,
           summaryType: 'WEEKLY',
           revokedAt: null, // Only update summaries not already revoked
         },
@@ -91,17 +87,17 @@ export async function PUT(req: NextRequest) {
       });
 
       console.log(
-        `[Consent] Marked \${revokedSummaries.count} summaries as revoked for athlete \${session.user.id}`
+        `[Consent] Marked ${revokedSummaries.count} summaries as revoked for athlete ${user!.id}`
       );
 
       // Log revocation to audit trail
-      await logSummaryRevocation(session.user.id, revokedSummaries.count);
+      await logSummaryRevocation(user!.id, revokedSummaries.count);
     }
 
     // Log consent update to audit trail
     const ipAddress = (req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'))?.split(',')[0];
     await logConsentUpdate(
-      session.user.id,
+      user!.id,
       consentChatSummaries,
       ipAddress
     );
@@ -134,15 +130,12 @@ export async function PUT(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     // Verify authentication
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { authorized, user, response } = await requireAuth(req);
+    if (!authorized) return response;
 
     // Get athlete consent status
     const athlete = await prisma.athlete.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user!.id },
       select: {
         consentChatSummaries: true,
       },

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         userId: true,
         sport: true,
         year: true,
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       include: {
         athlete: {
           include: {
-            user: {
+            User: {
               select: {
                 id: true,
                 name: true,

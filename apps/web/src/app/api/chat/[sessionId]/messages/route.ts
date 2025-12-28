@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
@@ -14,13 +14,8 @@ export async function GET(
 ) {
   try {
     // Check authentication
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { authorized, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { sessionId } = await params;
 

@@ -181,7 +181,7 @@ export default function ActiveAssignments() {
           title="Overdue"
           value={statusCounts.overdue}
           subtitle="Needs attention"
-          variant="error"
+          variant="danger"
         />
       </div>
 

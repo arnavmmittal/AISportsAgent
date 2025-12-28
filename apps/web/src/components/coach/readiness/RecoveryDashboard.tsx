@@ -80,7 +80,7 @@ export default function RecoveryDashboard() {
           title="Critical Recovery Cases"
           value={1}
           subtitle="Urgent attention"
-          variant="error"
+          variant="danger"
         />
         <StatCard
           title="Team Recovery Score"

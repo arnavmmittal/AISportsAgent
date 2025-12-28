@@ -7,7 +7,7 @@
 
 import { cn } from '@/lib/utils';
 import { EmptyChart } from '../ui/EmptyState';
-import { AthleteAvatar } from '../ui/AthleteAvatar';
+import AthleteAvatar from '../ui/AthleteAvatar';
 import { useEffect, useRef, useState } from 'react';
 
 export interface NetworkNode {

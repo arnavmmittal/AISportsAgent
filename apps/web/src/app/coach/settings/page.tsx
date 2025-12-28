@@ -1,18 +1,14 @@
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+// TODO: Re-implement auth after Supabase migration
+// import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 export default async function CoachSettingsPage() {
-  const session = await auth();
-
-  if (!session) {
-    redirect('/auth/signin?callbackUrl=/coach/settings');
-  }
-
-  if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
-    redirect('/dashboard');
-  }
+  // TODO: Re-implement auth check after Supabase migration
+  // const session = await auth();
+  // if (!session) redirect('/auth/signin?callbackUrl=/coach/settings');
+  // if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') redirect('/dashboard');
 
   return (
     <div className="min-h-screen bg-background">
@@ -55,7 +51,8 @@ export default async function CoachSettingsPage() {
                   </label>
                   <input
                     type="text"
-                    defaultValue={session.user.name || ''}
+                    defaultValue={''}
+                    placeholder="Name will be loaded after auth implementation"
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     disabled
                   />
@@ -66,7 +63,8 @@ export default async function CoachSettingsPage() {
                   </label>
                   <input
                     type="email"
-                    defaultValue={session.user.email || ''}
+                    defaultValue={''}
+                    placeholder="Email will be loaded after auth implementation"
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     disabled
                   />

@@ -395,7 +395,11 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
         {/* Weekly Summaries Section */}
         <div className="mb-8">
-          <WeeklySummaryDrawer athleteId={athleteId} athleteName={athlete.name} />
+          <WeeklySummaryDrawer
+            athleteId={athleteId}
+            athleteName={athlete.name}
+            consentGranted={athleteData.consentGranted}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

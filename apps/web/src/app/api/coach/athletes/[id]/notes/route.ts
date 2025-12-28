@@ -70,7 +70,7 @@ export async function POST(
         coachId: coach.userId,
         athleteId: athleteId,
         content: content.trim(),
-        category: category || 'GENERAL',
+        updatedAt: new Date(),
       },
     });
 

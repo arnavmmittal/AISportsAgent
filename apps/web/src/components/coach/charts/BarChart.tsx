@@ -44,14 +44,14 @@ interface BarChartProps {
 }
 
 // Custom tooltip
-function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-lg">
       <p className="text-sm font-medium text-slate-200 mb-2">{label}</p>
       <div className="space-y-1">
-        {payload.map((entry, index) => (
+        {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded"

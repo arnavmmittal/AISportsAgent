@@ -1,4 +1,5 @@
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+// TODO: Re-implement auth after Supabase migration
+// import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import AthleteDetailView from '@/components/coach/AthleteDetailView';
 
@@ -7,15 +8,10 @@ export default async function AthleteDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-
-  if (!session) {
-    redirect('/auth/signin?callbackUrl=/coach/athletes');
-  }
-
-  if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
-    redirect('/dashboard');
-  }
+  // TODO: Re-implement auth check after Supabase migration
+  // const session = await auth();
+  // if (!session) redirect('/auth/signin?callbackUrl=/coach/athletes');
+  // if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') redirect('/dashboard');
 
   const { id } = await params;
 

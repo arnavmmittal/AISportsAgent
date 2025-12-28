@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Check if assignment is for all athletes in their sport
-        if (!assignment.targetAthleteIds && assignment.targetSport === user.Athlete.sport) {
+        if (!assignment.targetAthleteIds && assignment.targetSport === user.Athlete?.sport) {
           return true;
         }
 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         title: data.title,
         description: data.description,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        targetAthleteIds: data.targetAthleteIds || null,
+        targetAthleteIds: data.targetAthleteIds || undefined,
         targetSport: data.targetSport || null,
       },
       include: {

@@ -35,10 +35,9 @@ export default function AthleteCard({ athlete, onClick, className }: AthleteCard
       <div className="flex items-start gap-3 mb-3">
         <AthleteAvatar
           name={athlete.name}
-          imageUrl={athlete.profileImageUrl}
+          imageUrl={athlete.profileImage}
           size="md"
           showStatus={hasConsent}
-          readinessLevel={hasConsent ? athlete.readinessLevel : undefined}
         />
         <div className="flex-1 min-w-0">
           <h4 className="text-base font-semibold text-white truncate">
@@ -66,17 +65,7 @@ export default function AthleteCard({ athlete, onClick, className }: AthleteCard
       {/* Metrics Row (only if consent) */}
       {hasConsent ? (
         <>
-          <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-700">
-            {athlete.readinessScore !== undefined && (
-              <div className="flex-1">
-                <p className="text-xs text-slate-400 mb-1">Readiness</p>
-                <ReadinessIndicator
-                  readiness={athlete.readinessScore}
-                  size="sm"
-                  showLabel={false}
-                />
-              </div>
-            )}
+          <div className="flex items-center gap-3 mb-3 pb-3 border-slate-700">
             <div className="flex-1">
               <p className="text-xs text-slate-400 mb-1">Risk</p>
               <RiskBadge level={athlete.riskLevel} size="sm" />

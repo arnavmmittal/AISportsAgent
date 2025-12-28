@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
         targetDate: targetDate ? new Date(targetDate) : null,
         category: category || 'PERFORMANCE',
         status: 'IN_PROGRESS',
+        updatedAt: new Date(),
       },
     });
 

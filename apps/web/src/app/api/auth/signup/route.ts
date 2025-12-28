@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hash } from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 import { signupSchema } from '@/lib/validation/auth';
-import { z } from 'zod';
+
+// Supabase Admin client (for server-side operations)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
 
 // Default school ID - in production, this would be determined by subdomain or user selection
 const DEFAULT_SCHOOL_ID = 'default-school';
 
 /**
  * POST /api/auth/signup
- * Create a new user account (athlete or coach)
+ * Create a new user account (athlete or coach) using Supabase Auth
  */
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     const { name, email, password, role, sport, year, title } = validationResult.data;
 
-    // Check if user already exists
+    // Check if user already exists in our database
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -41,8 +52,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12);
+    // Create user in Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm email for now
+      user_metadata: {
+        name,
+        role,
+      },
+    });
+
+    if (authError || !authData.user) {
+      console.error('Supabase auth error:', authError);
+      return NextResponse.json(
+        {
+          error: authError?.message || 'Failed to create authentication account',
+        },
+        { status: 500 }
+      );
+    }
 
     // Ensure default school exists or create it
     let school = await prisma.school.findFirst({
@@ -55,18 +84,20 @@ export async function POST(request: NextRequest) {
           id: DEFAULT_SCHOOL_ID,
           name: 'University of Washington',
           division: 'D1',
+          updatedAt: new Date(),
         },
       });
     }
 
-    // Create user and role-specific record in a transaction
+    // Create user and role-specific record in database
     const user = await prisma.$transaction(async (tx) => {
-      // Create base user
+      // Create base user with Supabase user ID
       const newUser = await tx.user.create({
         data: {
+          id: authData.user.id, // Use Supabase user ID
           email,
           name,
-          password: hashedPassword,
+          password: '', // Empty password - auth is handled by Supabase
           role,
           schoolId: school!.id,
           onboardingCompleted: false,

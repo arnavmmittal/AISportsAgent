@@ -17,9 +17,7 @@ export default function ReadinessForecast() {
     date.setDate(date.getDate() + i);
     return {
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      predicted: 78 + Math.random() * 15,
-      confidence: 85 + Math.random() * 10,
-      historical: i === 0 ? 82 : undefined, // Today's actual
+      score: Math.round(78 + Math.random() * 15), // Renamed from 'predicted' to match ReadinessTrendChart
     };
   });
 
@@ -99,7 +97,7 @@ export default function ReadinessForecast() {
         title="Team Readiness Forecast"
         description="ML-predicted readiness for next 7 days"
       >
-        <ReadinessTrendChart data={forecastData} height={300} showPrediction={true} />
+        <ReadinessTrendChart data={forecastData} height={300} />
         <div className="mt-4 p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
           <p className="text-sm text-blue-200">
             📊 <strong>Forecast Model:</strong> Predictions based on 30-day historical

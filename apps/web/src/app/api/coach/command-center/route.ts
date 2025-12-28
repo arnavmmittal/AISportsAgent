@@ -73,8 +73,7 @@ async function generateCommandCenterData(
             select: {
               id: true,
               name: true,
-              firstName: true,
-              lastName: true,
+              email: true,
             },
           },
           MoodLog: {
@@ -95,7 +94,7 @@ async function generateCommandCenterData(
   // Calculate priority athletes (mock algorithm for now)
   const priorityAthletes: PriorityAthlete[] = relations.slice(0, 10).map((relation, index) => {
     const athlete = relation.Athlete;
-    const name = athlete.User.name || `${athlete.User.firstName} ${athlete.User.lastName}`;
+    const name = athlete.User.name || 'Unknown';
 
     // Mock readiness calculation
     const avgMood =
@@ -141,16 +140,24 @@ async function generateCommandCenterData(
 
     return {
       athlete: {
-        id: athlete.id,
+        id: athlete.userId,
         userId: athlete.userId,
         name,
+        email: athlete.User.email,
         sport: athlete.sport,
-        year: athlete.year,
+        year: athlete.year as any,
         profileImageUrl: null,
         consentCoachView: true,
+        consentChatSummaries: athlete.consentChatSummaries,
         riskLevel: riskLevel as any,
+        createdAt: athlete.createdAt,
+        updatedAt: athlete.updatedAt,
       },
       readiness: {
+        id: `readiness_${athlete.userId}`,
+        athleteId: athlete.userId,
+        gameDate: new Date(),
+        calculatedAt: new Date(),
         score: readinessScore,
         level: readinessLevel as any,
         dimensions: {
@@ -163,9 +170,15 @@ async function generateCommandCenterData(
         },
         topLimiters: avgStress > 6 ? ['Sleep', 'Stress', 'Recovery'] : ['Recovery'],
         topStrengths: avgMood > 7 ? ['Mood', 'Confidence'] : ['Social support'],
+        moodAvg7d: avgMood,
+        stressAvg7d: avgStress,
+        sleepAvg3d: 7,
         updatedAt: new Date(),
       },
       risk: {
+        athleteId: athlete.userId,
+        calculatedAt: new Date(),
+        urgency: urgency as any,
         totalRiskScore: 100 - readinessScore,
         riskLevel: riskLevel as any,
         mentalHealthRisk: avgStress * 10,
@@ -186,6 +199,7 @@ async function generateCommandCenterData(
           : urgency === 'MONITOR'
           ? `Below team average readiness`
           : `All metrics improving, positive momentum`,
+      flags: [],
       suggestedIntervention:
         urgency === 'CRITICAL'
           ? 'Schedule immediate check-in. Assess for counseling referral.'
@@ -247,28 +261,24 @@ async function generateCommandCenterData(
   const recentInterventions: CoachIntervention[] = [];
 
   return {
-    quickStats: {
-      teamReadinessAvg,
-      teamReadinessDelta: Math.floor(Math.random() * 10) - 5,
-      activeCrisisAlerts,
-      crisisAlertsDelta: activeCrisisAlerts > 0 ? -1 : 0,
-      assignmentsDue: relations.reduce((sum, r) => sum + r.Athlete.Goal.length, 0),
-      assignmentsDueDelta: 3,
-      athletesNeedingAttention: priorityAthletes.filter((p) =>
-        ['CRITICAL', 'URGENT', 'MONITOR'].includes(p.urgency)
-      ).length,
-      athletesNeedingAttentionDelta: -2,
-    },
     priorityAthletes,
-    actionFeed,
-    recentInterventions,
-    teamReadinessDistribution: {
-      OPTIMAL: priorityAthletes.filter((p) => p.readiness.level === 'OPTIMAL').length,
-      GOOD: priorityAthletes.filter((p) => p.readiness.level === 'GOOD').length,
-      MODERATE: priorityAthletes.filter((p) => p.readiness.level === 'MODERATE').length,
-      LOW: priorityAthletes.filter((p) => p.readiness.level === 'LOW').length,
-      POOR: priorityAthletes.filter((p) => p.readiness.level === 'POOR').length,
+    teamStats: {
+      totalAthletes: relations.length,
+      withConsent: relations.filter((r) => r.consentGranted).length,
+      readinessDistribution: {
+        optimal: priorityAthletes.filter((p) => p.readiness.level === 'OPTIMAL').length,
+        good: priorityAthletes.filter((p) => p.readiness.level === 'GOOD').length,
+        moderate: priorityAthletes.filter((p) => p.readiness.level === 'MODERATE').length,
+        low: priorityAthletes.filter((p) => p.readiness.level === 'LOW').length,
+        poor: priorityAthletes.filter((p) => p.readiness.level === 'POOR').length,
+      },
+      activeCrisisAlerts,
+      assignmentsDueToday: relations.reduce((sum, r) => sum + r.Athlete.Goal.length, 0),
     },
-    lastUpdated: new Date(),
+    actionFeed,
+    recentFlags: [],
+    newInsights: [],
+    recentInterventions,
+    pendingFollowUps: [],
   };
 }

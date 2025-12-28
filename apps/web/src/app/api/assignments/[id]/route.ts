@@ -25,7 +25,7 @@ export async function GET(
     const assignment = await prisma.assignment.findUnique({
       where: { id },
       include: {
-        submissions: {
+        AssignmentSubmission: {
           select: {
             id: true,
             athleteId: true,
@@ -48,7 +48,7 @@ export async function GET(
     // Authorization check - user already provided by requireAuth
     const fullUser = await prisma.user.findUnique({
       where: { id: user!.id },
-      include: { athlete: true },
+      include: { Athlete: true },
     });
 
     if (!fullUser) {
@@ -59,31 +59,31 @@ export async function GET(
     }
 
     // Coaches can see assignments they created
-    if (user.role === 'COACH' && assignment.coachId === user.id) {
+    if (user!.role === 'COACH' && assignment.coachId === user!.id) {
       return NextResponse.json({ assignment });
     }
 
     // Athletes can see assignments targeted to them
-    if (user.role === 'ATHLETE' && user.athlete) {
+    if (user!.role === 'ATHLETE' && fullUser.Athlete) {
       const isTargeted =
         assignment.targetAthleteIds === null || // All athletes
         (Array.isArray(assignment.targetAthleteIds) &&
-          assignment.targetAthleteIds.includes(user.id));
+          assignment.targetAthleteIds.includes(user!.id));
 
       const isSportMatch =
         assignment.targetSport === null ||
-        assignment.targetSport === user.athlete.sport;
+        assignment.targetSport === fullUser.Athlete?.sport;
 
       if (isTargeted && isSportMatch) {
         // Only return athlete's own submission
-        const athleteSubmission = assignment.submissions.find(
-          (s: any) => s.athleteId === user.id
+        const athleteSubmission = assignment.AssignmentSubmission.find(
+          (s: any) => s.athleteId === user!.id
         );
 
         return NextResponse.json({
           assignment: {
             ...assignment,
-            submissions: athleteSubmission ? [athleteSubmission] : [],
+            AssignmentSubmission: athleteSubmission ? [athleteSubmission] : [],
           },
         });
       }
@@ -116,10 +116,10 @@ export async function PUT(
     // Verify user is a coach
     const fullUser = await prisma.user.findUnique({
       where: { id: user!.id },
-      include: { coach: true },
+      include: { Coach: true },
     });
 
-    if (!fullUser || fullUser.role !== 'COACH' || !fullUser.coach) {
+    if (!fullUser || fullUser.role !== 'COACH' || !fullUser.Coach) {
       return NextResponse.json(
         { error: 'Forbidden - Coach access required' },
         { status: 403 }
@@ -138,7 +138,7 @@ export async function PUT(
       );
     }
 
-    if (existingAssignment.coachId !== user.id) {
+    if (existingAssignment.coachId !== user!.id) {
       return NextResponse.json(
         { error: 'Forbidden - You can only update your own assignments' },
         { status: 403 }
@@ -180,7 +180,7 @@ export async function PUT(
       where: { id },
       data: updateData,
       include: {
-        submissions: true,
+        AssignmentSubmission: true,
       },
     });
 
@@ -211,10 +211,10 @@ export async function DELETE(
     // Verify user is a coach
     const fullUser = await prisma.user.findUnique({
       where: { id: user!.id },
-      include: { coach: true },
+      include: { Coach: true },
     });
 
-    if (!fullUser || fullUser.role !== 'COACH' || !fullUser.coach) {
+    if (!fullUser || fullUser.role !== 'COACH' || !fullUser.Coach) {
       return NextResponse.json(
         { error: 'Forbidden - Coach access required' },
         { status: 403 }
@@ -233,7 +233,7 @@ export async function DELETE(
       );
     }
 
-    if (existingAssignment.coachId !== user.id) {
+    if (existingAssignment.coachId !== user!.id) {
       return NextResponse.json(
         { error: 'Forbidden - You can only delete your own assignments' },
         { status: 403 }

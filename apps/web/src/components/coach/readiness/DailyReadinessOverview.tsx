@@ -110,7 +110,7 @@ export default function DailyReadinessOverview() {
           title="Critical Alerts"
           value={teamStats.criticalAlerts}
           subtitle="Needs attention"
-          variant="error"
+          variant="danger"
         />
       </div>
 

@@ -41,10 +41,9 @@ export default function AthleteProfileModal({ athlete, onClose }: AthleteProfile
             <div className="flex items-start gap-4">
               <AthleteAvatar
                 name={athlete.name}
-                imageUrl={athlete.profileImageUrl}
+                imageUrl={athlete.profileImage}
                 size="lg"
                 showStatus={true}
-                readinessLevel={athlete.readinessLevel}
               />
               <div>
                 <h2 className="text-2xl font-bold text-white">{athlete.name}</h2>
@@ -70,12 +69,6 @@ export default function AthleteProfileModal({ athlete, onClose }: AthleteProfile
 
           {/* Quick Stats */}
           <div className="flex gap-4">
-            {athlete.readinessScore !== undefined && (
-              <div className="flex-1 p-3 bg-slate-800/50 rounded-lg">
-                <p className="text-xs text-slate-400 mb-1">Readiness</p>
-                <ReadinessIndicator readiness={athlete.readinessScore} size="md" />
-              </div>
-            )}
             <div className="flex-1 p-3 bg-slate-800/50 rounded-lg">
               <p className="text-xs text-slate-400 mb-2">Risk Level</p>
               <RiskBadge level={athlete.riskLevel} size="md" />

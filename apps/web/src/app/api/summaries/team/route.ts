@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { generateTeamSummary } from '@/lib/summaries/generateWeeklySummaries';
 
 /**
@@ -13,16 +13,17 @@ import { generateTeamSummary } from '@/lib/summaries/generateWeeklySummaries';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
-    if (!session || (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN')) {
+    if (user!.role !== 'COACH' && user!.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized. Coach role required.' },
         { status: 401 }
       );
     }
 
-    const coachId = session.user.id;
+    const coachId = user!.id;
     const teamSummary = await generateTeamSummary(coachId);
 
     return NextResponse.json({

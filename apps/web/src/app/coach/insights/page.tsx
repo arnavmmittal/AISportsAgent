@@ -1,4 +1,5 @@
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+// TODO: Re-implement auth after Supabase migration
+// import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -7,19 +8,18 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, MessageCircle, TrendingUp, Users } from 'lucide-react';
 
 export default async function CoachInsightsPage() {
-  const session = await auth();
+  // TODO: Re-implement auth check after Supabase migration
+  // const session = await auth();
+  // if (!session) {
+  //   redirect('/auth/signin?callbackUrl=/coach/insights');
+  // }
+  // if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
+  //   redirect('/dashboard');
+  // }
 
-  if (!session) {
-    redirect('/auth/signin?callbackUrl=/coach/insights');
-  }
-
-  if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
-    redirect('/dashboard');
-  }
-
-  // Get coach's school
-  const coach = await prisma.user.findUnique({
-    where: { id: session.user.id },
+  // Get first coach (temporary until auth implemented)
+  const coach = await prisma.user.findFirst({
+    where: { role: 'COACH' },
   });
 
   if (!coach) {

@@ -14,38 +14,38 @@ interface ReadinessIndicatorProps {
   className?: string;
 }
 
-const READINESS_CONFIG = {
-  OPTIMAL: {
+const READINESS_CONFIG: Record<ReadinessLevel, {color: string; textColor: string; label: string; icon: string}> = {
+  [ReadinessLevel.OPTIMAL]: {
     color: 'bg-green-500',
     textColor: 'text-green-500',
     label: 'Optimal',
     icon: '●',
   },
-  GOOD: {
+  [ReadinessLevel.GOOD]: {
     color: 'bg-blue-500',
     textColor: 'text-blue-500',
     label: 'Good',
     icon: '●',
   },
-  MODERATE: {
+  [ReadinessLevel.MODERATE]: {
     color: 'bg-amber-500',
     textColor: 'text-amber-500',
     label: 'Moderate',
     icon: '●',
   },
-  LOW: {
+  [ReadinessLevel.LOW]: {
     color: 'bg-red-500',
     textColor: 'text-red-500',
     label: 'Low',
     icon: '●',
   },
-  POOR: {
+  [ReadinessLevel.POOR]: {
     color: 'bg-red-900',
     textColor: 'text-red-900',
     label: 'Poor',
     icon: '●',
   },
-} as const;
+};
 
 const SIZE_CONFIG = {
   sm: {
@@ -66,11 +66,11 @@ const SIZE_CONFIG = {
 };
 
 function getReadinessLevel(score: number): ReadinessLevel {
-  if (score >= 90) return 'OPTIMAL';
-  if (score >= 75) return 'GOOD';
-  if (score >= 60) return 'MODERATE';
-  if (score >= 45) return 'LOW';
-  return 'POOR';
+  if (score >= 90) return ReadinessLevel.OPTIMAL;
+  if (score >= 75) return ReadinessLevel.GOOD;
+  if (score >= 60) return ReadinessLevel.MODERATE;
+  if (score >= 45) return ReadinessLevel.LOW;
+  return ReadinessLevel.POOR;
 }
 
 export default function ReadinessIndicator({

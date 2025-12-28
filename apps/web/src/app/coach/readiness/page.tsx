@@ -1,4 +1,5 @@
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+// TODO: Re-implement auth after Supabase migration
+// import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -59,7 +60,7 @@ function calculateReadinessScore(athlete: any) {
   );
 
   // Traffic light level
-  let level: 'GREEN' | 'YELLOW' | 'RED' = 'LOW';
+  let level: 'GREEN' | 'YELLOW' | 'RED' = 'RED';
   if (score >= 75) level = 'GREEN';
   else if (score >= 55) level = 'YELLOW';
   else level = 'RED';
@@ -110,109 +111,68 @@ function calculateReadinessScore(athlete: any) {
 }
 
 export default async function CoachReadinessPage() {
-  const session = await auth();
+  // TODO: Re-implement auth check after Supabase migration
+  // const session = await auth();
+  // if (!session) {
+  //   redirect('/auth/signin?callbackUrl=/coach/readiness');
+  // }
+  // if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
+  //   redirect('/dashboard');
+  // }
 
-  if (!session) {
-    redirect('/auth/signin?callbackUrl=/coach/readiness');
-  }
-
-  if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
-    redirect('/dashboard');
-  }
-
-  // Skip database for demo coach
+  // Get first coach (temporary until auth implemented)
   let athletes: any[] = [];
-  let coach: any = {
-    School: { name: 'Demo University' },
-    schoolId: 'demo-school-123',
-  };
+  let coach: any = null;
 
-  if (!session.user.id.startsWith('demo-')) {
-    try {
-      // Get coach's school
-      const dbCoach = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: { School: true },
-      });
+  try {
+    // Get coach's school
+    const dbCoach = await prisma.user.findFirst({
+      where: { role: 'COACH' },
+      include: { School: true },
+    });
 
-      if (!dbCoach) {
-        return <div>Coach not found</div>;
-      }
+    if (!dbCoach) {
+      return <div>Coach not found. Please set up a coach account.</div>;
+    }
 
-      coach = dbCoach;
+    coach = dbCoach;
 
-      // Get all athletes with recent data
-      athletes = await prisma.user.findMany({
-        where: {
-          role: 'ATHLETE',
-          schoolId: coach.schoolId,
-        },
-        include: {
-          Athlete: {
-            include: {
-              MoodLog: {
-                orderBy: { createdAt: 'desc' },
-                take: 7, // Last 7 days
-              },
-              ChatSession: {
-                where: {
-                  createdAt: {
-                    gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
-                  },
+    // Get all athletes with recent data
+    athletes = await prisma.user.findMany({
+      where: {
+        role: 'ATHLETE',
+        schoolId: coach.schoolId,
+      },
+      include: {
+        Athlete: {
+          include: {
+            MoodLog: {
+              orderBy: { createdAt: 'desc' },
+              take: 7, // Last 7 days
+            },
+            ChatSession: {
+              where: {
+                createdAt: {
+                  gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
                 },
               },
             },
           },
         },
-        orderBy: { name: 'asc' },
-      });
-    } catch (error) {
-      console.error('Error fetching athletes:', error);
-      athletes = [];
-    }
-  } else {
-    // Mock data for demo coach
-    athletes = [
-      {
-        id: 'athlete-1',
-        name: 'Sarah Johnson',
-        email: 'sarah.j@example.com',
-        Athlete: {
-          sport: 'Basketball',
-          year: 'Junior',
-          teamPosition: 'Point Guard',
-          moodLogs: [
-            { mood: 9, confidence: 9, stress: 2, energy: 9, sleep: 8, createdAt: new Date() },
-            { mood: 8, confidence: 9, stress: 3, energy: 8, sleep: 8, createdAt: new Date(Date.now() - 86400000) },
-            { mood: 9, confidence: 9, stress: 2, energy: 9, sleep: 8, createdAt: new Date(Date.now() - 172800000) },
-          ],
-          sessions: [{ id: 's1', createdAt: new Date() }],
-        },
       },
-      {
-        id: 'athlete-2',
-        name: 'Mike Chen',
-        email: 'mike.c@example.com',
-        Athlete: {
-          sport: 'Basketball',
-          year: 'Sophomore',
-          teamPosition: 'Shooting Guard',
-          moodLogs: [
-            { mood: 5, confidence: 6, stress: 7, energy: 5, sleep: 6, createdAt: new Date() },
-            { mood: 5, confidence: 5, stress: 8, energy: 4, sleep: 5, createdAt: new Date(Date.now() - 86400000) },
-          ],
-          sessions: [],
-        },
-      },
-    ];
+      orderBy: { name: 'asc' },
+    });
+  } catch (error) {
+    console.error('Error fetching athletes:', error);
+    return <div>Error loading readiness data. Please try again.</div>;
   }
 
   // Calculate readiness scores for all athletes
   const athleteReadiness = athletes.map((athlete) => {
     // Pass the athlete data with correct structure
     const athleteData = {
-      moodLogs: athlete.Athlete?.moodLogs || [],
-      sessions: athlete.Athlete?.sessions || [],
+      moodLogs: athlete.Athlete?.MoodLog || [],
+      sessions: athlete.Athlete?.ChatSession || [],
     };
     const readiness = calculateReadinessScore(athleteData);
     return {

@@ -4,13 +4,13 @@
  * Use these helpers in API routes to verify permissions and enforce
  * role-based access control.
  *
- * Supports both NextAuth sessions (web) and JWT tokens (mobile)
+ * Supports both Supabase Auth sessions (web) and JWT tokens (mobile)
  */
 
-import { auth } from '@/app/api/auth/[...nextauth]/route';
-import type { Session } from 'next-auth';
 import { NextResponse, NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { getUser as getSupabaseUser } from './supabase-server';
+import { prisma } from './prisma';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
@@ -23,15 +23,52 @@ export interface AuthUser {
   schoolId: string;
 }
 
+export interface AuthSession {
+  user: AuthUser;
+}
+
 export interface AuthResult {
   authorized: boolean;
-  session: Session | null;
+  session: AuthSession | null;
   user: AuthUser | null;
   response?: NextResponse;
 }
 
 /**
- * Verify authentication from either JWT token (mobile) or NextAuth session (web)
+ * Get user data from Supabase auth user
+ * Fetches full user profile from database
+ */
+async function getUserFromSupabase(supabaseUserId: string): Promise<AuthUser | null> {
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: supabaseUserId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        schoolId: true,
+      },
+    });
+
+    if (!dbUser) {
+      console.error('User found in Supabase but not in database:', supabaseUserId);
+      return null;
+    }
+
+    return {
+      id: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role,
+      schoolId: dbUser.schoolId || '',
+    };
+  } catch (error) {
+    console.error('Error fetching user from database:', error);
+    return null;
+  }
+}
+
+/**
+ * Verify authentication from either JWT token (mobile) or Supabase session (web)
  */
 export async function verifyAuthFromRequest(request: NextRequest): Promise<AuthUser | null> {
   // Check for Bearer token (mobile app)
@@ -47,26 +84,21 @@ export async function verifyAuthFromRequest(request: NextRequest): Promise<AuthU
     }
   }
 
-  // Fall back to NextAuth session (web app)
+  // Fall back to Supabase session (web app)
   try {
-    const session = await auth();
-    if (session?.user?.id) {
-      return {
-        id: session.user.id,
-        email: session.user.email ?? '',
-        role: session.user.role ?? 'ATHLETE',
-        schoolId: session.user.schoolId ?? '',
-      };
+    const supabaseUser = await getSupabaseUser();
+    if (supabaseUser?.id) {
+      return await getUserFromSupabase(supabaseUser.id);
     }
   } catch (error) {
-    console.error('Session verification failed:', error);
+    console.error('Supabase session verification failed:', error);
   }
 
   return null;
 }
 
 /**
- * Require authentication - Any authenticated user (supports both JWT and session)
+ * Require authentication - Any authenticated user (supports both JWT and Supabase session)
  *
  * Usage in API routes:
  * ```typescript
@@ -76,7 +108,6 @@ export async function verifyAuthFromRequest(request: NextRequest): Promise<AuthU
  */
 export async function requireAuth(request?: NextRequest): Promise<AuthResult> {
   let user: AuthUser | null = null;
-  let session: Session | null = null;
 
   // If request provided, check for JWT token first
   if (request) {
@@ -84,25 +115,26 @@ export async function requireAuth(request?: NextRequest): Promise<AuthResult> {
     if (user) {
       return {
         authorized: true,
-        session: null,
+        session: { user },
         user,
       };
     }
   } else {
-    // Fall back to session-only auth
-    session = await auth();
-    if (session?.user?.id) {
-      user = {
-        id: session.user.id,
-        email: session.user.email ?? '',
-        role: session.user.role ?? 'ATHLETE',
-        schoolId: session.user.schoolId ?? '',
-      };
-      return {
-        authorized: true,
-        session,
-        user,
-      };
+    // Fall back to Supabase session-only auth
+    try {
+      const supabaseUser = await getSupabaseUser();
+      if (supabaseUser?.id) {
+        user = await getUserFromSupabase(supabaseUser.id);
+        if (user) {
+          return {
+            authorized: true,
+            session: { user },
+            user,
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Supabase auth check failed:', error);
     }
   }
 
@@ -157,21 +189,22 @@ export async function requireCoach(request?: NextRequest): Promise<AuthResult> {
  *
  * Usage in API routes:
  * ```typescript
- * const { authorized, session, response } = await requireAdmin();
+ * const { authorized, user, response } = await requireAdmin();
  * if (!authorized) return response;
  * ```
  */
-export async function requireAdmin(): Promise<AuthResult> {
-  const { authorized, session, response } = await requireAuth();
+export async function requireAdmin(request?: NextRequest): Promise<AuthResult> {
+  const { authorized, session, user, response } = await requireAuth(request);
 
   if (!authorized) {
-    return { authorized: false, session: null, response };
+    return { authorized: false, session: null, user: null, response };
   }
 
-  if (session!.user?.role !== 'ADMIN') {
+  if (user!.role !== 'ADMIN') {
     return {
       authorized: false,
-      session: session,
+      session,
+      user,
       response: NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -182,6 +215,7 @@ export async function requireAdmin(): Promise<AuthResult> {
   return {
     authorized: true,
     session,
+    user,
   };
 }
 
@@ -190,21 +224,22 @@ export async function requireAdmin(): Promise<AuthResult> {
  *
  * Usage in API routes:
  * ```typescript
- * const { authorized, session, response } = await requireAthlete();
+ * const { authorized, user, response } = await requireAthlete();
  * if (!authorized) return response;
  * ```
  */
-export async function requireAthlete(): Promise<AuthResult> {
-  const { authorized, session, response } = await requireAuth();
+export async function requireAthlete(request?: NextRequest): Promise<AuthResult> {
+  const { authorized, session, user, response } = await requireAuth(request);
 
   if (!authorized) {
-    return { authorized: false, session: null, response };
+    return { authorized: false, session: null, user: null, response };
   }
 
-  if (session!.user?.role !== 'ATHLETE' && session!.user?.role !== 'ADMIN') {
+  if (user!.role !== 'ATHLETE' && user!.role !== 'ADMIN') {
     return {
       authorized: false,
-      session: session,
+      session,
+      user,
       response: NextResponse.json(
         { error: 'Forbidden - Athlete access required' },
         { status: 403 }
@@ -215,6 +250,7 @@ export async function requireAthlete(): Promise<AuthResult> {
   return {
     authorized: true,
     session,
+    user,
   };
 }
 
@@ -223,22 +259,22 @@ export async function requireAthlete(): Promise<AuthResult> {
  *
  * Usage:
  * ```typescript
- * const { authorized, session } = await requireAuth();
+ * const { authorized, session, user } = await requireAuth();
  * if (!authorized) return response;
  *
- * if (!verifyOwnership(session, athleteId)) {
+ * if (!verifyOwnership(user, athleteId)) {
  *   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
  * }
  * ```
  */
-export function verifyOwnership(session: Session | null, resourceUserId: string): boolean {
-  if (!session) return false;
+export function verifyOwnership(user: AuthUser | null, resourceUserId: string): boolean {
+  if (!user) return false;
 
   // Admins can access all resources
-  if (session.user?.role === 'ADMIN') return true;
+  if (user.role === 'ADMIN') return true;
 
   // Users can only access their own resources
-  return session.user?.id === resourceUserId;
+  return user.id === resourceUserId;
 }
 
 /**
@@ -246,41 +282,41 @@ export function verifyOwnership(session: Session | null, resourceUserId: string)
  *
  * Usage:
  * ```typescript
- * const { authorized, session } = await requireCoach();
+ * const { authorized, user } = await requireCoach();
  * if (!authorized) return response;
  *
- * if (!verifySchoolAccess(session, athlete.schoolId)) {
+ * if (!verifySchoolAccess(user, athlete.schoolId)) {
  *   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
  * }
  * ```
  */
-export function verifySchoolAccess(session: Session | null, resourceSchoolId: string): boolean {
-  if (!session) return false;
+export function verifySchoolAccess(user: AuthUser | null, resourceSchoolId: string): boolean {
+  if (!user) return false;
 
   // Admins can access all schools
-  if (session.user?.role === 'ADMIN') return true;
+  if (user.role === 'ADMIN') return true;
 
   // Users can only access resources from their school
-  return session.user?.schoolId === resourceSchoolId;
+  return user.schoolId === resourceSchoolId;
 }
 
 /**
- * Get user ID from session (convenience function)
+ * Get user ID from auth user (convenience function)
  */
-export function getUserId(session: Session | null): string | null {
-  return session?.user?.id || null;
+export function getUserId(user: AuthUser | null): string | null {
+  return user?.id || null;
 }
 
 /**
- * Get user role from session (convenience function)
+ * Get user role from auth user (convenience function)
  */
-export function getUserRole(session: Session | null): string | null {
-  return session?.user?.role || null;
+export function getUserRole(user: AuthUser | null): string | null {
+  return user?.role || null;
 }
 
 /**
- * Get school ID from session (convenience function)
+ * Get school ID from auth user (convenience function)
  */
-export function getSchoolId(session: Session | null): string | null {
-  return session?.user?.schoolId || null;
+export function getSchoolId(user: AuthUser | null): string | null {
+  return user?.schoolId || null;
 }

@@ -271,7 +271,7 @@ export function GameStatsForm({
                   </label>
                   <Input
                     type="number"
-                    step={field.step || 1}
+                    step={'step' in field ? field.step : 1}
                     min={field.min}
                     max={field.max}
                     placeholder={`0-${field.max}`}

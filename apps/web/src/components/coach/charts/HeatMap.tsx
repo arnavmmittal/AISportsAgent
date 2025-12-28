@@ -29,19 +29,19 @@ interface HeatMapProps {
 }
 
 const READINESS_COLORS: Record<ReadinessLevel, string> = {
-  OPTIMAL: 'bg-green-500',
-  GOOD: 'bg-blue-500',
-  MODERATE: 'bg-amber-500',
-  LOW: 'bg-red-500',
-  POOR: 'bg-red-900',
+  [ReadinessLevel.OPTIMAL]: 'bg-green-500',
+  [ReadinessLevel.GOOD]: 'bg-blue-500',
+  [ReadinessLevel.MODERATE]: 'bg-amber-500',
+  [ReadinessLevel.LOW]: 'bg-red-500',
+  [ReadinessLevel.POOR]: 'bg-red-900',
 };
 
 function getReadinessLevel(score: number): ReadinessLevel {
-  if (score >= 90) return 'OPTIMAL';
-  if (score >= 75) return 'GOOD';
-  if (score >= 60) return 'MODERATE';
-  if (score >= 45) return 'LOW';
-  return 'POOR';
+  if (score >= 90) return ReadinessLevel.OPTIMAL;
+  if (score >= 75) return ReadinessLevel.GOOD;
+  if (score >= 60) return ReadinessLevel.MODERATE;
+  if (score >= 45) return ReadinessLevel.LOW;
+  return ReadinessLevel.POOR;
 }
 
 function getColorByValue(value: number, max: number = 100): string {

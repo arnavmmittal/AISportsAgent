@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const crisisAlerts = await prisma.crisisAlert.findMany({
       where: {
         athleteId: { in: athleteIds },
-        resolved: unreadOnly ? false : undefined,
+        reviewed: unreadOnly ? false : undefined,
       },
       include: {
         Athlete: {
@@ -45,6 +45,9 @@ export async function GET(req: NextRequest) {
               select: { name: true, email: true },
             },
           },
+        },
+        Message: {
+          select: { content: true },
         },
       },
       orderBy: { detectedAt: 'desc' },
@@ -57,12 +60,12 @@ export async function GET(req: NextRequest) {
       type: 'CRISIS_ALERT',
       severity: alert.severity,
       title: `Crisis Alert: ${alert.Athlete.User.name}`,
-      message: alert.message,
+      message: alert.Message.content,
       athleteId: alert.athleteId,
       athleteName: alert.Athlete.User.name,
       createdAt: alert.detectedAt,
-      read: alert.resolved,
-      actionRequired: !alert.resolved && alert.severity === 'CRITICAL',
+      read: alert.reviewed,
+      actionRequired: !alert.reviewed && alert.severity === 'CRITICAL',
     }));
 
     return NextResponse.json({
@@ -95,12 +98,12 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Missing notificationId' }, { status: 400 });
     }
 
-    // Update crisis alert as resolved
+    // Update crisis alert as reviewed
     const updated = await prisma.crisisAlert.update({
       where: { id: notificationId },
       data: {
-        resolved: true,
-        resolvedAt: new Date(),
+        reviewed: true,
+        reviewedAt: new Date(),
       },
     });
 

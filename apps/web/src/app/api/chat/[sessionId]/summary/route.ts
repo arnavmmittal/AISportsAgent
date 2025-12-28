@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { generateChatSummary } from '@/lib/generate-summary';
 
@@ -14,14 +13,8 @@ export async function POST(
   context: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { sessionId } = await context.params;
 
@@ -29,12 +22,12 @@ export async function POST(
     const chatSession = await prisma.chatSession.findUnique({
       where: { id: sessionId },
       include: {
-        messages: {
+        Message: {
           orderBy: { createdAt: 'asc' },
         },
-        athlete: {
+        Athlete: {
           include: {
-            user: {
+            User: {
               select: {
                 id: true,
                 name: true,
@@ -53,14 +46,14 @@ export async function POST(
     }
 
     // Verify user owns this session or is a coach
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { coach: true },
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user!.id },
+      include: { Coach: true },
     });
 
-    const isOwner = chatSession.athleteId === session.user.id;
-    const isCoach = user?.role === 'COACH';
-    const isAdmin = user?.role === 'ADMIN';
+    const isOwner = chatSession.athleteId === user!.id;
+    const isCoach = fullUser?.role === 'COACH';
+    const isAdmin = fullUser?.role === 'ADMIN';
 
     if (!isOwner && !isCoach && !isAdmin) {
       return NextResponse.json(
@@ -82,7 +75,7 @@ export async function POST(
     }
 
     // Generate summary using GPT-4
-    const messages = chatSession.messages.map(m => ({
+    const messages = chatSession.Message.map(m => ({
       role: m.role,
       content: m.content,
     }));
@@ -129,14 +122,8 @@ export async function GET(
   context: RouteContext
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { sessionId } = await context.params;
 
@@ -157,13 +144,13 @@ export async function GET(
     }
 
     // Verify user owns this session or is a coach with consent
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { coach: true, athlete: true },
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user!.id },
+      include: { Coach: true, Athlete: true },
     });
 
-    const isOwner = chatSession.athleteId === session.user.id;
-    const isCoach = user?.role === 'COACH';
+    const isOwner = chatSession.athleteId === user!.id;
+    const isCoach = fullUser?.role === 'COACH';
 
     if (!isOwner && !isCoach) {
       return NextResponse.json(
@@ -206,7 +193,7 @@ export async function GET(
         data: {
           viewedByCoach: true,
           viewedAt: new Date(),
-          coachId: session.user.id,
+          coachId: user!.id,
         },
       });
     }

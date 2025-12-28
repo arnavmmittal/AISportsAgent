@@ -1,24 +1,49 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { createServerClient } from '@supabase/ssr';
 
 /**
- * Role-based route protection middleware
+ * Role-based route protection middleware using Supabase Auth
  *
  * Features:
  * - Redirects unauthenticated users to login
  * - Redirects authenticated users away from auth pages to role-specific home
  * - Prevents coaches from accessing athlete routes
  * - Prevents athletes from accessing coach routes
- *
- * Currently using NextAuth (will migrate to Supabase Auth later)
  */
 export async function middleware(request: NextRequest) {
-  // Check NextAuth session
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   });
+
+  // Create Supabase client for middleware
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Get current session
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   const { pathname } = request.nextUrl;
 
@@ -26,43 +51,56 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = pathname.startsWith('/auth');
   const isCoachRoute = pathname.startsWith('/coach');
   const isAthleteRoute = ['/chat', '/dashboard', '/student', '/mood', '/goals'].some(
-    path => pathname.startsWith(path)
+    (path) => pathname.startsWith(path)
   );
-  const isCoachApiRoute = pathname.startsWith('/api/analytics') ||
-                          pathname.startsWith('/api/performance') ||
-                          pathname.startsWith('/api/coach');
+  const isCoachApiRoute =
+    pathname.startsWith('/api/analytics') ||
+    pathname.startsWith('/api/performance') ||
+    pathname.startsWith('/api/coach');
   const isPublicRoute = pathname.startsWith('/_next') || pathname.startsWith('/api');
 
-  // Get role from token
-  const role = token?.role;
+  // Get user role from database if session exists
+  let role: string | null = null;
+  if (session?.user?.id) {
+    try {
+      const { data: userData } = await supabase
+        .from('User')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      role = userData?.role || null;
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  }
 
   // Redirect authenticated users away from home page to their dashboard
-  if (pathname === '/' && token && role) {
+  if (pathname === '/' && session && role) {
     const redirectUrl = role === 'COACH' ? '/coach/dashboard' : '/dashboard';
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // Allow home page for unauthenticated users and other public routes
   if (pathname === '/' || isPublicRoute) {
-    return NextResponse.next();
+    return response;
   }
 
   // Redirect unauthenticated users to login (except for auth pages)
-  if (!token && !isAuthPage) {
+  if (!session && !isAuthPage) {
     const loginUrl = new URL('/auth/signin', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Redirect authenticated users away from auth pages to their role-specific home
-  if (token && isAuthPage && role) {
+  if (session && isAuthPage && role) {
     const redirectUrl = role === 'COACH' ? '/coach/dashboard' : '/dashboard';
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // Role-based access control
-  if (token && role) {
-
+  if (session && role) {
     // Coaches cannot access athlete routes
     if (role === 'COACH' && isAthleteRoute) {
       return NextResponse.redirect(new URL('/coach/dashboard', request.url));
@@ -75,22 +113,16 @@ export async function middleware(request: NextRequest) {
 
     // Athletes cannot access coach API routes
     if (role === 'ATHLETE' && isCoachApiRoute) {
-      return NextResponse.json(
-        { error: 'Forbidden - Coach access required' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden - Coach access required' }, { status: 403 });
     }
 
     // Only coaches and admins can access coach API routes
     if (isCoachApiRoute && role !== 'COACH' && role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Forbidden - Coach access required' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden - Coach access required' }, { status: 403 });
     }
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 /**

@@ -174,7 +174,7 @@ export async function POST(
         coachId: coach.userId,
         athleteId: athleteId,
         content: `[${type || 'CHECK_IN'}] ${message.trim()}`,
-        category: type || 'CHECK_IN',
+        updatedAt: new Date(),
       },
     });
 

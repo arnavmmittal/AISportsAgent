@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase-client';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -13,6 +13,7 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
     const message = searchParams.get('message');
@@ -27,22 +28,47 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       });
 
-      if (result?.error) {
-        setError('Invalid email or password');
-      } else {
-        // Redirect based on role will be handled by middleware
-        router.push('/dashboard');
-        router.refresh();
+      if (signInError) {
+        setError(signInError.message || 'Invalid email or password');
+        setIsLoading(false);
+        return;
       }
+
+      if (!data.user) {
+        setError('Authentication failed');
+        setIsLoading(false);
+        return;
+      }
+
+      // Get user role from database to determine redirect
+      const { data: userData, error: userError } = await supabase
+        .from('User')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (userError || !userData) {
+        console.error('Error fetching user role:', userError);
+        setError('Failed to load user profile');
+        setIsLoading(false);
+        return;
+      }
+
+      // Redirect based on role
+      if (userData.role === 'COACH' || userData.role === 'ADMIN') {
+        router.push('/coach/dashboard');
+      } else {
+        router.push('/student/dashboard');
+      }
+
+      router.refresh();
     } catch (err) {
       setError('An error occurred. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -151,26 +177,6 @@ export default function SignInPage() {
             >
               Create Account
             </Link>
-          </div>
-
-          {/* Demo Account Info */}
-          <div className="px-8 pb-6">
-            <div className="p-4 bg-muted rounded-lg chrome-border">
-              <p className="text-xs font-semibold text-foreground mb-2 flex items-center">
-                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                Demo Account (For Testing)
-              </p>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Email:</span> demo@athlete.com
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Password:</span> demo123
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

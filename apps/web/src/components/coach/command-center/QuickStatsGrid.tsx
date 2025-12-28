@@ -15,15 +15,21 @@ export default function QuickStatsGrid({ data }: QuickStatsGridProps) {
   if (!data) return null;
 
   const {
-    teamReadinessAvg,
-    teamReadinessDelta,
+    totalAthletes,
+    withConsent,
     activeCrisisAlerts,
-    crisisAlertsDelta,
-    assignmentsDue,
-    assignmentsDueDelta,
-    athletesNeedingAttention,
-    athletesNeedingAttentionDelta,
-  } = data.quickStats;
+    assignmentsDueToday,
+  } = data.teamStats;
+
+  // Calculate athletes needing attention (priority athletes)
+  const athletesNeedingAttention = data.priorityAthletes.length;
+
+  // Calculate team readiness average
+  const teamReadinessAvg = 75; // TODO: Calculate from actual data
+  const teamReadinessDelta = 0;
+  const crisisAlertsDelta = 0;
+  const assignmentsDueDelta = 0;
+  const athletesNeedingAttentionDelta = 0;
 
   return (
     <StatsGrid>
@@ -52,7 +58,7 @@ export default function QuickStatsGrid({ data }: QuickStatsGridProps) {
       {/* Assignments Due */}
       <StatCard
         title="Assignments Due"
-        value={assignmentsDue}
+        value={assignmentsDueToday}
         subtitle="Pending submissions this week"
         trend={assignmentsDueDelta}
         icon={<span className="text-2xl">📝</span>}

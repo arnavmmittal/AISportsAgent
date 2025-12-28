@@ -181,9 +181,10 @@ export async function POST(req: NextRequest) {
           );
 
           // Save assistant message
+          const assistantMessageId = `msg_${Date.now()}_assistant`;
           await prisma.message.create({
             data: {
-              id: `msg_${Date.now()}_assistant`,
+              id: assistantMessageId,
               sessionId: session.id,
               role: 'assistant',
               content: result.response.content,
@@ -199,10 +200,11 @@ export async function POST(req: NextRequest) {
               data: {
                 id: `alert_${Date.now()}`,
                 athleteId: athlete_id,
+                sessionId: session.id,
+                messageId: assistantMessageId,
                 severity: result.crisisDetection.severity,
-                message: result.crisisDetection.message || 'Crisis detected',
                 detectedAt: new Date(),
-                resolved: false,
+                reviewed: false,
               },
             });
 

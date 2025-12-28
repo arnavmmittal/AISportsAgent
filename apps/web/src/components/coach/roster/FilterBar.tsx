@@ -143,8 +143,8 @@ export default function FilterBar({
 
         {/* Consent Filter */}
         <select
-          value={filters.consentOnly === undefined ? '' : filters.consentOnly.toString()}
-          onChange={(e) => updateFilter('consentOnly', e.target.value === '' ? undefined : e.target.value === 'true')}
+          value={filters.consentGranted === undefined ? '' : filters.consentGranted.toString()}
+          onChange={(e) => updateFilter('consentGranted', e.target.value === '' ? undefined : e.target.value === 'true')}
           className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Athletes</option>

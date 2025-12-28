@@ -75,7 +75,7 @@ export default function PriorityAthleteList({
               <div className="flex items-center gap-3">
                 <AthleteAvatar
                   name={item.athlete.name}
-                  imageUrl={item.athlete.profileImageUrl}
+                  imageUrl={item.athlete.profileImage}
                   size="md"
                   showStatus={true}
                   readinessLevel={item.readiness.level}

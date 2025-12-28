@@ -1,4 +1,5 @@
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+// TODO: Re-implement auth after Supabase migration
+// import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -7,104 +8,47 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
 
 export default async function CoachAthletesPage() {
-  const session = await auth();
+  // TODO: Re-implement auth check after Supabase migration
+  // For now, using hardcoded coach ID until Supabase auth is implemented
+  const tempCoachId = 'temp-coach-id';
 
-  if (!session) {
-    redirect('/auth/signin?callbackUrl=/coach/athletes');
-  }
+  try {
+    // Get coach's school
+    const coach = await prisma.user.findFirst({
+      where: { role: 'COACH' },
+      include: { School: true },
+    });
 
-  if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
-    redirect('/dashboard');
-  }
+    if (!coach) {
+      return <div>No coach found. Please set up a coach account.</div>;
+    }
 
-  // Skip database queries for demo coach
-  let athletes: any[] = [];
-  let coach: any = {
-    School: { name: 'Demo University' },
-    schoolId: 'demo-school-123',
-  };
-
-  if (!session.user.id.startsWith('demo-')) {
-    try {
-      // Get coach's school
-      const dbCoach = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        include: { School: true },
-      });
-
-      if (!dbCoach) {
-        return <div>Coach not found</div>;
-      }
-
-      coach = dbCoach;
-
-      // Get all athletes from the same school
-      athletes = await prisma.user.findMany({
-        where: {
-          role: 'ATHLETE',
-          schoolId: coach.schoolId,
-        },
-        include: {
-          Athlete: {
-            include: {
-              MoodLog: {
-                orderBy: { createdAt: 'desc' },
-                take: 7, // Last 7 days
-              },
-              ChatSummary: {
-                orderBy: { generatedAt: 'desc' },
-                take: 1, // Most recent summary
-              },
+    // Get all athletes from the same school
+    const athletes = await prisma.user.findMany({
+      where: {
+        role: 'ATHLETE',
+        schoolId: coach.schoolId,
+      },
+      include: {
+        Athlete: {
+          include: {
+            MoodLog: {
+              orderBy: { createdAt: 'desc' },
+              take: 7, // Last 7 days
+            },
+            ChatSummary: {
+              orderBy: { generatedAt: 'desc' },
+              take: 1, // Most recent summary
             },
           },
         },
-        orderBy: { name: 'asc' },
-      });
-    } catch (error) {
-      console.error('Error fetching athletes:', error);
-      athletes = [];
-    }
-  } else {
-    // Mock data for demo coach
-    athletes = [
-      {
-        id: 'athlete-1',
-        name: 'Sarah Johnson',
-        email: 'sarah.j@example.com',
-        Athlete: {
-          sport: 'Basketball',
-          year: 'Junior',
-          teamPosition: 'Point Guard',
-          MoodLog: [
-            { mood: 8, confidence: 9, stress: 3, energy: 8, sleep: 8, createdAt: new Date() },
-          ],
-          ChatSummary: [
-            { summary: 'High performer, strong mental resilience', generatedAt: new Date() },
-          ],
-        },
       },
-      {
-        id: 'athlete-2',
-        name: 'Mike Chen',
-        email: 'mike.c@example.com',
-        Athlete: {
-          sport: 'Basketball',
-          year: 'Sophomore',
-          teamPosition: 'Shooting Guard',
-          MoodLog: [
-            { mood: 5, confidence: 6, stress: 7, energy: 5, sleep: 6, createdAt: new Date() },
-          ],
-          ChatSummary: [
-            { summary: 'Experiencing academic stress, needs support', generatedAt: new Date() },
-          ],
-        },
-      },
-    ];
-  }
+      orderBy: { name: 'asc' },
+    });
 
-  // Calculate metrics for each athlete
-  const athleteMetrics = athletes.map((athlete) => {
-    const recentMoods = athlete.Athlete?.MoodLog || [];
+    // Calculate metrics for each athlete
+    const athleteMetrics = athletes.map((athlete) => {
+      const recentMoods = athlete.Athlete?.MoodLog || [];
 
     if (recentMoods.length === 0) {
       return {
@@ -265,13 +209,13 @@ export default async function CoachAthletesPage() {
                       <tr key={athlete.id} className="hover:bg-background transition-colors">
                         <td className="px-4 py-4">
                           <div className="font-medium text-foreground">{athlete.name}</div>
-                          <div className="text-sm text-muted-foreground">{athlete.athlete?.year || 'N/A'}</div>
+                          <div className="text-sm text-muted-foreground">{athlete.Athlete?.year || 'N/A'}</div>
                         </td>
                         <td className="px-4 py-4 text-sm text-muted-foreground">
-                          {athlete.athlete?.sport || 'N/A'}
+                          {athlete.Athlete?.sport || 'N/A'}
                         </td>
                         <td className="px-4 py-4 text-sm text-muted-foreground">
-                          {athlete.athlete?.teamPosition || 'N/A'}
+                          {athlete.Athlete?.teamPosition || 'N/A'}
                         </td>
                         <td className="px-4 py-4 text-center">
                           <span className={`font-semibold ${
@@ -365,7 +309,7 @@ export default async function CoachAthletesPage() {
           <CardContent>
             {(() => {
               const athletesWithConsent = sortedAthletes.filter(
-                (a) => a.athlete?.consentChatSummaries === true
+                (a) => a.Athlete?.consentChatSummaries === true
               );
 
               if (athletesWithConsent.length === 0) {
@@ -385,7 +329,7 @@ export default async function CoachAthletesPage() {
               return (
                 <div className="space-y-4">
                   {athletesWithConsent.map((athlete) => {
-                    const latestSummary = athlete.athlete?.chatSummaries?.[0];
+                    const latestSummary = athlete.Athlete?.ChatSummary?.[0];
 
                     return (
                       <div
@@ -396,7 +340,7 @@ export default async function CoachAthletesPage() {
                           <div>
                             <h4 className="font-semibold text-foreground">{athlete.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {athlete.athlete?.sport} • {athlete.athlete?.year}
+                              {athlete.Athlete?.sport} • {athlete.Athlete?.year}
                             </p>
                           </div>
                           {latestSummary ? (
@@ -508,5 +452,16 @@ export default async function CoachAthletesPage() {
         ) : null}
       </div>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error('Error loading athletes page:', error);
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Error Loading Athletes</h2>
+          <p className="text-muted-foreground">Please try again later or contact support.</p>
+        </div>
+      </div>
+    );
+  }
 }

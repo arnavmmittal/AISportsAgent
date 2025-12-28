@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { generateWeeklySummaries } from '@/lib/summaries/generateWeeklySummaries';
 
 /**
@@ -20,14 +20,14 @@ export async function POST(request: NextRequest) {
   try {
     // Check authentication
     // Option 1: NextAuth session (for manual triggers by coaches/admins)
-    const session = await auth();
+    const { authorized, user } = await requireAuth(request);
 
     // Option 2: API key (for cron jobs)
     const apiKey = request.headers.get('x-api-key');
     const validApiKey = process.env.SUMMARY_GENERATION_API_KEY;
 
     const isAuthorized =
-      (session && (session.user?.role === 'ADMIN' || session.user?.role === 'COACH')) ||
+      (authorized && (user!.role === 'ADMIN' || user!.role === 'COACH')) ||
       (apiKey && validApiKey && apiKey === validApiKey);
 
     if (!isAuthorized) {
@@ -70,9 +70,10 @@ export async function POST(request: NextRequest) {
  * Useful for monitoring and debugging.
  */
 export async function GET(request: NextRequest) {
-  const session = await auth();
+  const { authorized, user, response } = await requireAuth(request);
+  if (!authorized) return response;
 
-  if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'COACH')) {
+  if (user!.role !== 'ADMIN' && user!.role !== 'COACH') {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }

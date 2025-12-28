@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -14,24 +14,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { id } = await params;
 
     // Verify user is an athlete
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { athlete: true },
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user!.id },
+      include: { Athlete: true },
     });
 
-    if (!user || user.role !== 'ATHLETE' || !user.athlete) {
+    if (!fullUser || fullUser.role !== 'ATHLETE' || !fullUser.Athlete) {
       return NextResponse.json(
         { error: 'Forbidden - Athlete access required' },
         { status: 403 }
@@ -54,11 +48,11 @@ export async function POST(
     const isTargeted =
       assignment.targetAthleteIds === null || // All athletes
       (Array.isArray(assignment.targetAthleteIds) &&
-        assignment.targetAthleteIds.includes(user.id));
+        assignment.targetAthleteIds.includes(fullUser.id));
 
     const isSportMatch =
       assignment.targetSport === null ||
-      assignment.targetSport === user.athlete.sport;
+      assignment.targetSport === fullUser.Athlete.sport;
 
     if (!isTargeted || !isSportMatch) {
       return NextResponse.json(
@@ -88,7 +82,7 @@ export async function POST(
       where: {
         assignmentId_athleteId: {
           assignmentId: id,
-          athleteId: user.id,
+          athleteId: fullUser.id,
         },
       },
       update: {
@@ -98,7 +92,7 @@ export async function POST(
       },
       create: {
         assignmentId: id,
-        athleteId: user.id,
+        athleteId: fullUser.id,
         response: data.response,
         status: 'SUBMITTED',
         submittedAt: new Date(),

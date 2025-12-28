@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const athlete = await prisma.athlete.findUnique({
       where: { userId: validatedData.athleteId },
       include: {
-        user: true,
+        User: true,
       },
     });
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       ? {
           mentalMoodScore: nearestMoodLog.mood,
           mentalStressScore: nearestMoodLog.stress,
-          mentalSleepHours: nearestMoodLog.sleepHours,
+          mentalSleepHours: nearestMoodLog.sleep,
           mentalHRVScore: null, // Will be populated from wearable data later
         }
       : {
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       performanceMetricId: performanceMetric.id,
       message: 'Game stats saved successfully',
       data: {
-        athleteName: athlete.user.name,
+        athleteName: athlete.User.name,
         gameDate: performanceMetric.gameDate.toISOString(),
         outcome: performanceMetric.outcome,
         readinessScore: readinessScore,

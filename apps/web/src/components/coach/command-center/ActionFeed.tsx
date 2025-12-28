@@ -12,7 +12,7 @@ interface ActionFeedProps {
 }
 
 const ACTION_CONFIG: Record<ActionType, { icon: string; color: string; label: string }> = {
-  BURNOUT_RISK_DETECTED: {
+  BURNOUT_RISK: {
     icon: '🔥',
     color: 'text-red-400',
     label: 'Burnout Risk',
@@ -27,40 +27,15 @@ const ACTION_CONFIG: Record<ActionType, { icon: string; color: string; label: st
     color: 'text-amber-400',
     label: 'Engagement Drop',
   },
-  PERFORMANCE_SLUMP: {
+  PERFORMANCE_DECLINE: {
     icon: '⚠️',
     color: 'text-yellow-400',
-    label: 'Performance Slump',
-  },
-  MOOD_DETERIORATION: {
-    icon: '😔',
-    color: 'text-blue-400',
-    label: 'Mood Decline',
-  },
-  CRISIS_LANGUAGE_DETECTED: {
-    icon: '🚨',
-    color: 'text-red-600',
-    label: 'Crisis Alert',
-  },
-  STREAK_BROKEN: {
-    icon: '💔',
-    color: 'text-purple-400',
-    label: 'Streak Broken',
+    label: 'Performance Decline',
   },
   POSITIVE_MOMENTUM: {
-    icon: '🌟',
+    icon: '✨',
     color: 'text-green-400',
     label: 'Positive Momentum',
-  },
-  TEAM_CHEMISTRY_ISSUE: {
-    icon: '👥',
-    color: 'text-indigo-400',
-    label: 'Team Issue',
-  },
-  ASSIGNMENT_OVERDUE: {
-    icon: '📝',
-    color: 'text-orange-400',
-    label: 'Overdue Assignment',
   },
 };
 

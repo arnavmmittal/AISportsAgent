@@ -42,6 +42,26 @@ export interface Athlete {
   updatedAt: Date;
 }
 
+// Action Feed Types
+export type ActionType =
+  | 'STRESS_SPIKE'
+  | 'ENGAGEMENT_DROP'
+  | 'POSITIVE_MOMENTUM'
+  | 'BURNOUT_RISK'
+  | 'PERFORMANCE_DECLINE';
+
+export interface ActionFeedItem {
+  id: string;
+  type: ActionType;
+  message: string;
+  timestamp: Date;
+  affectedAthletes: Array<{
+    id: string;
+    name: string;
+  }>;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
 export enum AthleteYear {
   FRESHMAN = 'FRESHMAN',
   SOPHOMORE = 'SOPHOMORE',

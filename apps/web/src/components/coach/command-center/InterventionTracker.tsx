@@ -8,55 +8,63 @@ import { cn } from '@/lib/utils';
 import { EmptyInterventions } from '../ui/EmptyState';
 import AthleteAvatar from '../ui/AthleteAvatar';
 
+// Extended type to include athlete data from Prisma relation
+interface InterventionWithAthlete extends CoachIntervention {
+  athlete?: {
+    name: string;
+    profileImageUrl?: string;
+  };
+}
+
 interface InterventionTrackerProps {
-  interventions: CoachIntervention[];
+  interventions: InterventionWithAthlete[];
 }
 
 const INTERVENTION_CONFIG: Record<InterventionType, { icon: string; color: string; label: string }> = {
-  CHECK_IN: {
-    icon: '💬',
-    color: 'text-blue-400',
-    label: 'Check-in',
-  },
-  PHONE_CALL: {
-    icon: '📞',
-    color: 'text-green-400',
-    label: 'Phone Call',
-  },
-  IN_PERSON_MEETING: {
+  [InterventionType.ONE_ON_ONE_MEETING]: {
     icon: '🤝',
     color: 'text-purple-400',
-    label: 'In-Person',
+    label: 'One-on-One Meeting',
   },
-  EMAIL_SENT: {
-    icon: '📧',
-    color: 'text-cyan-400',
-    label: 'Email',
+  [InterventionType.GROUP_SESSION]: {
+    icon: '👥',
+    color: 'text-blue-400',
+    label: 'Group Session',
   },
-  RESOURCE_SHARED: {
-    icon: '📚',
-    color: 'text-amber-400',
-    label: 'Resource Shared',
+  [InterventionType.TEXT_CHECK_IN]: {
+    icon: '💬',
+    color: 'text-green-400',
+    label: 'Text Check-in',
   },
-  REFERRAL: {
-    icon: '🏥',
-    color: 'text-red-400',
-    label: 'Referral',
-  },
-  ASSIGNMENT_CREATED: {
+  [InterventionType.ASSIGNMENT_GIVEN]: {
     icon: '📝',
     color: 'text-indigo-400',
-    label: 'Assignment',
+    label: 'Assignment Given',
   },
-  GOAL_SET: {
-    icon: '🎯',
-    color: 'text-green-400',
-    label: 'Goal Set',
+  [InterventionType.LOAD_ADJUSTMENT]: {
+    icon: '⚖️',
+    color: 'text-amber-400',
+    label: 'Load Adjustment',
   },
-  NOTE_ADDED: {
+  [InterventionType.MENTAL_SKILLS_TRAINING]: {
+    icon: '🧠',
+    color: 'text-cyan-400',
+    label: 'Mental Skills Training',
+  },
+  [InterventionType.CRISIS_INTERVENTION]: {
+    icon: '🚨',
+    color: 'text-red-400',
+    label: 'Crisis Intervention',
+  },
+  [InterventionType.REFERRAL]: {
+    icon: '🏥',
+    color: 'text-pink-400',
+    label: 'Referral',
+  },
+  [InterventionType.OTHER]: {
     icon: '📋',
     color: 'text-slate-400',
-    label: 'Note',
+    label: 'Other',
   },
 };
 
@@ -69,6 +77,11 @@ export default function InterventionTracker({ interventions }: InterventionTrack
     <div className="space-y-3">
       {interventions.map((intervention) => {
         const config = INTERVENTION_CONFIG[intervention.type];
+
+        // Skip if athlete data is missing
+        if (!intervention.athlete) {
+          return null;
+        }
 
         return (
           <div
@@ -110,7 +123,7 @@ export default function InterventionTracker({ interventions }: InterventionTrack
 
                 {/* Footer: Timestamp + Outcome */}
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>{formatTimestamp(intervention.timestamp)}</span>
+                  <span>{formatTimestamp(intervention.performedAt)}</span>
                   {intervention.outcome && (
                     <span className="text-green-400">✓ {intervention.outcome}</span>
                   )}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/assignments/[id]/submissions - Coach views all submissions
@@ -9,24 +8,18 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
-    }
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized) return response;
 
     const { id } = await params;
 
     // Verify user is a coach
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { coach: true },
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user!.id },
+      include: { Coach: true },
     });
 
-    if (!user || user.role !== 'COACH' || !user.coach) {
+    if (!fullUser || fullUser.role !== 'COACH' || !fullUser.Coach) {
       return NextResponse.json(
         { error: 'Forbidden - Coach access required' },
         { status: 403 }
@@ -37,7 +30,7 @@ export async function GET(
     const assignment = await prisma.assignment.findUnique({
       where: { id },
       include: {
-        submissions: {
+        AssignmentSubmission: {
           include: {
             // Include athlete user info for display
           },
@@ -55,7 +48,7 @@ export async function GET(
       );
     }
 
-    if (assignment.coachId !== user.id) {
+    if (assignment.coachId !== user!.id) {
       return NextResponse.json(
         { error: 'Forbidden - You can only view submissions for your own assignments' },
         { status: 403 }
@@ -64,14 +57,14 @@ export async function GET(
 
     // Get athlete info for each submission
     const submissionsWithAthletes = await Promise.all(
-      assignment.submissions.map(async (submission: any) => {
+      assignment.AssignmentSubmission.map(async (submission: any) => {
         const athlete = await prisma.user.findUnique({
           where: { id: submission.athleteId },
           select: {
             id: true,
             name: true,
             email: true,
-            athlete: {
+            Athlete: {
               select: {
                 sport: true,
                 year: true,

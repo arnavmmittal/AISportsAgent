@@ -162,7 +162,7 @@ export default function PatternDetection() {
           title="Critical Alerts"
           value={severityCounts.critical}
           subtitle="Requiring immediate action"
-          variant="error"
+          variant="danger"
         />
         <StatCard
           title="Warnings"
