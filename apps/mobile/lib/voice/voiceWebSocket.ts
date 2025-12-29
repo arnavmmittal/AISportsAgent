@@ -1,6 +1,8 @@
 import { Audio } from 'expo-av';
 import { Paths, File } from 'expo-file-system';
 import { VoiceRecorder } from './voiceRecorder';
+import { transcribeAudio, WHISPER_PRESETS } from '../services/whisper';
+import { textToSpeech, VOICE_PRESETS } from '../services/elevenlabs';
 
 export interface VoiceMessage {
   type: 'start' | 'utterance_end' | 'stop' | 'transcript' | 'response' | 'error' | 'started' | 'crisis_alert';
@@ -87,6 +89,20 @@ export class VoiceWebSocketClient {
                   if (message.text) {
                     console.log('💬 Response:', message.text);
                     this.config.onResponse?.(message.text);
+
+                    // Generate TTS audio using ElevenLabs
+                    try {
+                      console.log('🔊 Generating TTS audio...');
+                      const audioData = await textToSpeech(message.text, VOICE_PRESETS.default);
+                      console.log(`✅ TTS audio generated: ${audioData.byteLength} bytes`);
+
+                      // Add to audio queue for playback
+                      this.audioQueue.push(new Uint8Array(audioData));
+                      this.playAudioQueue();
+                    } catch (error) {
+                      console.error('Failed to generate TTS audio:', error);
+                      // Continue without audio if TTS fails
+                    }
                   }
                   break;
 
@@ -183,23 +199,31 @@ export class VoiceWebSocketClient {
       // Read recording data
       const audioData = await this.recorder.getRecordingData(uri);
 
-      // Send audio data to server
-      console.log(`📤 Sending audio data: ${audioData.byteLength} bytes`);
-      this.ws?.send(audioData.buffer);
+      console.log(`🎤 Transcribing audio: ${audioData.byteLength} bytes`);
 
-      // Send utterance_end signal
-      const utteranceEnd: VoiceMessage = {
-        type: 'utterance_end',
+      // Transcribe audio using Whisper STT
+      const transcript = await transcribeAudio(audioData, WHISPER_PRESETS.highAccuracy);
+
+      console.log(`📝 Transcription result: "${transcript}"`);
+
+      // Send transcript to server instead of raw audio
+      const transcriptMessage: VoiceMessage = {
+        type: 'transcript',
+        text: transcript,
+        isFinal: true,
       };
-      console.log('📤 Sending utterance_end signal');
-      this.ws?.send(JSON.stringify(utteranceEnd));
+      console.log('📤 Sending transcript to server');
+      this.ws?.send(JSON.stringify(transcriptMessage));
 
       // Clean up recording file
       await this.recorder.deleteRecording(uri);
 
-      console.log('✅ Audio sent successfully');
+      console.log('✅ Transcription sent successfully');
+
+      // Notify transcript callback
+      this.config.onTranscript?.(transcript);
     } catch (error) {
-      console.error('Failed to stop recording and send audio:', error);
+      console.error('Failed to stop recording and transcribe audio:', error);
       throw error;
     }
   }
