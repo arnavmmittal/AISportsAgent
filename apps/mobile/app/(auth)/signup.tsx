@@ -48,7 +48,7 @@ export default function SignupScreen() {
         password,
         role,
         sport: sport || undefined,
-        year: year || undefined,
+        year: year ? parseInt(year) : undefined,
       });
 
       // Auto-login after signup

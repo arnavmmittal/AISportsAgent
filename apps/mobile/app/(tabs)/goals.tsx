@@ -199,15 +199,15 @@ export default function GoalsScreen() {
   const getCategoryGradient = (category: Goal['category']) => {
     switch (category) {
       case 'PERFORMANCE':
-        return ['#8b5cf6', '#a78bfa']; // Purple
+        return ['#8b5cf6', '#a78bfa'] as const; // Purple
       case 'MENTAL':
-        return ['#ec4899', '#f472b6']; // Pink
+        return ['#ec4899', '#f472b6'] as const; // Pink
       case 'ACADEMIC':
-        return ['#10b981', '#34d399']; // Emerald
+        return ['#10b981', '#34d399'] as const; // Emerald
       case 'PERSONAL':
-        return ['#f59e0b', '#fbbf24']; // Amber
+        return ['#f59e0b', '#fbbf24'] as const; // Amber
       default:
-        return ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)'];
+        return ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)'] as const;
     }
   };
 

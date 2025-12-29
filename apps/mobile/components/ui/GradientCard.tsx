@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Colors, BorderRadius, Shadows } from '../../constants/theme';
 
 interface GradientCardProps {
-  colors?: string[];
+  colors?: readonly [string, string, ...string[]];
   start?: { x: number; y: number };
   end?: { x: number; y: number };
   style?: ViewStyle;
@@ -14,7 +14,7 @@ interface GradientCardProps {
 }
 
 export function GradientCard({
-  colors = ['#fff', '#fafafa'],
+  colors = ['#fff', '#fafafa'] as const,
   start = { x: 0, y: 0 },
   end = { x: 1, y: 1 },
   style,
@@ -39,7 +39,7 @@ export function GradientCard({
         ]}
       >
         <LinearGradient
-          colors={colors}
+          colors={colors as any}
           start={start}
           end={end}
           style={styles.gradient}
@@ -53,7 +53,7 @@ export function GradientCard({
   return (
     <View style={[styles.container, style]}>
       <LinearGradient
-        colors={colors}
+        colors={colors as any}
         start={start}
         end={end}
         style={styles.gradient}

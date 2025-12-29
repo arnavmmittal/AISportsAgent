@@ -16,8 +16,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { apiClient } from '../../lib/auth';
+import { apiClient, getStoredUserId } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+import { InterventionQueueComponent } from '../../components/coach/insights/InterventionQueue';
 
 export default function InsightsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -25,10 +26,19 @@ export default function InsightsScreen() {
   const [activeTab, setActiveTab] = useState<'summary' | 'predictions' | 'patterns'>('summary');
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [coachId, setCoachId] = useState('');
 
   useEffect(() => {
     loadDashboardData();
+    loadCoachId();
   }, []);
+
+  const loadCoachId = async () => {
+    const userId = await getStoredUserId();
+    if (userId) {
+      setCoachId(userId);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -266,6 +276,14 @@ export default function InsightsScreen() {
                 </View>
               ))}
             </View>
+
+            {/* Intervention Queue */}
+            {coachId && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>🎯 Intervention Queue</Text>
+                <InterventionQueueComponent coachId={coachId} />
+              </View>
+            )}
           </View>
         )}
 
@@ -289,7 +307,7 @@ export default function InsightsScreen() {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🔮 ML Predictions</Text>
-              {predictions.map((pred, idx) => (
+              {predictions.map((pred: any, idx: number) => (
                 <View key={idx} style={styles.predCard}>
                   <LinearGradient
                     colors={pred.type === 'RISK' ? ['rgba(239, 68, 68, 0.2)', 'rgba(220, 38, 38, 0.1)'] : pred.type === 'PERFORMANCE' ? ['rgba(16, 185, 129, 0.2)', 'rgba(5, 150, 105, 0.1)'] : ['rgba(59, 130, 246, 0.2)', 'rgba(37, 99, 235, 0.1)']}
@@ -392,7 +410,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: Spacing.md,
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: Typography.sizes?.md || 14,
+    fontSize: 14,
   },
   errorContainer: {
     flex: 1,
@@ -403,7 +421,7 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: Spacing.md,
     color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: Typography.sizes?.md || 14,
+    fontSize: 14,
     textAlign: 'center',
   },
   retryButton: {
@@ -415,7 +433,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: '#fff',
-    fontSize: Typography.sizes?.md || 14,
+    fontSize: 14,
     fontWeight: '600',
   },
   header: { paddingTop: 60, shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },

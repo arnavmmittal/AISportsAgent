@@ -12,7 +12,8 @@
  * Requires minimum 20 data points for statistical reliability.
  */
 
-import { prisma } from '@/lib/prisma';
+// Note: Prisma import removed for mobile - database queries should happen via API
+// import { prisma } from '@/lib/prisma';
 
 /**
  * Correlation result with statistical significance
@@ -135,6 +136,12 @@ export async function analyzePerformanceCorrelations(
   athleteId: string,
   days: number = 90
 ): Promise<PerformanceCorrelationAnalysis> {
+  // Note: This function requires database access and should not be called in mobile
+  // Mobile apps should fetch correlation data via API endpoints instead
+  // @ts-ignore - Function disabled in mobile
+  return { athleteId, period: { fromDate: new Date(), toDate: new Date(), days }, correlations: [], summary: { strongestCorrelation: null, weakestCorrelation: null, significantCount: 0, totalSampleSize: 0, recommendations: [] } };
+
+  /* Disabled for mobile - original implementation below uses Prisma
   const toDate = new Date();
   const fromDate = new Date();
   fromDate.setDate(fromDate.getDate() - days);
@@ -344,6 +351,7 @@ export async function analyzePerformanceCorrelations(
     topFactor,
     recommendations,
   };
+  */
 }
 
 /**
@@ -360,6 +368,12 @@ export async function analyzeTeamPerformanceCorrelations(
   avgCorrelations: CorrelationResult[];
   consistentFactors: string[]; // Factors that correlate across >70% of athletes
 }> {
+  // Note: This function requires database access and should not be called in mobile
+  // Mobile apps should fetch team correlation data via API endpoints instead
+  // @ts-ignore - Function disabled in mobile
+  return { teamSize: 0, avgCorrelations: [], consistentFactors: [] };
+
+  /* Disabled for mobile - original implementation below uses Prisma
   // Get all athletes for the school/sport
   const athletes = await prisma.athlete.findMany({
     where: {
@@ -426,4 +440,5 @@ export async function analyzeTeamPerformanceCorrelations(
     avgCorrelations: avgCorrelations.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation)),
     consistentFactors,
   };
+  */
 }

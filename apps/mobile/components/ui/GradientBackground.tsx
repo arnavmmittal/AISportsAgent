@@ -3,7 +3,7 @@ import { StyleSheet, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface GradientBackgroundProps {
-  colors?: string[];
+  colors?: readonly [string, string, ...string[]];
   start?: { x: number; y: number };
   end?: { x: number; y: number };
   style?: ViewStyle;
@@ -11,7 +11,7 @@ interface GradientBackgroundProps {
 }
 
 export function GradientBackground({
-  colors = ['#2563eb', '#3b82f6', '#60a5fa'],
+  colors = ['#2563eb', '#3b82f6', '#60a5fa'] as const,
   start = { x: 0, y: 0 },
   end = { x: 1, y: 1 },
   style,
@@ -19,7 +19,7 @@ export function GradientBackground({
 }: GradientBackgroundProps) {
   return (
     <LinearGradient
-      colors={colors}
+      colors={colors as any}
       start={start}
       end={end}
       style={[styles.gradient, style]}

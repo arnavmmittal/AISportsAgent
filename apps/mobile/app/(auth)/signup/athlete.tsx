@@ -175,7 +175,7 @@ export default function AthleteSignup() {
       Alert.alert('Success', 'Account created successfully!', [
         {
           text: 'Get Started',
-          onPress: () => router.replace(getRoleBasedRoute(user.role)),
+          onPress: () => router.replace(getRoleBasedRoute(user.role) as any),
         },
       ]);
     } catch (error: any) {

@@ -49,15 +49,15 @@ export default function CoachDashboard() {
   const getReadinessColor = (status: string) => {
     switch (status) {
       case 'excellent':
-        return ['#10b981', '#34d399'];
+        return ['#10b981', '#34d399'] as const;
       case 'good':
-        return ['#3b82f6', '#60a5fa'];
+        return ['#3b82f6', '#60a5fa'] as const;
       case 'fair':
-        return ['#f59e0b', '#fbbf24'];
+        return ['#f59e0b', '#fbbf24'] as const;
       case 'at-risk':
-        return ['#ef4444', '#f87171'];
+        return ['#ef4444', '#f87171'] as const;
       default:
-        return ['#6b7280', '#9ca3af'];
+        return ['#6b7280', '#9ca3af'] as const;
     }
   };
 

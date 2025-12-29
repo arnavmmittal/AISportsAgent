@@ -102,10 +102,10 @@ export default function MoodScreen() {
   };
 
   const getMoodColor = (value: number) => {
-    if (value <= 3) return ['#ef4444', '#f87171'];
-    if (value <= 5) return ['#f59e0b', '#fbbf24'];
-    if (value <= 7) return ['#10b981', '#34d399'];
-    return ['#8b5cf6', '#a78bfa'];
+    if (value <= 3) return ['#ef4444', '#f87171'] as const;
+    if (value <= 5) return ['#f59e0b', '#fbbf24'] as const;
+    if (value <= 7) return ['#10b981', '#34d399'] as const;
+    return ['#8b5cf6', '#a78bfa'] as const;
   };
 
   const handleSubmit = async () => {
@@ -263,7 +263,7 @@ export default function MoodScreen() {
                     colors={
                       log
                         ? getMoodColor(log.mood)
-                        : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.05)']
+                        : (['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.05)'] as const)
                     }
                     style={styles.dayCardGradient}
                   >

@@ -20,6 +20,8 @@ import { apiClient } from '../../lib/auth';
 import type { MoodLog, Goal } from '@sports-agent/types';
 import { Card, LoadingScreen, GradientCard } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
+import { BiometricOverview } from '../../components/biometrics/BiometricOverview';
+import { HRVChart } from '../../components/biometrics/HRVChart';
 
 const { width } = Dimensions.get('window');
 
@@ -28,6 +30,7 @@ export default function DashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userName, setUserName] = useState('');
+  const [userId, setUserId] = useState('');
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [moodStats, setMoodStats] = useState<any>(null);
@@ -72,6 +75,8 @@ export default function DashboardScreen() {
         router.replace('/(auth)/login');
         return;
       }
+
+      setUserId(userId);
 
       // Fetch all dashboard data in parallel
       const [moodLogsData, goalsData, assignmentsData] = await Promise.all([
@@ -422,6 +427,22 @@ export default function DashboardScreen() {
             </LinearGradient>
           </Pressable>
         </View>
+
+        {/* Biometric Overview */}
+        {userId && (
+          <>
+            <Text style={styles.sectionTitleLight}>Biometrics</Text>
+            <BiometricOverview athleteId={userId} />
+          </>
+        )}
+
+        {/* HRV Chart */}
+        {userId && (
+          <>
+            <Text style={styles.sectionTitleLight}>Heart Rate Variability</Text>
+            <HRVChart athleteId={userId} days={30} />
+          </>
+        )}
 
         {/* Quick Actions with Modern Cards */}
         <Text style={styles.sectionTitleLight}>Quick Actions</Text>

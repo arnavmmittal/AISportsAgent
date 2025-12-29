@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.text,
+    color: '#000',
     marginLeft: Spacing.sm,
   },
   headerDescription: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text,
+    color: '#000',
     marginBottom: Spacing.md,
   },
   card: {
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text,
+    color: '#000',
     marginBottom: 4,
   },
   cardContact: {
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   reminderTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.text,
+    color: '#000',
     marginBottom: Spacing.sm,
   },
   reminderList: {

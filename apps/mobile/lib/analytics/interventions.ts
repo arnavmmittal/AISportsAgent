@@ -13,7 +13,8 @@
  * - Low confidence → MEDIUM: Review past successes
  */
 
-import { prisma } from '@/lib/prisma';
+// Note: Prisma import removed for mobile - database queries should happen via API
+// import { prisma } from '@/lib/prisma';
 
 export type InterventionPriority = 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -62,6 +63,12 @@ export interface InterventionQueue {
 export async function generateInterventionRecommendations(
   athleteId: string
 ): Promise<InterventionRecommendation[]> {
+  // Note: This function requires database access and should not be called in mobile
+  // Mobile apps should fetch intervention data via API endpoints instead
+  // @ts-ignore - Function disabled in mobile
+  return [];
+
+  /* Disabled for mobile - original implementation below uses Prisma
   const recommendations: InterventionRecommendation[] = [];
 
   // Fetch athlete info
@@ -297,6 +304,7 @@ export async function generateInterventionRecommendations(
   }
 
   return recommendations;
+  */
 }
 
 /**
@@ -304,6 +312,12 @@ export async function generateInterventionRecommendations(
  * Returns all recommendations for consented athletes, sorted by priority
  */
 export async function getCoachInterventionQueue(coachId: string): Promise<InterventionQueue> {
+  // Note: This function requires database access and should not be called in mobile
+  // Mobile apps should fetch intervention queue via API endpoints instead
+  // @ts-ignore - Function disabled in mobile
+  return { totalCount: 0, byPriority: { URGENT: 0, HIGH: 0, MEDIUM: 0, LOW: 0 }, recommendations: [] };
+
+  /* Disabled for mobile - original implementation below uses Prisma
   // Get all consented athletes
   const athleteRelations = await prisma.coachAthleteRelation.findMany({
     where: {
@@ -339,4 +353,5 @@ export async function getCoachInterventionQueue(coachId: string): Promise<Interv
   };
 
   return queue;
+  */
 }

@@ -3,7 +3,7 @@
  * Team trends, cohort comparisons, and correlation analysis
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,11 +16,26 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+import { TeamHeatmap } from '../../components/coach/analytics/TeamHeatmap';
+import { PerformanceCorrelationMatrix } from '../../components/coach/analytics/PerformanceCorrelationMatrix';
+import { getStoredUserId } from '../../lib/auth';
 
 export default function AnalyticsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [timeRange, setTimeRange] = useState<'7' | '30' | '90'>('30');
   const [activeTab, setActiveTab] = useState<'pulse' | 'performance' | 'interventions'>('pulse');
+  const [coachId, setCoachId] = useState('');
+
+  useEffect(() => {
+    loadCoachId();
+  }, []);
+
+  const loadCoachId = async () => {
+    const userId = await getStoredUserId();
+    if (userId) {
+      setCoachId(userId);
+    }
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -162,6 +177,14 @@ export default function AnalyticsScreen() {
               </View>
             </View>
 
+            {/* Team Heatmap */}
+            {coachId && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Team Readiness Heatmap</Text>
+                <TeamHeatmap coachId={coachId} days={14} />
+              </View>
+            )}
+
             {/* Cohort Comparison */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Sport Comparisons</Text>
@@ -196,6 +219,14 @@ export default function AnalyticsScreen() {
         {/* Performance Tab */}
         {activeTab === 'performance' && (
           <View style={styles.section}>
+            {/* Performance Correlation Matrix - Note: Currently shows for demo athlete, can be enhanced with athlete selector */}
+            {coachId && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Mental State ↔ Performance Correlation</Text>
+                <PerformanceCorrelationMatrix athleteId={coachId} days={parseInt(timeRange)} />
+              </View>
+            )}
+
             <Text style={styles.sectionTitle}>Readiness-Performance Correlation</Text>
             <View style={styles.infoCard}>
               <LinearGradient colors={['rgba(16, 185, 129, 0.2)', 'rgba(5, 150, 105, 0.1)']} style={styles.infoGradient}>

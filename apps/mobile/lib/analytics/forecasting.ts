@@ -10,7 +10,8 @@
  * Requires minimum 14 days of historical data for reliable forecasts
  */
 
-import { prisma } from '@/lib/prisma';
+// Note: Prisma import removed for mobile - database queries should happen via API
+// import { prisma } from '@/lib/prisma';
 
 export interface ForecastPoint {
   date: string; // YYYY-MM-DD
@@ -199,10 +200,16 @@ export async function forecastReadinessTrend(
   athleteId: string,
   days: number = 30
 ): Promise<ReadinessForecast> {
-  // Fetch historical readiness scores
-  const fromDate = new Date();
-  fromDate.setDate(fromDate.getDate() - days);
+  // Note: This function requires database access and should not be called in mobile
+  // Mobile apps should fetch forecast data via API endpoints instead
+  throw new Error('forecastReadinessTrend() cannot be called in mobile app - use API endpoint instead');
 
+  // Fetch historical readiness scores
+  // const fromDate = new Date();
+  // fromDate.setDate(fromDate.getDate() - days);
+
+  const historicalScores: any[] = []; // Disabled for mobile - use API instead
+  /*
   const historicalScores = await prisma.readinessScore.findMany({
     where: {
       athleteId,
@@ -218,6 +225,7 @@ export async function forecastReadinessTrend(
       score: true,
     },
   });
+  */
 
   if (historicalScores.length < 14) {
     throw new Error(`Insufficient data for forecasting. Need at least 14 days, have ${historicalScores.length}`);

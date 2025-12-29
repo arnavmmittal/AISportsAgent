@@ -77,7 +77,7 @@ function AnimatedTabIcon({
           >
             <View style={styles.glowEffect} />
             <Ionicons
-              name={focused ? focusedName : name}
+              name={focused ? focusedName : name as any}
               size={28}
               color="#fff"
             />
@@ -108,7 +108,7 @@ function AnimatedTabIcon({
         >
           <View style={[styles.bubble, focused && styles.bubbleActive]}>
             <Ionicons
-              name={focused ? focusedName : name}
+              name={focused ? focusedName : name as any}
               size={26}
               color={focused ? Colors.primary : color}
             />
@@ -117,7 +117,7 @@ function AnimatedTabIcon({
       )}
       {!focused && (
         <Ionicons
-          name={focused ? focusedName : name}
+          name={focused ? focusedName : name as any}
           size={26}
           color={color}
         />

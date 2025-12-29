@@ -3,7 +3,7 @@
  * Game-day optimization and readiness forecasting with 4 sub-views
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+import { ReadinessForecastChart } from '../../components/coach/analytics/ReadinessForecastChart';
+import { getStoredUserId } from '../../lib/auth';
 
 type TabView = 'overview' | 'at-risk' | 'roster' | 'recovery';
 
@@ -24,6 +26,18 @@ export default function ReadinessScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedGame, setSelectedGame] = useState('next');
   const [activeTab, setActiveTab] = useState<TabView>('overview');
+  const [athleteId, setAthleteId] = useState('');
+
+  useEffect(() => {
+    loadAthleteId();
+  }, []);
+
+  const loadAthleteId = async () => {
+    const userId = await getStoredUserId();
+    if (userId) {
+      setAthleteId(userId);
+    }
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -161,6 +175,7 @@ export default function ReadinessScreen() {
             selectedGame={selectedGame}
             setSelectedGame={setSelectedGame}
             startingLineup={startingLineup}
+            athleteId={athleteId}
           />
         )}
 
@@ -183,9 +198,17 @@ export default function ReadinessScreen() {
 }
 
 // SUB-VIEW 1: Overview
-function OverviewView({ upcomingGames, selectedGame, setSelectedGame, startingLineup }: any) {
+function OverviewView({ upcomingGames, selectedGame, setSelectedGame, startingLineup, athleteId }: any) {
   return (
     <>
+      {/* 7-Day Readiness Forecast */}
+      {athleteId && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>7-Day Readiness Forecast</Text>
+          <ReadinessForecastChart athleteId={athleteId} days={30} />
+        </View>
+      )}
+
       {/* Today's Stats */}
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
