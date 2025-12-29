@@ -22,6 +22,9 @@ export interface ReadinessInput {
   sleepQuality: number; // 1-10 scale
   physicalFatigue: number; // 1-10 scale (higher = more fatigued)
   soreness: number; // 1-10 scale (higher = more sore)
+  hrvToday?: number; // Heart Rate Variability in ms (40-100 typical range)
+  restingHRToday?: number; // Resting heart rate in bpm (45-75 typical range)
+  recoveryScoreToday?: number; // Whoop-style recovery score 0-100 (optional, if provided)
 
   // Mental dimension
   mood: number; // 1-10 scale
@@ -96,13 +99,20 @@ export function calculateReadiness(input: ReadinessInput): ReadinessScore {
 }
 
 /**
- * Physical readiness based on sleep and fatigue
+ * Physical readiness based on sleep, fatigue, and HRV
+ *
+ * Updated weights (POST-MVP Week 4):
+ * - Sleep quality: 35% (reduced from 40%)
+ * - Sleep duration: 25% (reduced from 30%)
+ * - Physical fatigue: 10% (reduced from 20%)
+ * - Soreness: 10% (same)
+ * - HRV: 20% (NEW - biometric integration)
  */
 function calculatePhysicalReadiness(input: ReadinessInput): number {
-  // Sleep quality is most important (40% weight)
+  // Sleep quality (35% weight)
   const sleepScore = (input.sleepQuality / 10) * 100;
 
-  // Sleep duration (30% weight) - optimal 7-9 hours
+  // Sleep duration (25% weight) - optimal 7-9 hours
   let durationScore = 100;
   if (input.sleepHours < 6) {
     durationScore = (input.sleepHours / 6) * 60; // Severe penalty for <6hrs
@@ -114,17 +124,51 @@ function calculatePhysicalReadiness(input: ReadinessInput): number {
     durationScore = 100 - ((input.sleepHours - 9) * 5); // Slight penalty for oversleeping
   }
 
-  // Physical fatigue (20% weight) - inverted scale
+  // Physical fatigue (10% weight) - inverted scale
   const fatigueScore = ((10 - input.physicalFatigue) / 10) * 100;
 
   // Soreness (10% weight) - inverted scale
   const sorenessScore = ((10 - input.soreness) / 10) * 100;
 
+  // HRV (20% weight) - Heart Rate Variability scoring
+  let hrvScore = 75; // Default neutral score if no HRV data
+  let hrvWeight = 0.20;
+
+  if (input.hrvToday !== undefined) {
+    // HRV scoring based on typical athlete ranges (40-100ms)
+    // Research shows HRV >70ms indicates good recovery, <50ms indicates stress/fatigue
+    const hrv = input.hrvToday;
+
+    if (hrv >= 100) {
+      hrvScore = 100; // Excellent recovery
+    } else if (hrv >= 80) {
+      hrvScore = 90 + ((hrv - 80) / 20) * 10; // 90-100% for 80-100ms
+    } else if (hrv >= 60) {
+      hrvScore = 75 + ((hrv - 60) / 20) * 15; // 75-90% for 60-80ms
+    } else if (hrv >= 40) {
+      hrvScore = 50 + ((hrv - 40) / 20) * 25; // 50-75% for 40-60ms
+    } else {
+      hrvScore = (hrv / 40) * 50; // 0-50% for <40ms (very low)
+    }
+  } else {
+    // If no HRV data, redistribute 20% weight proportionally to other factors
+    // Redistributed: sleep quality gets +10%, duration gets +6%, fatigue gets +4%
+    hrvWeight = 0;
+    const redistributedPhysical = Math.round(
+      sleepScore * 0.45 +  // 35% + 10%
+      durationScore * 0.31 + // 25% + 6%
+      fatigueScore * 0.14 +  // 10% + 4%
+      sorenessScore * 0.10
+    );
+    return Math.max(0, Math.min(100, redistributedPhysical));
+  }
+
   const physical = Math.round(
-    sleepScore * 0.4 +
-    durationScore * 0.3 +
-    fatigueScore * 0.2 +
-    sorenessScore * 0.1
+    sleepScore * 0.35 +
+    durationScore * 0.25 +
+    fatigueScore * 0.10 +
+    sorenessScore * 0.10 +
+    hrvScore * hrvWeight
   );
 
   return Math.max(0, Math.min(100, physical));
