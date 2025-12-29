@@ -149,15 +149,21 @@ export async function generateAthleteWeeklySummary(athleteId: string) {
     },
   });
 
+  // Map Prisma result to expected type (Message → messages for backward compatibility)
+  const sessionsWithMessages = sessions.map(session => ({
+    ...session,
+    messages: session.Message || []
+  }));
+
   // Analyze sessions with GPT-4
-  const analysis = await analyzeChatSessions(sessions, moodLogs);
+  const analysis = await analyzeChatSessions(sessionsWithMessages as any, moodLogs);
 
   // Store the summary in the database
   // Use the most recent session for the sessionId relationship
   const mostRecentSession = sessions[0];
 
   // Count total messages across all sessions
-  const totalMessages = sessions.reduce((sum, session) => sum + session.messages.length, 0);
+  const totalMessages = sessions.reduce((sum, session) => sum + (session.Message?.length || 0), 0);
 
   const chatSummary = await prisma.chatSummary.create({
     data: {
@@ -312,7 +318,7 @@ export async function generateTeamSummary(coachId: string) {
       consentChatSummaries: true,
     },
     include: {
-      user: {
+      User: {
         select: {
           id: true,
           name: true,

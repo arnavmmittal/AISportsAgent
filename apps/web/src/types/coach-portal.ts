@@ -713,7 +713,7 @@ export interface APIResponse<T> {
   };
 }
 
-export interface PaginatedResponse<T> extends APIResponse<T> {
+export interface PaginatedResponse<T> extends APIResponse<T[]> {
   data: T[];
   meta: {
     page: number;

@@ -7,6 +7,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, MessageCircle, TrendingUp, Users } from 'lucide-react';
 
+// Force dynamic rendering to avoid database connection issues during build
+export const dynamic = 'force-dynamic';
+
 export default async function CoachInsightsPage() {
   // TODO: Re-implement auth check after Supabase migration
   // const session = await auth();

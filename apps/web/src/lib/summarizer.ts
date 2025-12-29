@@ -7,7 +7,7 @@
  * PRIVACY: Only processes MESSAGE METADATA, never raw chat content
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma, Prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 import { encryptFieldSafe, encryptArray } from './encryption';
 
@@ -468,8 +468,8 @@ export async function generateWeeklySummary(
 
       // Audit
       generatedAt: new Date(),
-      emotionalState: null,
-      actionItems: null,
+      emotionalState: null, // String? field
+      actionItems: undefined, // Json? field - omit if not provided
       athleteGoalsProgress: summaryOutput.athleteGoalsProgress,
     },
   });

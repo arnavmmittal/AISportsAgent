@@ -81,7 +81,7 @@ export class ChatService {
       };
 
       // Save user message
-      await this.saveMessage(session.id, 'user', message);
+      const userMessageId = await this.saveMessage(session.id, 'user', message);
 
       // Process with agent orchestrator
       const { response, crisisDetection } = await this.orchestrator.processMessage(
@@ -94,7 +94,7 @@ export class ChatService {
 
       // Handle crisis detection
       if (crisisDetection?.isCrisis) {
-        await this.handleCrisisDetection(session.id, crisisDetection, message);
+        await this.handleCrisisDetection(session.id, userMessageId, crisisDetection, message);
       }
 
       // Update session timestamp
@@ -142,7 +142,7 @@ export class ChatService {
     return prisma.chatSession.create({
       data: {
         athleteId,
-        startedAt: new Date(),
+        // createdAt is automatically set by Prisma @default(now())
       },
     });
   }
@@ -187,15 +187,17 @@ export class ChatService {
     sessionId: string,
     role: 'user' | 'assistant',
     content: string
-  ): Promise<void> {
+  ): Promise<string> {
+    const messageId = uuidv4();
     await prisma.message.create({
       data: {
-        id: uuidv4(),
+        id: messageId,
         sessionId,
         role,
         content,
       },
     });
+    return messageId;
   }
 
   /**
@@ -203,6 +205,7 @@ export class ChatService {
    */
   private async handleCrisisDetection(
     sessionId: string,
+    messageId: string,
     detection: CrisisDetection,
     triggerMessage: string
   ): Promise<void> {
@@ -213,7 +216,7 @@ export class ChatService {
         include: {
           Athlete: {
             include: {
-              CoachAthleteRelation: {
+              CoachAthlete: {
                 where: { consentGranted: true },
                 select: { coachId: true },
               },
@@ -227,14 +230,17 @@ export class ChatService {
       }
 
       // Create crisis alert
+      // Store indicators in notes field along with trigger message
+      const notesContent = `Indicators: ${detection.indicators.join('; ')}\n\nTrigger message: ${triggerMessage}`;
+
       const alert = await prisma.crisisAlert.create({
         data: {
           athleteId: session.athleteId,
           sessionId,
+          messageId,
           severity: detection.severity,
           detectedAt: new Date(),
-          indicators: detection.indicators.join('; '),
-          notes: triggerMessage,
+          notes: notesContent,
           reviewed: false,
         },
       });
@@ -251,7 +257,7 @@ export class ChatService {
       if (detection.severity === 'CRITICAL' || detection.severity === 'HIGH') {
         this.log('warn', 'HIGH PRIORITY - Notify coaches immediately', {
           alertId: alert.id,
-          coaches: session.Athlete.CoachAthleteRelation.map((r) => r.coachId),
+          coaches: session.Athlete.CoachAthlete.map((r) => r.coachId),
         });
       }
     } catch (error) {
@@ -276,7 +282,7 @@ export class ChatService {
   > {
     const sessions = await prisma.chatSession.findMany({
       where: { athleteId },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit,
       include: {
         Message: {
@@ -292,7 +298,7 @@ export class ChatService {
 
     return sessions.map((session) => ({
       id: session.id,
-      startedAt: session.startedAt,
+      startedAt: session.createdAt, // Use createdAt as session start time
       updatedAt: session.updatedAt,
       messageCount: session._count.Message,
       lastMessage: session.Message[0]?.content || 'No messages',
