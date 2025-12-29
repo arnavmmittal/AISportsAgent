@@ -201,8 +201,8 @@ export class VoiceWebSocketClient {
 
       console.log(`🎤 Transcribing audio: ${audioData.byteLength} bytes`);
 
-      // Transcribe audio using Whisper STT
-      const transcript = await transcribeAudio(audioData, WHISPER_PRESETS.highAccuracy);
+      // Transcribe audio using Whisper STT (convert Uint8Array to ArrayBuffer)
+      const transcript = await transcribeAudio(audioData.buffer, WHISPER_PRESETS.highAccuracy);
 
       console.log(`📝 Transcription result: "${transcript}"`);
 

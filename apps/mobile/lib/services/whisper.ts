@@ -47,7 +47,7 @@ export interface WhisperSegment {
  * Accepts audio data as ArrayBuffer (from AudioRecorder)
  */
 export async function transcribeAudio(
-  audioData: ArrayBuffer,
+  audioData: ArrayBuffer | ArrayBufferLike,
   config: WhisperConfig = {}
 ): Promise<string> {
   if (!OPENAI_API_KEY) {
@@ -60,8 +60,8 @@ export async function transcribeAudio(
     // Create FormData for multipart upload
     const formData = new FormData();
 
-    // Convert ArrayBuffer to Blob
-    const audioBlob = new Blob([audioData], { type: 'audio/m4a' });
+    // Convert ArrayBuffer/ArrayBufferLike to Blob
+    const audioBlob = new Blob([audioData as any], { type: 'audio/m4a' });
 
     // Append as file
     formData.append('file', audioBlob, 'audio.m4a');
@@ -110,7 +110,7 @@ export async function transcribeAudio(
  * Transcribe audio with detailed information (segments, timestamps, etc.)
  */
 export async function transcribeAudioVerbose(
-  audioData: ArrayBuffer,
+  audioData: ArrayBuffer | ArrayBufferLike,
   config: Omit<WhisperConfig, 'response_format'> = {}
 ): Promise<WhisperTranscription> {
   if (!OPENAI_API_KEY) {
@@ -121,7 +121,8 @@ export async function transcribeAudioVerbose(
     console.log('[Whisper] Transcribing (verbose)', audioData.byteLength, 'bytes');
 
     const formData = new FormData();
-    const audioBlob = new Blob([audioData], { type: 'audio/m4a' });
+    // Convert ArrayBuffer/ArrayBufferLike to Blob
+    const audioBlob = new Blob([audioData as any], { type: 'audio/m4a' });
 
     formData.append('file', audioBlob, 'audio.m4a');
     formData.append('model', config.model || 'whisper-1');
@@ -171,7 +172,7 @@ export async function transcribeAudioVerbose(
  * Useful for multilingual athlete support
  */
 export async function translateAudio(
-  audioData: ArrayBuffer,
+  audioData: ArrayBuffer | ArrayBufferLike,
   config: Omit<WhisperConfig, 'language'> = {}
 ): Promise<string> {
   if (!OPENAI_API_KEY) {
@@ -182,7 +183,8 @@ export async function translateAudio(
     console.log('[Whisper] Translating', audioData.byteLength, 'bytes');
 
     const formData = new FormData();
-    const audioBlob = new Blob([audioData], { type: 'audio/m4a' });
+    // Convert ArrayBuffer/ArrayBufferLike to Blob
+    const audioBlob = new Blob([audioData as any], { type: 'audio/m4a' });
 
     formData.append('file', audioBlob, 'audio.m4a');
     formData.append('model', config.model || 'whisper-1');
