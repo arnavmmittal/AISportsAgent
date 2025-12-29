@@ -4,30 +4,9 @@
  */
 
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import { Paths, File } from 'expo-file-system';
 import { Platform } from 'react-native';
-
-export interface RecordingConfig {
-  android: {
-    extension: string;
-    outputFormat: number;
-    audioEncoder: number;
-    sampleRate: number;
-    numberOfChannels: number;
-    bitRate: number;
-  };
-  ios: {
-    extension: string;
-    outputFormat: number;
-    audioQuality: number;
-    sampleRate: number;
-    numberOfChannels: number;
-    bitRate: number;
-    linearPCMBitDepth?: number;
-    linearPCMIsBigEndian?: boolean;
-    linearPCMIsFloat?: boolean;
-  };
-}
+import type { RecordingOptions } from 'expo-av/build/Audio/Recording.types';
 
 export interface AudioLevel {
   timestamp: number;
@@ -41,7 +20,8 @@ export class AudioRecorder {
   private meteringInterval: NodeJS.Timeout | null = null;
 
   // Recording configuration optimized for Whisper API (16kHz, mono, AAC)
-  private readonly recordingConfig: RecordingConfig = {
+  private readonly recordingConfig: RecordingOptions = {
+    isMeteringEnabled: true,
     android: {
       extension: '.m4a',
       outputFormat: Audio.AndroidOutputFormat.MPEG_4,
@@ -57,6 +37,13 @@ export class AudioRecorder {
       sampleRate: 16000, // 16kHz for Whisper
       numberOfChannels: 1, // Mono
       bitRate: 128000,
+      linearPCMBitDepth: 16,
+      linearPCMIsBigEndian: false,
+      linearPCMIsFloat: false,
+    },
+    web: {
+      mimeType: 'audio/webm',
+      bitsPerSecond: 128000,
     },
   };
 
@@ -109,11 +96,9 @@ export class AudioRecorder {
         playThroughEarpieceAndroid: false,
       });
 
-      // Create new recording
+      // Create new recording with proper options structure
       const { recording } = await Audio.Recording.createAsync(
-        Platform.OS === 'ios'
-          ? this.recordingConfig.ios
-          : this.recordingConfig.android,
+        this.recordingConfig,
         this.onRecordingStatusUpdate.bind(this),
         100 // Update interval in ms
       );
@@ -159,18 +144,9 @@ export class AudioRecorder {
         throw new Error('Recording URI is null');
       }
 
-      // Read file as base64 and convert to ArrayBuffer
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      // Convert base64 to ArrayBuffer
-      const binaryString = atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const arrayBuffer = bytes.buffer;
+      // Read file using new File API and convert to ArrayBuffer
+      const file = new File(uri);
+      const arrayBuffer = await file.arrayBuffer();
 
       // Clean up
       this.recording = null;
@@ -202,7 +178,12 @@ export class AudioRecorder {
 
         // Delete the recording file
         if (uri) {
-          await FileSystem.deleteAsync(uri, { idempotent: true });
+          try {
+            const file = new File(uri);
+            await file.delete();
+          } catch (error) {
+            // File may not exist, ignore error
+          }
         }
 
         this.recording = null;

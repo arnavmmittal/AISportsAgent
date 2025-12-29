@@ -4,7 +4,7 @@
  */
 
 import { Audio, AVPlaybackStatus } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import { Paths, File } from 'expo-file-system';
 
 export interface AudioChunk {
   id: string;
@@ -89,23 +89,17 @@ export class AudioPlayer {
       this.currentChunkId = chunk.id;
       this.notifyListeners();
 
-      // Convert ArrayBuffer to base64
-      const uint8Array = new Uint8Array(chunk.data);
-      let binary = '';
-      for (let i = 0; i < uint8Array.length; i++) {
-        binary += String.fromCharCode(uint8Array[i]);
-      }
-      const base64 = btoa(binary);
+      // Write audio data to temporary file using new File API
+      const file = new File(Paths.cache, `audio-chunk-${chunk.id}.mp3`);
 
-      // Write to temporary file
-      const fileUri = `${FileSystem.cacheDirectory}audio-chunk-${chunk.id}.mp3`;
-      await FileSystem.writeAsStringAsync(fileUri, base64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      // Write the ArrayBuffer directly to the file
+      await file.create();
+      const uint8Array = new Uint8Array(chunk.data);
+      await file.write(uint8Array);
 
       // Create and play sound
       const { sound } = await Audio.Sound.createAsync(
-        { uri: fileUri },
+        { uri: file.uri },
         { shouldPlay: true, volume: 1.0 },
         this.onPlaybackStatusUpdate.bind(this)
       );
@@ -286,8 +280,12 @@ export class AudioPlayer {
 
         // Delete temporary audio file
         if (this.currentChunkId) {
-          const fileUri = `${FileSystem.cacheDirectory}audio-chunk-${this.currentChunkId}.mp3`;
-          await FileSystem.deleteAsync(fileUri, { idempotent: true });
+          try {
+            const file = new File(Paths.cache, `audio-chunk-${this.currentChunkId}.mp3`);
+            await file.delete();
+          } catch (error) {
+            // File may not exist, ignore error
+          }
         }
 
         this.currentSound = null;
@@ -306,19 +304,17 @@ export class AudioPlayer {
       this.playbackListeners = [];
 
       // Clean up cache directory
-      const cacheDir = FileSystem.cacheDirectory;
-      if (cacheDir) {
-        const files = await FileSystem.readDirectoryAsync(cacheDir);
-        const audioChunks = files.filter((f) => f.startsWith('audio-chunk-'));
+      const cacheDir = Paths.cache;
+      const files = cacheDir.list();
+      const audioChunks = files.filter((f) => f instanceof File && f.name.startsWith('audio-chunk-'));
 
-        for (const file of audioChunks) {
-          try {
-            await FileSystem.deleteAsync(`${cacheDir}${file}`, {
-              idempotent: true,
-            });
-          } catch (error) {
-            console.error(`Error deleting ${file}:`, error);
+      for (const fileItem of audioChunks) {
+        try {
+          if (fileItem instanceof File) {
+            await fileItem.delete();
           }
+        } catch (error) {
+          console.error(`Error deleting ${fileItem instanceof File ? fileItem.name : 'unknown'}:`, error);
         }
       }
 

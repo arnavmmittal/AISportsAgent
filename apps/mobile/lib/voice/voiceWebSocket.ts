@@ -1,5 +1,5 @@
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
+import { Paths, File } from 'expo-file-system';
 import { VoiceRecorder } from './voiceRecorder';
 
 export interface VoiceMessage {
@@ -240,31 +240,33 @@ export class VoiceWebSocketClient {
           base64String += String.fromCharCode.apply(null, Array.from(chunk));
         }
 
-        const base64Audio = btoa(base64String);
-        console.log('✅ Converted to base64, length:', base64Audio.length);
+        console.log('✅ Converted audio chunks, creating audio file...');
 
-        // Write to temporary file using FileSystem
+        // Write to temporary file using new File API
         // ElevenLabs returns MP3 format
-        const fileUri = `${FileSystem.cacheDirectory}voice_response_${Date.now()}.mp3`;
-        console.log('📝 Writing audio to file:', fileUri);
+        const file = new File(Paths.cache, `voice_response_${Date.now()}.mp3`);
+        console.log('📝 Writing audio to file:', file.uri);
 
-        await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+        // Create file and write audio data
+        await file.create();
+        const uint8Array = new Uint8Array(audioData);
+        await file.write(uint8Array);
 
         console.log('🎧 Creating audio sound from file...');
         // Play audio using expo-av
         const { sound } = await Audio.Sound.createAsync(
-          { uri: fileUri },
+          { uri: file.uri },
           { shouldPlay: true },
           (status) => {
             if (status.isLoaded && status.didJustFinish) {
               console.log('✅ Audio finished playing');
               sound.unloadAsync();
               // Clean up temp file
-              FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(err =>
-                console.warn('Failed to delete temp audio file:', err)
-              );
+              try {
+                file.delete();
+              } catch (err: any) {
+                console.warn('Failed to delete temp audio file:', err);
+              }
             }
           }
         );
