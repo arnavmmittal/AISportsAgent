@@ -16,6 +16,7 @@
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset",
     "db:seed": "node scripts/seed-mvp-data.js",
+    "db:seed-biometrics": "tsx scripts/seed-biometric-data.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
