@@ -147,7 +147,7 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
             Sample size: {data.sampleSize} paired observations
           </p>
           {data.isSignificant && (
-            <Badge variant="success" className="mt-2 text-xs">
+            <Badge variant="outline" className="mt-2 text-xs bg-green-50 text-green-700 border-green-300 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
               Statistically significant (p &lt; 0.05)
             </Badge>
           )}
@@ -159,9 +159,9 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
 
   const getStrengthBadge = (strength: string) => {
     if (strength === 'very_strong' || strength === 'strong') {
-      return <Badge variant="success">Strong</Badge>;
+      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">Strong</Badge>;
     } else if (strength === 'moderate') {
-      return <Badge variant="warning">Moderate</Badge>;
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800">Moderate</Badge>;
     } else {
       return <Badge variant="default">Weak</Badge>;
     }

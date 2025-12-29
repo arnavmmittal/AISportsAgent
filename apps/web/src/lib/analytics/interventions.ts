@@ -43,6 +43,7 @@ export interface InterventionRecommendation {
     readiness?: number;
     mood?: number;
     stress?: number;
+    confidence?: number;
     engagement?: number;
   };
 }
@@ -86,12 +87,12 @@ export async function generateInterventionRecommendations(
   const recentReadiness = await prisma.readinessScore.findFirst({
     where: {
       athleteId,
-      createdAt: {
+      calculatedAt: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      calculatedAt: 'desc',
     },
   });
 
@@ -121,7 +122,7 @@ export async function generateInterventionRecommendations(
 
   // Calculate avg metrics
   const avgMood = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.mood, 0) / recentMoods.length : null;
-  const avgStress = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.stressLevel, 0) / recentMoods.length : null;
+  const avgStress = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.stress, 0) / recentMoods.length : null;
   const avgConfidence = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.confidence, 0) / recentMoods.length : null;
 
   // Fetch recent chat engagement (last 7 days)
@@ -178,7 +179,7 @@ export async function generateInterventionRecommendations(
   }
 
   // Rule 2: URGENT - Very low readiness (<45)
-  if (recentReadiness && recentReadiness.overallScore < 45) {
+  if (recentReadiness && recentReadiness.score < 45) {
     recommendations.push({
       id: `urgent-readiness-${athleteId}`,
       athleteId,
@@ -187,12 +188,12 @@ export async function generateInterventionRecommendations(
       category: 'ONE_ON_ONE',
       title: 'Very Low Readiness - Immediate Assessment',
       description: 'Conduct welfare check and adjust training plan. Athlete may need rest day or modified training.',
-      rationale: `Readiness score critically low (${recentReadiness.overallScore}/100)`,
+      rationale: `Readiness score critically low (${recentReadiness.score}/100)`,
       estimatedDuration: '20-30 min',
       dueBy: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      triggers: ['low_readiness', `score_${recentReadiness.overallScore}`],
+      triggers: ['low_readiness', `score_${recentReadiness.score}`],
       relatedMetrics: {
-        readiness: recentReadiness.overallScore,
+        readiness: recentReadiness.score,
       },
     });
   }
@@ -258,7 +259,7 @@ export async function generateInterventionRecommendations(
   }
 
   // Rule 6: MEDIUM - Moderate readiness (50-60)
-  if (recentReadiness && recentReadiness.overallScore >= 50 && recentReadiness.overallScore < 60) {
+  if (recentReadiness && recentReadiness.score >= 50 && recentReadiness.score < 60) {
     recommendations.push({
       id: `moderate-readiness-${athleteId}`,
       athleteId,
@@ -267,11 +268,11 @@ export async function generateInterventionRecommendations(
       category: 'RECOVERY_PROTOCOL',
       title: 'Suboptimal Readiness - Recovery Check',
       description: 'Review sleep, nutrition, and recovery habits. Consider implementing active recovery day.',
-      rationale: `Readiness in moderate zone (${recentReadiness.overallScore}/100)`,
+      rationale: `Readiness in moderate zone (${recentReadiness.score}/100)`,
       estimatedDuration: '15 min',
       triggers: ['moderate_readiness'],
       relatedMetrics: {
-        readiness: recentReadiness.overallScore,
+        readiness: recentReadiness.score,
       },
     });
   }

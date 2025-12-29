@@ -80,8 +80,8 @@ function doubleExponentialSmoothing(
 
   // Generate forecast
   const forecast: number[] = [];
-  let currentLevel = level[n - 1];
-  let currentTrend = trend[n - 1];
+  const currentLevel = level[n - 1];
+  const currentTrend = trend[n - 1];
 
   for (let h = 1; h <= forecastHorizon; h++) {
     // Forecast equation: F_{t+h} = L_t + h * T_t
@@ -206,16 +206,16 @@ export async function forecastReadinessTrend(
   const historicalScores = await prisma.readinessScore.findMany({
     where: {
       athleteId,
-      createdAt: {
+      calculatedAt: {
         gte: fromDate,
       },
     },
     orderBy: {
-      createdAt: 'asc',
+      calculatedAt: 'asc',
     },
     select: {
-      createdAt: true,
-      overallScore: true,
+      calculatedAt: true,
+      score: true,
     },
   });
 
@@ -224,8 +224,8 @@ export async function forecastReadinessTrend(
   }
 
   // Extract scores and dates
-  const scores = historicalScores.map((s) => s.overallScore);
-  const dates = historicalScores.map((s) => s.createdAt.toISOString().split('T')[0]);
+  const scores = historicalScores.map((s) => s.score);
+  const dates = historicalScores.map((s) => s.calculatedAt.toISOString().split('T')[0]);
 
   // Run exponential smoothing forecast
   const { forecast, residuals } = doubleExponentialSmoothing(scores, 0.3, 0.1, 7);
@@ -266,7 +266,7 @@ export async function forecastReadinessTrend(
     athleteId,
     historicalData: historicalScores.map((s, idx) => ({
       date: dates[idx],
-      score: s.overallScore,
+      score: s.score,
     })),
     forecast: forecastPoints,
     currentScore,

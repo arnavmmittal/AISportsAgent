@@ -83,27 +83,27 @@ export async function GET(req: NextRequest) {
         athleteId: {
           in: athleteIds,
         },
-        createdAt: {
+        calculatedAt: {
           gte: fromDate,
         },
       },
       select: {
         athleteId: true,
-        overallScore: true,
+        score: true,
         level: true,
-        createdAt: true,
+        calculatedAt: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        calculatedAt: 'desc',
       },
     });
 
     // Group scores by athlete and date
     const scoresByAthleteDate: Record<string, Record<string, { score: number; level: string }>> = {};
 
-    for (const score of readinessScores) {
-      const athleteId = score.athleteId;
-      const dateKey = score.createdAt.toISOString().split('T')[0];
+    for (const scoreRecord of readinessScores) {
+      const athleteId = scoreRecord.athleteId;
+      const dateKey = scoreRecord.calculatedAt.toISOString().split('T')[0];
 
       if (!scoresByAthleteDate[athleteId]) {
         scoresByAthleteDate[athleteId] = {};
@@ -112,8 +112,8 @@ export async function GET(req: NextRequest) {
       // Take the most recent score for each date (they're ordered desc)
       if (!scoresByAthleteDate[athleteId][dateKey]) {
         scoresByAthleteDate[athleteId][dateKey] = {
-          score: score.overallScore,
-          level: score.level,
+          score: scoreRecord.score,
+          level: scoreRecord.level,
         };
       }
     }

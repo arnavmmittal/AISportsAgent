@@ -143,18 +143,19 @@ export async function analyzePerformanceCorrelations(
   const performanceData = await prisma.performanceMetric.findMany({
     where: {
       athleteId,
-      date: {
+      gameDate: {
         gte: fromDate,
         lte: toDate,
       },
     },
     orderBy: {
-      date: 'asc',
+      gameDate: 'asc',
     },
     select: {
       id: true,
-      date: true,
-      performanceScore: true, // Overall performance score (0-100)
+      gameDate: true,
+      readinessScore: true, // Use readiness score as proxy for performance
+      stats: true, // Could be used to calculate custom performance score
     },
   });
 
@@ -175,7 +176,7 @@ export async function analyzePerformanceCorrelations(
   const correlations: CorrelationResult[] = [];
 
   // For each performance metric, find the closest mental state data (within 24 hours before)
-  const performanceDates = performanceData.map((p) => p.date);
+  const performanceDates = performanceData.map((p) => p.gameDate);
 
   // Fetch mood logs (within 24 hours before each performance)
   const moodData = await prisma.moodLog.findMany({
@@ -192,9 +193,9 @@ export async function analyzePerformanceCorrelations(
     select: {
       createdAt: true,
       mood: true,
-      stressLevel: true,
+      stress: true,
       confidence: true,
-      sleepQuality: true,
+      sleep: true,
     },
   });
 
@@ -202,17 +203,17 @@ export async function analyzePerformanceCorrelations(
   const readinessData = await prisma.readinessScore.findMany({
     where: {
       athleteId,
-      createdAt: {
+      calculatedAt: {
         gte: new Date(fromDate.getTime() - 24 * 60 * 60 * 1000),
         lte: toDate,
       },
     },
     orderBy: {
-      createdAt: 'asc',
+      calculatedAt: 'asc',
     },
     select: {
-      createdAt: true,
-      overallScore: true,
+      calculatedAt: true,
+      score: true,
     },
   });
 
@@ -227,8 +228,11 @@ export async function analyzePerformanceCorrelations(
   }[] = [];
 
   for (const perf of performanceData) {
-    const perfDate = perf.date.getTime();
-    const match: any = { performance: perf.performanceScore };
+    // Skip performances without readiness score
+    if (!perf.readinessScore) continue;
+
+    const perfDate = perf.gameDate.getTime();
+    const match: any = { performance: perf.readinessScore };
 
     // Find closest mood log (within 24h before performance)
     const closestMood = moodData.find((m) => {
@@ -239,20 +243,20 @@ export async function analyzePerformanceCorrelations(
 
     if (closestMood) {
       match.mood = closestMood.mood;
-      match.stress = closestMood.stressLevel;
+      match.stress = closestMood.stress;
       match.confidence = closestMood.confidence;
-      match.sleep = closestMood.sleepQuality;
+      match.sleep = closestMood.sleep;
     }
 
     // Find closest readiness score
     const closestReadiness = readinessData.find((r) => {
-      const readinessTime = r.createdAt.getTime();
+      const readinessTime = r.calculatedAt.getTime();
       const hoursBefore = (perfDate - readinessTime) / (1000 * 60 * 60);
       return hoursBefore >= 0 && hoursBefore <= 24;
     });
 
     if (closestReadiness) {
-      match.readiness = closestReadiness.overallScore;
+      match.readiness = closestReadiness.score;
     }
 
     matchedData.push(match);
