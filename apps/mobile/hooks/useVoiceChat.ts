@@ -47,8 +47,8 @@ export function useVoiceChat(config: VoiceChatConfig): VoiceChatHook {
   const recorderRef = useRef<AudioRecorder | null>(null);
   const playerRef = useRef<AudioPlayer | null>(null);
   const vadRef = useRef<VoiceActivityDetector | null>(null);
-  const volumeIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const audioChunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const volumeIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioChunkIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Initialize voice components

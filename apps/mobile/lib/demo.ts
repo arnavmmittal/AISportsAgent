@@ -10,9 +10,7 @@ export const DEMO_USER: User = {
   email: 'demo@athlete.com',
   name: 'Demo Athlete',
   role: 'ATHLETE',
-  schoolId: 'demo-school',
   createdAt: new Date(),
-  updatedAt: new Date(),
 };
 
 export const DEMO_MOOD_LOGS: MoodLog[] = [
@@ -27,7 +25,6 @@ export const DEMO_MOOD_LOGS: MoodLog[] = [
     sleep: 7.5,
     notes: 'Feeling great after yesterday\'s practice',
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: '2',
@@ -38,9 +35,7 @@ export const DEMO_MOOD_LOGS: MoodLog[] = [
     stress: 5,
     energy: 6,
     sleep: 6,
-    notes: null,
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: '3',
@@ -53,7 +48,6 @@ export const DEMO_MOOD_LOGS: MoodLog[] = [
     sleep: 8,
     notes: 'Good game performance',
     createdAt: new Date(),
-    updatedAt: new Date(),
   },
 ];
 

@@ -60,8 +60,8 @@ export interface User {
   role: 'ATHLETE' | 'COACH' | 'ADMIN';
   athlete?: AthleteProfile;
   coach?: CoachProfile;
-  onboardingCompleted: boolean;
-  createdAt: string;
+  onboardingCompleted?: boolean;
+  createdAt?: string | Date;
 }
 
 export interface AthleteProfile {

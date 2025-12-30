@@ -98,9 +98,8 @@ export async function createMoodLog(
         ...data,
         energy: data.energy || 5,
         sleep: data.sleep || 7,
-        notes: data.notes || null,
+        notes: data.notes,
         createdAt: new Date(),
-        updatedAt: new Date(),
       };
       return demoLog;
     }
@@ -109,6 +108,8 @@ export async function createMoodLog(
       athleteId,
       date: new Date(),
       ...data,
+      energy: data.energy || 5,
+      sleep: data.sleep || 7,
     });
     return log;
   } catch (error) {
@@ -121,9 +122,8 @@ export async function createMoodLog(
       ...data,
       energy: data.energy || 5,
       sleep: data.sleep || 7,
-      notes: data.notes || null,
+      notes: data.notes,
       createdAt: new Date(),
-      updatedAt: new Date(),
     };
     return demoLog;
   }

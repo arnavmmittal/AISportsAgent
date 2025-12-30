@@ -188,7 +188,17 @@ GET    /v1/sessions          # Session history
 
 ### Git Workflow & Branching Strategy
 
-**IMPORTANT: Always create/switch to a feature branch before starting new work.**
+**🚨 CRITICAL: NEVER WORK DIRECTLY ON MAIN BRANCH 🚨**
+
+**ALWAYS create/switch to a feature branch before starting ANY new work.** This applies to:
+- New features
+- Bug fixes
+- Refactoring
+- Documentation updates
+- Testing changes
+- Configuration changes
+
+**If you find yourself on main branch, STOP and create a feature branch first.**
 
 **Branch Naming Convention:**
 - `feature/[feature-name]` - New features (e.g., `feature/voice-integration`, `feature/coach-dashboard`)
@@ -223,8 +233,10 @@ GET    /v1/sessions          # Session history
    - Delete remote branch: `git push origin --delete feature/your-feature-name`
 
 **Current Branches:**
-- `main` - Production-ready code (MVP with basic chat + MCP integration)
+- `main` - Production-ready code
+- `feature/mobile-post-mvp-port` - Mobile POST-MVP analytics + voice chat (ready to test & merge)
 - `feature/mcp-agent-integration` - Full MCP agent orchestration + knowledge base
+- Many other feature branches (see `git branch -a` for full list)
 
 ### Environment Variables
 

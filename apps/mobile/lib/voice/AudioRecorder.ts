@@ -17,7 +17,7 @@ export class AudioRecorder {
   private recording: Audio.Recording | null = null;
   private isRecording = false;
   private audioLevels: AudioLevel[] = [];
-  private meteringInterval: NodeJS.Timeout | null = null;
+  private meteringInterval: ReturnType<typeof setTimeout> | null = null;
 
   // Recording configuration optimized for Whisper API (16kHz, mono, AAC)
   private readonly recordingConfig: RecordingOptions = {

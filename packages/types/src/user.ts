@@ -3,6 +3,7 @@ export interface User {
   email: string;
   name: string;
   role: 'ATHLETE' | 'COACH' | 'ADMIN';
+  onboardingCompleted?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

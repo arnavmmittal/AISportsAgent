@@ -304,7 +304,7 @@ export default function MoodScreen() {
                     labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
                     datasets: [
                       {
-                        data: moodTrendData.map((m) => (m === 0 ? null : m)),
+                        data: moodTrendData.map((m) => m || 0),
                         color: (opacity = 1) => `rgba(139, 92, 246, ${opacity})`,
                         strokeWidth: 3,
                       },
