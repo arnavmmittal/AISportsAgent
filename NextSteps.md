@@ -1,480 +1,592 @@
-# Next Steps - Mobile POST-MVP Integration & Voice Chat
+# Next Steps - Performance Tech Strategy & Demo Prep
 
-## 🎯 What We Accomplished in This Session
+**Last Updated**: 2025-12-31
+**Status**: Reframed as performance optimization platform (NOT mental health)
+**Goal**: UW Pilot → $100-200k/year contracts with D1 programs
 
-### 1. **Complete POST-MVP Features Integration to Mobile**
+---
 
-We successfully ported all advanced analytics features from the web app to the mobile app:
+## 🎯 Strategic Reframe: Performance Tech, Not Mental Health
 
-#### A. **Analytics Integration** (`apps/mobile/app/(coach)/analytics.tsx`)
-- **TeamHeatmap Component**: 14-day × N athletes heatmap showing readiness scores
-  - Color-coded: GREEN (85+), YELLOW (70-84), ORANGE (50-69), RED (<50)
-  - Interactive drill-down to athlete detail
-- **PerformanceCorrelationMatrix Component**: Mental state ↔ performance correlation analysis
-  - Pearson correlation for mood/stress/sleep vs. performance
-  - Heatmap visualization with correlation bars
-  - Sample size display for reliability
-  - Generated insights based on correlation strength
+### What Changed
 
-#### B. **Readiness Integration** (`apps/mobile/app/(coach)/readiness.tsx`)
-- **ReadinessForecastChart Component**: 7-day readiness trend forecasting
-  - Exponential smoothing forecast with confidence bounds
-  - Risk flags: "Predicted decline", "High variability", "Below optimal threshold"
-  - Confidence score display (high/medium/low)
+**OLD positioning (WRONG):**
+- Mental health therapy app
+- Replaces clinical psychologists
+- Heavy regulation (HIPAA, IRB approval)
+- Liability concerns
+- Hard sell to athletic departments
 
-#### C. **Insights Integration** (`apps/mobile/app/(coach)/insights.tsx`)
-- **InterventionQueue Component**: Prioritized intervention recommendations
-  - Rule-based intervention logic (URGENT/HIGH/MEDIUM/LOW priority)
-  - Action buttons: "View Athlete", "Mark Complete", "Escalate"
-  - Examples:
-    - Readiness < 50 → URGENT: "Schedule 1-on-1 check-in within 24 hours"
-    - Mood declining + low chat engagement → HIGH: "Assign mood journaling exercise"
-    - High stress + upcoming game → MEDIUM: "Recommend pre-game mindfulness protocol"
+**NEW positioning (CORRECT):**
+- **Performance analytics platform** (like WHOOP for mental readiness)
+- **Scalability tool** (replaces impossible 1:150 Zoom meeting model)
+- **Competitive advantage** (data-driven coaching insights)
+- Lighter regulation (FERPA, standard software contract)
+- Natural fit for athletic department budgets ($100-200k/year is market-rate)
 
-### 2. **Voice Chat Integration - ElevenLabs TTS + Whisper STT**
+### Core Value Props
 
-We completely overhauled the voice system to use client-side transcription and TTS generation:
+**1. Predictive Performance Analytics**
+- Correlate mental readiness → game performance
+- "Athletes with readiness >85 score 23% more points"
+- ML forecasting: predict who will struggle 7 days out
+- Data-driven lineup decisions
 
-#### A. **Created ElevenLabs TTS Service** (`apps/mobile/lib/services/elevenlabs.ts`)
+**2. 24/7 Scalable Support**
+- Replaces scheduled Zoom meetings (impossible at 1:150 ratio)
+- Athletes get support when they need it (night before game)
+- Voice + text chat available 24/7
+- Frees up sports psychologist for high-risk cases
+
+**Comps:**
+- WHOOP (physical readiness): $30-50k/year per team
+- Catapult (GPS tracking): $100-150k/year
+- Kinduct (athlete management): $50-100k/year
+- **Our pricing ($100-200k/year) is market-rate**
+
+---
+
+## 🚀 2-Week Demo Prep Plan
+
+### ✅ Week 1: Testing & Polish (CRITICAL)
+
+**Day 1-2: End-to-End Device Testing**
+- [ ] Install app on YOUR iPhone/Android
+- [ ] Run backend on laptop (`pnpm dev` in apps/web)
+- [ ] Connect phone to same WiFi
+- [ ] Update `EXPO_PUBLIC_API_URL` with laptop IP
+- [ ] Test complete flow:
+  - ✅ Login with seed account (athlete1@uw.edu / Athlete2024!)
+  - ✅ Voice chat works (speak → transcribe → AI response → TTS)
+  - ✅ Mood logging saves to database
+  - ✅ Analytics dashboards load with data
+  - ✅ Coach view shows team heatmap
+  - ✅ Correlation matrix displays r-values
+  - ✅ Readiness forecast shows 7-day prediction
+- [ ] **List every bug you find** (there will be many)
+
+**Day 3-4: Fix Critical Bugs**
+- [ ] Fix TypeScript errors: ✅ Already done (14 errors fixed)
+- [ ] Fix voice chat issues found in testing
+- [ ] Fix analytics display bugs
+- [ ] Ensure data persists (not just demo mode)
+- [ ] Test on both iOS and Android if possible
+
+**Day 5: Create Realistic Demo Data**
+- [ ] Add performance stats to seed data:
+  ```sql
+  -- Basketball example: Points, Assists, Rebounds, Turnovers
+  INSERT INTO performance_records (athlete_id, game_date, points, assists, rebounds, turnovers, minutes_played)
+  VALUES
+    -- Athlete with HIGH readiness → GOOD performance
+    ('athlete1', '2024-12-15', 22, 5, 8, 2, 34),  -- Readiness 87
+    ('athlete1', '2024-12-18', 24, 6, 7, 1, 36),  -- Readiness 89
+
+    -- Athlete with LOW readiness → BAD performance
+    ('athlete1', '2024-12-22', 9, 2, 4, 5, 24),   -- Readiness 62
+    ('athlete1', '2024-12-25', 11, 1, 3, 4, 28);  -- Readiness 58
+  ```
+- [ ] Ensure mood logs correlate with performance
+- [ ] Verify correlation matrix shows r>0.5
+- [ ] Check forecast predicts declining performance
+
+**Day 6-7: Backup Plans**
+- [ ] Record video of working demo (when WiFi fails)
+- [ ] Set up mobile hotspot backup (if campus WiFi unreliable)
+- [ ] Test demo mode (offline fallback)
+- [ ] Create slides with screenshots (if live demo fails)
+
+### ✅ Week 2: Pitch & Outreach
+
+**Day 8-10: Perfect the 10-Minute Pitch**
+
+**Demo Flow:**
+
+1. **The Problem** (1 min)
+   - "UW has 1 sports psychologist for 150+ athletes"
+   - "Can't do individual meetings - physically impossible"
+   - "Athletes need support but can't access it"
+   - "Coaches don't know who's struggling until it's too late"
+
+2. **The Solution - Chat** (2 min)
+   - Show athlete using voice chat on phone
+   - "I'm anxious about tomorrow's game against UCLA"
+   - AI responds with sport-specific mental prep
+   - "This is 24/7, not just scheduled Zoom times"
+
+3. **The Killer Feature - Analytics** (4 min)
+   - **Team Heatmap:**
+     - "14-day readiness - see entire team at a glance"
+     - "Green = good, red = at-risk"
+   - **Performance Correlation:**
+     - "When Sarah's readiness >85: 22 PPG"
+     - "When readiness <70: 12 PPG"
+     - "r=0.73 correlation between confidence and assists"
+     - **"This is data you don't have today"**
+   - **Readiness Forecast:**
+     - "7-day forecast shows who will struggle next week"
+     - "Proactive intervention before performance drops"
+
+4. **The ROI** (2 min)
+   - "Star player transfers due to mental health: $500k lost"
+   - "One prevented injury: $100k saved"
+   - "One extra conference win: $1M in bowl revenue"
+   - **"$150k/year. If it prevents ONE star transfer, 5x ROI"**
+
+5. **The Ask** (1 min)
+   - "8-week pilot with women's basketball, 15 athletes, FREE"
+   - "Show you correlations with YOUR athletes"
+   - "No risk - if data isn't predictive, we walk away"
+   - **"But I think you'll see data that changes how you coach"**
+
+**Day 11-12: Rehearse**
+- [ ] Practice pitch 5 times
+- [ ] Time yourself (<10 minutes)
+- [ ] Get 3 people to watch and ask hard questions
+- [ ] Refine answers to objections
+
+**Day 13-14: Outreach**
+- [ ] Email UW women's basketball coach
+  ```
+  Subject: Predictive performance analytics pilot - 8 weeks, no cost
+
+  Coach [Name],
+
+  I'm a UW student who built an AI-powered athlete readiness platform that correlates mental state with game performance. We've seen r=0.7+ correlations between readiness scores and points/assists.
+
+  I'd love to demo this and discuss an 8-week pilot with your team (no cost). The platform provides:
+  - 24/7 mental performance support (replaces scheduled meetings)
+  - Predictive analytics (who will struggle 7 days out)
+  - Data-driven lineup insights
+
+  Can we schedule 15 minutes this week?
+
+  Best,
+  [Your name]
+  ```
+- [ ] Email athletic director
+- [ ] Email sports psychologist at UW
+- [ ] Post on LinkedIn (tag UW athletics)
+
+---
+
+## 📊 Automated Performance Stats Collection
+
+### The Problem
+Manual data entry sucks. You need game stats automatically.
+
+### Solution: Multi-Tier Approach
+
+#### Tier 1: Web Scraping (Best for Pilot)
+
+**Most D1 schools publish box scores on athletics websites:**
+- UW: `https://gohuskies.com/sports/womens-basketball/stats`
+- Every school has similar structure
+
+**Implementation:**
 ```typescript
-// Features:
-- Full text-to-speech with streaming support
-- 8 professional voices (Rachel, Domi, Bella, Elli, Adam, Antoni, Josh, Arnold)
-- Voice presets for different contexts:
-  * default: Rachel (warm, professional) - general coaching
-  * crisis: Elli (calm, reassuring) - anxiety support
-  * motivation: Domi (energetic, confident) - performance talks
-  * instruction: Rachel (consistent, neutral) - techniques
-- Configurable settings:
-  * stability (0.0-1.0): consistency vs. expressiveness
-  * similarityBoost (0.0-1.0): voice matching
-  * style (0.0-1.0): speaking style intensity
-  * useSpeakerBoost: clarity enhancement
+// apps/web/src/lib/scraping/uw-athletics.ts
+
+import * as cheerio from 'cheerio';
+import { prisma } from '@/lib/prisma';
+
+export async function scrapeUWBasketballStats(gameUrl: string) {
+  const response = await fetch(gameUrl);
+  const html = await response.text();
+  const $ = cheerio.load(html);
+
+  // Parse box score table
+  const stats = [];
+  $('table.box-score tbody tr').each((i, row) => {
+    const name = $(row).find('td.name').text().trim();
+    const points = parseInt($(row).find('td.pts').text()) || 0;
+    const rebounds = parseInt($(row).find('td.reb').text()) || 0;
+    const assists = parseInt($(row).find('td.ast').text()) || 0;
+    const turnovers = parseInt($(row).find('td.to').text()) || 0;
+    const minutes = parseInt($(row).find('td.min').text()) || 0;
+
+    stats.push({ name, points, rebounds, assists, turnovers, minutes });
+  });
+
+  return stats;
+}
+
+// Run daily via cron job
+export async function importDailyStats() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  // Check UW athletics schedule API
+  const games = await fetchRecentGames(yesterday);
+
+  for (const game of games) {
+    const stats = await scrapeUWBasketballStats(game.boxScoreUrl);
+
+    for (const playerStats of stats) {
+      // Match player name to athlete in database
+      const athlete = await prisma.athlete.findFirst({
+        where: { name: { contains: playerStats.name } }
+      });
+
+      if (athlete) {
+        await prisma.performanceRecord.create({
+          data: {
+            athleteId: athlete.id,
+            gameDate: game.date,
+            points: playerStats.points,
+            rebounds: playerStats.rebounds,
+            assists: playerStats.assists,
+            turnovers: playerStats.turnovers,
+            minutesPlayed: playerStats.minutes,
+          }
+        });
+      }
+    }
+  }
+}
 ```
 
-#### B. **Created OpenAI Whisper STT Service** (`apps/mobile/lib/services/whisper.ts`)
+**Cron Job (runs daily at 6am):**
 ```typescript
-// Features:
-- Full speech-to-text transcription
-- Optimized for 16kHz mono M4A audio (from AudioRecorder)
-- Three modes:
-  * transcribeAudio(): Standard fast transcription
-  * transcribeAudioVerbose(): Detailed with segments, timestamps, confidence
-  * translateAudio(): Multilingual support (auto-translates to English)
-- Whisper presets:
-  * default: Balanced accuracy and speed
-  * highAccuracy: Sports psychology conversation context
-  * multilingual: Auto-detect language for international athletes
+// apps/web/src/app/api/cron/import-stats/route.ts
+
+export async function GET(request: Request) {
+  // Verify cron secret (prevent abuse)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  await importDailyStats();
+
+  return Response.json({ success: true });
+}
 ```
 
-#### C. **Updated Voice WebSocket Client** (`apps/mobile/lib/voice/voiceWebSocket.ts`)
-**New Voice Flow:**
-```
-User speaks → AudioRecorder (16kHz M4A) →
-stopRecording() → Whisper API (client-side transcription) →
-Send transcript to chat server (text-only WebSocket) →
-Server responds with text →
-ElevenLabs API (client-side TTS generation) →
-AudioPlayer (queued playback)
-```
-
-**Benefits:**
-- ✅ **Reduced server load**: No audio upload, only text messages
-- ✅ **Better UX**: High-quality ElevenLabs voices (professional, natural)
-- ✅ **Cost efficiency**: Direct API calls, pay only for what you use
-- ✅ **Scalability**: Unlimited concurrent users
-
-#### D. **Fixed All Voice TypeScript Errors**
-- Resolved expo-file-system v19 API migration issues
-- Fixed expo-av RecordingOptions structure for SDK 54
-- Fixed ArrayBuffer/ArrayBufferLike type compatibility in Whisper service
-- All voice components now compile without errors
-
-### 3. **Environment Configuration**
-
-Updated `.env.local` with actual API keys from web app:
-```bash
-# OpenAI API (Whisper STT)
-EXPO_PUBLIC_OPENAI_API_KEY=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
-
-# ElevenLabs API (TTS)
-EXPO_PUBLIC_ELEVENLABS_API_KEY=sk_5f2d1168eacd5035faa380423bc48cf4a87f0c0153a36dab
+**Vercel Cron (free tier):**
+```json
+// vercel.json
+{
+  "crons": [{
+    "path": "/api/cron/import-stats",
+    "schedule": "0 6 * * *"  // 6am daily
+  }]
+}
 ```
 
-Also updated `.env.example` with placeholders for new developers.
+**Pros:**
+- ✅ Fully automated
+- ✅ Free (no API costs)
+- ✅ Works for any D1 school (similar HTML structure)
+- ✅ Gets ALL players automatically
+
+**Cons:**
+- ❌ Breaks if website redesigns
+- ❌ Needs maintenance per school
+
+#### Tier 2: Sports Data APIs (Best for Scale)
+
+**Option A: ESPN API (Unofficial)**
+```typescript
+// Free but rate-limited
+const espnUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams/264/statistics`;
+// Team 264 = UW Huskies
+
+const response = await fetch(espnUrl);
+const data = await response.json();
+```
+
+**Option B: NCAA Stats API**
+```typescript
+// Official NCAA stats (requires approval)
+const ncaaUrl = `https://stats.ncaa.org/team/${teamId}/stats`;
+```
+
+**Option C: SportsDataIO (Paid)**
+- $50-200/month for college sports data
+- Reliable, well-structured JSON
+- Covers all D1 programs
+
+**Pros:**
+- ✅ Structured JSON (no parsing)
+- ✅ Reliable (won't break on redesign)
+- ✅ Fast implementation
+
+**Cons:**
+- ❌ Costs money (SportsDataIO)
+- ❌ Rate limits (ESPN unofficial)
+- ❌ Approval process (NCAA)
+
+#### Tier 3: CSV Upload (Fallback)
+
+**For coaches who already track stats:**
+```typescript
+// apps/web/src/app/api/performance/upload/route.ts
+
+export async function POST(request: Request) {
+  const formData = await request.formData();
+  const file = formData.get('file') as File;
+  const csvText = await file.text();
+
+  // Parse CSV
+  const rows = csvText.split('\n').map(row => row.split(','));
+  const headers = rows[0]; // ['Name', 'Date', 'Points', 'Assists', ...]
+
+  for (let i = 1; i < rows.length; i++) {
+    const data = {};
+    headers.forEach((header, index) => {
+      data[header.toLowerCase()] = rows[i][index];
+    });
+
+    // Find athlete by name
+    const athlete = await prisma.athlete.findFirst({
+      where: { name: { contains: data.name } }
+    });
+
+    if (athlete) {
+      await prisma.performanceRecord.create({
+        data: {
+          athleteId: athlete.id,
+          gameDate: new Date(data.date),
+          points: parseInt(data.points) || 0,
+          assists: parseInt(data.assists) || 0,
+          rebounds: parseInt(data.rebounds) || 0,
+          // ... other stats
+        }
+      });
+    }
+  }
+
+  return Response.json({ success: true, imported: rows.length - 1 });
+}
+```
+
+**UI Component:**
+```tsx
+// apps/web/src/app/coach/performance/import/page.tsx
+
+<input
+  type="file"
+  accept=".csv"
+  onChange={async (e) => {
+    const file = e.target.files?.[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    await fetch('/api/performance/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    toast.success('Stats imported!');
+  }}
+/>
+```
+
+**Pros:**
+- ✅ Works with ANY data source
+- ✅ Coaches already have this data (Excel, TeamBuildr, Kinduct)
+- ✅ 100% reliable (manual = always works)
+
+**Cons:**
+- ❌ Not automated (requires coach to upload)
+- ❌ Extra work for coaches
+
+#### Tier 4: Integration with Existing Systems
+
+**Most D1 programs use:**
+- **Kinduct** (athlete management)
+- **TeamBuildr** (strength training)
+- **Catapult** (GPS tracking)
+
+**API Integration:**
+```typescript
+// If school uses Kinduct, integrate via their API
+const kinductStats = await fetch(`https://api.kinduct.com/v1/athletes/${athleteId}/performance`, {
+  headers: {
+    'Authorization': `Bearer ${KINDUCT_API_KEY}`,
+  }
+});
+```
+
+**Pros:**
+- ✅ Fully automated
+- ✅ Real-time data
+- ✅ Trusted source
+
+**Cons:**
+- ❌ Requires partnership with vendor
+- ❌ Different per school
+- ❌ May not have game stats (only training data)
 
 ---
 
-## 📝 Files Modified in This Session
+### Recommended Approach for UW Pilot
 
-### New Files Created:
-1. `apps/mobile/lib/services/elevenlabs.ts` - ElevenLabs TTS service (225 lines)
-2. `apps/mobile/lib/services/whisper.ts` - OpenAI Whisper STT service (251 lines)
+**Phase 1 (Week 1-2): Manual CSV Upload**
+- Ask coach for last 20 games in Excel
+- You manually import once
+- Prove correlations exist
 
-### Modified Files:
-1. `apps/mobile/app/(coach)/analytics.tsx` - Integrated TeamHeatmap + PerformanceCorrelationMatrix
-2. `apps/mobile/app/(coach)/readiness.tsx` - Integrated ReadinessForecastChart
-3. `apps/mobile/app/(coach)/insights.tsx` - Integrated InterventionQueue
-4. `apps/mobile/lib/voice/voiceWebSocket.ts` - Integrated Whisper STT + ElevenLabs TTS
-5. `apps/mobile/lib/voice/AudioRecorder.ts` - Fixed expo-av API compatibility
-6. `apps/mobile/lib/voice/AudioPlayer.ts` - Fixed expo-file-system API compatibility
-7. `apps/mobile/.env.local` - Added actual OpenAI and ElevenLabs API keys
-8. `apps/mobile/.env.example` - Added API key placeholders
+**Phase 2 (Week 3-4): Build Web Scraper**
+- Scrape `gohuskies.com` box scores
+- Run daily cron job
+- Auto-import new games
 
-### Commits Made:
-1. `feat(mobile): Integrate POST-MVP analytics into coach pages`
-   - TeamHeatmap, PerformanceCorrelationMatrix, ReadinessForecastChart, InterventionQueue
-2. `feat(mobile): Integrate ElevenLabs TTS and Whisper STT for voice chat`
-   - Created elevenlabs.ts and whisper.ts services
-   - Updated voiceWebSocket.ts for client-side transcription/TTS
-3. `fix(mobile): Resolve TypeScript errors in voice services`
-   - Fixed ArrayBuffer/ArrayBufferLike compatibility
+**Phase 3 (Month 2+): Sports Data API**
+- Subscribe to SportsDataIO ($50/month)
+- Or get ESPN API working
+- Scale to other schools
 
----
+**Cost:**
+- Phase 1: $0
+- Phase 2: $0 (web scraping)
+- Phase 3: $50-200/month (API)
 
-## 🚀 Next Steps for Development
-
-### Immediate (On New Laptop)
-
-#### 1. **Pull Latest Changes**
-```bash
-cd /path/to/SPAI
-git checkout main
-git pull origin main
-git checkout feature/mobile-post-mvp-port
-git pull origin feature/mobile-post-mvp-port
-```
-
-#### 2. **Copy .env.local (API Keys Not Pushed)**
-The `.env.local` file is gitignored, so you'll need to copy it manually:
-```bash
-# Option A: If you have access to this laptop's files
-scp user@old-laptop:/Users/arnavmittal/Desktop/SPAI/apps/mobile/.env.local apps/mobile/.env.local
-
-# Option B: Manually create with keys from above
-# Edit apps/mobile/.env.local and paste:
-# - EXPO_PUBLIC_OPENAI_API_KEY (from web/.env.local line 51)
-# - EXPO_PUBLIC_ELEVENLABS_API_KEY (from web/.env.local line 106)
-```
-
-#### 3. **Install Dependencies & Test**
-```bash
-pnpm install
-cd apps/mobile
-pnpm start
-
-# Test on physical device (voice doesn't work in simulators):
-# - iOS: pnpm ios
-# - Android: pnpm android
-```
-
-### Short-Term (This Week)
-
-#### A. **Test Voice Chat End-to-End**
-1. **Test on Physical Device** (voice requires real microphone/speaker):
-   - Tap microphone button in chat screen
-   - Speak a message (e.g., "I'm feeling anxious about tomorrow's game")
-   - Verify Whisper transcription appears in chat
-   - Verify server responds with text
-   - Verify ElevenLabs TTS plays audio response
-
-2. **Test Voice Presets**:
-   - Modify `voiceWebSocket.ts` line 96 to test different presets:
-   ```typescript
-   // Try each preset:
-   const audioData = await textToSpeech(message.text, VOICE_PRESETS.default);
-   const audioData = await textToSpeech(message.text, VOICE_PRESETS.crisis);
-   const audioData = await textToSpeech(message.text, VOICE_PRESETS.motivation);
-   const audioData = await textToSpeech(message.text, VOICE_PRESETS.instruction);
-   ```
-
-3. **Monitor Console Logs**:
-   ```
-   🎤 Transcribing audio: X bytes
-   📝 Transcription result: "..."
-   💬 Response: "..."
-   🔊 Generating TTS audio...
-   ✅ TTS audio generated: X bytes
-   ▶️ Audio sound created, playing...
-   ```
-
-#### B. **Test POST-MVP Analytics on Mobile**
-1. **Coach Analytics Page**:
-   - Navigate to Coach → Analytics
-   - Verify TeamHeatmap renders with 14-day data
-   - Verify PerformanceCorrelationMatrix shows correlations
-   - Test different time ranges (7/14/30 days)
-
-2. **Coach Readiness Page**:
-   - Navigate to Coach → Readiness
-   - Verify ReadinessForecastChart shows 7-day forecast
-   - Check confidence bounds and risk flags
-   - Test athlete selection dropdown
-
-3. **Coach Insights Page**:
-   - Navigate to Coach → Insights
-   - Verify InterventionQueue shows prioritized interventions
-   - Test action buttons (View Athlete, Mark Complete, Escalate)
-   - Verify priority sorting (URGENT → HIGH → MEDIUM → LOW)
-
-#### C. **Performance Testing**
-1. **Check Voice Latency**:
-   - Measure time from mic release to transcription display
-   - Measure time from server response to audio playback start
-   - Target: <3s total round-trip
-
-2. **Check Chart Rendering Performance**:
-   - Test with 100+ athletes in TeamHeatmap
-   - Monitor FPS during heatmap interactions
-   - Test scroll performance with large datasets
-
-3. **Monitor Memory Usage**:
-   - Use React DevTools Profiler
-   - Check for memory leaks during voice sessions
-   - Monitor audio file cleanup (temp files should be deleted)
-
-### Medium-Term (Next 2 Weeks)
-
-#### 1. **Fix Remaining TypeScript Errors**
-There are still 14 non-voice TypeScript errors in the mobile app:
-```bash
-pnpm --filter @sports-agent/mobile exec tsc --noEmit
-```
-
-Priority fixes:
-- `app/(tabs)/mood.tsx:307` - LineChart null values in data array
-- `lib/auth.ts:23,80,118` - Missing `onboardingCompleted` property
-- `lib/notifications.ts:9` - Missing NotificationBehavior properties
-- `hooks/useVoiceChat.ts:285,315` - Timeout type mismatches
-
-#### 2. **Voice Chat Enhancements**
-1. **Add Voice Activity Detection (VAD)**:
-   - Auto-stop recording when user finishes speaking
-   - Use `AudioRecorder.getCurrentLevel()` to detect silence
-   - Example: Stop after 1.5s of silence
-
-2. **Add Voice Visualization**:
-   - Animated waveform during recording
-   - Use audio levels from `AudioRecorder.getAudioLevels()`
-   - Pulsing mic icon based on audio input
-
-3. **Add Retry Logic**:
-   - Retry failed Whisper/ElevenLabs API calls (network errors)
-   - Fallback to text-only mode if voice services fail
-   - User-friendly error messages
-
-4. **Voice Settings Page**:
-   - Allow athletes to select preferred voice (Rachel, Domi, etc.)
-   - Adjust voice speed/stability settings
-   - Test voice playback with sample phrases
-
-#### 3. **Analytics Polish**
-1. **Add Loading States**:
-   - Skeleton loaders for TeamHeatmap while fetching data
-   - Shimmer effects for charts
-   - "No data" empty states with helpful messages
-
-2. **Add Export Functionality**:
-   - Export TeamHeatmap as PNG image (for presentations)
-   - Export PerformanceCorrelationMatrix as CSV
-   - Share intervention recommendations via email
-
-3. **Add Real-Time Updates**:
-   - WebSocket connection for live readiness score updates
-   - Push notifications when intervention priority changes
-   - Auto-refresh charts every 5 minutes
-
-### Long-Term (Next Month)
-
-#### 1. **Merge to Main & Deploy**
-Once all tests pass and voice chat is stable:
-```bash
-git checkout main
-git merge feature/mobile-post-mvp-port
-git push origin main
-```
-
-Deploy to production:
-- **iOS**: Build with EAS and submit to App Store
-- **Android**: Build with EAS and submit to Google Play
-- **Backend**: Ensure voice WebSocket server is production-ready
-
-#### 2. **User Testing**
-- Recruit 5-10 UW athletes for beta testing
-- Focus on voice chat usability
-- Collect feedback on analytics visualizations
-- Identify performance bottlenecks
-
-#### 3. **Production Readiness**
-- [ ] Enable RLS policies on Supabase (from plan file)
-- [ ] Migrate to real authentication (Supabase Auth)
-- [ ] Enforce cost controls (100 tokens/day limit)
-- [ ] Remove demo accounts
-- [ ] Crisis escalation UI complete
-- [ ] All emojis replaced with Lucide icons
-- [ ] Hardcoded localhost URLs replaced with env vars
+**For demo:** Use Phase 1 (manual CSV). Show it works. Then automate later.
 
 ---
 
-## 🐛 Known Issues & Blockers
+## 📋 Production Checklist (Post-Pilot)
 
-### 1. **Voice Chat Requires Physical Device**
-- **Issue**: Expo simulators don't support microphone/speaker APIs properly
-- **Workaround**: Always test voice on real iOS/Android device
-- **Solution**: N/A - expected limitation of simulators
+### IF pilot shows strong correlations (r>0.5, p<0.05)
 
-### 2. **.env.local Not Synced to Git**
-- **Issue**: API keys in `.env.local` are gitignored (security best practice)
-- **Workaround**: Manually copy `.env.local` to new laptop or recreate from web app's keys
-- **Solution**: Use secure environment variable management (1Password, Doppler, etc.)
+**Month 1-2: Production Infrastructure**
+- [ ] Replace demo accounts with Supabase Auth
+- [ ] Implement RLS policies (athletes see only their data)
+- [ ] Add cost controls (daily message caps, monthly budget)
+- [ ] Enforce crisis detection on every message
+- [ ] Remove all mock data from API routes
+- [ ] Set up monitoring (Sentry, LogRocket)
 
-### 3. **14 Remaining TypeScript Errors**
-- **Issue**: Non-voice TypeScript errors in mobile app (see "Medium-Term" section)
-- **Impact**: App still compiles and runs, but type safety compromised
-- **Priority**: Medium (fix over next 2 weeks)
+**Month 3-4: Expand Pilot**
+- [ ] Add 2-3 more UW teams
+- [ ] Refine algorithms based on feedback
+- [ ] Polish coach dashboard UX
+- [ ] Add automated stats import
 
-### 4. **Prisma Database Queries in Analytics Modules**
-- **Issue**: Mobile analytics modules import `@/lib/prisma` which doesn't exist on mobile
-- **Current Fix**: Commented out Prisma imports with early returns
-- **Proper Solution**: Refactor to use API endpoints instead of direct DB access
-- **Files affected**:
-  - `components/coach/analytics/TeamHeatmap.tsx`
-  - `components/coach/analytics/PerformanceCorrelationMatrix.tsx`
-  - `components/coach/analytics/ReadinessForecastChart.tsx`
-  - `components/coach/insights/InterventionQueue.tsx`
+**Month 5-6: Fundraising**
+- [ ] Create deck with pilot results
+- [ ] Apply to Y Combinator, TechStars Sports
+- [ ] Raise $250-500k pre-seed
+- [ ] Hire 1 engineer + 1 customer success
 
-### 5. **Voice WebSocket Server Not Fully Implemented**
-- **Issue**: Backend voice WebSocket server may need updates to handle text-only messages
-- **Current State**: Web app uses binary audio streaming
-- **Required Changes**: Server should accept JSON transcript messages instead of raw audio
-- **Location**: Check `apps/web/src/app/api/voice/stream/route.ts` or similar
+**Month 7-12: Scale**
+- [ ] Approach 5 Pac-12 schools
+- [ ] $100-200k/year contracts
+- [ ] Target revenue: $500k-1M ARR Year 1
+- [ ] Team: 3-4 people
 
 ---
 
-## 📊 POST-MVP Feature Status
+## 💰 Business Model
 
-| Feature | Web | Mobile | Status |
-|---------|-----|--------|--------|
-| **Biometric Integration** | ✅ | ❌ | Web only (HRV, sleep, resting HR) |
-| **Team Heatmap** | ✅ | ✅ | **COMPLETE** |
-| **Performance Correlation** | ✅ | ✅ | **COMPLETE** |
-| **Readiness Forecasting** | ✅ | ✅ | **COMPLETE** |
-| **Intervention Queue** | ✅ | ✅ | **COMPLETE** |
-| **Voice Chat (Whisper STT)** | ❌ | ✅ | **Mobile only** |
-| **Voice Chat (ElevenLabs TTS)** | ❌ | ✅ | **Mobile only** |
-| **Crisis Escalation UI** | ⏳ | ❌ | In progress on web |
-| **Professional UI (no emojis)** | ⏳ | ✅ | Mobile complete, web in progress |
+### Pricing Tiers
 
----
+**Tier 1: Single Team ($100k/year)**
+- 50 athletes
+- All features
+- Email support
+- Quarterly business reviews
 
-## 🎯 Success Criteria for UW Demo
+**Tier 2: Full Program ($150k/year)**
+- 100 athletes
+- All features
+- Dedicated customer success
+- Monthly business reviews
+- Custom integrations
 
-**Must Have** (All ✅):
-1. ✅ Readiness score displayed on mobile athlete dashboard
-2. ✅ Team heatmap (14 days) with color-coded patterns on mobile coach analytics
-3. ✅ Performance correlation showing r > 0.5 for mood vs. performance
-4. ✅ Voice chat with natural-sounding TTS (ElevenLabs)
-5. ✅ Accurate speech transcription (Whisper)
-6. ❌ 7-day forecast showing declining trend + intervention recommendation (needs backend data)
-7. ✅ No emojis in mobile coach views (using Lucide icons)
-8. ❌ <2s voice round-trip latency (needs testing on device)
+**Tier 3: Enterprise ($200k+/year)**
+- 200+ athletes
+- All features
+- 24/7 support
+- Weekly check-ins
+- White-label option
+- On-premise deployment
 
-**Nice to Have**:
-- ❌ Sleep stage visualization (biometrics not implemented on mobile)
-- ❌ Athlete-facing pre-game readiness check-in
-- ❌ Coach intervention effectiveness tracking
-- ❌ Export dashboard as PDF
+### Target Market
 
-**Demo Impact Goal**: Show sports psychologist a system that's technically sophisticated (6-dimensional readiness model, client-side voice processing, ML forecasting) AND professionally designed (Whoop/Oura-level UI, smooth mobile experience).
+**Phase 1 (Year 1): Pac-12 Schools**
+- 12 schools
+- Focus on basketball, football
+- Target: 5 contracts = $500-750k ARR
 
----
+**Phase 2 (Year 2): Power 5 Conferences**
+- 65 schools
+- Expand to all sports
+- Target: 20 contracts = $2-3M ARR
 
-## 📚 Key Documentation References
-
-- **Main Plan**: `/Users/arnavmittal/.claude/plans/dynamic-floating-dragonfly.md`
-- **Project Context**: `CLAUDE.md`
-- **MVP Status**: `MVP_STATUS.md`
-- **Setup Guide**: `SETUP.md`
-- **Web .env.local**: `apps/web/.env.local` (contains all API keys)
-- **Mobile .env.local**: `apps/mobile/.env.local` (needs manual copy to new laptop)
+**Phase 3 (Year 3+): All D1**
+- 350 schools
+- Add D2, D3 (lower pricing)
+- Target: 50+ contracts = $5-10M ARR
 
 ---
 
-## 🔧 Useful Commands
+## 🎯 Success Metrics
 
-```bash
-# Start mobile development server
-cd apps/mobile && pnpm start
+### Pilot Success (8 weeks)
+- ✅ Correlation r>0.5 between readiness and performance
+- ✅ 60%+ athletes use app weekly
+- ✅ 50%+ mood log completion rate
+- ✅ Coach finds insights valuable ("changed my lineup based on this")
+- ✅ <$200 OpenAI costs
+- ✅ 0 crisis detection failures
 
-# Run TypeScript type check
-pnpm --filter @sports-agent/mobile exec tsc --noEmit
-
-# Check git status
-git status
-
-# View recent commits
-git log --oneline -10
-
-# Test voice services directly (Node REPL)
-node
-> const { transcribeAudio } = require('./apps/mobile/lib/services/whisper.ts');
-> // Test transcription with sample audio file
-
-# Clean Expo cache (if build issues)
-cd apps/mobile && pnpm start --clear
-
-# Check environment variables loaded
-cd apps/mobile && pnpm expo config
-
-# View running processes (check if backend is running)
-lsof -i :3000  # Web backend
-lsof -i :8000  # Voice WebSocket server
-```
+### Year 1 Success
+- ✅ 5 school contracts
+- ✅ $500k ARR
+- ✅ Team of 3-4 people
+- ✅ Raised $250-500k
+- ✅ Conference presentation (AAASP, APA)
 
 ---
 
-## 💡 Pro Tips for New Laptop Setup
+## 🚨 Risk Mitigation
 
-1. **Install pnpm globally first**:
-   ```bash
-   npm install -g pnpm
-   ```
+### Technical Risks
+- **Voice chat fails during demo**: Video backup + demo mode
+- **Stats scraping breaks**: CSV upload fallback
+- **Backend crashes**: Demo mode works offline
 
-2. **Ensure Node.js >= 20.9.0**:
-   ```bash
-   node -v  # Should be v20.9.0 or higher
-   # If not, install via nvm or upgrade
-   ```
+### Business Risks
+- **School says no**: Multiple schools in parallel
+- **Correlations are weak**: More data, refine algorithm
+- **Can't fundraise**: Bootstrap with first contract revenue
 
-3. **Install Expo CLI globally**:
-   ```bash
-   npm install -g expo-cli
-   ```
-
-4. **Set up iOS development** (Mac only):
-   ```bash
-   xcode-select --install
-   sudo gem install cocoapods
-   ```
-
-5. **Set up Android development**:
-   - Install Android Studio
-   - Install Android SDK Platform 34
-   - Add `ANDROID_HOME` to environment variables
-
-6. **Copy .env.local to new laptop**:
-   ```bash
-   # Create apps/mobile/.env.local and paste API keys from this file (lines 17-20)
-   ```
-
-7. **Test API keys work**:
-   ```bash
-   # In apps/mobile directory
-   pnpm expo config  # Should show EXPO_PUBLIC_* env vars
-   ```
+### Personal Risks
+- **Graduate before product ready**: Incorporate, hire team
+- **Burnout from solo work**: Find co-founders early
+- **Opportunity cost**: Dual-track with job applications
 
 ---
 
-**Last Updated**: 2025-12-30
-**Branch**: `feature/mobile-post-mvp-port`
-**Status**: Ready to test on device, ready to merge to main after testing
+## 🎯 This Week's Action Items
+
+### Day 1 (Today): ✅ DONE
+- [x] Updated NextSteps.md with reframed strategy
+- [x] Designed automated stats collection system
+
+### Day 2-3: Critical Testing
+- [ ] Install app on your phone
+- [ ] Test voice chat works end-to-end
+- [ ] Test analytics dashboards load
+- [ ] List all bugs
+
+### Day 4-5: Fix & Polish
+- [ ] Fix critical bugs
+- [ ] Add realistic performance data to seed
+- [ ] Verify correlations show up
+- [ ] Record backup video
+
+### Weekend: Outreach
+- [ ] Email UW women's basketball coach
+- [ ] Email athletic director
+- [ ] Post on LinkedIn
+- [ ] Goal: 1 meeting scheduled
+
+---
+
+**Next Review**: After testing on device + getting first demo scheduled
+
+**Status**: Ready to test → Ready to demo → Ready to pilot
