@@ -85,6 +85,7 @@ async function main() {
   }
 
   // Create mood logs for last 30 days for each athlete
+  // Intentionally create varied patterns to demonstrate correlations
   console.log('📊 Creating mood logs (30 days per athlete)...');
   const now = new Date();
   for (const athlete of athletes) {
@@ -92,10 +93,25 @@ async function main() {
       const date = new Date(now);
       date.setDate(date.getDate() - day);
 
-      const mood = Math.floor(Math.random() * 4) + 6; // 6-9
-      const stress = Math.floor(Math.random() * 4) + 3; // 3-6
-      const sleep = Math.floor(6 + Math.random() * 3); // 6-9 hours
-      const confidence = Math.floor(Math.random() * 4) + 6; // 6-9
+      // Create intentional variation: some high-readiness days, some low
+      // High readiness pattern (70% of days): good mood, low stress, good sleep
+      // Low readiness pattern (30% of days): poor mood, high stress, poor sleep
+      const isHighReadiness = Math.random() > 0.3;
+
+      let mood, stress, sleep, confidence, energy;
+      if (isHighReadiness) {
+        mood = Math.floor(Math.random() * 2) + 8; // 8-9
+        stress = Math.floor(Math.random() * 2) + 2; // 2-3 (low stress)
+        sleep = Math.floor(Math.random() * 1.5) + 7.5; // 7.5-9 hours
+        confidence = Math.floor(Math.random() * 2) + 8; // 8-9
+        energy = Math.floor(Math.random() * 2) + 8; // 8-9
+      } else {
+        mood = Math.floor(Math.random() * 3) + 4; // 4-6
+        stress = Math.floor(Math.random() * 2) + 7; // 7-8 (high stress)
+        sleep = Math.floor(Math.random() * 1.5) + 5; // 5-6.5 hours
+        confidence = Math.floor(Math.random() * 3) + 4; // 4-6
+        energy = Math.floor(Math.random() * 3) + 4; // 4-6
+      }
 
       await prisma.moodLog.create({
         data: {
@@ -104,6 +120,7 @@ async function main() {
           stress,
           sleep,
           confidence,
+          energy,
           tags: '',
           createdAt: date,
         },
@@ -111,8 +128,32 @@ async function main() {
     }
   }
 
+  // Helper function to calculate readiness score (matches import endpoint)
+  function calculateReadiness(moodLog: any): number {
+    const mood = moodLog.mood || 5;
+    const confidence = moodLog.confidence || 5;
+    const stress = moodLog.stress || 5;
+    const energy = moodLog.energy || 5;
+    const sleep = moodLog.sleep || 7;
+
+    // Normalize sleep to 0-10 scale (8 hours is ideal)
+    const sleepNormalized = Math.min(10, (sleep / 8) * 10);
+
+    // Calculate readiness (0-100 scale)
+    const readiness = (
+      (mood * 0.25) +           // 25% weight
+      (confidence * 0.25) +     // 25% weight
+      ((10 - stress) * 0.2) +   // 20% weight (inverted)
+      (energy * 0.15) +         // 15% weight
+      (sleepNormalized * 0.15)  // 15% weight
+    ) * 10;
+
+    return Math.round(Math.max(0, Math.min(100, readiness)));
+  }
+
   // Create 10 games with performance metrics for first 10 athletes
-  console.log('🏀 Creating game performance data...');
+  // Stats will correlate with readiness to demonstrate r>0.5 correlation
+  console.log('🏀 Creating game performance data with correlations...');
   const opponents = [
     'Oregon Ducks',
     'USC Trojans',
@@ -132,37 +173,75 @@ async function main() {
 
     for (let athleteIdx = 0; athleteIdx < 10; athleteIdx++) {
       const athlete = athletes[athleteIdx];
-      const outcome = Math.random() > 0.5 ? 'win' : 'loss';
 
-      // Basketball stats
-      let stats = {};
-      if (athlete.athlete?.sport === 'Basketball') {
-        stats = {
-          points: Math.floor(Math.random() * 25) + 5,
-          shooting_pct: Math.random() * 0.3 + 0.35, // 35-65%
-          assists: Math.floor(Math.random() * 8),
-          rebounds: Math.floor(Math.random() * 10),
-          turnovers: Math.floor(Math.random() * 5),
-        };
-      }
+      // Get exact mood data from that day
+      const gameDayStart = new Date(gameDate);
+      gameDayStart.setHours(0, 0, 0, 0);
+      const gameDayEnd = new Date(gameDate);
+      gameDayEnd.setHours(23, 59, 59, 999);
 
-      // Get mood data from around that time
-      const nearestMood = await prisma.moodLog.findFirst({
+      const moodLog = await prisma.moodLog.findFirst({
         where: {
           athleteId: athlete.id,
           createdAt: {
-            gte: new Date(gameDate.getTime() - 3 * 24 * 60 * 60 * 1000),
-            lte: new Date(gameDate.getTime() + 3 * 24 * 60 * 60 * 1000),
+            gte: gameDayStart,
+            lte: gameDayEnd,
           },
-        },
-        orderBy: {
-          createdAt: 'desc',
         },
       });
 
-      const readinessScore = nearestMood
-        ? Math.floor((nearestMood.mood * 0.25 + (10 - nearestMood.stress) * 0.2 + ((nearestMood.sleep || 0) / 10) * 100 * 0.2 + nearestMood.confidence * 0.15) * 10)
-        : null;
+      if (!moodLog) continue;
+
+      // Calculate readiness score
+      const readinessScore = calculateReadiness(moodLog);
+
+      // Generate stats that correlate with readiness
+      // High readiness (>85) → excellent performance
+      // Medium readiness (70-85) → good performance
+      // Low readiness (<70) → poor performance
+      let stats = {};
+      let outcome = 'UNKNOWN';
+
+      if (athlete.athlete?.sport === 'Basketball') {
+        // Correlation formula: performance = baseline + (readiness_factor * range)
+        const readinessFactor = readinessScore / 100; // 0.0 - 1.0
+
+        // Points: 5-30 range, strong correlation
+        const points = Math.floor(5 + (readinessFactor * 25) + (Math.random() * 3 - 1.5));
+
+        // Assists: 0-8 range, moderate correlation
+        const assists = Math.floor(0 + (readinessFactor * 8) + (Math.random() * 2 - 1));
+
+        // Rebounds: 2-12 range, moderate correlation
+        const rebounds = Math.floor(2 + (readinessFactor * 10) + (Math.random() * 2 - 1));
+
+        // Turnovers: inverted correlation (high readiness = low turnovers)
+        const turnovers = Math.floor(6 - (readinessFactor * 5) + (Math.random() * 1.5));
+
+        // Minutes: 20-40 range, slight correlation
+        const minutes = Math.floor(20 + (readinessFactor * 20) + (Math.random() * 4 - 2));
+
+        // Shooting percentage: 35-60%, moderate correlation
+        const shootingPct = Math.round((0.35 + (readinessFactor * 0.25) + (Math.random() * 0.05 - 0.025)) * 100) / 100;
+
+        stats = {
+          points: Math.max(0, points),
+          assists: Math.max(0, assists),
+          rebounds: Math.max(0, rebounds),
+          turnovers: Math.max(0, turnovers),
+          minutes: Math.max(15, Math.min(40, minutes)),
+          shootingPct,
+        };
+
+        // Outcome correlates with readiness
+        if (readinessScore >= 80) {
+          outcome = Math.random() > 0.2 ? 'WIN' : 'LOSS'; // 80% win rate
+        } else if (readinessScore >= 70) {
+          outcome = Math.random() > 0.5 ? 'WIN' : 'LOSS'; // 50% win rate
+        } else {
+          outcome = Math.random() > 0.7 ? 'WIN' : 'LOSS'; // 30% win rate
+        }
+      }
 
       await prisma.performanceMetric.create({
         data: {
@@ -172,9 +251,9 @@ async function main() {
           opponentName: opponents[gameIdx],
           outcome,
           stats,
-          mentalMoodScore: nearestMood?.mood || null,
-          mentalStressScore: nearestMood?.stress || null,
-          mentalSleepHours: nearestMood?.sleep ? parseFloat(nearestMood.sleep.toString()) : null,
+          mentalMoodScore: moodLog.mood,
+          mentalStressScore: moodLog.stress,
+          mentalSleepHours: moodLog.sleep ? parseFloat(moodLog.sleep.toString()) : null,
           mentalHRVScore: null,
           readinessScore,
           slumpPrediction: null,
@@ -239,11 +318,15 @@ async function main() {
   console.log(`   - 1 School (${school.name})`);
   console.log(`   - 1 Coach (coach@uw.edu / Coach2024!)`);
   console.log(`   - 20 Athletes (athlete1@uw.edu to athlete20@uw.edu / Athlete2024!)`);
-  console.log(`   - ${20 * 30} Mood Logs (30 days per athlete)`);
-  console.log(`   - ${10 * 10} Performance Metrics (10 games, 10 athletes)`);
+  console.log(`   - ${20 * 30} Mood Logs (30 days per athlete with high/low readiness patterns)`);
+  console.log(`   - ${10 * 10} Performance Metrics (10 games, 10 athletes) - CORRELATED WITH READINESS`);
   console.log(`   - 10 Goals`);
   console.log(`   - 3 Knowledge Base Entries`);
-  console.log('\n🎉 Ready for MVP demo!');
+  console.log('\n🎯 Performance Correlation Details:');
+  console.log('   - High Readiness (>85) → 18-28 PPG, 5-8 APG, 80% win rate');
+  console.log('   - Low Readiness (<70) → 8-15 PPG, 1-3 APG, 30% win rate');
+  console.log('   - Expected Pearson r > 0.5 for Points, Assists, Rebounds vs Readiness');
+  console.log('\n🎉 Ready for MVP demo with analytics!');
 }
 
 main()
