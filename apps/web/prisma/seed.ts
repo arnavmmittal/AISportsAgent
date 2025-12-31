@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { hash } from 'bcryptjs';
+import { calculateReadiness } from '../lib/analytics/readiness';
+import { getSportConfig } from '../lib/analytics/sport-configs';
 
 const prisma = new PrismaClient();
 
@@ -128,28 +130,6 @@ async function main() {
     }
   }
 
-  // Helper function to calculate readiness score (matches import endpoint)
-  function calculateReadiness(moodLog: any): number {
-    const mood = moodLog.mood || 5;
-    const confidence = moodLog.confidence || 5;
-    const stress = moodLog.stress || 5;
-    const energy = moodLog.energy || 5;
-    const sleep = moodLog.sleep || 7;
-
-    // Normalize sleep to 0-10 scale (8 hours is ideal)
-    const sleepNormalized = Math.min(10, (sleep / 8) * 10);
-
-    // Calculate readiness (0-100 scale)
-    const readiness = (
-      (mood * 0.25) +           // 25% weight
-      (confidence * 0.25) +     // 25% weight
-      ((10 - stress) * 0.2) +   // 20% weight (inverted)
-      (energy * 0.15) +         // 15% weight
-      (sleepNormalized * 0.15)  // 15% weight
-    ) * 10;
-
-    return Math.round(Math.max(0, Math.min(100, readiness)));
-  }
 
   // Create 10 games with performance metrics for first 10 athletes
   // Stats will correlate with readiness to demonstrate r>0.5 correlation
@@ -192,8 +172,19 @@ async function main() {
 
       if (!moodLog) continue;
 
-      // Calculate readiness score
-      const readinessScore = calculateReadiness(moodLog);
+      // Calculate readiness score using advanced algorithm
+      const readinessBreakdown = calculateReadiness({
+        mood: moodLog.mood,
+        confidence: moodLog.confidence,
+        stress: moodLog.stress,
+        energy: moodLog.energy || undefined,
+        sleep: moodLog.sleep || undefined,
+        focus: moodLog.focus || undefined,
+        motivation: moodLog.motivation || undefined,
+        createdAt: moodLog.createdAt,
+      }, athlete.athlete?.sport || 'Basketball');
+
+      const readinessScore = readinessBreakdown.overall;
 
       // Generate stats that correlate with readiness
       // High readiness (>85) → excellent performance
