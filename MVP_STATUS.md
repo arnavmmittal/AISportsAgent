@@ -1,313 +1,315 @@
 # MVP Status & Production Roadmap
 
-**Last Updated**: 2025-12-15
+**Last Updated**: 2025-12-31
 **Current Branch**: `main`
-**Status**: Feature-complete, moving to production readiness
+**Status**: Feature-complete, ready for device testing and UW pilot
 
 ---
 
-## ✅ MVP Features Complete
+## 🎯 Strategic Positioning
 
-### Athlete Portal
-- [x] Authentication (demo accounts + NextAuth)
-- [x] AI Chat interface (text + voice streaming)
-- [x] Mood tracking with visualizations
+**This is NOT a mental health app.** This is a **performance analytics platform** for D1 athletics.
+
+**Value Props:**
+1. **Predictive Analytics** - Correlate mental readiness → game performance (r>0.5 target)
+2. **Scalability** - Replace impossible 1:150 Zoom meeting model with 24/7 AI chat
+3. **Competitive Edge** - Data-driven coaching insights schools don't have today
+
+**Market:** $100-200k/year contracts with D1 programs (comparable to WHOOP, Catapult, Kinduct)
+
+---
+
+## ✅ MVP Features Complete (95%)
+
+### Athlete Portal (Mobile + Web)
+- [x] Authentication (seed accounts + demo fallback)
+- [x] AI Chat interface (text + voice with Whisper STT + ElevenLabs TTS)
+- [x] Mood tracking with 7-day trend visualization
+- [x] Readiness score calculation (0-100)
 - [x] Goal setting and progress tracking
 - [x] Session history
-- [x] Mobile app (iOS + Android via Expo)
+- [x] Crisis detection with native modal
+- [x] Push notifications
+- [x] Assignments (submit responses, track completion)
 
-### Coach Portal
-- [x] Team dashboard with analytics
-- [x] Athlete roster with filtering
-- [x] Readiness scores and trends
-- [x] Crisis alerts
+### Coach Portal (Mobile + Web)
+- [x] Team dashboard with at-a-glance metrics
+- [x] Athlete roster with risk levels and filtering
+- [x] **Predictive Analytics** (POST-MVP features):
+  - Team Heatmap (14-day readiness visualization)
+  - Performance Correlation Matrix (mental state ↔ game stats)
+  - Readiness Forecasting (7-day ML predictions)
+  - Intervention Queue (prioritized recommendations)
+- [x] Crisis alerts with severity levels
 - [x] AI-powered insights and pattern detection
 - [x] Assignment management
 - [x] Settings and privacy controls
-- [x] Mobile coach portal (7 tabs matching web)
 
 ### Infrastructure
 - [x] PostgreSQL database (Prisma ORM)
-- [x] API routes for web + mobile
+- [x] 25+ API routes for web + mobile
 - [x] JWT authentication for mobile
-- [x] Demo accounts (no database required)
+- [x] Seed data (coach@uw.edu + athlete1-20@uw.edu)
+- [x] Demo accounts for offline testing
 - [x] Shared API client package
+- [x] Monorepo structure (web + mobile + shared)
+
+### Advanced Features (NEW)
+- [x] Voice chat with client-side transcription/TTS
+- [x] Real-time AI streaming (token-by-token)
+- [x] ML-based readiness forecasting
+- [x] Performance correlation analysis (Pearson r, p-values)
+- [x] Automated stats import design (web scraping + cron)
+- [x] All TypeScript errors fixed (14 errors resolved)
 
 ---
 
-## 🚧 MVP Gaps (Must Fix Before Production)
+## 🚧 Production Gaps (40% remaining)
 
-### CRITICAL - Security & Data
-- [ ] **Replace demo accounts with Supabase Auth**
-  - Current: Hardcoded demo users in auth logic
-  - Target: Real invite-only auth with RLS
-  - Impact: No production without this
+### BLOCKER - Must Fix Before UW Pilot
 
-- [ ] **Implement Row-Level Security (RLS)**
-  - Current: No database-level access control
-  - Target: Supabase RLS policies per user/role
-  - Impact: Data leaks possible
+**1. Device Testing (Week 1)**
+- [ ] Install app on physical iPhone/Android
+- [ ] Test voice chat works end-to-end
+- [ ] Test analytics dashboards load with real data
+- [ ] Verify correlations display correctly
+- [ ] List all bugs (expect 20-30)
+- [ ] Fix critical bugs
 
-- [ ] **Remove all mock data from API routes**
-  - Current: `if (user.id.startsWith('demo-'))` returns mock data
-  - Target: Real database queries only
-  - Impact: False sense of functionality
+**2. Demo Data Preparation (Week 1)**
+- [ ] Add realistic performance stats to seed data
+- [ ] Ensure mood logs correlate with performance
+- [ ] Verify correlation matrix shows r>0.5
+- [ ] Test readiness forecast predictions
+- [ ] Record backup video (when WiFi fails)
 
-### CRITICAL - Cost & Safety
-- [ ] **AI Cost Controls**
-  - Daily per-user message caps (20 messages/day)
-  - Monthly OpenAI budget ceiling ($100 dev, $500 prod)
-  - Token tracking and alerts
-  - Rate limiting middleware
+**3. Pitch Preparation (Week 2)**
+- [ ] Perfect 10-minute demo narrative
+- [ ] Rehearse 5 times
+- [ ] Prepare objection responses
+- [ ] Create one-pager with value prop
 
-- [ ] **Crisis Detection Always On**
-  - Current: Exists but may not run on every message
-  - Target: Safety check before ANY AI response
-  - Must log flagged sessions
-  - Must override AI response if unsafe
+### CRITICAL - Must Fix Before Production
 
-### HIGH PRIORITY - Data Persistence
-- [ ] **All data must persist in real database**
-  - Sessions (no fake history)
-  - Moods (no hardcoded trends)
-  - Goals (CRUD against DB)
-  - Coach summaries (auto-generated, not static)
-
-- [ ] **Environment Separation**
-  - Dev Supabase project (for testing)
-  - Prod Supabase project (for real users)
-  - Separate OpenAI API keys with limits
-  - `.env` vs `.env.production` separation
-
----
-
-## 📋 Production Checklist
-
-### Week 1: Core Infrastructure
-- [ ] Set up Supabase Auth (replace NextAuth)
-  - Email/password + magic link
-  - Invite-only (disable public signup)
-  - Store roles in `users` table
-- [ ] Implement RLS policies
+**1. Security & Authentication**
+- [ ] Replace demo accounts with Supabase Auth
+- [ ] Implement Row-Level Security (RLS) policies
   - Athletes see only their data
   - Coaches see only consented athletes
-  - Admins see all (with audit log)
-- [ ] Create dev + prod Supabase projects
-- [ ] Set OpenAI spending limits ($20 dev, $100 prod)
+- [ ] Invite-only signup (no public registration)
+- [ ] Remove all `if (user.id.startsWith('demo-'))` checks
 
-### Week 2: Safety & Cost
-- [ ] Single `/api/chat` endpoint (no client OpenAI calls)
-- [ ] Crisis detection before every response
-  - Parse message for self-harm, abuse, severe depression
-  - Log flagged sessions
-  - Return safe fallback response
-- [ ] Cost control middleware
-  - Track tokens per request
-  - Daily user message cap (20/day)
-  - Monthly budget ceiling
-  - Alert when 80% budget used
-- [ ] Remove ALL mock data from prod
+**2. Cost Controls**
+- [ ] Daily per-user message caps (20 messages/day)
+- [ ] Monthly OpenAI budget ceiling ($500 pilot, $2500 prod)
+- [ ] Token tracking per request
+- [ ] Alert when 80% budget consumed
+- [ ] Kill switch to disable AI if budget exceeded
 
-### Week 3: Real Data + Coach Value
-- [ ] Sessions persist to database
-- [ ] Mood history visible (from DB)
-- [ ] Goals editable (CRUD operations)
-- [ ] Coach weekly summary auto-generation
-- [ ] Coach dashboard (real athlete data with consent)
-- [ ] Test data survives logout/device switch
+**3. Crisis Detection**
+- [ ] Enforce on EVERY message (no bypasses)
+- [ ] Log all flagged sessions to database
+- [ ] Email/SMS alerts to coach + admin
+- [ ] Override AI response if unsafe
+- [ ] Clinician validation of keywords
 
-### Week 4: Testing + Polish
-- [ ] Test with 2-3 real athletes
-- [ ] Test with 1 real coach
-- [ ] Test crisis detection with edge cases
-- [ ] Verify cost caps work (try to spam)
-- [ ] Confirm safety never bypassed
-- [ ] No crashes on long sessions
+**4. Data Persistence**
+- [ ] All data must save to real database (no mock data in production)
+- [ ] Sessions persist across logout/login
+- [ ] Mood logs queryable for correlations
+- [ ] Performance records importable (CSV + scraper)
+
+**5. Monitoring & Alerts**
+- [ ] Sentry for error tracking
+- [ ] LogRocket for session replay
+- [ ] PostHog for product analytics
+- [ ] Uptime monitoring (better uptime, pingdom)
+- [ ] Cost monitoring dashboard
 
 ---
 
-## 🎯 MVP "Done" Gate
+## 📋 2-Week Pre-Pilot Checklist
 
-Production readiness achieved when:
+**This Week (Week 1):**
+- [ ] Day 1-2: Install on phone, test end-to-end, list bugs
+- [ ] Day 3-4: Fix critical bugs, ensure data persists
+- [ ] Day 5: Add realistic performance data to seed
+- [ ] Day 6-7: Record backup video, create slides
 
-✅ Real users (no demo accounts in prod)
-✅ Real auth (Supabase Auth with RLS)
-✅ Real data (no mock responses)
-✅ Real AI (single controlled endpoint)
-✅ Cost bounded (daily caps + budget ceiling)
-✅ Safety enforced (crisis detection always runs)
-✅ Coach value proven (weekly summaries useful)
+**Next Week (Week 2):**
+- [ ] Day 8-10: Perfect pitch, rehearse 5x
+- [ ] Day 11-12: Refine objections, finalize one-pager
+- [ ] Day 13-14: Outreach to UW (coach, AD, sports psych)
 
-**NOT required for MVP:**
-- 10k users
-- AWS migration
-- Perfect UI
-- Voice streaming polish
-- Offline mode
+**Goal:** 1 demo meeting scheduled by end of week 2
 
 ---
 
-## 🏗️ Architecture Decisions
+## 🧪 UW Pilot Timeline (IF Demo Goes Well)
 
-### Current Architecture (MVP)
-```
-Frontend (Next.js + React Native)
-    ↓
-API Routes (/api/chat, /api/moods, /api/goals)
-    ↓
-Supabase (PostgreSQL + Auth + RLS)
-    ↓
-OpenAI API (GPT-4)
-```
+### Month 1-2: Demo → Pilot Approval
+- Week 1-2: Demo to UW women's basketball coach
+- Week 3-4: Get athletic department approval
+- Week 5-6: IRB exemption (if needed - confirm with UW)
+- Week 7-8: Production infrastructure build
 
-### Future Architecture (Post-MVP)
-```
-Frontend
-    ↓
-Next.js API (simple CRUD)
-    ↓
-Python MCP Server (advanced AI orchestration)
-    ↓
-Supabase + OpenAI + Vector DB
-```
+### Month 3-4: Pilot Onboarding
+- Week 9-10: Onboard 15 athletes + 1 coach
+- Week 11-12: Training sessions, fix bugs
+- Week 13-14: Active use begins
 
-**Decision**: Keep simple for MVP, add MCP layer when we need:
-- Multi-agent workflows
-- RAG knowledge base
-- Complex intervention logic
+### Month 5-8: Pilot Execution (8 weeks active)
+- Athletes use daily (mood logs, chat)
+- Coach reviews dashboard weekly
+- Collect performance data from games
+- Monitor engagement, costs, bugs
 
-### Folder Structure (Current)
-
-```
-apps/web/src/
-  app/
-    api/
-      chat/route.ts              # Main AI endpoint
-      moods/route.ts
-      goals/route.ts
-      auth/[...nextauth]/route.ts
-      coach/
-        athletes/route.ts
-        dashboard/route.ts
-    athlete/                     # Athlete pages
-      chat/
-      mood/
-      goals/
-      history/
-    coach/                       # Coach pages
-      dashboard/
-      athletes/
-      analytics/
-      readiness/
-      insights/
-      assignments/
-      settings/
-  components/
-    athlete/                     # Athlete UI components
-    coach/                       # Coach UI components
-    ui/                          # shadcn/ui base
-  lib/
-    prisma.ts                    # Database client
-    auth.ts                      # NextAuth config
-    auth-helpers.ts              # JWT + session helpers
-```
-
-**Recommendation**: This structure is fine for MVP. No refactor needed.
+### Month 9-10: Evaluation
+- Analyze correlations (r>0.5 target)
+- Coach interview (changed my coaching?)
+- Athlete survey (helpful? would recommend?)
+- Decide: expand, iterate, or pivot
 
 ---
 
-## 🔐 Production Environment Setup
+## 🎯 Pilot Success Metrics
 
-### Required Environment Variables
+**Quantitative:**
+- ✅ r>0.5 correlation between readiness and performance
+- ✅ 60%+ weekly active users (9+ of 15 athletes)
+- ✅ 50%+ mood log completion rate
+- ✅ <$200 OpenAI costs for 8 weeks
+- ✅ 0 crisis detection failures
+- ✅ <5% API error rate
 
-**Development (`apps/web/.env.local`):**
-```bash
-DATABASE_URL="postgresql://...dev.supabase.co..."
-NEXTAUTH_SECRET="[run: openssl rand -base64 32]"
-NEXTAUTH_URL="http://localhost:3000"
-OPENAI_API_KEY="sk-...dev-key..."
-NEXT_PUBLIC_ENV="development"
-```
+**Qualitative:**
+- ✅ Coach says "this changed how I coach" or "I made lineup decisions based on this"
+- ✅ Athletes prefer this to scheduled Zoom meetings (>70%)
+- ✅ Coach would pay for this next season
+- ✅ Athletes would recommend to other teams (>70%)
 
-**Production (Vercel environment variables):**
-```bash
-DATABASE_URL="postgresql://...prod.supabase.co..."
-NEXTAUTH_SECRET="[different-secret]"
-NEXTAUTH_URL="https://app.yourdomain.com"
-OPENAI_API_KEY="sk-...prod-key..."
-NEXT_PUBLIC_ENV="production"
-```
-
-### Supabase Projects
-
-**Dev Project:**
-- Name: `ai-sports-agent-dev`
-- Purpose: Development + testing
-- Data: Can be wiped/reset
-- OpenAI: $20 monthly limit
-
-**Prod Project:**
-- Name: `ai-sports-agent-prod`
-- Purpose: Real users only
-- Data: Persistent, backed up
-- OpenAI: $100 monthly limit
+**Data to Publish:**
+- Correlation coefficients (r-values, p-values)
+- Engagement metrics (DAU, retention)
+- Coach satisfaction (Likert scale)
+- Cost per athlete per week
 
 ---
 
-## 🚀 Next Steps (Immediate)
+## 💰 Post-Pilot: Production Infrastructure
 
-### This Week
-1. [ ] Create dev Supabase project
-2. [ ] Implement Supabase Auth (replace demo accounts)
-3. [ ] Add RLS policies to database
-4. [ ] Remove mock data from coach APIs
-5. [ ] Add cost control middleware
+**IF pilot shows strong correlations and coach is enthusiastic:**
 
-### Next Week
-1. [ ] Crisis detection testing
-2. [ ] Real data persistence verification
-3. [ ] Coach weekly summary generation
-4. [ ] Test with 2-3 athletes + 1 coach
+### Month 1-2: Production Build
+- [ ] Supabase Auth (replace demo accounts)
+- [ ] RLS policies (security)
+- [ ] Cost controls (daily caps + monthly ceiling)
+- [ ] Crisis detection enforcement (100% coverage)
+- [ ] Remove all mock data
+- [ ] Monitoring setup (Sentry, LogRocket)
 
-### Following Week
-1. [ ] Create prod Supabase project
-2. [ ] Deploy to Vercel
-3. [ ] Mobile app to TestFlight (iOS)
-4. [ ] Institutional pilot preparation
+**Estimated effort:** 80-120 hours (6-8 weeks part-time, 3-4 weeks full-time)
 
----
+### Month 3-4: Expand Pilot
+- [ ] Add 2-3 more UW teams (50-100 athletes total)
+- [ ] Refine algorithms based on feedback
+- [ ] Build automated stats scraper
+- [ ] Polish coach dashboard UX
 
-## 📊 Current Metrics (Mock)
+### Month 5-6: Fundraising
+- [ ] Create deck with pilot results
+- [ ] Apply to Y Combinator, TechStars Sports
+- [ ] Raise $250-500k pre-seed
+- [ ] Hire 1 engineer + 1 customer success person
 
-Replace with real metrics once production:
-- Total users: TBD
-- Sessions/day: TBD
-- Crisis alerts: TBD
-- Coach engagement: TBD
-- OpenAI costs: TBD
-
----
-
-## 🤔 Open Questions
-
-1. **Auth Strategy**: Supabase Auth or keep NextAuth v5?
-   - Recommendation: Supabase Auth (simpler RLS integration)
-
-2. **Mobile Deployment**: App Store or web-only MVP?
-   - Recommendation: TestFlight beta, delay App Store until post-MVP
-
-3. **Voice Chat**: Include in MVP or skip?
-   - Current: Voice exists but may skip for production readiness
-   - Recommendation: Include (already built)
-
-4. **Crisis Protocol**: Who gets alerts?
-   - Recommendation: Email to coach + admin + log to DB
+### Month 7-12: Scale to Other Schools
+- [ ] Approach 5 Pac-12 schools with UW pilot data
+- [ ] Close $100-200k/year contracts
+- [ ] Target: $500k-1M ARR by end of Year 1
+- [ ] Team: 3-4 people
 
 ---
 
-## 📝 Notes
+## 🚨 Known Blockers & Risks
 
-- Keep this file updated weekly during MVP push
-- Mark items complete with [x] as you go
-- Update metrics when real data flows
-- Document blockers immediately
+### Technical Risks
+- **Voice chat fails during demo** → Video backup + demo mode
+- **Stats scraping breaks** → CSV upload fallback
+- **Backend crashes mid-demo** → Demo mode works offline
+- **Correlation is weak (r<0.3)** → More data, refine algorithm, or pivot
+
+### Business Risks
+- **UW says no** → Approach multiple schools in parallel (Stanford, USC, Cal)
+- **Can't prove correlations** → Need >8 weeks of data, expand pilot
+- **Schools won't pay $100-200k** → Start lower ($50k), prove value, raise price
+- **Can't fundraise** → Bootstrap with first contract revenue
+
+### Personal Risks
+- **Graduate before product ready** → Incorporate, hire team
+- **Burnout from solo work** → Find co-founders early (sports scientist + sales)
+- **Opportunity cost** → Dual-track with job applications (hedge bets)
+
+---
+
+## 🎯 Decision Gates
+
+**Gate 1: After Demo (2 weeks from now)**
+- ✅ Demo goes well → Schedule pilot
+- ❌ Demo fails → Fix bugs, retry
+- ❌ School not interested → Try 3 more schools
+
+**Gate 2: After Pilot (6 months from now)**
+- ✅ Strong correlations (r>0.5) + coach is enthusiastic → Raise money, scale
+- ⚠️ Weak correlations (r<0.3) → More data, refine, or pivot
+- ❌ Pilot fails → Portfolio project, apply to TeamSnap/WHOOP/Kinduct
+
+**Gate 3: After Fundraising (12 months from now)**
+- ✅ Raised $250k+ → Go full-time, hire team
+- ❌ Can't raise → Bootstrap with contracts or get acquired
+- ❌ No traction → Job at sports tech company
+
+---
+
+## 📊 Current Status Summary
+
+**What's Built:** 95% feature-complete
+- ✅ Full athlete + coach experience (mobile + web)
+- ✅ Voice chat, analytics, forecasting, interventions
+- ✅ Crisis detection, push notifications
+- ✅ Seed data with 20 athletes
+
+**What's Missing:** 5% polish + 40% production infrastructure
+- ❌ Device testing (critical)
+- ❌ Demo preparation (critical)
+- ❌ Real auth + RLS (for production)
+- ❌ Cost controls (for production)
+- ❌ Monitoring (for production)
+
+**What's Next:** 2 weeks of testing + demo prep, then approach UW
+
+**Realistic Timeline:**
+- Week 1-2: Test + polish
+- Week 3-4: Demo + pilot approval
+- Month 3-10: Pilot execution
+- Month 11-12: Evaluate + decide
+
+---
+
+## 🎯 The Bottom Line
+
+**Features are done.** The gap is:
+1. Testing on device (2-3 days)
+2. Demo preparation (1 week)
+3. Getting the meeting (1 week)
+
+**Then:** Prove correlations in 8-week pilot.
+
+**If correlations are strong:** Raise money, scale to 5-10 schools, $500k-1M ARR Year 1.
+
+**If correlations are weak:** Pivot algorithm, get more data, or turn into portfolio project for job at WHOOP/Kinduct.
+
+**Either way:** This is an impressive project. Worst case = great job offers. Best case = venture-backed startup with competitive moat.
+
+---
+
+**Next Action:** Install app on YOUR phone and test voice chat end-to-end. Everything else depends on that working.
