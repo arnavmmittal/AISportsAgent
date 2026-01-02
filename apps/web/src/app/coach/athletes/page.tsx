@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, User, Calendar, TrendingDown, MessageSquare, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { SportFilter } from '@/components/SportFilter';
 
 type RiskLevel = 'critical' | 'warning' | 'good' | 'no-data';
 
@@ -14,16 +15,51 @@ interface Athlete {
   riskLevel: RiskLevel;
   lastCheckIn: Date | null;
   moodScore: number | null;
-  concern: string;
+  concern: string | null;
   missedCheckIns: number;
 }
 
 export default function AthletesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | RiskLevel>('all');
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [athletes, setAthletes] = useState<Athlete[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - will be replaced with API call
-  const [athletes] = useState<Athlete[]>([
+  // Fetch athletes from API
+  useEffect(() => {
+    loadAthletes();
+  }, [selectedSports]);
+
+  const loadAthletes = async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams();
+      if (selectedSports.length > 0) {
+        params.set('sports', selectedSports.join(','));
+      }
+
+      const response = await fetch(`/api/athletes?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch athletes');
+
+      const data = await response.json();
+
+      // Transform dates
+      const transformedAthletes = data.athletes.map((a: any) => ({
+        ...a,
+        lastCheckIn: a.lastCheckIn ? new Date(a.lastCheckIn) : null,
+      }));
+
+      setAthletes(transformedAthletes);
+    } catch (error) {
+      console.error('Error loading athletes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Keep mock data as fallback (remove these when API is working)
+  const mockAthletes: Athlete[] = [
     {
       id: 'alex-martinez',
       name: 'Alex Martinez',
@@ -90,7 +126,10 @@ export default function AthletesPage() {
       concern: 'Sleep average 5.2hrs over 7 days',
       missedCheckIns: 0,
     },
-  ]);
+  ];
+
+  // Use real data if available, otherwise fall back to mock
+  const displayAthletes = athletes.length > 0 ? athletes : mockAthletes;
 
   const getRiskColor = (level: RiskLevel) => {
     switch (level) {
@@ -141,7 +180,7 @@ export default function AthletesPage() {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  const filteredAthletes = athletes
+  const filteredAthletes = displayAthletes
     .filter(athlete => {
       const matchesSearch = athlete.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           athlete.sport.toLowerCase().includes(searchQuery.toLowerCase());
@@ -154,9 +193,9 @@ export default function AthletesPage() {
       return riskOrder[a.riskLevel] - riskOrder[b.riskLevel];
     });
 
-  const criticalCount = athletes.filter(a => a.riskLevel === 'critical').length;
-  const warningCount = athletes.filter(a => a.riskLevel === 'warning').length;
-  const goodCount = athletes.filter(a => a.riskLevel === 'good').length;
+  const criticalCount = displayAthletes.filter(a => a.riskLevel === 'critical').length;
+  const warningCount = displayAthletes.filter(a => a.riskLevel === 'warning').length;
+  const goodCount = displayAthletes.filter(a => a.riskLevel === 'good').length;
 
   return (
     <div className="min-h-screen">
@@ -175,8 +214,10 @@ export default function AthletesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Total Athletes</div>
-                <div className="text-5xl font-black mb-2">{athletes.length}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Active roster</div>
+                <div className="text-5xl font-black mb-2">{displayAthletes.length}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                  {selectedSports.length > 0 ? `Filtered` : 'Active roster'}
+                </div>
               </div>
               <div className="text-6xl opacity-20">👥</div>
             </div>
@@ -218,7 +259,7 @@ export default function AthletesPage() {
 
         {/* Search and Filter */}
         <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 mb-8">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
             <input
@@ -229,7 +270,11 @@ export default function AthletesPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-foreground dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
-          <div className="flex gap-2">
+
+          {/* Sport Filter */}
+          <SportFilter selectedSports={selectedSports} onSportsChange={setSelectedSports} />
+
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
@@ -238,7 +283,7 @@ export default function AthletesPage() {
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              All ({athletes.length})
+              All ({displayAthletes.length})
             </button>
             <button
               onClick={() => setFilter('critical')}
@@ -276,7 +321,12 @@ export default function AthletesPage() {
 
       {/* Athletes List */}
       <div className="space-y-3">
-        {filteredAthletes.length === 0 ? (
+        {isLoading ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Loading athletes...</h3>
+          </div>
+        ) : filteredAthletes.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
             <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No athletes found</h3>

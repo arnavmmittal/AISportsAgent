@@ -12,11 +12,12 @@ async function main() {
   console.log('📚 Creating school...');
   const school = await prisma.school.upsert({
     where: { id: 'school-demo-001' },
-    update: {},
+    update: { updatedAt: new Date() },
     create: {
       id: 'school-demo-001',
       name: 'University of Washington',
       division: 'D1',
+      updatedAt: new Date(),
     },
   });
 
@@ -33,7 +34,7 @@ async function main() {
       password: coachPassword,
       role: 'COACH',
       schoolId: school.id,
-      coach: {
+      Coach: {
         create: {
           sport: 'Basketball',
         },
@@ -41,35 +42,72 @@ async function main() {
     },
   });
 
-  // Create 20 sample athletes
-  console.log('🏃 Creating 20 sample athletes...');
-  const sports = ['Basketball', 'Football', 'Soccer', 'Volleyball'];
+  // Create 150 sample athletes across 12 sports
+  console.log('🏃 Creating 150 sample athletes across 12 sports...');
+  const sports = [
+    'Basketball',
+    'Football',
+    'Soccer',
+    'Baseball',
+    'Volleyball',
+    'Track & Field',
+    'Swimming',
+    'Tennis',
+    'Cross Country',
+    'Wrestling',
+    'Gymnastics',
+    'Lacrosse',
+  ];
   const years = ['FRESHMAN', 'SOPHOMORE', 'JUNIOR', 'SENIOR'];
   const positions = {
     Basketball: ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'],
-    Football: ['Quarterback', 'Running Back', 'Wide Receiver', 'Linebacker', 'Safety'],
+    Football: ['Quarterback', 'Running Back', 'Wide Receiver', 'Linebacker', 'Safety', 'Defensive Back'],
     Soccer: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'],
-    Volleyball: ['Outside Hitter', 'Middle Blocker', 'Setter', 'Libero'],
+    Baseball: ['Pitcher', 'Catcher', 'First Base', 'Second Base', 'Third Base', 'Shortstop', 'Outfield'],
+    Volleyball: ['Outside Hitter', 'Middle Blocker', 'Setter', 'Libero', 'Opposite'],
+    'Track & Field': ['Sprinter', 'Distance Runner', 'Jumper', 'Thrower', 'Hurdler'],
+    Swimming: ['Freestyle', 'Backstroke', 'Breaststroke', 'Butterfly', 'IM'],
+    Tennis: ['Singles', 'Doubles'],
+    'Cross Country': ['Distance Runner'],
+    Wrestling: ['Lightweight', 'Middleweight', 'Heavyweight'],
+    Gymnastics: ['All-Around', 'Vault', 'Bars', 'Beam', 'Floor'],
+    Lacrosse: ['Attack', 'Midfield', 'Defense', 'Goalie'],
   };
 
   const athletePassword = await hash('Athlete2024!', 10);
 
+  // First and last names for realistic athlete names
+  const firstNames = [
+    'Alex', 'Jordan', 'Morgan', 'Taylor', 'Casey', 'Riley', 'Avery', 'Quinn', 'Blake', 'Cameron',
+    'Sam', 'Drew', 'Reese', 'Peyton', 'Dylan', 'Skyler', 'Rowan', 'Sage', 'River', 'Phoenix',
+    'Jamie', 'Kai', 'Dakota', 'Logan', 'Parker', 'Hayden', 'Charlie', 'Emerson', 'Finley', 'Spencer',
+  ];
+  const lastNames = [
+    'Johnson', 'Smith', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson',
+    'Thomas', 'Jackson', 'White', 'Harris', 'Martin', 'Thompson', 'Garcia', 'Martinez', 'Robinson', 'Clark',
+    'Rodriguez', 'Lewis', 'Lee', 'Walker', 'Hall', 'Allen', 'Young', 'King', 'Wright', 'Lopez',
+  ];
+
   const athletes = [];
-  for (let i = 1; i <= 20; i++) {
-    const sport = sports[i % sports.length];
+  for (let i = 1; i <= 150; i++) {
+    const sport = sports[(i - 1) % sports.length];
     const year = years[Math.floor(Math.random() * years.length)];
     const positionList = positions[sport as keyof typeof positions];
     const position = positionList[Math.floor(Math.random() * positionList.length)];
+
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const athleteName = `${firstName} ${lastName}`;
 
     const athlete = await prisma.user.create({
       data: {
         id: `user-athlete-${String(i).padStart(3, '0')}`,
         email: `athlete${i}@uw.edu`,
-        name: `Athlete ${i}`,
+        name: athleteName,
         password: athletePassword,
         role: 'ATHLETE',
         schoolId: school.id,
-        athlete: {
+        Athlete: {
           create: {
             sport,
             year,
@@ -79,12 +117,18 @@ async function main() {
         },
       },
       include: {
-        athlete: true,
+        Athlete: true,
       },
     });
 
     athletes.push(athlete);
+
+    // Log progress every 25 athletes
+    if (i % 25 === 0) {
+      console.log(`   ✓ Created ${i}/150 athletes`);
+    }
   }
+  console.log(`   ✓ All 150 athletes created!`);
 
   // Create mood logs for last 30 days for each athlete
   // Intentionally create varied patterns to demonstrate correlations
@@ -308,16 +352,18 @@ async function main() {
   console.log('\n📊 Summary:');
   console.log(`   - 1 School (${school.name})`);
   console.log(`   - 1 Coach (coach@uw.edu / Coach2024!)`);
-  console.log(`   - 20 Athletes (athlete1@uw.edu to athlete20@uw.edu / Athlete2024!)`);
-  console.log(`   - ${20 * 30} Mood Logs (30 days per athlete with high/low readiness patterns)`);
+  console.log(`   - 150 Athletes across 12 sports (athlete1@uw.edu to athlete150@uw.edu / Athlete2024!)`);
+  console.log(`   - ${150 * 30} Mood Logs (30 days per athlete with high/low readiness patterns)`);
   console.log(`   - ${10 * 10} Performance Metrics (10 games, 10 athletes) - CORRELATED WITH READINESS`);
   console.log(`   - 10 Goals`);
   console.log(`   - 3 Knowledge Base Entries`);
+  console.log('\n🏆 Sports Covered:');
+  console.log(`   ${sports.join(', ')}`);
   console.log('\n🎯 Performance Correlation Details:');
   console.log('   - High Readiness (>85) → 18-28 PPG, 5-8 APG, 80% win rate');
   console.log('   - Low Readiness (<70) → 8-15 PPG, 1-3 APG, 30% win rate');
   console.log('   - Expected Pearson r > 0.5 for Points, Assists, Rebounds vs Readiness');
-  console.log('\n🎉 Ready for MVP demo with analytics!');
+  console.log('\n🎉 Ready for MVP demo with 150 athletes across all sports!');
 }
 
 main()
