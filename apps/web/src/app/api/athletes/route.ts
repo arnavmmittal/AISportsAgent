@@ -11,15 +11,15 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {
       role: 'ATHLETE',
-      athlete: {
+      Athlete: {
         isNot: null,
       },
     };
 
     // Add sport filter if provided
     if (sports && sports.length > 0) {
-      where.athlete = {
-        ...where.athlete,
+      where.Athlete = {
+        ...where.Athlete,
         sport: { in: sports },
       };
     }
@@ -28,10 +28,13 @@ export async function GET(request: NextRequest) {
     const athletes = await prisma.user.findMany({
       where,
       include: {
-        athlete: true,
-        moodLogs: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
+        Athlete: {
+          include: {
+            MoodLog: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
         },
       },
       orderBy: {
@@ -42,7 +45,7 @@ export async function GET(request: NextRequest) {
     // Transform to match frontend interface
     const transformedAthletes = await Promise.all(
       athletes.map(async (user) => {
-        const latestMood = user.moodLogs[0];
+        const latestMood = user.Athlete?.MoodLog?.[0];
 
         // Calculate enhanced readiness with chat insights if we have mood data
         let readinessScore = null;
@@ -63,7 +66,7 @@ export async function GET(request: NextRequest) {
               motivation: latestMood.motivation || undefined,
               createdAt: latestMood.createdAt,
             },
-            user.athlete?.sport || 'Basketball'
+            user.Athlete?.sport || 'Basketball'
           );
 
           readinessScore = enhanced.overall;
@@ -115,8 +118,8 @@ export async function GET(request: NextRequest) {
         return {
           id: user.id,
           name: user.name,
-          sport: user.athlete?.sport || 'Unknown',
-          year: user.athlete?.year || 'FRESHMAN',
+          sport: user.Athlete?.sport || 'Unknown',
+          year: user.Athlete?.year || 'FRESHMAN',
           riskLevel,
           lastCheckIn: latestMood?.createdAt || null,
           moodScore: latestMood?.mood || null,
