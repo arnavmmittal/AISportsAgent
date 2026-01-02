@@ -33,6 +33,7 @@ export default function AthletesPage() {
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch athletes from API
   useEffect(() => {
@@ -42,13 +43,17 @@ export default function AthletesPage() {
   const loadAthletes = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       if (selectedSports.length > 0) {
         params.set('sports', selectedSports.join(','));
       }
 
       const response = await fetch(`/api/athletes?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch athletes');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to fetch athletes');
+      }
 
       const data = await response.json();
 
@@ -59,8 +64,12 @@ export default function AthletesPage() {
       }));
 
       setAthletes(transformedAthletes);
+      console.log(`Loaded ${transformedAthletes.length} athletes from API`);
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load athletes';
       console.error('Error loading athletes:', error);
+      setError(message);
+      setAthletes([]); // Clear athletes on error
     } finally {
       setIsLoading(false);
     }
@@ -180,8 +189,8 @@ export default function AthletesPage() {
     },
   ];
 
-  // Use real data if available, otherwise fall back to mock
-  const displayAthletes = athletes.length > 0 ? athletes : mockAthletes;
+  // ALWAYS use real data from API (no mock fallback)
+  const displayAthletes = athletes;
 
   const getRiskColor = (level: RiskLevel) => {
     switch (level) {
@@ -377,6 +386,18 @@ export default function AthletesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Loading athletes...</h3>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg shadow border-2 border-red-200 dark:border-red-800 p-12 text-center">
+            <div className="text-red-600 dark:text-red-400 mb-4">⚠️</div>
+            <h3 className="text-lg font-semibold text-red-900 dark:text-red-200 mb-2">Error Loading Athletes</h3>
+            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            <button
+              onClick={() => loadAthletes()}
+              className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              Retry
+            </button>
           </div>
         ) : filteredAthletes.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
