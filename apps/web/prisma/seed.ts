@@ -8,6 +8,40 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
+  // Clear all existing data (delete in correct order to respect foreign keys)
+  console.log('🗑️  Clearing existing data...');
+
+  await prisma.chatInsight.deleteMany({});
+  await prisma.gameResult.deleteMany({});
+  await prisma.performanceMetric.deleteMany({});
+  await prisma.message.deleteMany({});
+  await prisma.chatSession.deleteMany({});
+  await prisma.chatSummary.deleteMany({});
+  await prisma.conversationInsight.deleteMany({});
+  await prisma.crisisAlert.deleteMany({});
+  await prisma.readinessScore.deleteMany({});
+  await prisma.wearableData.deleteMany({});
+  await prisma.moodLog.deleteMany({});
+  await prisma.goal.deleteMany({});
+  await prisma.task.deleteMany({});
+  await prisma.taskPattern.deleteMany({});
+  await prisma.assignmentSubmission.deleteMany({});
+  await prisma.assignment.deleteMany({});
+  await prisma.coachAthleteRelation.deleteMany({});
+  await prisma.knowledgeBase.deleteMany({});
+  await prisma.pushToken.deleteMany({});
+  await prisma.tokenUsage.deleteMany({});
+  await prisma.userSettings.deleteMany({});
+  await prisma.athlete.deleteMany({});
+  await prisma.coach.deleteMany({});
+  await prisma.session.deleteMany({});
+  await prisma.account.deleteMany({});
+  await prisma.auditLog.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.school.deleteMany({});
+
+  console.log('   ✓ All existing data cleared!');
+
   // Create school
   console.log('📚 Creating school...');
   const school = await prisma.school.upsert({
