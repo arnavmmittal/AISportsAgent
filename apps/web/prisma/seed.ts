@@ -77,8 +77,8 @@ async function main() {
     },
   });
 
-  // Create 150 sample athletes across 12 sports
-  console.log('🏃 Creating 150 sample athletes across 12 sports...');
+  // Create 50 sample athletes across 12 sports
+  console.log('🏃 Creating 50 sample athletes across 12 sports...');
   const sports = [
     'Basketball',
     'Football',
@@ -124,7 +124,7 @@ async function main() {
   ];
 
   const athletes = [];
-  for (let i = 1; i <= 150; i++) {
+  for (let i = 1; i <= 50; i++) {
     const sport = sports[(i - 1) % sports.length];
     const year = years[Math.floor(Math.random() * years.length)];
     const positionList = positions[sport as keyof typeof positions];
@@ -160,10 +160,10 @@ async function main() {
 
     // Log progress every 25 athletes
     if (i % 25 === 0) {
-      console.log(`   ✓ Created ${i}/150 athletes`);
+      console.log(`   ✓ Created ${i}/50 athletes`);
     }
   }
-  console.log(`   ✓ All 150 athletes created!`);
+  console.log(`   ✓ All 50 athletes created!`);
 
   // Create mood logs for last 30 days for each athlete
   // Intentionally create varied patterns to demonstrate correlations
@@ -568,8 +568,8 @@ async function main() {
   console.log('\n📊 Summary:');
   console.log(`   - 1 School (${school.name})`);
   console.log(`   - 1 Coach (coach@uw.edu / Coach2024!)`);
-  console.log(`   - 150 Athletes across 12 sports (athlete1@uw.edu to athlete150@uw.edu / Athlete2024!)`);
-  console.log(`   - ${150 * 30} Mood Logs (30 days per athlete with high/low readiness patterns)`);
+  console.log(`   - 50 Athletes across 12 sports (athlete1@uw.edu to athlete50@uw.edu / Athlete2024!)`);
+  console.log(`   - ${50 * 30} Mood Logs (30 days per athlete with high/low readiness patterns)`);
   console.log(`   - ~80 Chat Sessions with psychological insights (first 20 athletes)`);
   console.log(`   - ~80 ChatInsights (sentiment, topics, stress indicators from conversations)`);
   console.log(`   - ${10 * 10} Performance Metrics (10 games, 10 athletes) - CORRELATED WITH READINESS`);
