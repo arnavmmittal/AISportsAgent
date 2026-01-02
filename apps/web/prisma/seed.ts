@@ -521,6 +521,7 @@ async function main() {
         category: 'PERFORMANCE',
         targetDate: new Date(now.getFullYear(), 11, 31),
         status: 'IN_PROGRESS',
+        updatedAt: new Date(),
       },
     });
   }
