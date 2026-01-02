@@ -174,6 +174,138 @@ async function main() {
     }
   }
 
+  // Create chat sessions and insights for first 20 athletes
+  console.log('💬 Creating chat sessions with psychological insights...');
+  const emotionalTones = ['anxious', 'confident', 'frustrated', 'motivated', 'neutral'];
+  const topics = [
+    'performance-anxiety',
+    'team-conflict',
+    'coach-pressure',
+    'injury-concern',
+    'academic-stress',
+    'mindset-mental',
+    'goal-setting',
+    'recovery-rest',
+    'competition-preparation',
+    'technique-refinement'
+  ];
+  const stressIndicators = [
+    'fear of failure',
+    'coach pressure',
+    'performance expectations',
+    'academic overload',
+    'comparison to others',
+    'injury anxiety'
+  ];
+  const copingStrategies = [
+    'visualization',
+    'breathing exercises',
+    'positive self-talk',
+    'goal setting',
+    'seeking support',
+    'rest and recovery'
+  ];
+
+  for (let i = 0; i < 20; i++) {
+    const athlete = athletes[i];
+
+    // Create 3-5 chat sessions for each athlete over the past 30 days
+    const numSessions = 3 + Math.floor(Math.random() * 3);
+
+    for (let sessionIdx = 0; sessionIdx < numSessions; sessionIdx++) {
+      const sessionDate = new Date(now);
+      sessionDate.setDate(sessionDate.getDate() - (sessionIdx * 7 + Math.floor(Math.random() * 3)));
+
+      // Create chat session
+      const session = await prisma.chatSession.create({
+        data: {
+          athleteId: athlete.id,
+          createdAt: sessionDate,
+          updatedAt: sessionDate,
+          isActive: false
+        }
+      });
+
+      // Create messages for the session (3-8 messages)
+      const numMessages = 3 + Math.floor(Math.random() * 6);
+      for (let msgIdx = 0; msgIdx < numMessages; msgIdx++) {
+        const msgDate = new Date(sessionDate);
+        msgDate.setMinutes(msgDate.getMinutes() + (msgIdx * 2));
+
+        await prisma.message.create({
+          data: {
+            id: `msg-${athlete.id}-${sessionIdx}-${msgIdx}`,
+            sessionId: session.id,
+            role: msgIdx % 2 === 0 ? 'user' : 'assistant',
+            content: msgIdx % 2 === 0 ? 'Athlete message content' : 'AI response content',
+            createdAt: msgDate
+          }
+        });
+      }
+
+      // Determine sentiment pattern based on session timing
+      // Sessions closer to games tend to be more anxious
+      const daysFromNow = Math.floor((now.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
+      const isRecentSession = daysFromNow < 7;
+
+      // Create varied sentiment patterns
+      let sentiment: number;
+      let tone: string;
+      let selectedTopics: string[];
+      let selectedStressors: string[];
+      let selectedCoping: string[];
+
+      if (Math.random() < 0.3) {
+        // 30% anxious/struggling sessions
+        sentiment = -0.6 + (Math.random() * 0.4); // -0.6 to -0.2
+        tone = Math.random() < 0.6 ? 'anxious' : 'frustrated';
+        selectedTopics = [topics[0], topics[1], topics[2]].slice(0, 2); // anxiety, conflict, pressure
+        selectedStressors = stressIndicators.slice(0, 2 + Math.floor(Math.random() * 2));
+        selectedCoping = copingStrategies.slice(0, 1); // Few coping strategies
+      } else if (Math.random() < 0.5) {
+        // 35% confident/motivated sessions
+        sentiment = 0.4 + (Math.random() * 0.5); // 0.4 to 0.9
+        tone = Math.random() < 0.6 ? 'confident' : 'motivated';
+        selectedTopics = [topics[5], topics[6], topics[8]].slice(0, 2); // mindset, goals, prep
+        selectedStressors = [];
+        selectedCoping = copingStrategies.slice(0, 2 + Math.floor(Math.random() * 2));
+      } else {
+        // 35% neutral/mixed sessions
+        sentiment = -0.2 + (Math.random() * 0.4); // -0.2 to 0.2
+        tone = 'neutral';
+        selectedTopics = [topics[Math.floor(Math.random() * topics.length)]];
+        selectedStressors = Math.random() < 0.5 ? [stressIndicators[0]] : [];
+        selectedCoping = copingStrategies.slice(0, 1 + Math.floor(Math.random() * 2));
+      }
+
+      // Create ChatInsight
+      await prisma.chatInsight.create({
+        data: {
+          sessionId: session.id,
+          athleteId: athlete.id,
+          createdAt: sessionDate,
+          overallSentiment: sentiment,
+          emotionalTone: tone,
+          confidenceLevel: Math.round(50 + sentiment * 30 + Math.random() * 15),
+          topics: selectedTopics,
+          dominantTheme: selectedTopics[0] || null,
+          stressIndicators: selectedStressors,
+          copingStrategies: selectedCoping,
+          isPreGame: false,
+          gameDate: null,
+          daysUntilGame: null,
+          preGameMindset: null,
+          sessionDuration: 10 + Math.floor(Math.random() * 20), // 10-30 minutes
+          messageCount: numMessages
+        }
+      });
+    }
+
+    if ((i + 1) % 5 === 0) {
+      console.log(`   ✓ Created chat sessions for ${i + 1}/20 athletes`);
+    }
+  }
+  console.log(`   ✓ All chat sessions and insights created!`);
 
   // Create 10 games with performance metrics for first 10 athletes
   // Stats will correlate with readiness to demonstrate r>0.5 correlation
@@ -294,6 +426,51 @@ async function main() {
           slumpPrediction: null,
         },
       });
+
+      // NEW: Create GameResult with linked mental state from 3 days before
+      // Get chat insights from 3 days before game
+      const threeDaysBefore = new Date(gameDate);
+      threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
+
+      const chatInsights = await prisma.chatInsight.findMany({
+        where: {
+          athleteId: athlete.id,
+          createdAt: {
+            gte: threeDaysBefore,
+            lte: gameDate
+          }
+        }
+      });
+
+      // Calculate average sentiment from chats before game
+      const avgSentiment = chatInsights.length > 0
+        ? chatInsights.reduce((sum, i) => sum + i.overallSentiment, 0) / chatInsights.length
+        : null;
+
+      // Get unique topics discussed before game
+      const psychThemes = chatInsights.length > 0
+        ? [...new Set(chatInsights.flatMap(i => i.topics))]
+        : [];
+
+      // Create GameResult
+      await prisma.gameResult.create({
+        data: {
+          athleteId: athlete.id,
+          gameDate,
+          opponent: opponents[gameIdx],
+          sport: athlete.athlete?.sport || 'Basketball',
+          stats: {
+            ...stats,
+            performanceScore: Math.round((stats.points / 30) * 100) // Normalize to 0-100
+          },
+          outcome,
+          readinessScore: readinessScore,
+          chatSentiment: avgSentiment,
+          psychThemes: psychThemes,
+          scrapedFrom: 'seed-script',
+          scrapedAt: new Date()
+        }
+      });
     }
   }
 
@@ -354,7 +531,10 @@ async function main() {
   console.log(`   - 1 Coach (coach@uw.edu / Coach2024!)`);
   console.log(`   - 150 Athletes across 12 sports (athlete1@uw.edu to athlete150@uw.edu / Athlete2024!)`);
   console.log(`   - ${150 * 30} Mood Logs (30 days per athlete with high/low readiness patterns)`);
+  console.log(`   - ~80 Chat Sessions with psychological insights (first 20 athletes)`);
+  console.log(`   - ~80 ChatInsights (sentiment, topics, stress indicators from conversations)`);
   console.log(`   - ${10 * 10} Performance Metrics (10 games, 10 athletes) - CORRELATED WITH READINESS`);
+  console.log(`   - ${10 * 10} Game Results with linked mental state (readiness + chat sentiment)`);
   console.log(`   - 10 Goals`);
   console.log(`   - 3 Knowledge Base Entries`);
   console.log('\n🏆 Sports Covered:');
@@ -363,7 +543,12 @@ async function main() {
   console.log('   - High Readiness (>85) → 18-28 PPG, 5-8 APG, 80% win rate');
   console.log('   - Low Readiness (<70) → 8-15 PPG, 1-3 APG, 30% win rate');
   console.log('   - Expected Pearson r > 0.5 for Points, Assists, Rebounds vs Readiness');
-  console.log('\n🎉 Ready for MVP demo with 150 athletes across all sports!');
+  console.log('\n💬 Chat Insights Data:');
+  console.log('   - Sentiment patterns: 30% anxious, 35% confident, 35% neutral');
+  console.log('   - Topics: performance-anxiety, mindset-mental, goal-setting, team-conflict, etc.');
+  console.log('   - Stress indicators: fear of failure, coach pressure, performance expectations');
+  console.log('   - GameResults linked to chat sentiment from 3 days before game');
+  console.log('\n🎉 Ready for MVP demo with multi-modal correlation analysis!');
 }
 
 main()
