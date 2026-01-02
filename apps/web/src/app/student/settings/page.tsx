@@ -18,10 +18,15 @@ import {
   Phone,
   Trophy,
   Calendar,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function StudentSettingsPage() {
+  const { theme, toggleTheme, isDarkMode } = useTheme();
+
   // Profile settings
   const [profile, setProfile] = useState({
     name: 'Alex Johnson',
@@ -98,26 +103,28 @@ export default function StudentSettingsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-          <Settings className="w-8 h-8 text-purple-600" />
-          Settings
-        </h1>
-        <p className="text-muted-foreground mt-1">Manage your profile and preferences</p>
-      </div>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Settings
+          </h1>
+          <p className="mt-3 text-muted-foreground text-lg">Manage your profile and preferences</p>
+        </div>
 
-      {/* Profile Information */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="w-5 h-5 text-purple-600" />
-            <CardTitle>Profile Information</CardTitle>
+        {/* Profile Information */}
+        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
+          <div className="p-8 border-b-2 border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-foreground">Profile Information</h2>
+            </div>
+            <p className="text-base text-muted-foreground font-semibold ml-15">Update your personal and athletic information</p>
           </div>
-          <CardDescription>Update your personal and athletic information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <div className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -197,38 +204,40 @@ export default function StudentSettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
-            <Button
-              onClick={handleSaveProfile}
-              disabled={isSaving}
-              className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700"
-            >
-              {isSaving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Profile
-                </>
-              )}
-            </Button>
+            <div className="flex justify-end pt-6">
+              <button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Save Profile
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Notification Preferences */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-primary" />
-            <CardTitle>Notification Preferences</CardTitle>
+        {/* Notification Preferences */}
+        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
+          <div className="p-8 border-b-2 border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Bell className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-foreground">Notification Preferences</h2>
+            </div>
+            <p className="text-base text-muted-foreground font-semibold ml-15">Choose what updates you want to receive</p>
           </div>
-          <CardDescription>Choose what updates you want to receive</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <div className="p-8 space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -321,29 +330,30 @@ export default function StudentSettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
-            <Button
-              onClick={handleSaveNotifications}
-              variant="outline"
-              className="border-blue-600 text-primary hover:bg-blue-50"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Preferences
-            </Button>
+            <div className="flex justify-end pt-6">
+              <button
+                onClick={handleSaveNotifications}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2"
+              >
+                <Save className="w-5 h-5" />
+                Save Preferences
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Privacy & Data Sharing */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-green-600" />
-            <CardTitle>Privacy & Data Sharing</CardTitle>
+        {/* Privacy & Data Sharing */}
+        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
+          <div className="p-8 border-b-2 border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-foreground">Privacy & Data Sharing</h2>
+            </div>
+            <p className="text-base text-muted-foreground font-semibold ml-15">Control how your data is used and shared</p>
           </div>
-          <CardDescription>Control how your data is used and shared</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <div className="p-8 space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -382,50 +392,83 @@ export default function StudentSettingsPage() {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-            <div className="flex gap-3">
-              <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <h4 className="text-sm font-semibold text-blue-900">Your Data is Protected</h4>
-                <p className="text-xs text-blue-800">
-                  All data is encrypted and stored securely. Your coach only sees aggregated trends
-                  unless you explicitly share specific information. You can revoke access at any
-                  time.
-                </p>
+            <div className="bg-gradient-to-r from-blue-100 to-blue-50 border-2 border-blue-200 rounded-2xl p-6 shadow">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-lg font-black text-blue-900">Your Data is Protected</h4>
+                  <p className="text-sm text-blue-800 font-semibold">
+                    All data is encrypted and stored securely. Your coach only sees aggregated trends
+                    unless you explicitly share specific information. You can revoke access at any
+                    time.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end pt-4">
-            <Button
-              onClick={handleSavePrivacy}
-              variant="outline"
-              className="border-green-600 text-green-600 hover:bg-green-50"
+            <div className="flex justify-end pt-6">
+              <button
+                onClick={handleSavePrivacy}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2"
+              >
+                <Save className="w-5 h-5" />
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Appearance & Theme */}
+        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
+          <div className="p-8 border-b-2 border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                {isDarkMode ? <Moon className="w-6 h-6 text-white" /> : <Sun className="w-6 h-6 text-white" />}
+              </div>
+              <h2 className="text-2xl font-black text-foreground">Appearance & Theme</h2>
+            </div>
+            <p className="text-base text-muted-foreground font-semibold ml-15">Customize your visual experience</p>
+          </div>
+          <div className="p-8">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+              <div>
+                <p className="text-base font-black text-foreground">Dark Mode</p>
+                <p className="text-sm text-muted-foreground font-semibold mt-1">
+                  {isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={isDarkMode}
+                  onChange={toggleTheme}
+                />
+                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-600 peer-checked:to-indigo-700 shadow-inner"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Actions */}
+        <div className="bg-card rounded-2xl shadow-xl border-2 border-red-200">
+          <div className="p-8 border-b-2 border-red-100">
+            <h2 className="text-2xl font-black text-red-700">Account Actions</h2>
+            <p className="text-base text-red-600 font-semibold mt-2">Manage your account</p>
+          </div>
+          <div className="p-8">
+            <button
+              onClick={handleLogout}
+              className="w-full px-6 py-4 border-2 border-red-600 text-red-600 rounded-xl hover:bg-red-50 transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2"
             >
-              <Save className="w-4 h-4 mr-2" />
-              Save Settings
-            </Button>
+              <LogOut className="w-5 h-5" />
+              Log Out
+            </button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Actions */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-red-700">Account Actions</CardTitle>
-          <CardDescription>Manage your account</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="w-full border-red-600 text-red-600 hover:bg-red-50"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Log Out
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

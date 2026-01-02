@@ -4,26 +4,29 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
 import {
   LayoutDashboard,
-  MessageSquare,
-  Heart,
-  Target,
+  Users,
   ClipboardList,
+  AlertTriangle,
+  FileText,
   Settings,
   LogOut,
+  Menu,
+  X,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
-  { href: '/student/home', label: 'Home', icon: LayoutDashboard },
-  { href: '/student/assignments', label: 'My Assignments', icon: ClipboardList },
-  { href: '/student/ai-coach', label: 'AI Wellness Coach', icon: MessageSquare },
-  { href: '/student/progress', label: 'My Progress', icon: Target },
-  { href: '/student/settings', label: 'Settings', icon: Settings },
+  { href: '/coach/team-overview', label: 'Team Overview', icon: LayoutDashboard },
+  { href: '/coach/athletes', label: 'Athletes', icon: Users },
+  { href: '/coach/assignments', label: 'Assignments', icon: ClipboardList },
+  { href: '/coach/alerts', label: 'Alerts', icon: AlertTriangle },
+  { href: '/coach/reports', label: 'Reports', icon: FileText },
+  { href: '/coach/settings', label: 'Settings', icon: Settings },
 ];
 
-export default function StudentLayout({ children }: { children: React.ReactNode }) {
+export default function CoachLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -37,7 +40,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   // Load sidebar state from localStorage on mount
   useEffect(() => {
-    const savedState = localStorage.getItem('student-sidebar-open');
+    const savedState = localStorage.getItem('coach-sidebar-open');
     if (savedState !== null) {
       setIsSidebarOpen(savedState === 'true');
     }
@@ -47,11 +50,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const toggleSidebar = () => {
     const newState = !isSidebarOpen;
     setIsSidebarOpen(newState);
-    localStorage.setItem('student-sidebar-open', String(newState));
+    localStorage.setItem('coach-sidebar-open', String(newState));
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Hamburger Menu Button - Visible on all screen sizes */}
       <button
         onClick={toggleSidebar}
@@ -75,8 +78,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         <div className="flex flex-col h-full overflow-hidden">
           {/* Logo/Header */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 mt-16">
-            <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap">
-              Student Portal
+            <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+              Coach Portal
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 whitespace-nowrap">AI Sports Agent</p>
           </div>
@@ -99,7 +102,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                       className={`
                         flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap
                         ${isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }
                       `}

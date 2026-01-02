@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { Header } from "@/components/layout/Header";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -21,13 +22,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased bg-background text-foreground`}>
-        <SessionProvider>
-          <Header />
-          {children}
-          <Toaster />
-        </SessionProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            {/* Header removed - coach/student layouts have their own navigation */}
+            {children}
+            <Toaster />
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

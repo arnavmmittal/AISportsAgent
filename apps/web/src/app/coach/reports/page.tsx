@@ -1,0 +1,212 @@
+'use client';
+
+import { useState } from 'react';
+import { FileText, Download, TrendingUp, BarChart3 } from 'lucide-react';
+
+interface Report {
+  id: string;
+  title: string;
+  type: 'weekly' | 'monthly';
+  dateRange: string;
+  generatedAt: Date;
+  keyInsights: string[];
+  readinessAvg: number;
+  performanceCorrelation?: string;
+}
+
+export default function ReportsPage() {
+  const [reports] = useState<Report[]>([
+    {
+      id: '1',
+      title: 'Weekly Readiness Summary',
+      type: 'weekly',
+      dateRange: 'Dec 23-29, 2025',
+      generatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      keyInsights: [
+        'Team avg readiness: 72/100 (↓6 points from last week)',
+        '3 athletes in high-risk category (readiness <50)',
+        'Finals week pattern detected - stress up 45%, sleep down 2.1hrs',
+        'Sarah Johnson forecast: decline to 56/100 by game day (7 days)',
+      ],
+      readinessAvg: 72,
+      performanceCorrelation: 'r=0.78 between readiness & points scored',
+    },
+    {
+      id: '2',
+      title: 'Monthly Performance Correlation',
+      type: 'monthly',
+      dateRange: 'December 2025',
+      generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      keyInsights: [
+        'When readiness >85: Team scores avg 78 PPG',
+        'When readiness <70: Team scores avg 62 PPG (-16 PPG)',
+        'Sarah Johnson: r=0.82 correlation between readiness & individual PPG',
+        'Sleep quality strongest predictor of next-day performance (r=0.71)',
+      ],
+      readinessAvg: 75,
+      performanceCorrelation: 'Strong correlation found (r=0.78, p<0.01)',
+    },
+    {
+      id: '3',
+      title: 'Intervention Outcomes Report',
+      type: 'monthly',
+      dateRange: 'December 2025',
+      generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      keyInsights: [
+        '12 interventions completed this month',
+        '9 athletes improved readiness after intervention (75% success rate)',
+        'Avg readiness improvement: +18 points post-intervention',
+        'Most effective: sleep optimization coaching (+22 points avg)',
+      ],
+      readinessAvg: 78,
+    },
+  ]);
+
+  const getReadinessColor = (score: number) => {
+    if (score >= 85) return 'text-green-600 dark:text-green-400';
+    if (score >= 70) return 'text-yellow-600 dark:text-yellow-400';
+    if (score >= 50) return 'text-orange-600 dark:text-orange-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Reports
+            </h1>
+            <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Readiness analytics, performance correlations, and insights</p>
+          </div>
+          <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform">
+            <FileText className="w-5 h-5" />
+            Generate Custom Report
+          </button>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Total Reports</div>
+                <div className="text-5xl font-black mb-2">{reports.length}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Last 30 days</div>
+              </div>
+              <div className="text-6xl opacity-20">📊</div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Avg Readiness</div>
+                <div className="text-5xl font-black mb-2">75<span className="text-2xl opacity-75">/100</span></div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">This month</div>
+              </div>
+              <div className="text-6xl opacity-20">🎯</div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Correlation</div>
+                <div className="text-5xl font-black mb-2">r=0.78</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Readiness ↔ Performance</div>
+              </div>
+              <div className="text-6xl opacity-20">📈</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reports List */}
+        <div className="space-y-6">
+          {reports.map((report) => (
+            <div key={report.id} className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all">
+              <div className="p-8">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-2xl font-black text-foreground dark:text-gray-100">{report.title}</h3>
+                      <span className="px-3 py-1 rounded-xl text-xs font-black uppercase bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        {report.type}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
+                      <span>📅 {report.dateRange}</span>
+                      <span>•</span>
+                      <span>Generated {new Date(report.generatedAt).toLocaleDateString()}</span>
+                      {report.performanceCorrelation && (
+                        <>
+                          <span>•</span>
+                          <span className="font-semibold text-blue-600 dark:text-blue-400">{report.performanceCorrelation}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`text-5xl font-black ${getReadinessColor(report.readinessAvg)}`}>
+                    {report.readinessAvg}
+                    <span className="text-xl opacity-75">/100</span>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-l-4 border-blue-500 p-6 rounded-lg mb-6">
+                  <h4 className="font-black text-foreground dark:text-gray-100 mb-3 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    Key Insights
+                  </h4>
+                  <ul className="space-y-2">
+                    {report.keyInsights.map((insight, idx) => (
+                      <li key={idx} className="text-sm text-foreground dark:text-gray-200 font-semibold flex items-start gap-2">
+                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                        <span>{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex gap-3">
+                  <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold hover:scale-105 transform">
+                    <FileText className="w-4 h-4" />
+                    View Full Report
+                  </button>
+                  <button className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 rounded-xl hover:shadow-lg transition-all font-bold hover:scale-105 transform hover:bg-gray-50 dark:hover:bg-gray-600">
+                    <Download className="w-4 h-4" />
+                    Export PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recommendation Card */}
+        <div className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-2xl shadow-xl p-8 border-2 border-purple-200 dark:border-purple-800 mt-10">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+              <BarChart3 className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-purple-900 dark:text-purple-200 mb-2">Performance Correlation Insights</h3>
+              <p className="text-purple-800 dark:text-purple-300 font-semibold mb-4">
+                Strong correlation (r=0.78, p&lt;0.01) found between mental readiness scores and game performance.
+                This is your competitive edge - use readiness forecasts to optimize lineups and interventions.
+              </p>
+              <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border-2 border-purple-300 dark:border-purple-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-purple-900 dark:text-purple-200">
+                  <div>✅ When readiness &gt;85: Avg 78 PPG</div>
+                  <div>⚠️ When readiness &lt;70: Avg 62 PPG (-16 PPG)</div>
+                  <div>🎯 Top performer correlation: r=0.82</div>
+                  <div>😴 Sleep quality strongest predictor: r=0.71</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

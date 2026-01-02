@@ -44,8 +44,9 @@ export default function CoachAssignmentsPage() {
   };
 
   const getSubmissionStats = (assignment: Assignment) => {
-    const total = assignment.submissions.length;
-    const submitted = assignment.submissions.filter(s => s.status !== 'PENDING').length;
+    const submissions = assignment.submissions || [];
+    const total = submissions.length;
+    const submitted = submissions.filter(s => s.status !== 'PENDING').length;
     const pending = total - submitted;
     return { total, submitted, pending };
   };
@@ -62,54 +63,50 @@ export default function CoachAssignmentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Assignments
-              </h1>
-              <p className="mt-2 text-muted-foreground">
-                Create and manage assignments for your athletes
-              </p>
-            </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              + Create Assignment
-            </button>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-10">
+          <div>
+            <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Assignments
+            </h1>
+            <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">
+              Create and manage assignments for your athletes
+            </p>
           </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform"
+          >
+            📝 Create Assignment
+          </button>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            <p className="mt-4 text-muted-foreground">Loading assignments...</p>
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
+            <p className="mt-6 text-muted-foreground dark:text-gray-400 font-semibold text-lg">Loading assignments...</p>
           </div>
         ) : assignments.length === 0 ? (
-          <div className="bg-card rounded-lg shadow p-12 text-center">
-            <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
+          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl p-16 text-center border border-gray-100 dark:border-gray-700">
+            <div className="text-8xl mb-6">📋</div>
+            <h3 className="text-3xl font-black text-foreground dark:text-gray-100 mb-4">
               No assignments yet
             </h3>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground dark:text-gray-400 text-lg mb-8 max-w-md mx-auto">
               Create your first assignment to get started with athlete check-ins and journaling.
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg hover:scale-105 transform"
             >
-              Create First Assignment
+              📝 Create First Assignment
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {assignments.map((assignment) => {
               const stats = getSubmissionStats(assignment);
               const overdue = isOverdue(assignment.dueDate);
@@ -118,38 +115,38 @@ export default function CoachAssignmentsPage() {
                 <Link
                   key={assignment.id}
                   href={`/coach/assignments/${assignment.id}`}
-                  className="block bg-card rounded-lg shadow hover:shadow-lg transition-shadow p-6"
+                  className="block bg-card dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all p-8 border border-gray-100 dark:border-gray-700 hover:scale-102 transform"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <span className="text-2xl">📋</span>
+                      <div className="flex items-start gap-6">
+                        <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                          <span className="text-3xl">📋</span>
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-foreground mb-1">
+                          <h3 className="text-2xl font-black text-foreground dark:text-gray-100 mb-2">
                             {assignment.title}
                           </h3>
-                          <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                          <p className="text-muted-foreground dark:text-gray-400 text-base mb-4 line-clamp-2 font-semibold">
                             {assignment.description}
                           </p>
 
-                          <div className="flex flex-wrap items-center gap-3 text-sm">
+                          <div className="flex flex-wrap items-center gap-3">
                             {/* Submission Stats */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground">Submissions:</span>
-                              <span className="font-medium text-green-600">
+                            <div className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 px-4 py-2 rounded-xl border-2 border-green-200 dark:border-green-800">
+                              <span className="text-sm font-bold text-green-900 dark:text-green-200">Submissions:</span>
+                              <span className="text-lg font-black text-green-600 dark:text-green-400">
                                 {stats.submitted}
                               </span>
-                              <span className="text-muted-foreground">/</span>
-                              <span className="font-medium text-muted-foreground">
+                              <span className="text-sm font-bold text-green-900 dark:text-green-200">/</span>
+                              <span className="text-lg font-black text-green-900 dark:text-green-200">
                                 {stats.total}
                               </span>
                             </div>
 
                             {/* Pending Count */}
                             {stats.pending > 0 && (
-                              <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                              <span className="px-4 py-2 bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-xl text-sm font-black shadow border-2 border-amber-200 dark:border-amber-800">
                                 {stats.pending} pending
                               </span>
                             )}
@@ -157,10 +154,10 @@ export default function CoachAssignmentsPage() {
                             {/* Due Date */}
                             {assignment.dueDate && (
                               <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
                                   overdue
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-blue-100 text-blue-700'
+                                    ? 'bg-red-100 text-red-800 border-red-200'
+                                    : 'bg-blue-100 text-blue-800 border-blue-200'
                                 }`}
                               >
                                 {overdue ? '⚠️ ' : '📅 '}
@@ -170,7 +167,7 @@ export default function CoachAssignmentsPage() {
 
                             {/* Target Info */}
                             {assignment.targetSport && (
-                              <span className="px-2 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium">
+                              <span className="px-4 py-2 bg-purple-100 text-purple-800 rounded-xl text-sm font-black shadow border-2 border-purple-200">
                                 {assignment.targetSport}
                               </span>
                             )}
@@ -200,18 +197,18 @@ export default function CoachAssignmentsPage() {
             })}
           </div>
         )}
-      </div>
 
-      {/* Create Assignment Modal */}
-      {showCreateModal && (
-        <CreateAssignmentModal
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={() => {
-            setShowCreateModal(false);
-            loadAssignments();
-          }}
-        />
-      )}
+        {/* Create Assignment Modal */}
+        {showCreateModal && (
+          <CreateAssignmentModal
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={() => {
+              setShowCreateModal(false);
+              loadAssignments();
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -278,20 +275,20 @@ function CreateAssignmentModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-100">
+        <div className="p-8 border-b-2 border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-foreground">
+            <h2 className="text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Create Assignment
             </h2>
             <button
               onClick={onClose}
-              className="text-muted-foreground hover:text-muted-foreground"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
               type="button"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -383,20 +380,20 @@ function CreateAssignmentModal({
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-border text-muted-foreground rounded-lg hover:bg-background transition-colors font-medium"
+              className="flex-1 px-6 py-4 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-bold text-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transform"
             >
-              {isSubmitting ? 'Creating...' : 'Create Assignment'}
+              {isSubmitting ? 'Creating...' : '✅ Create Assignment'}
             </button>
           </div>
         </form>

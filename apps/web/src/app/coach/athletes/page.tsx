@@ -1,467 +1,384 @@
-// TODO: Re-implement auth after Supabase migration
-// import { auth } from '@/app/api/auth/[...nextauth]/route';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Search, User, Calendar, TrendingDown, MessageSquare, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
 
-export default async function CoachAthletesPage() {
-  // TODO: Re-implement auth check after Supabase migration
-  // For now, using hardcoded coach ID until Supabase auth is implemented
-  const tempCoachId = 'temp-coach-id';
+type RiskLevel = 'critical' | 'warning' | 'good' | 'no-data';
 
-  try {
-    // Get coach's school
-    const coach = await prisma.user.findFirst({
-      where: { role: 'COACH' },
-      include: { School: true },
-    });
+interface Athlete {
+  id: string;
+  name: string;
+  sport: string;
+  year: string;
+  riskLevel: RiskLevel;
+  lastCheckIn: Date | null;
+  moodScore: number | null;
+  concern: string;
+  missedCheckIns: number;
+}
 
-    if (!coach) {
-      return <div>No coach found. Please set up a coach account.</div>;
+export default function AthletesPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | RiskLevel>('all');
+
+  // Mock data - will be replaced with API call
+  const [athletes] = useState<Athlete[]>([
+    {
+      id: 'alex-martinez',
+      name: 'Alex Martinez',
+      sport: 'Basketball',
+      year: 'Junior',
+      riskLevel: 'critical',
+      lastCheckIn: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      moodScore: null,
+      concern: 'Missed 3 check-ins consecutively',
+      missedCheckIns: 3,
+    },
+    {
+      id: 'jordan-lee',
+      name: 'Jordan Lee',
+      sport: 'Soccer',
+      year: 'Sophomore',
+      riskLevel: 'warning',
+      lastCheckIn: new Date(),
+      moodScore: 5.0,
+      concern: 'Stress 9/10, Sleep 4hrs',
+      missedCheckIns: 0,
+    },
+    {
+      id: 'morgan-davis',
+      name: 'Morgan Davis',
+      sport: 'Track',
+      year: 'Senior',
+      riskLevel: 'warning',
+      lastCheckIn: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      moodScore: 4.5,
+      concern: 'Mood declining (8.5 → 4.5 in 3 days)',
+      missedCheckIns: 0,
+    },
+    {
+      id: 'sarah-johnson',
+      name: 'Sarah Johnson',
+      sport: 'Swimming',
+      year: 'Freshman',
+      riskLevel: 'good',
+      lastCheckIn: new Date(),
+      moodScore: 8.5,
+      concern: null,
+      missedCheckIns: 0,
+    },
+    {
+      id: 'taylor-brown',
+      name: 'Taylor Brown',
+      sport: 'Volleyball',
+      year: 'Junior',
+      riskLevel: 'good',
+      lastCheckIn: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      moodScore: 7.8,
+      concern: null,
+      missedCheckIns: 0,
+    },
+    {
+      id: 'casey-wilson',
+      name: 'Casey Wilson',
+      sport: 'Tennis',
+      year: 'Sophomore',
+      riskLevel: 'warning',
+      lastCheckIn: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      moodScore: 6.2,
+      concern: 'Sleep average 5.2hrs over 7 days',
+      missedCheckIns: 0,
+    },
+  ]);
+
+  const getRiskColor = (level: RiskLevel) => {
+    switch (level) {
+      case 'critical':
+        return {
+          bg: 'bg-red-50 dark:bg-red-900/20',
+          border: 'border-red-200 dark:border-red-800',
+          dot: 'bg-red-500',
+          text: 'text-red-900 dark:text-red-200',
+          badge: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200',
+        };
+      case 'warning':
+        return {
+          bg: 'bg-orange-50 dark:bg-orange-900/20',
+          border: 'border-orange-200 dark:border-orange-800',
+          dot: 'bg-orange-500',
+          text: 'text-orange-900 dark:text-orange-200',
+          badge: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200',
+        };
+      case 'good':
+        return {
+          bg: 'bg-green-50 dark:bg-green-900/20',
+          border: 'border-green-200 dark:border-green-800',
+          dot: 'bg-green-500',
+          text: 'text-green-900 dark:text-green-200',
+          badge: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200',
+        };
+      case 'no-data':
+        return {
+          bg: 'bg-gray-50 dark:bg-gray-900/20',
+          border: 'border-gray-200 dark:border-gray-700',
+          dot: 'bg-gray-400',
+          text: 'text-gray-900 dark:text-gray-200',
+          badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+        };
     }
-
-    // Get all athletes from the same school
-    const athletes = await prisma.user.findMany({
-      where: {
-        role: 'ATHLETE',
-        schoolId: coach.schoolId,
-      },
-      include: {
-        Athlete: {
-          include: {
-            MoodLog: {
-              orderBy: { createdAt: 'desc' },
-              take: 7, // Last 7 days
-            },
-            ChatSummary: {
-              orderBy: { generatedAt: 'desc' },
-              take: 1, // Most recent summary
-            },
-          },
-        },
-      },
-      orderBy: { name: 'asc' },
-    });
-
-    // Calculate metrics for each athlete
-    const athleteMetrics = athletes.map((athlete) => {
-      const recentMoods = athlete.Athlete?.MoodLog || [];
-
-    if (recentMoods.length === 0) {
-      return {
-        ...athlete,
-        avgMood: 0,
-        avgStress: 0,
-        avgConfidence: 0,
-        trend: 'neutral' as const,
-        riskLevel: 'LOW' as const,
-      };
-    }
-
-    const avgMood = recentMoods.reduce((sum, log) => sum + log.mood, 0) / recentMoods.length;
-    const avgStress = recentMoods.reduce((sum, log) => sum + log.stress, 0) / recentMoods.length;
-    const avgConfidence = recentMoods.reduce((sum, log) => sum + log.confidence, 0) / recentMoods.length;
-
-    // Calculate trend (comparing first half vs second half of recent logs)
-    const midpoint = Math.floor(recentMoods.length / 2);
-    const recentAvg = recentMoods.slice(0, midpoint).reduce((sum, log) => sum + log.mood, 0) / Math.max(midpoint, 1);
-    const olderAvg = recentMoods.slice(midpoint).reduce((sum, log) => sum + log.mood, 0) / Math.max(recentMoods.length - midpoint, 1);
-    const trend = recentAvg > olderAvg + 0.5 ? 'improving' : recentAvg < olderAvg - 0.5 ? 'declining' : 'neutral';
-
-    // Determine risk level based on mood and stress
-    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
-    if (avgMood < 4 || avgStress > 7) {
-      riskLevel = 'HIGH';
-    } else if (avgMood < 5 || avgStress > 6) {
-      riskLevel = 'MEDIUM';
-    }
-
-    // Critical if very low mood or very high stress
-    if (avgMood < 3 || avgStress > 8) {
-      riskLevel = 'CRITICAL';
-    }
-
-    return {
-      ...athlete,
-      avgMood: Math.round(avgMood * 10) / 10,
-      avgStress: Math.round(avgStress * 10) / 10,
-      avgConfidence: Math.round(avgConfidence * 10) / 10,
-      trend,
-      riskLevel,
-    };
-  });
-
-  // Sort by risk level (CRITICAL first, then HIGH, MEDIUM, LOW)
-  const riskOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-  const sortedAthletes = athleteMetrics.sort((a, b) => riskOrder[a.riskLevel] - riskOrder[b.riskLevel]);
-
-  // Count by risk level
-  const riskCounts = {
-    CRITICAL: sortedAthletes.filter((a) => a.riskLevel === 'CRITICAL').length,
-    HIGH: sortedAthletes.filter((a) => a.riskLevel === 'HIGH').length,
-    MEDIUM: sortedAthletes.filter((a) => a.riskLevel === 'MEDIUM').length,
-    LOW: sortedAthletes.filter((a) => a.riskLevel === 'LOW').length,
   };
 
+  const getTimeAgo = (date: Date | null) => {
+    if (!date) return 'Never';
+
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 172800) return 'Yesterday';
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  const filteredAthletes = athletes
+    .filter(athlete => {
+      const matchesSearch = athlete.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          athlete.sport.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesFilter = filter === 'all' || athlete.riskLevel === filter;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      // Sort by risk level: critical > warning > good > no-data
+      const riskOrder = { critical: 0, warning: 1, good: 2, 'no-data': 3 };
+      return riskOrder[a.riskLevel] - riskOrder[b.riskLevel];
+    });
+
+  const criticalCount = athletes.filter(a => a.riskLevel === 'critical').length;
+  const warningCount = athletes.filter(a => a.riskLevel === 'warning').length;
+  const goodCount = athletes.filter(a => a.riskLevel === 'good').length;
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Team Roster
-              </h1>
-              <p className="mt-2 text-muted-foreground">
-                {coach.School.name} - {athletes.length} Athletes
-              </p>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Athletes
+          </h1>
+          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Quick status overview with readiness tracking</p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Total Athletes</div>
+                <div className="text-5xl font-black mb-2">{athletes.length}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Active roster</div>
+              </div>
+              <div className="text-6xl opacity-20">👥</div>
             </div>
-            <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-background">
-                ← Back to Dashboard
-              </button>
-            </Link>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-red-100 text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
+                <div className="text-5xl font-black mb-2">{criticalCount}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Immediate attention</div>
+              </div>
+              <div className="text-6xl opacity-20">🚨</div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Warning</div>
+                <div className="text-5xl font-black mb-2">{warningCount}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Monitor closely</div>
+              </div>
+              <div className="text-6xl opacity-20">⚠️</div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Good</div>
+                <div className="text-5xl font-black mb-2">{goodCount}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Doing well</div>
+              </div>
+              <div className="text-6xl opacity-20">✅</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 mb-8">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search by name or sport..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-foreground dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filter === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              All ({athletes.length})
+            </button>
+            <button
+              onClick={() => setFilter('critical')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filter === 'critical'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              🔴 Critical
+            </button>
+            <button
+              onClick={() => setFilter('warning')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filter === 'warning'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              🟡 Warning
+            </button>
+            <button
+              onClick={() => setFilter('good')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filter === 'good'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              🟢 Good
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Risk Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border-2 border-red-200 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-red-700">{riskCounts.CRITICAL}</div>
-                <div className="text-sm text-red-600 mt-1">Critical Risk</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-orange-200 bg-orange-50">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-orange-700">{riskCounts.HIGH}</div>
-                <div className="text-sm text-orange-600 mt-1">High Risk</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-yellow-200 bg-yellow-50">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-yellow-700">{riskCounts.MEDIUM}</div>
-                <div className="text-sm text-yellow-600 mt-1">Medium Risk</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-700">{riskCounts.LOW}</div>
-                <div className="text-sm text-green-600 mt-1">Low Risk</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Athletes List */}
+      <div className="space-y-3">
+        {filteredAthletes.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No athletes found</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Try adjusting your search or filter</p>
+          </div>
+        ) : (
+          filteredAthletes.map((athlete) => {
+            const colors = getRiskColor(athlete.riskLevel);
+            return (
+              <div
+                key={athlete.id}
+                className={`${colors.bg} border ${colors.border} rounded-lg p-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow`}
+              >
+                <div className="flex items-center gap-4 flex-1">
+                  {/* Status Dot */}
+                  <div className={`w-3 h-3 ${colors.dot} rounded-full flex-shrink-0`}></div>
 
-        {/* Athletes Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Athlete Mental Performance Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sortedAthletes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-background border-b-2 border-border">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                        Athlete
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                        Sport
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                        Position
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                        Avg Mood (7d)
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                        Avg Stress (7d)
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                        Confidence
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                        Trend
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                        Risk Level
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {sortedAthletes.map((athlete) => (
-                      <tr key={athlete.id} className="hover:bg-background transition-colors">
-                        <td className="px-4 py-4">
-                          <div className="font-medium text-foreground">{athlete.name}</div>
-                          <div className="text-sm text-muted-foreground">{athlete.Athlete?.year || 'N/A'}</div>
-                        </td>
-                        <td className="px-4 py-4 text-sm text-muted-foreground">
-                          {athlete.Athlete?.sport || 'N/A'}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-muted-foreground">
-                          {athlete.Athlete?.teamPosition || 'N/A'}
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <span className={`font-semibold ${
-                            athlete.avgMood >= 7 ? 'text-green-600' :
-                            athlete.avgMood >= 5 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {athlete.avgMood > 0 ? athlete.avgMood.toFixed(1) : '--'}/10
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <span className={`font-semibold ${
-                            athlete.avgStress <= 4 ? 'text-green-600' :
-                            athlete.avgStress <= 6 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {athlete.avgStress > 0 ? athlete.avgStress.toFixed(1) : '--'}/10
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <span className="text-sm text-muted-foreground">
-                            {athlete.avgConfidence > 0 ? athlete.avgConfidence.toFixed(1) : '--'}/10
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center justify-center">
-                            {athlete.trend === 'improving' && (
-                              <div className="flex items-center gap-1 text-green-600">
-                                <TrendingUp className="size-4" />
-                                <span className="text-xs font-medium">Improving</span>
-                              </div>
-                            )}
-                            {athlete.trend === 'declining' && (
-                              <div className="flex items-center gap-1 text-red-600">
-                                <TrendingDown className="size-4" />
-                                <span className="text-xs font-medium">Declining</span>
-                              </div>
-                            )}
-                            {athlete.trend === 'neutral' && (
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <Minus className="size-4" />
-                                <span className="text-xs font-medium">Stable</span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <Badge
-                              variant={
-                                athlete.riskLevel === 'CRITICAL' ? 'destructive' :
-                                athlete.riskLevel === 'HIGH' ? 'destructive' :
-                                athlete.riskLevel === 'MEDIUM' ? 'secondary' :
-                                'secondary'
-                              }
-                              className={
-                                athlete.riskLevel === 'CRITICAL' ? 'bg-red-600' :
-                                athlete.riskLevel === 'HIGH' ? 'bg-orange-500' :
-                                athlete.riskLevel === 'MEDIUM' ? 'bg-yellow-500' :
-                                'bg-green-500'
-                              }
-                            >
-                              {athlete.riskLevel}
-                            </Badge>
-                            {(athlete.riskLevel === 'CRITICAL' || athlete.riskLevel === 'HIGH') && (
-                              <AlertCircle className="size-4 text-red-500" />
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No athletes found in your school.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Chat Summaries Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly Chat Summaries</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Summaries are only shown for athletes who have granted consent in their settings.
-            </p>
-          </CardHeader>
-          <CardContent>
-            {(() => {
-              const athletesWithConsent = sortedAthletes.filter(
-                (a) => a.Athlete?.consentChatSummaries === true
-              );
-
-              if (athletesWithConsent.length === 0) {
-                return (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-3">🔒</div>
-                    <p className="text-muted-foreground">
-                      No athletes have consented to share chat summaries yet.
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Athletes can enable sharing in their Settings {'>'} Privacy & Coach Access
-                    </p>
-                  </div>
-                );
-              }
-
-              return (
-                <div className="space-y-4">
-                  {athletesWithConsent.map((athlete) => {
-                    const latestSummary = athlete.Athlete?.ChatSummary?.[0];
-
-                    return (
-                      <div
-                        key={athlete.id}
-                        className="border border-border rounded-lg p-4 hover:border-purple-300 transition-colors"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-semibold text-foreground">{athlete.name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {athlete.Athlete?.sport} • {athlete.Athlete?.year}
-                            </p>
-                          </div>
-                          {latestSummary ? (
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(latestSummary.generatedAt).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">No recent summary</span>
-                          )}
-                        </div>
-
-                        {latestSummary ? (
-                          <>
-                            {/* Summary Text */}
-                            <div className="bg-background rounded-lg p-3 mb-3">
-                              <p className="text-sm text-muted-foreground leading-relaxed">
-                                {latestSummary.summary}
-                              </p>
-                            </div>
-
-                            {/* Key Themes */}
-                            {latestSummary.keyThemes && Array.isArray(latestSummary.keyThemes) && latestSummary.keyThemes.length > 0 && (
-                              <div className="mb-3">
-                                <p className="text-xs font-medium text-muted-foreground mb-2">Key Themes:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {(latestSummary.keyThemes as string[]).map((theme, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
-                                    >
-                                      {theme}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Emotional State */}
-                            {latestSummary.emotionalState && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-muted-foreground">Emotional State:</span>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    latestSummary.emotionalState === 'positive'
-                                      ? 'bg-green-100 text-green-700'
-                                      : latestSummary.emotionalState === 'negative'
-                                      ? 'bg-red-100 text-red-700'
-                                      : latestSummary.emotionalState === 'mixed'
-                                      ? 'bg-yellow-100 text-yellow-700'
-                                      : 'bg-muted text-muted-foreground'
-                                  }`}
-                                >
-                                  {latestSummary.emotionalState === 'positive' && '😊 Positive'}
-                                  {latestSummary.emotionalState === 'negative' && '😔 Struggling'}
-                                  {latestSummary.emotionalState === 'mixed' && '😐 Mixed'}
-                                  {latestSummary.emotionalState === 'neutral' && '😐 Neutral'}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Action Items */}
-                            {latestSummary.actionItems && Array.isArray(latestSummary.actionItems) && latestSummary.actionItems.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-border">
-                                <p className="text-xs font-medium text-muted-foreground mb-2">Follow-up Items:</p>
-                                <ul className="space-y-1">
-                                  {(latestSummary.actionItems as string[]).map((item, idx) => (
-                                    <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
-                                      <span className="text-purple-500 mt-0.5">•</span>
-                                      <span>{item}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="text-center py-4">
-                            <p className="text-sm text-muted-foreground">No chat sessions this week</p>
-                          </div>
-                        )}
+                  {/* Athlete Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className={`font-semibold ${colors.text}`}>{athlete.name}</h3>
+                      {athlete.riskLevel === 'critical' && (
+                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <span>{athlete.sport}</span>
+                      <span>•</span>
+                      <span>{athlete.year}</span>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>Last check-in: {getTimeAgo(athlete.lastCheckIn)}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </CardContent>
-        </Card>
+                    </div>
+                  </div>
 
-        {/* Help Text */}
-        {riskCounts.CRITICAL > 0 || riskCounts.HIGH > 0 ? (
-          <Card className="border-2 border-orange-200 bg-orange-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="size-6 text-orange-600 mt-0.5 shrink-0" />
-                <div>
-                  <h3 className="font-semibold text-orange-900 mb-2">Action Recommended</h3>
-                  <p className="text-sm text-orange-800">
-                    You have {riskCounts.CRITICAL + riskCounts.HIGH} athlete(s) showing signs of elevated mental health risk.
-                    Consider reaching out for a one-on-one check-in or reviewing their recent chat sessions for more context.
-                  </p>
+                  {/* Status Info */}
+                  <div className="hidden md:block text-right min-w-[200px]">
+                    {athlete.moodScore !== null && (
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                        Mental health: {athlete.moodScore.toFixed(1)}/10
+                      </div>
+                    )}
+                    {athlete.concern && (
+                      <div className={`text-sm ${athlete.riskLevel === 'critical' ? 'text-red-700 dark:text-red-300' : athlete.riskLevel === 'warning' ? 'text-orange-700 dark:text-orange-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                        {athlete.concern}
+                      </div>
+                    )}
+                    {!athlete.concern && athlete.riskLevel === 'good' && (
+                      <div className="text-sm text-green-700 dark:text-green-300">All indicators healthy</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2">
+                  {athlete.riskLevel === 'critical' && (
+                    <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm whitespace-nowrap">
+                      Reach Out
+                    </button>
+                  )}
+                  {athlete.riskLevel === 'warning' && (
+                    <Link
+                      href={`/coach/athletes/${athlete.id}`}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium text-sm text-center whitespace-nowrap"
+                    >
+                      View Details
+                    </Link>
+                  )}
+                  {athlete.riskLevel === 'good' && (
+                    <Link
+                      href={`/coach/athletes/${athlete.id}`}
+                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium text-sm text-center whitespace-nowrap"
+                    >
+                      View Profile
+                    </Link>
+                  )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ) : null}
+            );
+          })
+        )}
+      </div>
+
+        {/* Mobile Concern Display */}
+        {filteredAthletes.some(a => a.concern) && (
+          <div className="md:hidden bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 mt-8">
+            <h3 className="text-xl font-black text-foreground dark:text-gray-100 mb-4">Recent Concerns</h3>
+            <div className="space-y-3">
+              {filteredAthletes
+                .filter(a => a.concern)
+                .map(athlete => (
+                  <div key={athlete.id} className="text-sm">
+                    <span className="font-bold text-foreground dark:text-gray-100">{athlete.name}:</span>{' '}
+                    <span className="text-muted-foreground dark:text-gray-400">{athlete.concern}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
-    );
-  } catch (error) {
-    console.error('Error loading athletes page:', error);
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Error Loading Athletes</h2>
-          <p className="text-muted-foreground">Please try again later or contact support.</p>
-        </div>
-      </div>
-    );
-  }
+  );
 }

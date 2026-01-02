@@ -224,138 +224,145 @@ export default function StudentAssignmentsPage() {
     const isSubmitted = status !== 'PENDING';
 
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Back Button */}
-        <Button onClick={handleBack} variant="ghost" className="gap-2">
-          <ChevronLeft className="w-4 h-4" />
-          Back to Tasks
-        </Button>
+      <div className="min-h-screen">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+          {/* Back Button */}
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            Back to Assignments
+          </button>
 
-        {/* Assignment Details Card */}
-        <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
-          <CardContent className="pt-6 space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">
+          {/* Assignment Details Card */}
+          <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl shadow-xl p-8 border-2 border-purple-200">
+            <div className="space-y-4">
+              <h2 className="text-4xl font-black text-purple-900">
                 {selectedAssignment.title}
               </h2>
               {selectedAssignment.dueDate && (
                 <div
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black shadow ${
                     isOverdue(selectedAssignment.dueDate)
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-yellow-100 text-yellow-700'
+                      ? 'bg-red-100 text-red-700 border-2 border-red-200'
+                      : 'bg-amber-100 text-amber-700 border-2 border-amber-200'
                   }`}
                 >
                   {isOverdue(selectedAssignment.dueDate) ? (
-                    <AlertTriangle className="w-4 h-4" />
+                    <AlertTriangle className="w-5 h-5" />
                   ) : (
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-5 h-5" />
                   )}
                   {formatDueDate(selectedAssignment.dueDate)}
                 </div>
               )}
-            </div>
 
-            <p className="text-muted-foreground leading-relaxed">
-              {selectedAssignment.description}
-            </p>
+              <p className="text-purple-900 leading-relaxed text-lg font-semibold">
+                {selectedAssignment.description}
+              </p>
 
-            <div className="flex items-center gap-3">
-              <Badge className={getStatusColor(status)}>{getStatusText(status)}</Badge>
-              {submission?.submittedAt && (
-                <span className="text-sm text-muted-foreground">
-                  Submitted {new Date(submission.submittedAt).toLocaleDateString()}
+              <div className="flex items-center gap-4 flex-wrap">
+                <span className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
+                  status === 'PENDING'
+                    ? 'bg-amber-100 text-amber-800 border-amber-200'
+                    : status === 'SUBMITTED'
+                    ? 'bg-green-100 text-green-800 border-green-200'
+                    : 'bg-purple-100 text-purple-800 border-purple-200'
+                }`}>
+                  {getStatusText(status)}
                 </span>
+                {submission?.submittedAt && (
+                  <span className="text-base text-purple-800 font-bold flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Submitted {new Date(submission.submittedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Response Card */}
+          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
+            <div className="p-8 border-b-2 border-gray-100 dark:border-gray-700">
+              <h3 className="text-2xl font-black text-foreground">Your Response</h3>
+              {isSubmitted && (
+                <p className="text-base text-muted-foreground mt-2 font-semibold">
+                  You can edit and resubmit if needed
+                </p>
               )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Response Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Response</CardTitle>
-            {isSubmitted && (
-              <CardDescription className="text-primary">
-                Tap to edit and resubmit if needed
-              </CardDescription>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              value={responseText}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setResponseText(e.target.value)}
-              placeholder="Enter your response here..."
-              className="min-h-[250px] resize-none"
-              disabled={isSubmitting}
-            />
-
-            <div className="flex gap-3">
-              <Button
-                onClick={handleBack}
-                variant="outline"
-                className="flex-1"
+            <div className="p-8 space-y-6">
+              <Textarea
+                value={responseText}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setResponseText(e.target.value)}
+                placeholder="Enter your response here..."
+                className="min-h-[250px] resize-none text-base font-medium"
                 disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !responseText.trim()}
-                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    {isSubmitted ? 'Update Response' : 'Submit'}
-                  </>
-                )}
-              </Button>
+              />
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleBack}
+                  className="flex-1 px-6 py-4 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-bold text-lg disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !responseText.trim()}
+                  className="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transform flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      {isSubmitted ? 'Update Response' : 'Submit'}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   // Assignment List View
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <ClipboardList className="w-8 h-8 text-purple-600" />
-            Tasks
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Assignments
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">
             {pendingAssignments.length} pending task
             {pendingAssignments.length !== 1 ? 's' : ''}
           </p>
         </div>
-      </div>
 
-      {assignments.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <ClipboardList className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No tasks yet</h3>
-            <p className="text-muted-foreground">
+        {assignments.length === 0 ? (
+          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl p-16 text-center border border-gray-100 dark:border-gray-700">
+            <div className="text-8xl mb-6">📋</div>
+            <h3 className="text-3xl font-black text-foreground mb-4">No tasks yet</h3>
+            <p className="text-lg text-muted-foreground">
               Tasks from your coach will appear here
             </p>
-          </CardContent>
-        </Card>
-      ) : (
+          </div>
+        ) : (
         <>
           {/* Pending Assignments */}
           {pendingAssignments.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+            <div className="space-y-6 mb-10">
+              <h2 className="text-2xl font-black text-foreground uppercase tracking-wide">
                 Pending
               </h2>
               {pendingAssignments.map((assignment) => (
@@ -370,8 +377,8 @@ export default function StudentAssignmentsPage() {
 
           {/* Submitted Assignments */}
           {submittedAssignments.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+            <div className="space-y-6 mb-10">
+              <h2 className="text-2xl font-black text-foreground uppercase tracking-wide">
                 Completed
               </h2>
               {submittedAssignments.map((assignment) => (
@@ -386,43 +393,46 @@ export default function StudentAssignmentsPage() {
         </>
       )}
 
-      {/* Tips Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-        <CardContent className="pt-6">
-          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-primary" />
-            Task Tips
-          </h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Be honest:</strong> Your responses help your coach understand how to
-                support you better
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Be specific:</strong> Include concrete examples and details
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Take your time:</strong> Thoughtful reflection leads to better insights
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Ask questions:</strong> Use tasks as opportunities to discuss
-                challenges with your coach
-              </span>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+        {/* Tips Card */}
+        <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl shadow-xl p-8 border-2 border-blue-200">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+              <FileText className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-blue-900 mb-4">Assignment Tips</h3>
+              <ul className="space-y-3 text-blue-800 font-semibold">
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
+                  <span>
+                    <strong className="font-black">Be honest:</strong> Your responses help your coach understand how to
+                    support you better
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
+                  <span>
+                    <strong className="font-black">Be specific:</strong> Include concrete examples and details
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
+                  <span>
+                    <strong className="font-black">Take your time:</strong> Thoughtful reflection leads to better insights
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
+                  <span>
+                    <strong className="font-black">Ask questions:</strong> Use assignments as opportunities to discuss
+                    challenges with your coach
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -487,54 +497,74 @@ function AssignmentCard({
   };
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.01]"
+    <div
+      className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 cursor-pointer hover:shadow-2xl transition-all hover:scale-[1.02]"
       onClick={onPress}
     >
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4 flex-1">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                isPending ? 'bg-yellow-100' : 'bg-green-100'
-              }`}
-            >
-              {isPending ? (
-                <ClipboardList className="w-6 h-6 text-yellow-600" />
-              ) : (
-                <CheckCircle className="w-6 h-6 text-green-600" />
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex items-start gap-6 flex-1">
+          <div
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+              isPending
+                ? 'bg-gradient-to-br from-amber-500 to-amber-600'
+                : 'bg-gradient-to-br from-green-500 to-green-600'
+            }`}
+          >
+            {isPending ? (
+              <ClipboardList className="w-8 h-8 text-white" />
+            ) : (
+              <CheckCircle className="w-8 h-8 text-white" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-2xl font-black text-foreground mb-2">{assignment.title}</h3>
+            <p className="text-base text-muted-foreground dark:text-gray-400 line-clamp-2 mb-4 font-semibold">
+              {assignment.description}
+            </p>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
+                status === 'PENDING'
+                  ? 'bg-amber-100 text-amber-800 border-amber-200'
+                  : status === 'SUBMITTED'
+                  ? 'bg-green-100 text-green-800 border-green-200'
+                  : 'bg-purple-100 text-purple-800 border-purple-200'
+              }`}>
+                {getStatusText(status)}
+              </span>
+
+              {assignment.dueDate && (
+                <div
+                  className={`flex items-center gap-2 text-sm font-bold ${
+                    isOverdueFlag ? 'text-red-600' : 'text-gray-600'
+                  }`}
+                >
+                  {isOverdueFlag ? (
+                    <AlertTriangle className="w-4 h-4" />
+                  ) : (
+                    <Clock className="w-4 h-4" />
+                  )}
+                  {formatDueDate(assignment.dueDate)}
+                </div>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-foreground mb-1">{assignment.title}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                {assignment.description}
-              </p>
-
-              <div className="flex items-center gap-3 flex-wrap">
-                <Badge className={getStatusColor(status)}>{getStatusText(status)}</Badge>
-
-                {assignment.dueDate && (
-                  <div
-                    className={`flex items-center gap-1 text-xs ${
-                      isOverdueFlag ? 'text-red-600 font-semibold' : 'text-gray-500'
-                    }`}
-                  >
-                    {isOverdueFlag ? (
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                    ) : (
-                      <Clock className="w-3.5 h-3.5" />
-                    )}
-                    {formatDueDate(assignment.dueDate)}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
-
-          <ChevronLeft className="w-5 h-5 text-muted-foreground rotate-180 flex-shrink-0" />
         </div>
-      </CardContent>
-    </Card>
+
+        <svg
+          className="w-6 h-6 text-muted-foreground flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </div>
+    </div>
   );
 }
