@@ -15,6 +15,14 @@ interface Athlete {
   riskLevel: RiskLevel;
   lastCheckIn: Date | null;
   moodScore: number | null;
+  readinessScore: number | null;
+  baseReadiness: number | null;
+  chatContribution: number;
+  chatInsights: {
+    sentiment: 'improving' | 'stable' | 'declining';
+    themes: string[];
+    risks: string[];
+  } | null;
   concern: string | null;
   missedCheckIns: number;
 }
@@ -68,7 +76,15 @@ export default function AthletesPage() {
       riskLevel: 'critical',
       lastCheckIn: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       moodScore: null,
-      concern: 'Missed 3 check-ins consecutively',
+      readinessScore: 42,
+      baseReadiness: 48,
+      chatContribution: -6,
+      chatInsights: {
+        sentiment: 'declining',
+        themes: ['performance-anxiety', 'team-conflict'],
+        risks: ['Performance anxiety detected in recent conversations'],
+      },
+      concern: 'Performance anxiety detected in recent conversations',
       missedCheckIns: 3,
     },
     {
@@ -79,7 +95,15 @@ export default function AthletesPage() {
       riskLevel: 'warning',
       lastCheckIn: new Date(),
       moodScore: 5.0,
-      concern: 'Stress 9/10, Sleep 4hrs',
+      readinessScore: 64,
+      baseReadiness: 62,
+      chatContribution: 2,
+      chatInsights: {
+        sentiment: 'stable',
+        themes: ['academic-stress', 'recovery-rest'],
+        risks: ['Academic stress affecting mental bandwidth'],
+      },
+      concern: 'Academic stress affecting mental bandwidth',
       missedCheckIns: 0,
     },
     {
@@ -90,6 +114,14 @@ export default function AthletesPage() {
       riskLevel: 'warning',
       lastCheckIn: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       moodScore: 4.5,
+      readinessScore: 58,
+      baseReadiness: 54,
+      chatContribution: 4,
+      chatInsights: {
+        sentiment: 'improving',
+        themes: ['mindset-mental', 'goal-setting'],
+        risks: [],
+      },
       concern: 'Mood declining (8.5 → 4.5 in 3 days)',
       missedCheckIns: 0,
     },
@@ -101,6 +133,14 @@ export default function AthletesPage() {
       riskLevel: 'good',
       lastCheckIn: new Date(),
       moodScore: 8.5,
+      readinessScore: 88,
+      baseReadiness: 84,
+      chatContribution: 4,
+      chatInsights: {
+        sentiment: 'improving',
+        themes: ['competition-preparation', 'mindset-mental'],
+        risks: [],
+      },
       concern: null,
       missedCheckIns: 0,
     },
@@ -112,6 +152,10 @@ export default function AthletesPage() {
       riskLevel: 'good',
       lastCheckIn: new Date(Date.now() - 2 * 60 * 60 * 1000),
       moodScore: 7.8,
+      readinessScore: 82,
+      baseReadiness: 82,
+      chatContribution: 0,
+      chatInsights: null,
       concern: null,
       missedCheckIns: 0,
     },
@@ -123,7 +167,15 @@ export default function AthletesPage() {
       riskLevel: 'warning',
       lastCheckIn: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       moodScore: 6.2,
-      concern: 'Sleep average 5.2hrs over 7 days',
+      readinessScore: 68,
+      baseReadiness: 72,
+      chatContribution: -4,
+      chatInsights: {
+        sentiment: 'stable',
+        themes: ['recovery-rest', 'injury-concern'],
+        risks: ['Injury concerns mentioned - monitor physical readiness'],
+      },
+      concern: 'Injury concerns mentioned - monitor physical readiness',
       missedCheckIns: 0,
     },
   ];
@@ -366,18 +418,59 @@ export default function AthletesPage() {
 
                   {/* Status Info */}
                   <div className="hidden md:block text-right min-w-[200px]">
-                    {athlete.moodScore !== null && (
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                        Mental health: {athlete.moodScore.toFixed(1)}/10
+                    {athlete.readinessScore !== null && (
+                      <div className="mb-2">
+                        <div className="flex items-center justify-end gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                          <span>Readiness: {athlete.readinessScore}/100</span>
+                          {athlete.chatContribution !== 0 && (
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded ${
+                                athlete.chatContribution > 0
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                              }`}
+                            >
+                              Chat: {athlete.chatContribution > 0 ? '+' : ''}
+                              {athlete.chatContribution}
+                            </span>
+                          )}
+                        </div>
+                        {athlete.chatInsights && athlete.chatInsights.sentiment && (
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            Sentiment: {athlete.chatInsights.sentiment}
+                          </div>
+                        )}
                       </div>
                     )}
                     {athlete.concern && (
-                      <div className={`text-sm ${athlete.riskLevel === 'critical' ? 'text-red-700 dark:text-red-300' : athlete.riskLevel === 'warning' ? 'text-orange-700 dark:text-orange-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                      <div
+                        className={`text-sm ${
+                          athlete.riskLevel === 'critical'
+                            ? 'text-red-700 dark:text-red-300'
+                            : athlete.riskLevel === 'warning'
+                            ? 'text-orange-700 dark:text-orange-300'
+                            : 'text-gray-600 dark:text-gray-400'
+                        }`}
+                      >
                         {athlete.concern}
                       </div>
                     )}
+                    {athlete.chatInsights && athlete.chatInsights.themes.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1 justify-end">
+                        {athlete.chatInsights.themes.slice(0, 2).map((theme) => (
+                          <span
+                            key={theme}
+                            className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                          >
+                            {theme.replace(/-/g, ' ')}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     {!athlete.concern && athlete.riskLevel === 'good' && (
-                      <div className="text-sm text-green-700 dark:text-green-300">All indicators healthy</div>
+                      <div className="text-sm text-green-700 dark:text-green-300">
+                        All indicators healthy
+                      </div>
                     )}
                   </div>
                 </div>
