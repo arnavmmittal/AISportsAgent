@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { hash } from 'bcryptjs';
-import { calculateReadiness } from '../lib/analytics/readiness';
-import { getSportConfig } from '../lib/analytics/sport-configs';
+import { calculateReadiness } from '../src/lib/analytics/readiness';
+import { getSportConfig } from '../src/lib/analytics/sport-configs';
 
 const prisma = new PrismaClient();
 
@@ -11,20 +11,21 @@ async function main() {
   // Clear all existing data (delete in correct order to respect foreign keys)
   console.log('🗑️  Clearing existing data...');
 
+  // Delete child records first
   await prisma.chatInsight.deleteMany({});
   await prisma.gameResult.deleteMany({});
   await prisma.performanceMetric.deleteMany({});
+  await prisma.crisisAlert.deleteMany({}); // MUST come before Message
   await prisma.message.deleteMany({});
-  await prisma.chatSession.deleteMany({});
   await prisma.chatSummary.deleteMany({});
   await prisma.conversationInsight.deleteMany({});
-  await prisma.crisisAlert.deleteMany({});
+  await prisma.chatSession.deleteMany({});
   await prisma.readinessScore.deleteMany({});
   await prisma.wearableData.deleteMany({});
   await prisma.moodLog.deleteMany({});
   await prisma.goal.deleteMany({});
-  await prisma.task.deleteMany({});
   await prisma.taskPattern.deleteMany({});
+  await prisma.task.deleteMany({});
   await prisma.assignmentSubmission.deleteMany({});
   await prisma.assignment.deleteMany({});
   await prisma.coachAthleteRelation.deleteMany({});
