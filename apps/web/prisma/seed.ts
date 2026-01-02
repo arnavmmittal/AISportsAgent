@@ -530,6 +530,7 @@ async function main() {
   console.log('📚 Creating knowledge base entries...');
   const kbEntries = [
     {
+      id: 'kb-001',
       title: 'Managing Pre-Game Anxiety',
       content: 'Pre-game anxiety is normal and can be managed through breathing exercises, visualization, and positive self-talk. Research shows that controlled breathing can reduce cortisol levels by up to 20%.',
       category: 'ANXIETY',
@@ -537,6 +538,7 @@ async function main() {
       source: 'AI Sports Psych Project',
     },
     {
+      id: 'kb-002',
       title: 'Building Confidence Through Self-Talk',
       content: 'Positive self-talk has been shown to improve performance in competitive situations. Athletes who use constructive self-talk show 15% improvement in clutch situations.',
       category: 'CONFIDENCE',
@@ -544,6 +546,7 @@ async function main() {
       source: 'Sports Psychology Research',
     },
     {
+      id: 'kb-003',
       title: 'Flow State Techniques',
       content: 'Achieving flow state requires complete focus on the present moment. Elite athletes report entering flow state when challenge matches skill level perfectly.',
       category: 'FLOW_STATE',
