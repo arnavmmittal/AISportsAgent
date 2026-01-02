@@ -216,6 +216,42 @@ export async function POST(req: NextRequest) {
             );
           }
 
+          // Trigger chat analysis if session has enough messages and hasn't been analyzed recently
+          try {
+            const messageCount = await prisma.message.count({
+              where: { sessionId: session.id },
+            });
+
+            // Check if we should analyze (session has 5+ messages)
+            if (messageCount >= 5) {
+              // Check if session was analyzed in last hour
+              const recentInsight = await prisma.chatInsight.findFirst({
+                where: {
+                  sessionId: session.id,
+                  createdAt: {
+                    gte: new Date(Date.now() - 60 * 60 * 1000), // Last hour
+                  },
+                },
+              });
+
+              // Only analyze if not recently analyzed
+              if (!recentInsight) {
+                console.log(`[Chat Analysis] Triggering analysis for session ${session.id} (${messageCount} messages)`);
+
+                // Import analysis function
+                const { analyzeAndStore } = await import('@/lib/chat-analysis');
+
+                // Trigger analysis asynchronously (don't wait for it)
+                analyzeAndStore(session.id).catch((error) => {
+                  console.error(`[Chat Analysis] Failed to analyze session ${session.id}:`, error);
+                });
+              }
+            }
+          } catch (error) {
+            console.error('[Chat Analysis] Error checking if analysis needed:', error);
+            // Don't fail the request if analysis check fails
+          }
+
           // Send done event
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
           controller.close();
