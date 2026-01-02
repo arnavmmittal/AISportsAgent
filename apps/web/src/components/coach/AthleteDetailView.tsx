@@ -221,14 +221,63 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
   const { athlete, relationship, statistics, moodLogs, goals, coachNotes, crisisAlerts } = athleteData.data;
 
+  // Calculate readiness score (0-100) from mood, confidence, stress, sleep
+  const calculateReadinessScore = (mood: number, confidence: number, stress: number, sleep: number) => {
+    // Normalize all to 0-100 scale (mood, confidence, sleep are 0-10, stress is inverted)
+    const moodScore = mood * 10; // 0-10 -> 0-100
+    const confidenceScore = confidence * 10; // 0-10 -> 0-100
+    const stressScore = (10 - stress) * 10; // Inverted: low stress = high score
+    const sleepScore = (sleep / 9) * 100; // 0-9 hours -> 0-100 (9hrs = 100%)
+
+    // Weighted average: mood 25%, confidence 25%, stress 30%, sleep 20%
+    return Math.round((moodScore * 0.25) + (confidenceScore * 0.25) + (stressScore * 0.30) + (sleepScore * 0.20));
+  };
+
+  const getReadinessColor = (score: number) => {
+    if (score >= 85) return 'from-green-500 to-green-600';
+    if (score >= 70) return 'from-yellow-500 to-yellow-600';
+    if (score >= 50) return 'from-orange-500 to-orange-600';
+    return 'from-red-500 to-red-600';
+  };
+
+  // Prepare readiness data with last 14 days
+  const last14Days = moodLogs?.slice(0, 14).reverse() || [];
+  const readinessScores = last14Days.map(log =>
+    calculateReadinessScore(log.mood, log.confidence, log.stress, log.sleep)
+  );
+
+  const currentReadiness = readinessScores[readinessScores.length - 1] || 0;
+
+  // Calculate 7-day forecast (simple trend-based prediction)
+  const calculateForecast = (scores: number[]): number[] => {
+    if (scores.length < 3) return [];
+
+    // Calculate trend from last 7 days
+    const recent = scores.slice(-7);
+    const avgChange = (recent[recent.length - 1] - recent[0]) / recent.length;
+
+    // Project forward 7 days
+    let forecast: number[] = [];
+    let lastScore = recent[recent.length - 1];
+    for (let i = 1; i <= 7; i++) {
+      lastScore = Math.max(0, Math.min(100, lastScore + avgChange));
+      forecast.push(Math.round(lastScore));
+    }
+    return forecast;
+  };
+
+  const forecast = calculateForecast(readinessScores);
+
   // Prepare mood chart data
-  const chartData = moodLogs?.slice(0, 14).reverse().map((log) => {
+  const chartData = last14Days.map((log) => {
     const date = new Date(log.createdAt);
     return {
       date: `${date.getMonth() + 1}/${date.getDate()}`,
+      Readiness: calculateReadinessScore(log.mood, log.confidence, log.stress, log.sleep),
       Mood: log.mood,
       Confidence: log.confidence,
-      Stress: log.stress,
+      Stress: 10 - log.stress, // Invert for visualization
+      Sleep: log.sleep,
     };
   }) || [];
 
@@ -298,12 +347,20 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
         {/* Athlete Profile Header */}
         <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <h1 className="text-4xl font-black text-foreground mb-2">{athlete.name}</h1>
-              <p className="text-xl text-muted-foreground mb-3">{athlete.sport} • {athlete.year} • {athlete.teamPosition}</p>
-              <p className="text-sm text-muted-foreground">{athlete.email}</p>
-              <div className="mt-4 flex gap-3">
-                <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
+            <div className="flex-1">
+              <div className="flex items-center gap-4 mb-3">
+                <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{athlete.name}</h1>
+                {currentReadiness > 0 && (
+                  <div className={`bg-gradient-to-br ${getReadinessColor(currentReadiness)} rounded-2xl px-6 py-4 text-white shadow-lg`}>
+                    <div className="text-xs font-bold uppercase tracking-wider opacity-90">Readiness</div>
+                    <div className="text-4xl font-black">{currentReadiness}<span className="text-xl opacity-75">/100</span></div>
+                  </div>
+                )}
+              </div>
+              <p className="text-xl text-muted-foreground mb-3 font-semibold">{athlete.sport} • {athlete.year} • {athlete.teamPosition}</p>
+              <p className="text-sm text-muted-foreground mb-4">{athlete.email}</p>
+              <div className="flex gap-3 flex-wrap">
+                <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow ${
                   athlete.riskLevel === 'LOW'
                     ? 'bg-green-100 text-green-800'
                     : athlete.riskLevel === 'MEDIUM'
@@ -312,7 +369,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                 }`}>
                   {athlete.riskLevel} Risk
                 </span>
-                <span className="px-4 py-2 rounded-lg text-sm font-bold bg-blue-100 text-blue-800">
+                <span className="px-4 py-2 rounded-xl text-sm font-bold bg-blue-100 text-blue-800 shadow">
                   Joined {new Date(relationship.joinedAt).toLocaleDateString()}
                 </span>
               </div>
@@ -322,13 +379,13 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => setShowCheckIn(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold flex items-center gap-2 justify-center"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
               >
                 📨 Send Check-In
               </button>
               <button
                 onClick={() => setShowAddNote(true)}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl hover:shadow-xl transition-all font-bold flex items-center gap-2 justify-center"
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
               >
                 📝 Add Note
               </button>
@@ -336,29 +393,125 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
           </div>
         </div>
 
-        {/* Statistics Overview */}
+        {/* Readiness Breakdown - Statistics Overview */}
         {statistics && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
-              <div className="text-sm font-semibold opacity-90 mb-1">Avg Mood</div>
-              <div className="text-4xl font-black">{statistics.avgMood}</div>
-              <div className="text-xs mt-2 opacity-75">Last 7 days</div>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Avg Mood</div>
+                  <div className="text-5xl font-black mb-2">{statistics.avgMood.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
+                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Last 7 days</div>
+                </div>
+                <div className="text-6xl opacity-20">😊</div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
-              <div className="text-sm font-semibold opacity-90 mb-1">Confidence</div>
-              <div className="text-4xl font-black">{statistics.avgConfidence}</div>
-              <div className="text-xs mt-2 opacity-75">Average</div>
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Confidence</div>
+                  <div className="text-5xl font-black mb-2">{statistics.avgConfidence.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
+                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Average</div>
+                </div>
+                <div className="text-6xl opacity-20">💪</div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg p-6 text-white">
-              <div className="text-sm font-semibold opacity-90 mb-1">Stress</div>
-              <div className="text-4xl font-black">{statistics.avgStress}</div>
-              <div className="text-xs mt-2 opacity-75">Average</div>
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Stress Level</div>
+                  <div className="text-5xl font-black mb-2">{statistics.avgStress.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
+                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Lower is better</div>
+                </div>
+                <div className="text-6xl opacity-20">😰</div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
-              <div className="text-sm font-semibold opacity-90 mb-1">Active Goals</div>
-              <div className="text-4xl font-black">{statistics.activeGoals}</div>
-              <div className="text-xs mt-2 opacity-75">{statistics.completedGoals} completed</div>
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Active Goals</div>
+                  <div className="text-5xl font-black mb-2">{statistics.activeGoals}</div>
+                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">{statistics.completedGoals} completed</div>
+                </div>
+                <div className="text-6xl opacity-20">🎯</div>
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* 14-Day Readiness Heatmap + 7-Day Forecast */}
+        {readinessScores.length > 0 && (
+          <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
+              <span className="text-3xl">🔥</span>
+              14-Day Readiness Trend + 7-Day Forecast
+            </h2>
+            <div className="flex flex-col md:flex-row gap-6 items-center">
+              {/* Last 14 Days */}
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wider">Last 14 Days</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {readinessScores.map((score, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <div
+                        className={`w-14 h-14 rounded-lg bg-gradient-to-br ${getReadinessColor(score)} text-white font-black text-sm flex items-center justify-center shadow-lg hover:scale-110 transform transition-all cursor-pointer`}
+                        title={`Day ${index - 13}: ${score}/100`}
+                      >
+                        {score}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1 font-semibold">
+                        D{index - 13}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 7-Day Forecast */}
+              {forecast.length > 0 && (
+                <div className="md:border-l-2 md:border-gray-200 md:pl-6">
+                  <h3 className="text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wider">7-Day Forecast</h3>
+                  <div className="flex gap-2">
+                    {forecast.map((score, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                        <div
+                          className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getReadinessColor(score)} text-white font-bold text-xs flex items-center justify-center shadow opacity-75`}
+                          title={`Day +${index + 1}: ${score}/100`}
+                        >
+                          {score}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 font-semibold">
+                          +{index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Trend Insight */}
+            {forecast.length > 0 && (
+              <div className={`mt-6 p-4 rounded-xl border-l-4 ${
+                forecast[forecast.length - 1] < currentReadiness - 10
+                  ? 'bg-red-50 border-red-500'
+                  : forecast[forecast.length - 1] > currentReadiness + 10
+                  ? 'bg-green-50 border-green-500'
+                  : 'bg-blue-50 border-blue-500'
+              }`}>
+                <p className={`font-semibold text-sm ${
+                  forecast[forecast.length - 1] < currentReadiness - 10
+                    ? 'text-red-900'
+                    : forecast[forecast.length - 1] > currentReadiness + 10
+                    ? 'text-green-900'
+                    : 'text-blue-900'
+                }`}>
+                  {forecast[forecast.length - 1] < currentReadiness - 10 && '⚠️ Declining trend detected - forecast shows readiness dropping to ' + forecast[forecast.length - 1] + ' in 7 days. Consider proactive intervention.'}
+                  {forecast[forecast.length - 1] > currentReadiness + 10 && '✅ Improving trend detected - forecast shows readiness rising to ' + forecast[forecast.length - 1] + ' in 7 days. Great progress!'}
+                  {forecast[forecast.length - 1] >= currentReadiness - 10 && forecast[forecast.length - 1] <= currentReadiness + 10 && '→ Stable trend - forecast shows readiness maintaining around ' + forecast[forecast.length - 1] + ' in 7 days.'}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -367,26 +520,28 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
           <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
               <span className="text-3xl">📊</span>
-              Mood History (Last 14 Days)
+              Readiness Components (Last 14 Days)
             </h2>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" stroke="#6b7280" />
-                  <YAxis domain={[0, 10]} stroke="#6b7280" />
+                  <XAxis dataKey="date" stroke="#6b7280" style={{ fontWeight: 600 }} />
+                  <YAxis domain={[0, 100]} stroke="#6b7280" style={{ fontWeight: 600 }} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#fff',
                       border: '2px solid #e5e7eb',
                       borderRadius: '12px',
                       boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                      fontWeight: 600,
                     }}
                   />
-                  <Legend />
-                  <Line type="monotone" dataKey="Mood" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', r: 5 }} />
-                  <Line type="monotone" dataKey="Confidence" stroke="#22c55e" strokeWidth={3} dot={{ fill: '#22c55e', r: 5 }} />
-                  <Line type="monotone" dataKey="Stress" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 5 }} />
+                  <Legend wrapperStyle={{ fontWeight: 700 }} />
+                  <Line type="monotone" dataKey="Readiness" stroke="#8b5cf6" strokeWidth={4} dot={{ fill: '#8b5cf6', r: 6 }} name="Readiness Score (0-100)" />
+                  <Line type="monotone" dataKey="Mood" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} name="Mood" opacity={0.6} />
+                  <Line type="monotone" dataKey="Confidence" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} name="Confidence" opacity={0.6} />
+                  <Line type="monotone" dataKey="Stress" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 4 }} name="Stress (Inverted)" opacity={0.6} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

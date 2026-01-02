@@ -121,6 +121,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
     }
   };
 
+
   // Prepare chart data
   const chartData = dashboardData?.moodTrend?.map((d) => {
     const date = new Date(d.date);
@@ -165,9 +166,9 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
   const { overview, teamMood, atRiskAthletes, athleteReadiness, crisisAlerts } = dashboardData;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen">
       {/* Header with Invite Code */}
-      <div className="bg-card shadow-lg border-b-2 border-blue-100">
+      <div className="bg-card shadow-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div>

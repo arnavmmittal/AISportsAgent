@@ -40,10 +40,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Get current session
+  // Get current user (more secure than getSession on server-side)
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
@@ -59,14 +59,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/coach');
   const isPublicRoute = pathname.startsWith('/_next') || pathname.startsWith('/api');
 
-  // Get user role from database if session exists
+  // Get user role from database if user exists
   let role: string | null = null;
-  if (session?.user?.id) {
+  if (user?.id) {
     try {
       const { data: userData } = await supabase
         .from('User')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
       role = userData?.role || null;
@@ -76,9 +76,27 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from home page to their dashboard
-  if (pathname === '/' && session && role) {
-    const redirectUrl = role === 'COACH' ? '/coach/dashboard' : '/dashboard';
+  if (pathname === '/' && user && role) {
+    const redirectUrl = role === 'COACH' ? '/coach/team-overview' : '/student/home';
     return NextResponse.redirect(new URL(redirectUrl, request.url));
+  }
+
+  // Redirect old coach routes to new structure
+  if (pathname === '/coach/dashboard' && user && role === 'COACH') {
+    return NextResponse.redirect(new URL('/coach/team-overview', request.url));
+  }
+
+  // Redirect old student routes to new structure
+  if (user && role === 'ATHLETE') {
+    if (pathname === '/student/dashboard') {
+      return NextResponse.redirect(new URL('/student/home', request.url));
+    }
+    if (pathname === '/student/chat') {
+      return NextResponse.redirect(new URL('/student/ai-coach', request.url));
+    }
+    if (pathname === '/student/mood' || pathname === '/student/goals') {
+      return NextResponse.redirect(new URL('/student/progress', request.url));
+    }
   }
 
   // Allow home page for unauthenticated users and other public routes
@@ -87,28 +105,28 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect unauthenticated users to login (except for auth pages)
-  if (!session && !isAuthPage) {
+  if (!user && !isAuthPage) {
     const loginUrl = new URL('/auth/signin', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Redirect authenticated users away from auth pages to their role-specific home
-  if (session && isAuthPage && role) {
-    const redirectUrl = role === 'COACH' ? '/coach/dashboard' : '/dashboard';
+  if (user && isAuthPage && role) {
+    const redirectUrl = role === 'COACH' ? '/coach/team-overview' : '/student/home';
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // Role-based access control
-  if (session && role) {
+  if (user && role) {
     // Coaches cannot access athlete routes
     if (role === 'COACH' && isAthleteRoute) {
-      return NextResponse.redirect(new URL('/coach/dashboard', request.url));
+      return NextResponse.redirect(new URL('/coach/team-overview', request.url));
     }
 
     // Athletes cannot access coach routes
     if (role === 'ATHLETE' && isCoachRoute) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL('/student/home', request.url));
     }
 
     // Athletes cannot access coach API routes

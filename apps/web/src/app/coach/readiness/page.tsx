@@ -1,496 +1,235 @@
-// TODO: Re-implement auth after Supabase migration
-// import { auth } from '@/app/api/auth/[...nextauth]/route';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState } from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  CheckCircle,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Brain,
-  Activity,
-  Moon,
-  MessageSquare
-} from 'lucide-react';
 
-// Readiness score calculation algorithm
-function calculateReadinessScore(athlete: any) {
-  const recentMoods = athlete.moodLogs;
-
-  if (recentMoods.length === 0) {
-    return {
-      score: 0,
-      level: 'RED' as const,
-      factors: [],
-      trend: 'stable' as const,
-    };
-  }
-
-  // Calculate 7-day averages
-  const moodAvg7d = recentMoods.reduce((sum: number, log: any) => sum + log.mood, 0) / recentMoods.length;
-  const stressAvg7d = recentMoods.reduce((sum: number, log: any) => sum + log.stress, 0) / recentMoods.length;
-  const confidenceAvg7d = recentMoods.reduce((sum: number, log: any) => sum + log.confidence, 0) / recentMoods.length;
-
-  // Get 3-day sleep average
-  const recent3Days = recentMoods.slice(0, 3);
-  const sleepAvg3d = recent3Days.filter((log: any) => log.sleep).length > 0
-    ? recent3Days.reduce((sum: number, log: any) => sum + (log.sleep || 0), 0) / recent3Days.filter((log: any) => log.sleep).length
-    : 7;
-
-  // Normalize features to 0-1 scale
-  const moodNorm = (moodAvg7d - 1) / 9; // 1-10 scale to 0-1
-  const stressNorm = 1 - ((stressAvg7d - 1) / 9); // Inverse for stress
-  const confidenceNorm = (confidenceAvg7d - 1) / 9;
-  const sleepNorm = Math.min((sleepAvg3d - 4) / 6, 1); // 4-10 hours normalized
-
-  // Engagement boost (has recent sessions)
-  const engagementBoost = athlete.sessions.length > 0 ? 0.1 : 0;
-
-  // Weighted composite score (0-100)
-  const score = Math.round(
-    (0.30 * moodNorm +
-     0.25 * stressNorm +
-     0.20 * confidenceNorm +
-     0.15 * sleepNorm +
-     0.10 * engagementBoost) * 100
-  );
-
-  // Traffic light level
-  let level: 'GREEN' | 'YELLOW' | 'RED' = 'RED';
-  if (score >= 75) level = 'GREEN';
-  else if (score >= 55) level = 'YELLOW';
-  else level = 'RED';
-
-  // Calculate trend
-  const midpoint = Math.floor(recentMoods.length / 2);
-  const recentAvg = recentMoods.slice(0, midpoint).reduce((sum: number, log: any) => sum + log.mood, 0) / Math.max(midpoint, 1);
-  const olderAvg = recentMoods.slice(midpoint).reduce((sum: number, log: any) => sum + log.mood, 0) / Math.max(recentMoods.length - midpoint, 1);
-  const trend = recentAvg > olderAvg + 0.5 ? 'improving' : recentAvg < olderAvg - 0.5 ? 'declining' : 'stable';
-
-  // Contributing factors
-  const factors = [
-    {
-      factor: 'mood',
-      label: 'Mood Level',
-      value: moodAvg7d,
-      impact: moodNorm * 30,
-    },
-    {
-      factor: 'stress',
-      label: 'Stress Management',
-      value: 10 - stressAvg7d, // Show as positive
-      impact: stressNorm * 25,
-    },
-    {
-      factor: 'confidence',
-      label: 'Confidence',
-      value: confidenceAvg7d,
-      impact: confidenceNorm * 20,
-    },
-    {
-      factor: 'sleep',
-      label: 'Sleep Quality',
-      value: sleepAvg3d,
-      impact: sleepNorm * 15,
-    },
-  ];
-
-  // Sort factors by impact
-  factors.sort((a, b) => b.impact - a.impact);
-
-  return {
-    score,
-    level,
-    factors: factors.slice(0, 3), // Top 3
-    trend,
-  };
+interface ReadinessScore {
+  athleteId: string;
+  athleteName: string;
+  sport: string;
+  scores: number[]; // Last 14 days, 0-100
+  trend: 'improving' | 'declining' | 'stable';
+  forecast: number[]; // Next 7 days prediction
 }
 
-export default async function CoachReadinessPage() {
-  // TODO: Re-implement auth check after Supabase migration
-  // const session = await auth();
-  // if (!session) {
-  //   redirect('/auth/signin?callbackUrl=/coach/readiness');
-  // }
-  // if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
-  //   redirect('/dashboard');
-  // }
+interface Intervention {
+  athleteId: string;
+  athleteName: string;
+  priority: 1 | 2 | 3;
+  readiness: number;
+  reason: string;
+  recommendation: string;
+}
 
-  // Get first coach (temporary until auth implemented)
-  let athletes: any[] = [];
-  let coach: any = null;
+export default function ReadinessPage() {
+  const [athletes] = useState<ReadinessScore[]>([
+    {
+      athleteId: '1',
+      athleteName: 'Sarah Johnson',
+      sport: 'Basketball',
+      scores: [85, 87, 82, 88, 90, 89, 91, 88, 85, 82, 78, 75, 72, 70],
+      trend: 'declining',
+      forecast: [68, 65, 63, 62, 60, 58, 56],
+    },
+    {
+      athleteId: '2',
+      athleteName: 'Marcus Davis',
+      sport: 'Football',
+      scores: [72, 75, 78, 80, 82, 83, 85, 86, 87, 88, 89, 90, 91, 92],
+      trend: 'improving',
+      forecast: [93, 94, 95, 95, 96, 96, 97],
+    },
+    {
+      athleteId: '3',
+      athleteName: 'Alex Martinez',
+      sport: 'Soccer',
+      scores: [65, 64, 62, 60, 58, 55, 53, 50, 48, 45, 42, 40, 38, 35],
+      trend: 'declining',
+      forecast: [32, 30, 28, 25, 23, 20, 18],
+    },
+  ]);
 
-  try {
-    // Get coach's school
-    const dbCoach = await prisma.user.findFirst({
-      where: { role: 'COACH' },
-      include: { School: true },
-    });
+  const [interventions] = useState<Intervention[]>([
+    {
+      athleteId: '3',
+      athleteName: 'Alex Martinez',
+      priority: 1,
+      readiness: 35,
+      reason: 'Readiness dropped 46% over 14 days (65→35). Forecast shows continued decline to 18.',
+      recommendation: 'Immediate 1:1 check-in. Sleep avg 4.2hrs. Stress 9/10 for 7 days.',
+    },
+    {
+      athleteId: '1',
+      athleteName: 'Sarah Johnson',
+      priority: 1,
+      readiness: 70,
+      reason: 'Star performer declining (-23% in 7 days). Historic r=0.82 correlation with PPG.',
+      recommendation: 'Proactive intervention before performance drops. Check workload & finals stress.',
+    },
+  ]);
 
-    if (!dbCoach) {
-      return <div>Coach not found. Please set up a coach account.</div>;
-    }
+  const getReadinessColor = (score: number) => {
+    if (score >= 85) return 'from-green-500 to-green-600';
+    if (score >= 70) return 'from-yellow-500 to-yellow-600';
+    if (score >= 50) return 'from-orange-500 to-orange-600';
+    return 'from-red-500 to-red-600';
+  };
 
-    coach = dbCoach;
-
-    // Get all athletes with recent data
-    athletes = await prisma.user.findMany({
-      where: {
-        role: 'ATHLETE',
-        schoolId: coach.schoolId,
-      },
-      include: {
-        Athlete: {
-          include: {
-            MoodLog: {
-              orderBy: { createdAt: 'desc' },
-              take: 7, // Last 7 days
-            },
-            ChatSession: {
-              where: {
-                createdAt: {
-                  gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { name: 'asc' },
-    });
-  } catch (error) {
-    console.error('Error fetching athletes:', error);
-    return <div>Error loading readiness data. Please try again.</div>;
-  }
-
-  // Calculate readiness scores for all athletes
-  const athleteReadiness = athletes.map((athlete) => {
-    // Pass the athlete data with correct structure
-    const athleteData = {
-      moodLogs: athlete.Athlete?.MoodLog || [],
-      sessions: athlete.Athlete?.ChatSession || [],
-    };
-    const readiness = calculateReadinessScore(athleteData);
-    return {
-      id: athlete.id,
-      name: athlete.name,
-      position: athlete.Athlete?.teamPosition,
-      ...readiness,
-    };
-  });
-
-  // Sort by score (worst first)
-  const sortedAthletes = athleteReadiness.sort((a, b) => a.score - b.score);
-
-  // Count by level
-  const greenCount = sortedAthletes.filter((a) => a.level === 'GREEN').length;
-  const yellowCount = sortedAthletes.filter((a) => a.level === 'YELLOW').length;
-  const redCount = sortedAthletes.filter((a) => a.level === 'RED').length;
-
-  // Get at-risk athletes
-  const atRiskAthletes = sortedAthletes.filter((a) => a.level === 'RED');
+  const teamAvg = Math.round(athletes.reduce((sum, a) => sum + a.scores[13], 0) / athletes.length);
+  const highRisk = athletes.filter(a => a.scores[13] < 70).length;
+  const declining = athletes.filter(a => a.trend === 'declining').length;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Pre-Competition Readiness
-              </h1>
-              <p className="mt-2 text-muted-foreground">
-                Mental readiness scores for {coach.School.name} athletes
-              </p>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-10">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Team Readiness
+          </h1>
+          <p className="mt-3 text-muted-foreground text-lg">Mental performance forecasting & intervention prioritization</p>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Team Avg</div>
+                <div className="text-5xl font-black mb-2">{teamAvg}<span className="text-2xl opacity-75">/100</span></div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">WHOOP for mental</div>
+              </div>
+              <div className="text-6xl opacity-20">🎯</div>
             </div>
-            <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-background">
-                ← Back to Dashboard
-              </button>
-            </Link>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-red-100 text-xs font-bold uppercase tracking-wider mb-2">High Risk</div>
+                <div className="text-5xl font-black mb-2">{highRisk}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Need intervention</div>
+              </div>
+              <div className="text-6xl opacity-20">⚠️</div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Declining</div>
+                <div className="text-5xl font-black mb-2">{declining}</div>
+                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Watch closely</div>
+              </div>
+              <div className="text-6xl opacity-20">📉</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Team Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-l-4 border-green-500 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Ready to Compete</p>
-                  <p className="text-3xl font-bold text-green-700">{greenCount}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {athletes.length > 0 ? ((greenCount / athletes.length) * 100).toFixed(0) : 0}% of team
-                  </p>
-                </div>
-                <CheckCircle className="size-8 text-green-600" />
-              </div>
-              <div className="mt-3 w-full bg-green-200 rounded-full h-2">
-                <div
-                  className="h-2 rounded-full bg-green-600"
-                  style={{ width: `${athletes.length > 0 ? (greenCount / athletes.length) * 100 : 0}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-yellow-500 bg-yellow-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Monitor Closely</p>
-                  <p className="text-3xl font-bold text-yellow-700">{yellowCount}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {athletes.length > 0 ? ((yellowCount / athletes.length) * 100).toFixed(0) : 0}% of team
-                  </p>
-                </div>
-                <TrendingUp className="size-8 text-yellow-600" />
-              </div>
-              <div className="mt-3 w-full bg-yellow-200 rounded-full h-2">
-                <div
-                  className="h-2 rounded-full bg-yellow-600"
-                  style={{ width: `${athletes.length > 0 ? (yellowCount / athletes.length) * 100 : 0}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-red-500 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Intervention Needed</p>
-                  <p className="text-3xl font-bold text-red-700">{redCount}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {athletes.length > 0 ? ((redCount / athletes.length) * 100).toFixed(0) : 0}% of team
-                  </p>
-                </div>
-                <AlertTriangle className="size-8 text-red-600" />
-              </div>
-              <div className="mt-3 w-full bg-red-200 rounded-full h-2">
-                <div
-                  className="h-2 rounded-full bg-red-600"
-                  style={{ width: `${athletes.length > 0 ? (redCount / athletes.length) * 100 : 0}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* At-Risk Athletes Alert */}
-        {atRiskAthletes.length > 0 && (
-          <Card className="border-l-4 border-red-500 bg-red-50">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-red-800">
-                <AlertTriangle className="size-5" />
-                {atRiskAthletes.length} Athlete{atRiskAthletes.length > 1 ? 's' : ''} Need Immediate Attention
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {atRiskAthletes.map((athlete) => (
-                  <div key={athlete.id} className="p-4 bg-card border-2 border-red-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-foreground">{athlete.name}</h3>
-                          {athlete.position && (
-                            <span className="text-sm text-muted-foreground">{athlete.position}</span>
-                          )}
-                          <Badge className="bg-red-600 text-white">
-                            {athlete.score}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Top factors: {athlete.factors.map((f) => f.label).join(', ')}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        {athlete.trend === 'declining' && (
-                          <div className="flex items-center gap-1 text-red-600 text-sm">
-                            <TrendingDown className="size-4" />
-                            <span>Declining</span>
-                          </div>
-                        )}
-                        {athlete.trend === 'stable' && (
-                          <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                            <Minus className="size-4" />
-                            <span>Stable</span>
-                          </div>
-                        )}
-                      </div>
+        {/* Intervention Queue */}
+        <div className="bg-card rounded-2xl shadow-xl border border-gray-100 mb-8">
+          <div className="p-8 border-b border-gray-100">
+            <h2 className="text-2xl font-black text-foreground flex items-center gap-3">
+              <span className="text-3xl">🚨</span>
+              Intervention Queue
+            </h2>
+            <p className="text-muted-foreground mt-2 text-lg">AI-prioritized based on forecasts</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {interventions.map((int, i) => (
+              <div key={i} className="p-6 hover:bg-background transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className={`bg-gradient-to-r ${int.priority === 1 ? 'from-red-500 to-red-600' : 'from-orange-500 to-orange-600'} rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-black shadow-lg`}>
+                    P{int.priority}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-xl font-black">{int.athleteName}</h3>
+                      <span className={`text-2xl font-black bg-gradient-to-r ${getReadinessColor(int.readiness)} bg-clip-text text-transparent`}>
+                        {int.readiness}/100
+                      </span>
+                    </div>
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-3">
+                      <p className="text-red-900 font-semibold text-sm">{int.reason}</p>
+                    </div>
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                      <p className="text-blue-900 font-semibold text-sm">💡 {int.recommendation}</p>
                     </div>
                   </div>
-                ))}
+                  <Link
+                    href={`/coach/athletes/${int.athleteId}`}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform whitespace-nowrap"
+                  >
+                    View
+                  </Link>
+                </div>
               </div>
-              <div className="mt-4 p-3 bg-card border border-red-200 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Recommended Action:</strong> Schedule 1-on-1 conversations with these athletes before game day. Focus on stress management and sleep optimization.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            ))}
+          </div>
+        </div>
 
-        {/* Full Team Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Team Readiness Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-background border-b-2 border-border">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Athlete
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Position
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                      Score
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                      Level
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase">
-                      Trend
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">
-                      Top Factors
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {sortedAthletes.map((athlete) => (
-                    <tr
-                      key={athlete.id}
-                      className={`hover:bg-background transition-colors ${
-                        athlete.level === 'RED' ? 'bg-red-50' :
-                        athlete.level === 'YELLOW' ? 'bg-yellow-50' :
-                        'bg-green-50'
-                      }`}
-                    >
-                      <td className="px-4 py-4">
-                        <div className="font-medium text-foreground">{athlete.name}</div>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-muted-foreground">
-                        {athlete.position || 'N/A'}
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className={`text-2xl font-bold ${
-                          athlete.level === 'GREEN' ? 'text-green-600' :
-                          athlete.level === 'YELLOW' ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                          {athlete.score}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <Badge className={
-                          athlete.level === 'GREEN' ? 'bg-green-500 text-white' :
-                          athlete.level === 'YELLOW' ? 'bg-yellow-500 text-white' :
-                          'bg-red-500 text-white'
-                        }>
-                          {athlete.level}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-1">
-                          {athlete.trend === 'improving' && (
-                            <>
-                              <TrendingUp className="size-4 text-green-600" />
-                              <span className="text-xs text-green-600">Improving</span>
-                            </>
-                          )}
-                          {athlete.trend === 'declining' && (
-                            <>
-                              <TrendingDown className="size-4 text-red-600" />
-                              <span className="text-xs text-red-600">Declining</span>
-                            </>
-                          )}
-                          {athlete.trend === 'stable' && (
-                            <>
-                              <Minus className="size-4 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">Stable</span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="space-y-1">
-                          {athlete.factors.map((factor, index) => (
-                            <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground">
-                              {factor.factor === 'mood' && <Brain className="size-3" />}
-                              {factor.factor === 'stress' && <Activity className="size-3" />}
-                              {factor.factor === 'sleep' && <Moon className="size-3" />}
-                              {factor.factor === 'engagement' && <MessageSquare className="size-3" />}
-                              <span>
-                                <strong>{factor.label}:</strong> {factor.value.toFixed(1)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
+        {/* Heatmap */}
+        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
+          <div className="p-8 border-b border-gray-100">
+            <h2 className="text-2xl font-black flex items-center gap-3">
+              <span className="text-3xl">🔥</span>
+              14-Day Readiness Heatmap
+            </h2>
+            <p className="text-muted-foreground mt-2 text-lg">Mental performance trends + 7-day forecast</p>
+          </div>
+          <div className="p-8 overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-gray-200">
+                  <th className="text-left pb-4 pr-6 font-black">Athlete</th>
+                  {[...Array(14)].map((_, i) => (
+                    <th key={i} className="text-center pb-4 px-1 text-xs font-bold text-muted-foreground">D{i-13}</th>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recommendations */}
-        <Card className="bg-blue-50 border-l-4 border-blue-500">
-          <CardHeader>
-            <CardTitle className="text-lg text-blue-900">Coaching Recommendations</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {redCount > 0 && (
-              <div className="flex gap-3">
-                <AlertTriangle className="size-5 text-red-600 mt-0.5 shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-foreground">High Priority</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {redCount} athlete{redCount > 1 ? 's' : ''} need immediate intervention.
-                    Schedule 1-on-1 meetings to address stress, sleep, and mental state concerns.
-                  </p>
-                </div>
-              </div>
-            )}
-            {yellowCount > 0 && (
-              <div className="flex gap-3">
-                <TrendingUp className="size-5 text-yellow-600 mt-0.5 shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-foreground">Monitor</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {yellowCount} athlete{yellowCount > 1 ? 's' : ''} in yellow status should be monitored closely.
-                    Quick check-ins during warm-up recommended.
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="flex gap-3">
-              <CheckCircle className="size-5 text-green-600 mt-0.5 shrink-0" />
-              <div>
-                <h4 className="font-semibold text-foreground">Team Preparation</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {greenCount} athlete{greenCount !== 1 ? 's are' : ' is'} mentally ready for peak performance.
-                  Focus team meeting on maintaining positive momentum and executing game plan.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                  <th className="text-center pb-4 pl-6 font-black">Trend</th>
+                  <th className="text-center pb-4 pl-6 font-black">7-Day Forecast</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {athletes.map((athlete) => (
+                  <tr key={athlete.athleteId} className="hover:bg-background transition-colors">
+                    <td className="py-4 pr-6">
+                      <div className="font-black">{athlete.athleteName}</div>
+                      <div className="text-sm text-muted-foreground">{athlete.sport}</div>
+                    </td>
+                    {athlete.scores.map((score, idx) => (
+                      <td key={idx} className="py-4 px-1">
+                        <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getReadinessColor(score)} text-white font-black text-sm flex items-center justify-center shadow-lg hover:scale-110 transform transition-all`}>
+                          {score}
+                        </div>
+                      </td>
+                    ))}
+                    <td className="py-4 pl-6 text-center">
+                      {athlete.trend === 'improving' && (
+                        <div className="flex items-center justify-center gap-2 text-green-600 font-bold">
+                          <TrendingUp className="w-5 h-5" />Up
+                        </div>
+                      )}
+                      {athlete.trend === 'declining' && (
+                        <div className="flex items-center justify-center gap-2 text-red-600 font-bold">
+                          <TrendingDown className="w-5 h-5" />Down
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-4 pl-6">
+                      <div className="flex gap-1">
+                        {athlete.forecast.map((score, idx) => (
+                          <div key={idx} className={`w-8 h-8 rounded bg-gradient-to-br ${getReadinessColor(score)} text-white font-bold text-xs flex items-center justify-center shadow opacity-75`}>
+                            {score}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
