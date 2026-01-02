@@ -20,10 +20,19 @@ const DEFAULT_SCHOOL_ID = 'default-school';
 
 /**
  * POST /api/auth/signup
- * Create a new user account (athlete or coach) using Supabase Auth
+ * DISABLED - Only seeded users can log in (coach@uw.edu and athlete1-150@uw.edu)
  */
 export async function POST(request: NextRequest) {
-  try {
+  return NextResponse.json(
+    {
+      error: 'Registration is disabled. Please use your assigned credentials.',
+      message: 'Contact your administrator for access.'
+    },
+    { status: 403 }
+  );
+
+  // Original signup code disabled below
+  /* try {
     const body = await request.json();
 
     // Validate input
@@ -173,4 +182,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  */ // End of disabled signup code
 }
