@@ -73,11 +73,13 @@ model Athlete {
   User                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   ChatSession          ChatSession[]
   ChatSummary          ChatSummary[]
+  ChatInsight          ChatInsight[]
   ConversationInsight  ConversationInsight[]
   CrisisAlert          CrisisAlert[]
   Goal                 Goal[]
   MoodLog              MoodLog[]
   PerformanceMetric    PerformanceMetric[]
+  GameResult           GameResult[]
   ReadinessScore       ReadinessScore[]
   WearableData         WearableData[]
   Task                 Task[]
@@ -127,9 +129,73 @@ model ChatSession {
   ConversationInsight ConversationInsight[]
   CrisisAlert         CrisisAlert[]
   Message             Message[]
+  ChatInsight         ChatInsight[]
 
   @@index([athleteId])
   @@index([createdAt])
+}
+
+model ChatInsight {
+  id            String   @id @default(cuid())
+  sessionId     String
+  athleteId     String
+  createdAt     DateTime @default(now())
+
+  // Sentiment Analysis
+  overallSentiment Float    // -1.0 to 1.0
+  emotionalTone    String   // "anxious" | "confident" | "frustrated" | "motivated" | "neutral"
+  confidenceLevel  Int?     // 0-100 inferred from language
+
+  // Topic Extraction
+  topics           String[] // ["performance-anxiety", "team-conflict", "injury-concern"]
+  dominantTheme    String?
+  stressIndicators String[] // ["fear of failure", "coach pressure", "academic stress"]
+  copingStrategies String[] // ["visualization", "breathing", "self-talk"]
+
+  // Pre-Competition Mental State
+  isPreGame        Boolean  @default(false)
+  gameDate         DateTime?
+  daysUntilGame    Int?
+  preGameMindset   String?  // "focused" | "anxious" | "overconfident" | "distracted"
+
+  // Metadata
+  sessionDuration  Int?     // minutes
+  messageCount     Int?
+
+  session          ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  athlete          Athlete     @relation(fields: [athleteId], references: [userId], onDelete: Cascade)
+
+  @@index([athleteId, createdAt])
+  @@index([gameDate])
+  @@index([sessionId])
+}
+
+model GameResult {
+  id              String   @id @default(cuid())
+  athleteId       String
+  gameDate        DateTime
+  opponent        String
+  sport           String
+
+  // Auto-scraped data
+  scrapedFrom     String?  // Source URL
+  scrapedAt       DateTime?
+
+  // Stats (sport-specific JSON)
+  stats           Json
+  outcome         String   // "WIN" | "LOSS" | "TIE"
+
+  // Link to mental state (calculated when result is imported)
+  readinessScore  Float?   // Readiness score from 3 days before game
+  chatSentiment   Float?   // Average sentiment from chats 3 days before
+  psychThemes     String[] @default([]) // Topics discussed pre-game
+
+  createdAt       DateTime @default(now())
+  athlete         Athlete  @relation(fields: [athleteId], references: [userId], onDelete: Cascade)
+
+  @@index([athleteId, gameDate])
+  @@index([sport, gameDate])
+  @@index([gameDate])
 }
 
 model ChatSummary {
