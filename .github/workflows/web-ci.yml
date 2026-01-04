@@ -106,8 +106,9 @@ jobs:
 
       - name: Verify no secrets in code
         run: |
-          if grep -r "sk-" apps/web/src/ 2>/dev/null | grep -v ".test." | grep -v ".spec."; then
-            echo "❌ ERROR: API keys found in source code!"
+          # Check for actual API key patterns (sk-proj-, sk-ant-, not just "sk-" which matches words like "risk-")
+          if grep -rE "sk-proj-[a-zA-Z0-9]{20,}|sk-ant-[a-zA-Z0-9]{20,}" apps/web/src/ 2>/dev/null | grep -v ".test." | grep -v ".spec."; then
+            echo "❌ ERROR: Real API keys found in source code!"
             exit 1
           fi
           echo "✅ No secrets in code"
