@@ -1,8 +1,22 @@
 /**
  * Governance Agent - PRODUCTION-READY
- * AI-powered crisis detection with dual-layer safety system
- * Layer 1: Fast regex screening (immediate response)
- * Layer 2: GPT-4 powered nuanced analysis (context-aware)
+ * AI-powered crisis detection with triple-layer safety system
+ *
+ * Layer 1: Fast regex screening (< 1ms, immediate response)
+ *   - Explicit keywords (suicide, self-harm, abuse)
+ *   - Coded language (unalive, sewerslide, kms)
+ *
+ * Layer 2: OpenAI Moderation API (< 100ms, free, industry-standard)
+ *   - Self-harm detection
+ *   - Violence/threat detection
+ *   - Harassment detection
+ *
+ * Layer 3: GPT-4 powered nuanced analysis (context-aware)
+ *   - Understands metaphorical language ("dying out there")
+ *   - Distinguishes performance stress from mental health crisis
+ *   - Considers conversation context
+ *
+ * CRITICAL PRIORITY: Crisis detection runs BEFORE any other agent processing
  */
 
 import { BaseAgent } from '../core/BaseAgent';
@@ -15,6 +29,9 @@ const CRITICAL_KEYWORDS = [
   /\b(hurt myself|self[- ]?harm|cut myself|cutting)\b/i,
   /\b(want to die|wish I (was|were) dead|better off dead)\b/i,
   /\b(end (my|the) pain|can't take it anymore)\b/i,
+  // Coded language (censored/obfuscated terms)
+  /\b(unalive|un-alive|un alive|s\*icide|su1c1de|kms)\b/i,
+  /\b(sewerslide|sewer slide|game end|not exist)\b/i,
 ];
 
 const HIGH_RISK_KEYWORDS = [
@@ -102,8 +119,10 @@ export class GovernanceAgent extends BaseAgent {
   }
 
   /**
-   * PRODUCTION-READY: Dual-layer crisis detection
-   * Fast regex + AI-powered nuanced analysis
+   * PRODUCTION-READY: Triple-layer crisis detection
+   * Layer 1: Fast regex screening (< 1ms)
+   * Layer 2: OpenAI Moderation API (< 100ms, free)
+   * Layer 3: AI-powered nuanced analysis with context
    */
   async detectCrisis(
     message: string,
@@ -128,7 +147,21 @@ export class GovernanceAgent extends BaseAgent {
         };
       }
 
-      // Layer 2: AI-powered nuanced analysis
+      // Layer 2: OpenAI Moderation API (fast, free, specifically designed for harmful content)
+      const moderationResult = await this.moderationCheck(message);
+      if (moderationResult && moderationResult.severity !== 'LOW') {
+        this.log('warn', 'Crisis detected via OpenAI Moderation API', {
+          sessionId: context.sessionId,
+          categories: moderationResult.indicators,
+        });
+
+        // If moderation flags it as high/critical, return immediately
+        if (moderationResult.severity === 'CRITICAL' || moderationResult.severity === 'HIGH') {
+          return moderationResult;
+        }
+      }
+
+      // Layer 3: AI-powered nuanced analysis
       // Understands context, metaphor, and subtle indicators
       if (this.enableAIAnalysis) {
         const aiResult = await this.aiCrisisAnalysis(message, context);
@@ -166,6 +199,79 @@ export class GovernanceAgent extends BaseAgent {
         confidence: 0,
         recommendedAction: 'monitor',
       };
+    }
+  }
+
+  /**
+   * Layer 2: OpenAI Moderation API
+   * Fast, free API specifically designed for harmful content detection
+   */
+  private async moderationCheck(message: string): Promise<CrisisDetection | null> {
+    try {
+      const moderation = await this.client.moderations.create({
+        input: message,
+      });
+
+      const result = moderation.results[0];
+      if (!result.flagged) {
+        return null; // No issues detected
+      }
+
+      // Map moderation categories to crisis severity
+      const indicators: string[] = [];
+      let severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+
+      // CRITICAL: Self-harm category
+      if (result.categories['self-harm']) {
+        indicators.push('Self-harm detected');
+        severity = 'CRITICAL';
+      }
+      if (result.categories['self-harm/intent']) {
+        indicators.push('Self-harm intent detected');
+        severity = 'CRITICAL';
+      }
+      if (result.categories['self-harm/instructions']) {
+        indicators.push('Self-harm instructions detected');
+        severity = 'CRITICAL';
+      }
+
+      // HIGH: Violence (could indicate harm to others or abuse)
+      if (result.categories.violence && result.category_scores.violence > 0.7) {
+        indicators.push('High violence score');
+        if (severity !== 'CRITICAL') severity = 'HIGH';
+      }
+
+      // MEDIUM: Other concerning categories
+      if (result.categories.harassment) {
+        indicators.push('Harassment detected');
+        if (severity === 'LOW') severity = 'MEDIUM';
+      }
+      if (result.categories.hate) {
+        indicators.push('Hate speech detected');
+        if (severity === 'LOW') severity = 'MEDIUM';
+      }
+
+      const isCrisis = severity === 'CRITICAL' || severity === 'HIGH';
+      const recommendedAction =
+        severity === 'CRITICAL'
+          ? 'escalate'
+          : severity === 'HIGH'
+            ? 'alert'
+            : 'monitor';
+
+      return {
+        isCrisis,
+        severity,
+        indicators,
+        message,
+        confidence: result.category_scores['self-harm'] || result.category_scores['self-harm/intent'] || 0.8,
+        recommendedAction,
+      };
+    } catch (error) {
+      this.log('warn', 'Moderation API failed, skipping layer 2', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      return null; // Skip this layer if it fails
     }
   }
 
