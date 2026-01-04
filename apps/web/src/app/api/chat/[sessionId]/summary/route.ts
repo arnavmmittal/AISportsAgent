@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { generateChatSummary } from '@/lib/generate-summary';
+import {
+  decryptFieldSafe,
+  decryptArray,
+  encryptFieldSafe,
+  encryptArray,
+} from '@/lib/encryption';
 
 type RouteContext = {
   params: Promise<{ sessionId: string }>;
@@ -68,8 +74,21 @@ export async function POST(
     });
 
     if (existingSummary) {
+      // Decrypt before returning
+      const decrypted = {
+        ...existingSummary,
+        summary: decryptFieldSafe(existingSummary.summary) || existingSummary.summary,
+        adherenceNotes: decryptFieldSafe(existingSummary.adherenceNotes as string | null),
+        keyThemes: Array.isArray(existingSummary.keyThemes)
+          ? decryptArray(existingSummary.keyThemes as string[])
+          : existingSummary.keyThemes,
+        recommendedActions: existingSummary.recommendedActions && Array.isArray(existingSummary.recommendedActions)
+          ? decryptArray(existingSummary.recommendedActions as string[])
+          : existingSummary.recommendedActions,
+      };
+
       return NextResponse.json({
-        summary: existingSummary,
+        summary: decrypted,
         message: 'Summary already exists',
       });
     }
@@ -89,21 +108,39 @@ export async function POST(
 
     const summaryResult = await generateChatSummary(messages);
 
-    // Create ChatSummary record
+    // Encrypt sensitive fields before storing (FIELD-LEVEL ENCRYPTION)
+    const encryptedSummary = encryptFieldSafe(summaryResult.summary);
+    const encryptedKeyThemes = encryptArray(summaryResult.keyThemes);
+    const encryptedActionItems = encryptArray(summaryResult.actionItems);
+
+    // Create ChatSummary record with encrypted fields
     const chatSummary = await prisma.chatSummary.create({
       data: {
         sessionId: chatSession.id,
         athleteId: chatSession.athleteId,
-        summary: summaryResult.summary,
-        keyThemes: summaryResult.keyThemes,
+        summary: encryptedSummary!,
+        keyThemes: encryptedKeyThemes,
         emotionalState: summaryResult.emotionalState,
-        actionItems: summaryResult.actionItems,
+        actionItems: encryptedActionItems,
         messageCount: messages.length,
       },
     });
 
+    // Decrypt before returning (newly created summary)
+    const decrypted = {
+      ...chatSummary,
+      summary: decryptFieldSafe(chatSummary.summary) || chatSummary.summary,
+      adherenceNotes: decryptFieldSafe(chatSummary.adherenceNotes as string | null),
+      keyThemes: Array.isArray(chatSummary.keyThemes)
+        ? decryptArray(chatSummary.keyThemes as string[])
+        : chatSummary.keyThemes,
+      recommendedActions: chatSummary.recommendedActions && Array.isArray(chatSummary.recommendedActions)
+        ? decryptArray(chatSummary.recommendedActions as string[])
+        : chatSummary.recommendedActions,
+    };
+
     return NextResponse.json({
-      summary: chatSummary,
+      summary: decrypted,
       message: 'Summary generated successfully',
     }, { status: 201 });
 
@@ -198,7 +235,20 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({ summary });
+    // Decrypt sensitive fields before returning (TRANSPARENT DECRYPTION)
+    const decryptedSummary = {
+      ...summary,
+      summary: decryptFieldSafe(summary.summary) || summary.summary,
+      adherenceNotes: decryptFieldSafe(summary.adherenceNotes as string | null),
+      keyThemes: Array.isArray(summary.keyThemes)
+        ? decryptArray(summary.keyThemes as string[])
+        : summary.keyThemes,
+      recommendedActions: summary.recommendedActions && Array.isArray(summary.recommendedActions)
+        ? decryptArray(summary.recommendedActions as string[])
+        : summary.recommendedActions,
+    };
+
+    return NextResponse.json({ summary: decryptedSummary });
 
   } catch (error) {
     console.error('Error fetching chat summary:', error);

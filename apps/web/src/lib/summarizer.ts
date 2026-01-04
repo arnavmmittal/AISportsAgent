@@ -419,7 +419,9 @@ export async function generateWeeklySummary(
   // Generate AI summary
   const summaryOutput = await generateSummaryWithAI(aggregated, goals);
 
-  // Encrypt sensitive fields before storing
+  // Encrypt sensitive fields before storing (FIELD-LEVEL ENCRYPTION)
+  const summaryText = `Weekly activity: ${aggregated.sessionCount} sessions, ${aggregated.totalMessages} messages. Key focus: ${summaryOutput.keyThemes.slice(0, 2).join(', ')}`;
+  const encryptedSummary = encryptFieldSafe(summaryText);
   const encryptedAdherenceNotes = encryptFieldSafe(summaryOutput.adherenceNotes);
   const encryptedKeyThemes = encryptArray(summaryOutput.keyThemes);
   const encryptedRecommendedActions = encryptArray(summaryOutput.recommendedActions);
@@ -436,8 +438,8 @@ export async function generateWeeklySummary(
       weekStart,
       weekEnd,
 
-      // Summary text (non-encrypted, general)
-      summary: `Weekly activity: ${aggregated.sessionCount} sessions, ${aggregated.totalMessages} messages. Key focus: ${summaryOutput.keyThemes.slice(0, 2).join(', ')}`,
+      // Summary text (ENCRYPTED with AES-256-GCM)
+      summary: encryptedSummary!,
 
       // Encrypted qualitative fields
       keyThemes: encryptedKeyThemes,
