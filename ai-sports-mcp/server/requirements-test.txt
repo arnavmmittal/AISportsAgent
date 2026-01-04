@@ -1,0 +1,23 @@
+# Minimal dependencies for testing (avoids disk space issues in CI)
+# Full dependencies are in requirements.txt for production deployment
+
+# Core framework (required for imports)
+fastapi==0.115.0
+pydantic==2.10.0
+pydantic-settings==2.6.0
+
+# Database (for imports, not actual DB access in basic tests)
+sqlalchemy==2.0.36
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+
+# Utilities (needed by config/logging)
+python-dotenv==1.0.1
+
+# Linting/formatting (separate from runtime)
+black==24.10.0
+ruff==0.7.4
+mypy==1.13.0
