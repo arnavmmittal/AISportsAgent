@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
+import {
+  validateRequest,
+  moodLogCreateSchema,
+  ValidationError,
+} from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,29 +13,33 @@ export async function POST(req: NextRequest) {
     const { authorized, user, response } = await requireAuth(req);
     if (!authorized) return response;
 
-    const body = await req.json();
-    const { athleteId, mood, confidence, stress, energy, sleep, notes, tags } = body;
-
-    if (!athleteId || mood === undefined || confidence === undefined || stress === undefined) {
+    // Validate and sanitize input with Zod
+    let validatedData;
+    try {
+      validatedData = await validateRequest(req, moodLogCreateSchema);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          {
+            error: 'Validation failed',
+            details: error.errors
+          },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Invalid request' },
         { status: 400 }
       );
     }
+
+    const { athleteId, mood, confidence, stress, energy, sleep, notes, tags } = validatedData;
 
     // Verify user can create mood logs for this athlete
     if (user!.id !== athleteId && user!.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Forbidden - Cannot create mood logs for other users' },
         { status: 403 }
-      );
-    }
-
-    // Validate ranges
-    if (mood < 1 || mood > 10 || confidence < 1 || confidence > 10 || stress < 1 || stress > 10) {
-      return NextResponse.json(
-        { error: 'Mood, confidence, and stress must be between 1 and 10' },
-        { status: 400 }
       );
     }
 

@@ -2,12 +2,24 @@
  * Chat Stream API - PRODUCTION-READY
  * Uses integrated TypeScript agent system instead of external MCP server
  * Supports both streaming and non-streaming responses
+ *
+ * Security:
+ * - Input validation with Zod
+ * - XSS prevention (HTML sanitization)
+ * - Cost controls (rate limiting)
+ * - Multi-tenant access control
  */
 
 import { NextRequest } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
 import { checkUserCanMakeRequest } from '@/lib/cost-tracking';
 import { getChatService } from '@/services/ChatService';
+import {
+  validateRequest,
+  chatStreamRequestSchema,
+  ValidationError,
+  validateAthleteAccess,
+} from '@/lib/validation';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -40,13 +52,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const body = await req.json();
-    const { session_id, message, athlete_id } = body;
-
-    if (!message || !athlete_id) {
+    // Validate and sanitize input with Zod
+    let validatedData;
+    try {
+      validatedData = await validateRequest(req, chatStreamRequestSchema);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({
+            type: 'error',
+            data: 'Validation failed',
+            details: error.errors
+          }) + '\n\n'),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          }
+        );
+      }
       return new Response(
-        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Missing required fields' }) + '\n\n'),
+        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Invalid request' }) + '\n\n'),
         {
+          status: 400,
           headers: {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
@@ -55,6 +86,8 @@ export async function POST(req: NextRequest) {
         }
       );
     }
+
+    const { session_id, message, athlete_id } = validatedData;
 
     // Only check cost limits and permissions for regular user requests (not voice service)
     if (!isVoiceService && user) {
