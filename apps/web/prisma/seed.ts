@@ -148,6 +148,7 @@ async function main() {
             year,
             teamPosition: position,
             consentCoachView: true,
+            consentChatSummaries: true,
           },
         },
       },
@@ -164,6 +165,21 @@ async function main() {
     }
   }
   console.log(`   ✓ All 50 athletes created!`);
+
+  // Create coach-athlete relationships for all athletes
+  console.log('🔗 Creating coach-athlete relationships...');
+  for (const athlete of athletes) {
+    await prisma.coachAthleteRelation.create({
+      data: {
+        coachId: coach.id,
+        athleteId: athlete.id,
+        consentGranted: true,
+        joinedAt: new Date(),
+        notes: null,
+      },
+    });
+  }
+  console.log(`   ✓ Created ${athletes.length} coach-athlete relationships!`);
 
   // Create mood logs for last 30 days for each athlete
   // Intentionally create varied patterns to demonstrate correlations
@@ -209,7 +225,7 @@ async function main() {
     }
   }
 
-  // Create chat sessions and insights for first 20 athletes
+  // Create chat sessions and insights for first 5 athletes (5 sessions each = 25 total)
   console.log('💬 Creating chat sessions with psychological insights...');
   const emotionalTones = ['anxious', 'confident', 'frustrated', 'motivated', 'neutral'];
   const topics = [
@@ -241,11 +257,11 @@ async function main() {
     'rest and recovery'
   ];
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 5; i++) {
     const athlete = athletes[i];
 
-    // Create 3-5 chat sessions for each athlete over the past 30 days
-    const numSessions = 3 + Math.floor(Math.random() * 3);
+    // Create 5 chat sessions for each athlete over the past 30 days
+    const numSessions = 5;
 
     for (let sessionIdx = 0; sessionIdx < numSessions; sessionIdx++) {
       const sessionDate = new Date(now);
@@ -337,7 +353,7 @@ async function main() {
     }
 
     if ((i + 1) % 5 === 0) {
-      console.log(`   ✓ Created chat sessions for ${i + 1}/20 athletes`);
+      console.log(`   ✓ Created chat sessions for ${i + 1}/5 athletes`);
     }
   }
   console.log(`   ✓ All chat sessions and insights created!`);
@@ -560,6 +576,7 @@ async function main() {
       data: {
         ...entry,
         schoolId: null, // Global knowledge base
+        updatedAt: new Date(),
       },
     });
   }
@@ -569,9 +586,10 @@ async function main() {
   console.log(`   - 1 School (${school.name})`);
   console.log(`   - 1 Coach (coach@uw.edu / Coach2024!)`);
   console.log(`   - 50 Athletes across 12 sports (athlete1@uw.edu to athlete50@uw.edu / Athlete2024!)`);
+  console.log(`   - 50 Coach-Athlete Relationships (all with consent granted)`);
   console.log(`   - ${50 * 30} Mood Logs (30 days per athlete with high/low readiness patterns)`);
-  console.log(`   - ~80 Chat Sessions with psychological insights (first 20 athletes)`);
-  console.log(`   - ~80 ChatInsights (sentiment, topics, stress indicators from conversations)`);
+  console.log(`   - 25 Chat Sessions with psychological insights (5 athletes × 5 sessions)`);
+  console.log(`   - 25 ChatInsights (sentiment, topics, stress indicators from conversations)`);
   console.log(`   - ${10 * 10} Performance Metrics (10 games, 10 athletes) - CORRELATED WITH READINESS`);
   console.log(`   - ${10 * 10} Game Results with linked mental state (readiness + chat sentiment)`);
   console.log(`   - 10 Goals`);
@@ -582,7 +600,7 @@ async function main() {
   console.log('   - High Readiness (>85) → 18-28 PPG, 5-8 APG, 80% win rate');
   console.log('   - Low Readiness (<70) → 8-15 PPG, 1-3 APG, 30% win rate');
   console.log('   - Expected Pearson r > 0.5 for Points, Assists, Rebounds vs Readiness');
-  console.log('\n💬 Chat Insights Data:');
+  console.log('\n💬 Chat Insights Data (25 sessions from 5 athletes):');
   console.log('   - Sentiment patterns: 30% anxious, 35% confident, 35% neutral');
   console.log('   - Topics: performance-anxiety, mindset-mental, goal-setting, team-conflict, etc.');
   console.log('   - Stress indicators: fear of failure, coach pressure, performance expectations');
