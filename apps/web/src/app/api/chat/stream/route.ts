@@ -12,7 +12,7 @@
 
 import { NextRequest } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
-import { checkUserCanMakeRequest } from '@/lib/cost-tracking';
+import { checkUserCanMakeRequest, checkSchoolCostLimit } from '@/lib/cost-tracking';
 import { getChatService } from '@/services/ChatService';
 import {
   validateRequest,
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
 
     // Only check cost limits and permissions for regular user requests (not voice service)
     if (!isVoiceService && user) {
-      // Check cost limits before allowing request
+      // Check per-user cost limits
       const usageCheck = await checkUserCanMakeRequest(user.id);
       if (!usageCheck.allowed) {
         console.warn(`[Cost Control] Request blocked for user ${user.id}: ${usageCheck.reason}`);
@@ -108,6 +108,28 @@ export async function POST(req: NextRequest) {
               'Cache-Control': 'no-cache',
               'Connection': 'keep-alive',
               'Retry-After': '86400', // 24 hours (for daily limit)
+            },
+          }
+        );
+      }
+
+      // Check per-school (tenant) cost limits and circuit breaker
+      const schoolCheck = await checkSchoolCostLimit(user.schoolId);
+      if (!schoolCheck.allowed) {
+        console.error(`[CIRCUIT BREAKER] Request blocked for school ${user.schoolId}: ${schoolCheck.reason}`);
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({
+            type: 'error',
+            data: schoolCheck.reason,
+            usage: schoolCheck.currentUsage,
+          }) + '\n\n'),
+          {
+            status: 429, // Too Many Requests
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+              'Retry-After': '86400', // 24 hours (resets at midnight UTC)
             },
           }
         );
