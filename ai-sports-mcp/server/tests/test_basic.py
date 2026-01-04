@@ -1,44 +1,29 @@
 """
-Basic tests for MCP Server
+Basic tests for MCP Server.
+
+Tests core functionality without requiring database or external services.
+Environment setup is handled by conftest.py.
 """
-
-import sys
-import os
-from pathlib import Path
-
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Set test environment variables before importing anything
-os.environ['DATABASE_URL'] = 'postgresql://test:test@localhost:5432/test_db'
-os.environ['OPENAI_API_KEY'] = 'sk-test-key-for-ci-testing'
-os.environ['ENVIRONMENT'] = 'test'
-os.environ['DEBUG'] = 'true'
 
 import pytest
 
 
 def test_imports():
-    """Test that core modules can be imported."""
-    try:
-        from app.core.logging import setup_logging
-        assert True
-    except ImportError as e:
-        pytest.fail(f"Failed to import core modules: {e}")
+    """Test that core modules can be imported without errors."""
+    from app.core.logging import setup_logging
+    from app.core.config import settings
 
-
-def test_environment_variables():
-    """Test that required environment variables are defined (or have defaults)."""
-    # Import after env vars are set
-    from app.core.config import Settings
-
-    # Create settings with test values
-    settings = Settings()
-
-    # Should have default values or be defined
+    assert setup_logging is not None
     assert settings is not None
-    assert hasattr(settings, 'ENVIRONMENT')
-    assert settings.ENVIRONMENT is not None
+
+
+def test_settings_loaded(test_settings):
+    """Test that settings are loaded correctly from environment."""
+    assert test_settings is not None
+    assert hasattr(test_settings, 'ENVIRONMENT')
+    assert test_settings.ENVIRONMENT is not None
+    assert test_settings.DATABASE_URL.startswith('postgresql://')
+    assert test_settings.OPENAI_API_KEY.startswith('sk-')
 
 
 @pytest.mark.asyncio
@@ -54,32 +39,23 @@ async def test_basic_async():
     assert result is True
 
 
-def test_configuration_loading():
-    """Test that configuration can be loaded without errors."""
-    from app.core.config import Settings
-
-    settings = Settings()
-
-    # Verify settings object exists and has expected attributes
-    assert settings is not None
-    assert hasattr(settings, 'ENVIRONMENT')
-    # Just check it's not None, don't check type since it's an Enum
-    assert settings.ENVIRONMENT is not None
+def test_configuration_has_required_fields(test_settings):
+    """Test that configuration has all required fields."""
+    assert hasattr(test_settings, 'ENVIRONMENT')
+    assert hasattr(test_settings, 'DATABASE_URL')
+    assert hasattr(test_settings, 'OPENAI_API_KEY')
+    assert hasattr(test_settings, 'OPENAI_MODEL')
+    assert hasattr(test_settings, 'LOG_LEVEL')
+    assert hasattr(test_settings, 'LOG_FORMAT')
 
 
-def test_logging_setup():
-    """Test that logging can be initialized."""
-    from app.core.logging import setup_logging
+def test_logging_can_be_initialized():
+    """Test that logging can be initialized without errors."""
+    from app.core.logging import get_logger
 
-    logger = setup_logging()
-
-    # Verify logger was created
+    logger = get_logger("test")
     assert logger is not None
 
-    # Test logging doesn't crash (catch any exceptions)
-    try:
-        logger.info("Test log message")
-        logger.debug("Test debug message")
-        assert True
-    except Exception as e:
-        pytest.fail(f"Logging failed: {e}")
+    # Test logging doesn't crash
+    logger.info("Test log message from test suite")
+    logger.debug("Test debug message")
