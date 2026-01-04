@@ -148,13 +148,13 @@ export default function StudentProgressPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 flex gap-2 mb-10">
+        <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 flex gap-3 mb-10">
           <button
             onClick={() => setActiveTab('mood')}
             className={`flex-1 px-6 py-4 rounded-xl font-bold transition-all ${
               activeTab === 'mood'
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-100 hover:scale-105 transform'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
             }`}
           >
             ❤️ Wellness Tracking
@@ -163,8 +163,8 @@ export default function StudentProgressPage() {
             onClick={() => setActiveTab('goals')}
             className={`flex-1 px-6 py-4 rounded-xl font-bold transition-all ${
               activeTab === 'goals'
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-100 hover:scale-105 transform'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
             }`}
           >
             🎯 Goals

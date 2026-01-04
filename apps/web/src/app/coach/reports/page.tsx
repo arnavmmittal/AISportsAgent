@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Download, TrendingUp, BarChart3, Brain, MessageSquare } from 'lucide-react';
+import { FileText, Download, TrendingUp, BarChart3, Brain, MessageSquare, X, Calendar, Users, CheckSquare } from 'lucide-react';
 
 interface Report {
   id: string;
@@ -45,6 +45,27 @@ interface MultiModalAnalysis {
 }
 
 export default function ReportsPage() {
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [showCustomReportModal, setShowCustomReportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState<string | null>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+
+  // Custom report form state
+  const [customReportForm, setCustomReportForm] = useState({
+    reportType: 'weekly' as 'weekly' | 'monthly' | 'custom',
+    startDate: '',
+    endDate: '',
+    includeMetrics: {
+      readiness: true,
+      mood: true,
+      performance: true,
+      chatInsights: true,
+      interventions: true,
+    },
+    athleteFilter: 'all' as 'all' | 'specific',
+    selectedAthletes: [] as string[],
+  });
+
   const [reports] = useState<Report[]>([
     {
       id: '1',
@@ -192,6 +213,102 @@ export default function ReportsPage() {
     return 'text-red-600 dark:text-red-400';
   };
 
+  const handleViewReport = (report: Report) => {
+    setSelectedReport(report);
+  };
+
+  const handleExportPDF = async (reportId: string) => {
+    setIsExporting(reportId);
+    try {
+      // Call API to generate PDF
+      const response = await fetch(`/api/reports/${reportId}/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report-${reportId}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
+  const handleGenerateCustomReport = () => {
+    setShowCustomReportModal(true);
+  };
+
+  const handleSubmitCustomReport = async () => {
+    setIsGeneratingReport(true);
+    try {
+      // Validate form
+      if (!customReportForm.startDate || !customReportForm.endDate) {
+        alert('Please select both start and end dates');
+        return;
+      }
+
+      // Call API to generate custom report
+      const response = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(customReportForm),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      const data = await response.json();
+
+      // Close modal and show success message
+      setShowCustomReportModal(false);
+      alert(`Custom report "${data.title}" generated successfully! Refresh the page to see it in the reports list.`);
+
+      // Reset form
+      setCustomReportForm({
+        reportType: 'weekly',
+        startDate: '',
+        endDate: '',
+        includeMetrics: {
+          readiness: true,
+          mood: true,
+          performance: true,
+          chatInsights: true,
+          interventions: true,
+        },
+        athleteFilter: 'all',
+        selectedAthletes: [],
+      });
+    } catch (error) {
+      console.error('Error generating custom report:', error);
+      alert('Failed to generate custom report. Please try again.');
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -203,7 +320,10 @@ export default function ReportsPage() {
             </h1>
             <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Readiness analytics, performance correlations, and insights</p>
           </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform">
+          <button
+            onClick={handleGenerateCustomReport}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform"
+          >
             <FileText className="w-5 h-5" />
             Generate Custom Report
           </button>
@@ -292,13 +412,20 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold hover:scale-105 transform">
+                  <button
+                    onClick={() => handleViewReport(report)}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold hover:scale-105 transform"
+                  >
                     <FileText className="w-4 h-4" />
                     View Full Report
                   </button>
-                  <button className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 rounded-xl hover:shadow-lg transition-all font-bold hover:scale-105 transform hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <button
+                    onClick={() => handleExportPDF(report.id)}
+                    disabled={isExporting === report.id}
+                    className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 rounded-xl hover:shadow-lg transition-all font-bold hover:scale-105 transform hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
                     <Download className="w-4 h-4" />
-                    Export PDF
+                    {isExporting === report.id ? 'Exporting...' : 'Export PDF'}
                   </button>
                 </div>
               </div>
@@ -473,6 +600,306 @@ export default function ReportsPage() {
             </div>
           </div>
         </div>
+
+        {/* View Report Modal */}
+        {selectedReport && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setSelectedReport(null)}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 p-6 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-3xl font-black text-white">{selectedReport.title}</h2>
+                  <p className="text-blue-100 font-semibold mt-1">{selectedReport.dateRange}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedReport(null)}
+                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-8">
+                {/* Report Meta Info */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-2 border-blue-200 dark:border-blue-800">
+                    <div className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2">Report Type</div>
+                    <div className="text-2xl font-black text-blue-900 dark:text-blue-200 uppercase">{selectedReport.type}</div>
+                  </div>
+
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
+                    <div className="text-sm font-bold text-purple-600 dark:text-purple-400 mb-2">Avg Readiness</div>
+                    <div className={`text-4xl font-black ${getReadinessColor(selectedReport.readinessAvg)}`}>
+                      {selectedReport.readinessAvg}
+                      <span className="text-xl opacity-75">/100</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border-2 border-green-200 dark:border-green-800">
+                    <div className="text-sm font-bold text-green-600 dark:text-green-400 mb-2">Generated</div>
+                    <div className="text-xl font-black text-green-900 dark:text-green-200">
+                      {new Date(selectedReport.generatedAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance Correlation */}
+                {selectedReport.performanceCorrelation && (
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-l-4 border-green-500 p-6 rounded-lg mb-8">
+                    <h3 className="font-black text-green-900 dark:text-green-200 mb-2 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      Performance Correlation
+                    </h3>
+                    <p className="text-lg text-green-800 dark:text-green-300 font-semibold">
+                      {selectedReport.performanceCorrelation}
+                    </p>
+                  </div>
+                )}
+
+                {/* Key Insights */}
+                <div className="mb-8">
+                  <h3 className="text-2xl font-black text-foreground dark:text-gray-100 mb-4 flex items-center gap-2">
+                    <Brain className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    Key Insights
+                  </h3>
+                  <div className="space-y-4">
+                    {selectedReport.keyInsights.map((insight, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-l-4 border-blue-500 p-5 rounded-lg"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                            {idx + 1}
+                          </span>
+                          <p className="text-base text-foreground dark:text-gray-200 font-semibold pt-1">
+                            {insight}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Detailed Statistics Section */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border-2 border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xl font-black text-foreground dark:text-gray-100 mb-4">Detailed Statistics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-600">
+                      <span className="text-gray-600 dark:text-gray-400 font-semibold">Report Period:</span>
+                      <span className="font-black text-foreground dark:text-gray-100">{selectedReport.dateRange}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-600">
+                      <span className="text-gray-600 dark:text-gray-400 font-semibold">Report Type:</span>
+                      <span className="font-black text-foreground dark:text-gray-100 uppercase">{selectedReport.type}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-600">
+                      <span className="text-gray-600 dark:text-gray-400 font-semibold">Team Avg Readiness:</span>
+                      <span className={`font-black ${getReadinessColor(selectedReport.readinessAvg)}`}>
+                        {selectedReport.readinessAvg}/100
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-600">
+                      <span className="text-gray-600 dark:text-gray-400 font-semibold">Generated Date:</span>
+                      <span className="font-black text-foreground dark:text-gray-100">
+                        {new Date(selectedReport.generatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-8">
+                  <button
+                    onClick={() => handleExportPDF(selectedReport.id)}
+                    disabled={isExporting === selectedReport.id}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
+                    <Download className="w-5 h-5" />
+                    {isExporting === selectedReport.id ? 'Exporting...' : 'Export as PDF'}
+                  </button>
+                  <button
+                    onClick={() => setSelectedReport(null)}
+                    className="px-6 py-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl hover:shadow-lg transition-all font-bold hover:scale-105 transform"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Report Modal */}
+        {showCustomReportModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowCustomReportModal(false)}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 p-6 flex items-center justify-between rounded-t-2xl">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-8 h-8 text-white" />
+                  <div>
+                    <h2 className="text-2xl font-black text-white">Generate Custom Report</h2>
+                    <p className="text-blue-100 font-semibold">Configure your custom analytics report</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCustomReportModal(false)}
+                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-8 space-y-6">
+                {/* Report Type */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-foreground dark:text-gray-100 mb-3">
+                    <Calendar className="w-4 h-4" />
+                    Report Type
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['weekly', 'monthly', 'custom'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setCustomReportForm({ ...customReportForm, reportType: type as any })}
+                        className={`px-4 py-3 rounded-xl font-bold capitalize transition-all ${
+                          customReportForm.reportType === type
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Date Range */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-foreground dark:text-gray-100 mb-2">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customReportForm.startDate}
+                      onChange={(e) => setCustomReportForm({ ...customReportForm, startDate: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-foreground dark:text-gray-100 font-semibold focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-foreground dark:text-gray-100 mb-2">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customReportForm.endDate}
+                      onChange={(e) => setCustomReportForm({ ...customReportForm, endDate: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-foreground dark:text-gray-100 font-semibold focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Metrics to Include */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-foreground dark:text-gray-100 mb-3">
+                    <CheckSquare className="w-4 h-4" />
+                    Metrics to Include
+                  </label>
+                  <div className="space-y-2">
+                    {Object.entries(customReportForm.includeMetrics).map(([metric, enabled]) => (
+                      <label
+                        key={metric}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={enabled}
+                          onChange={(e) =>
+                            setCustomReportForm({
+                              ...customReportForm,
+                              includeMetrics: {
+                                ...customReportForm.includeMetrics,
+                                [metric]: e.target.checked,
+                              },
+                            })
+                          }
+                          className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="font-semibold text-foreground dark:text-gray-200 capitalize">
+                          {metric.replace(/([A-Z])/g, ' $1').trim()}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Athlete Filter */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-foreground dark:text-gray-100 mb-3">
+                    <Users className="w-4 h-4" />
+                    Athlete Filter
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setCustomReportForm({ ...customReportForm, athleteFilter: 'all' })}
+                      className={`px-4 py-3 rounded-xl font-bold transition-all ${
+                        customReportForm.athleteFilter === 'all'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      All Athletes
+                    </button>
+                    <button
+                      onClick={() => setCustomReportForm({ ...customReportForm, athleteFilter: 'specific' })}
+                      className={`px-4 py-3 rounded-xl font-bold transition-all ${
+                        customReportForm.athleteFilter === 'specific'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Specific Athletes
+                    </button>
+                  </div>
+                  {customReportForm.athleteFilter === 'specific' && (
+                    <div className="mt-3 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
+                      <p className="text-sm text-blue-900 dark:text-blue-200 font-semibold">
+                        Athlete selection coming soon! For now, reports will include all athletes.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={handleSubmitCustomReport}
+                    disabled={isGeneratingReport}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
+                    <FileText className="w-5 h-5" />
+                    {isGeneratingReport ? 'Generating...' : 'Generate Report'}
+                  </button>
+                  <button
+                    onClick={() => setShowCustomReportModal(false)}
+                    disabled={isGeneratingReport}
+                    className="px-6 py-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl hover:shadow-lg transition-all font-bold hover:scale-105 transform disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

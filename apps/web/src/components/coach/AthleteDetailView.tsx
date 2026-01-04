@@ -77,6 +77,7 @@ interface AthleteData {
 export default function AthleteDetailView({ athleteId }: { athleteId: string }) {
   const router = useRouter();
   const [athleteData, setAthleteData] = useState<AthleteData | null>(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,12 +97,23 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
   const fetchAthleteData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/coach/athletes/${athleteId}`);
-      if (!res.ok) throw new Error('Failed to fetch athlete data');
+      const [athleteRes, perfRes] = await Promise.all([
+        fetch(`/api/coach/athletes/${athleteId}`),
+        fetch(`/api/performance/${athleteId}?limit=10`)
+      ]);
 
-      const json = await res.json();
-      setAthleteData(json);
-      setRelationshipNotes(json.data.relationship.notes || '');
+      if (!athleteRes.ok) throw new Error('Failed to fetch athlete data');
+
+      const athleteJson = await athleteRes.json();
+      setAthleteData(athleteJson);
+      setRelationshipNotes(athleteJson.data.relationship.notes || '');
+
+      // Performance data is optional
+      if (perfRes.ok) {
+        const perfJson = await perfRes.json();
+        setPerformanceMetrics(perfJson.data || []);
+      }
+
       setError(null);
     } catch (err) {
       console.error('Error fetching athlete data:', err);
@@ -557,6 +569,185 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
           />
         </div>
 
+        {/* Performance Metrics Section */}
+        {performanceMetrics.length > 0 && (
+          <>
+            {/* Performance Summary Stats */}
+            <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+              <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
+                <span className="text-3xl">🏆</span>
+                Performance Summary
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
+                  <div className="text-4xl font-black text-green-700">
+                    {performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'WIN').length}
+                  </div>
+                  <div className="text-sm font-semibold text-green-600 mt-2">Wins</div>
+                </div>
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border-2 border-red-200">
+                  <div className="text-4xl font-black text-red-700">
+                    {performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'LOSS').length}
+                  </div>
+                  <div className="text-sm font-semibold text-red-600 mt-2">Losses</div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
+                  <div className="text-4xl font-black text-blue-700">
+                    {((performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'WIN').length / performanceMetrics.length) * 100).toFixed(0)}%
+                  </div>
+                  <div className="text-sm font-semibold text-blue-600 mt-2">Win Rate</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
+                  <div className="text-4xl font-black text-purple-700">
+                    {performanceMetrics.filter(m => m.readinessScore).length > 0
+                      ? (performanceMetrics
+                          .filter(m => m.readinessScore)
+                          .reduce((sum, m) => sum + m.readinessScore, 0) /
+                        performanceMetrics.filter(m => m.readinessScore).length).toFixed(0)
+                      : 'N/A'}
+                  </div>
+                  <div className="text-sm font-semibold text-purple-600 mt-2">Avg Readiness</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance vs Readiness Correlation */}
+            {performanceMetrics.filter(m => m.readinessScore && m.stats?.points).length >= 5 && (
+              <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+                <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
+                  <span className="text-3xl">📈</span>
+                  Performance vs Readiness Correlation
+                </h2>
+                <p className="text-sm text-muted-foreground mb-6">
+                  This chart shows the correlation between mental readiness scores and game performance (points scored).
+                  Higher readiness typically correlates with better performance outcomes.
+                </p>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={performanceMetrics.slice(0, 10).reverse().map((m, idx) => ({
+                      game: `Game ${idx + 1}`,
+                      points: m.stats?.points || 0,
+                      readiness: m.readinessScore || 0,
+                      outcome: m.outcome
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="game" stroke="#6b7280" style={{ fontWeight: 600 }} />
+                      <YAxis yAxisId="left" stroke="#6b7280" style={{ fontWeight: 600 }} />
+                      <YAxis yAxisId="right" orientation="right" stroke="#8b5cf6" style={{ fontWeight: 600 }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '2px solid #e5e7eb',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                          fontWeight: 600,
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontWeight: 700 }} />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="points"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        dot={{ fill: '#10b981', r: 5 }}
+                        name="Points Scored"
+                      />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="readiness"
+                        stroke="#8b5cf6"
+                        strokeWidth={3}
+                        dot={{ fill: '#8b5cf6', r: 5 }}
+                        name="Readiness Score"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Recent Games */}
+            <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+              <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
+                <span className="text-3xl">🎮</span>
+                Recent Games
+              </h2>
+              <div className="space-y-4">
+                {performanceMetrics.slice(0, 5).map((metric, idx) => (
+                  <div
+                    key={idx}
+                    className="border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-all hover:shadow-lg"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="text-sm text-muted-foreground font-semibold">
+                          {new Date(metric.gameDate).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                        <div className="text-lg font-bold text-foreground mt-1">
+                          vs {metric.opponentName}
+                        </div>
+                      </div>
+                      <span className={`px-4 py-2 rounded-lg font-black text-sm ${
+                        metric.outcome?.toUpperCase() === 'WIN'
+                          ? 'bg-green-100 text-green-800 border-2 border-green-300'
+                          : metric.outcome?.toUpperCase() === 'LOSS'
+                          ? 'bg-red-100 text-red-800 border-2 border-red-300'
+                          : 'bg-gray-100 text-gray-800 border-2 border-gray-300'
+                      }`}>
+                        {metric.outcome?.toUpperCase() || 'N/A'}
+                      </span>
+                    </div>
+
+                    {metric.stats && (
+                      <div className="flex gap-4 mb-3 flex-wrap">
+                        {metric.stats.points !== undefined && (
+                          <div className="flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
+                            <span className="font-black text-blue-700">{metric.stats.points}</span>
+                            <span className="text-xs text-blue-600 font-semibold">PTS</span>
+                          </div>
+                        )}
+                        {metric.stats.assists !== undefined && (
+                          <div className="flex items-center gap-1 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
+                            <span className="font-black text-purple-700">{metric.stats.assists}</span>
+                            <span className="text-xs text-purple-600 font-semibold">AST</span>
+                          </div>
+                        )}
+                        {metric.stats.rebounds !== undefined && (
+                          <div className="flex items-center gap-1 bg-orange-50 px-3 py-1 rounded-lg border border-orange-200">
+                            <span className="font-black text-orange-700">{metric.stats.rebounds}</span>
+                            <span className="text-xs text-orange-600 font-semibold">REB</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {metric.readinessScore && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground font-semibold">Mental Readiness:</span>
+                        <div className={`px-3 py-1 rounded-lg font-bold ${
+                          metric.readinessScore >= 80
+                            ? 'bg-green-100 text-green-800'
+                            : metric.readinessScore >= 60
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {metric.readinessScore}/100
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Goals */}
           <div className="bg-card rounded-2xl shadow-xl p-8 border border-gray-100">
@@ -571,26 +762,26 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                     key={goal.id}
                     className={`border-2 rounded-xl p-4 ${
                       goal.status === 'COMPLETED'
-                        ? 'border-green-300 bg-green-50'
+                        ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
                         : goal.status === 'IN_PROGRESS'
-                        ? 'border-blue-300 bg-blue-50'
-                        : 'border-border bg-background'
+                        ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-foreground">{goal.title}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100">{goal.title}</h3>
                       <span className={`text-xs px-2 py-1 rounded font-bold ${
                         goal.status === 'COMPLETED'
-                          ? 'bg-green-200 text-green-800'
+                          ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-100'
                           : goal.status === 'IN_PROGRESS'
-                          ? 'bg-blue-200 text-blue-800'
-                          : 'bg-gray-200 text-foreground'
+                          ? 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-100'
+                          : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
                       }`}>
                         {goal.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{goal.description}</p>
-                    <div className="flex gap-2 text-xs text-muted-foreground">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{goal.description}</p>
+                    <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <span>📌 {goal.type}</span>
                       <span>•</span>
                       <span>🗓️ {new Date(goal.targetDate).toLocaleDateString()}</span>

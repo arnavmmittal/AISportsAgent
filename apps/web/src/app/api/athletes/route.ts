@@ -11,18 +11,16 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {
       role: 'ATHLETE',
-      Athlete: {
-        isNot: null,
-      },
+      Athlete: sports && sports.length > 0
+        ? {
+            is: {
+              sport: { in: sports },
+            },
+          }
+        : {
+            isNot: null,
+          },
     };
-
-    // Add sport filter if provided
-    if (sports && sports.length > 0) {
-      where.Athlete = {
-        ...where.Athlete,
-        sport: { in: sports },
-      };
-    }
 
     // Fetch athletes with their latest mood log
     const athletes = await prisma.user.findMany({
