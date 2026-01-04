@@ -273,6 +273,74 @@ REDIS_URL="redis://..."
 - Custom frameworks per school
 - Configurable data retention policies
 
+## Production & Security Guardrails
+
+### Secrets & Environment
+- ❌ NEVER use `NEXT_PUBLIC_*` for API keys or sensitive data
+- ✅ All secrets in environment variables (Vercel/Railway, never in code)
+- ✅ Rotation: JWT secrets every 90 days, API keys every 180 days
+- ✅ Validation: Startup checks verify all required secrets exist
+- ✅ Separation: Dev/staging/prod use different credentials
+
+### Supabase RLS (Row-Level Security)
+- ✅ EVERY table must have RLS policies (no exceptions)
+- ❌ NEVER use service role key on client (security breach)
+- ✅ Test RLS: Try accessing other user's data, must fail
+- ✅ Defense in depth: Add explicit `WHERE schoolId = user.schoolId` in application code
+- ✅ Audit logs: Log all data access with user ID, timestamp, resource
+
+### Multi-Tenant Boundaries
+- ✅ Enforce at 3 layers: (1) Supabase RLS, (2) Next.js middleware, (3) MCP service layer
+- ✅ ChromaDB: Use collections per tenant (e.g., `kb_{schoolId}`)
+- ❌ NEVER let user control `where` filters in vector queries
+- ✅ Every DB query includes `schoolId` filter (server-side enforced)
+
+### LLM Safety
+- ✅ Tool allowlists: Only approved functions callable by LLM
+- ✅ Strict schemas: Use function calling with `additionalProperties: false`
+- ✅ PII redaction: Remove emails, phones, SSNs before sending to LLM
+- ✅ Prompt storage: Opt-in only, redacted, 30-day retention
+- ✅ Cost controls: Circuit breakers at $500/day per tenant, $10K/month total
+
+### Input Validation
+- ✅ Zod schemas on ALL API routes (no exceptions)
+- ✅ Sanitize HTML in chat messages (use DOMPurify for markdown)
+- ❌ NEVER use `dangerouslySetInnerHTML` without sanitization
+- ✅ Rate limiting: 60 req/min per user, 1000 req/min per tenant
+
+### CI/CD Rules
+- ✅ Protected main branch: Require PR reviews + passing checks
+- ✅ Required checks: lint, typecheck, tests, security scan
+- ✅ Secret scanning: GitHub Dependabot + npm audit / safety check
+- ❌ NEVER merge failing builds or skipped tests
+- ✅ Staging deployment: Auto-deploy on merge to staging branch
+- ✅ Production deployment: Manual approval required
+
+### Deployment Safety
+- ✅ Deploy to staging first, test for 24 hours minimum
+- ✅ Database migrations: Test rollback before production
+- ✅ Rollback plan: Verify can rollback in < 2 minutes
+- ✅ Kill switch: Ability to disable features via Redis flags
+- ✅ Feature flags: Use PostHog or similar for gradual rollouts
+
+### Incident Response
+- ✅ Leaked keys: Revoke within 5 minutes, rotate, audit usage
+- ✅ Data exposure: Kill switch → investigate → notify users → fix → deploy
+- ✅ Auth compromise: Lock account → invalidate sessions → require password reset
+- ✅ Runaway costs: Circuit breaker triggers at $500/day (auto-blocks requests)
+- ✅ Downtime: Rollback → verify recovery → post-mortem within 24 hours
+
+### Pre-Launch Checklist (CRITICAL)
+- [ ] No demo account logic in production code (`ENABLE_DEMO_ACCOUNTS=false`)
+- [ ] Cost limits enabled (`ENABLE_COST_LIMITS=true`)
+- [ ] RLS policies on all 40 tables (verify with tests)
+- [ ] Secrets rotated in last 90 days
+- [ ] Monitoring alerts configured (5xx, latency, cost)
+- [ ] Incident playbooks documented
+- [ ] Backup/restore drill completed successfully
+
+**See `/ProductionSecurityRunbook.md` for complete security playbook.**
+
 ## Coding Conventions
 
 ### TypeScript/Next.js
