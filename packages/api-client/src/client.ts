@@ -167,7 +167,15 @@ export class APIClient {
   // ========== Athlete Profile ==========
 
   async getAthleteProfile(athleteId: string): Promise<any> {
-    return this.request(`/api/athlete/${athleteId}`);
+    const response: any = await this.request(`/api/coach/athletes/${athleteId}`);
+    // Extract nested data structure
+    return response.data?.athlete ? {
+      ...response.data.athlete,
+      position: response.data.athlete.teamPosition,
+      moodLogs: response.data.moodLogs || [],
+      goals: response.data.goals || [],
+      chatSessions: response.data.chatSessions || [],
+    } : response;
   }
 
   async getProfile(): Promise<{

@@ -10,6 +10,7 @@ import * as Notifications from 'expo-notifications';
 
 import { initializeAuth } from '../lib/auth';
 import { registerForPushNotifications, setupNotificationListeners } from '../lib/notifications';
+import { ThemeProvider as CustomThemeProvider } from '../contexts/ThemeContext';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -116,11 +117,13 @@ function RootLayoutNav() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    </ThemeProvider>
+    <CustomThemeProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </ThemeProvider>
+    </CustomThemeProvider>
   );
 }

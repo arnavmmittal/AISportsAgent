@@ -3,57 +3,120 @@
  * AI Sports Agent - Premium Athletic Design System (Lovable)
  */
 
-export const Colors = {
+// Dark theme colors (default)
+const darkColors = {
   // Primary - Deep Blue (Trust, Focus, Professionalism)
-  primary: '#1E40AF', // hsl(217 91% 40%)
-  primaryLight: '#3B82F6', // hsl(217 91% 60%) - Bright Blue
+  primary: '#1E40AF',
+  primaryLight: '#3B82F6',
   primaryDark: '#1E3A8A',
 
   // Secondary/Accent
-  secondary: '#3B82F6', // Bright Blue
-  accent: '#5BA3F5', // Light Blue hsl(213 94% 68%)
+  secondary: '#3B82F6',
+  accent: '#5BA3F5',
 
   // Chrome Silver
-  chrome: '#BFBFBF', // hsl(0 0% 75%)
+  chrome: '#BFBFBF',
   chromeDark: '#8F8F8F',
 
-  // Grayscale - Dark with blue tint
+  // Grayscale
   gray50: '#F8FAFC',
   gray100: '#F1F5F9',
   gray200: '#E2E8F0',
   gray300: '#CBD5E1',
-  gray400: '#94A3B8', // hsl(215 20% 65%) - muted foreground
+  gray400: '#94A3B8',
   gray500: '#64748B',
   gray600: '#475569',
-  gray700: '#334155', // hsl(215 25% 27%) - muted
-  gray800: '#1E293B', // hsl(217 33% 17%) - card
-  gray900: '#0F1419', // hsl(210 29% 8%) - background
+  gray700: '#334155',
+  gray800: '#1E293B',
+  gray900: '#0F1419',
 
   // Semantic
-  success: '#10B981', // hsl(160 84% 39%)
+  success: '#10B981',
   successLight: '#D1FAE5',
-  warning: '#F59E0B', // hsl(38 92% 50%)
+  warning: '#F59E0B',
   warningLight: '#FEF3C7',
-  error: '#EF4444', // hsl(0 84% 60%)
+  error: '#EF4444',
   errorLight: '#FEE2E2',
   info: '#3B82F6',
   infoLight: '#DBEAFE',
 
-  // Backgrounds - Dark with blue tint
-  background: '#0F1419', // hsl(210 29% 8%)
-  backgroundSecondary: '#1E293B', // hsl(217 33% 17%)
+  // Backgrounds - Dark
+  background: '#0F1419',
+  backgroundSecondary: '#1E293B',
   card: '#1E293B',
   cardElevated: '#334155',
 
   // Borders
-  border: '#2D3E50', // hsl(217 33% 25%)
+  border: '#2D3E50',
   borderLight: '#334155',
 
   // Text - Light on dark
   textPrimary: '#FFFFFF',
-  textSecondary: '#94A3B8', // hsl(215 20% 65%)
+  textSecondary: '#94A3B8',
   textTertiary: '#64748B',
   textInverse: '#0F1419',
+};
+
+// Light theme colors
+const lightColors = {
+  // Primary - Deep Blue
+  primary: '#1E40AF',
+  primaryLight: '#3B82F6',
+  primaryDark: '#1E3A8A',
+
+  // Secondary/Accent
+  secondary: '#3B82F6',
+  accent: '#5BA3F5',
+
+  // Chrome Silver
+  chrome: '#BFBFBF',
+  chromeDark: '#8F8F8F',
+
+  // Grayscale
+  gray50: '#F8FAFC',
+  gray100: '#F1F5F9',
+  gray200: '#E2E8F0',
+  gray300: '#CBD5E1',
+  gray400: '#94A3B8',
+  gray500: '#64748B',
+  gray600: '#475569',
+  gray700: '#334155',
+  gray800: '#1E293B',
+  gray900: '#0F1419',
+
+  // Semantic
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  error: '#EF4444',
+  errorLight: '#FEE2E2',
+  info: '#3B82F6',
+  infoLight: '#DBEAFE',
+
+  // Backgrounds - Light
+  background: '#FFFFFF',
+  backgroundSecondary: '#F8FAFC',
+  card: '#FFFFFF',
+  cardElevated: '#F1F5F9',
+
+  // Borders
+  border: '#E2E8F0',
+  borderLight: '#F1F5F9',
+
+  // Text - Dark on light
+  textPrimary: '#0F1419',
+  textSecondary: '#64748B',
+  textTertiary: '#94A3B8',
+  textInverse: '#FFFFFF',
+};
+
+// Default export (dark theme for backwards compatibility)
+export const Colors = darkColors;
+
+// Function to get theme-aware colors
+export const getThemeColors = (isDark: boolean = true) => {
+  return isDark ? darkColors : lightColors;
 };
 
 export const Spacing = {

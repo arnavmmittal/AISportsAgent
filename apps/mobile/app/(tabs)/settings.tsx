@@ -20,8 +20,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { Colors, Spacing, Typography, BorderRadius } from '@/constants/theme';
 import { apiClient, getStoredUserRole } from '../../lib/auth';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function SettingsScreen() {
+  const { theme, toggleTheme, isDarkMode } = useTheme();
   const [consentChatSummaries, setConsentChatSummaries] = useState(false);
   const [consentCoachView, setConsentCoachView] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -507,8 +509,27 @@ export default function SettingsScreen() {
             style={styles.cardGradient}
           >
             <SettingItem
+              icon={isDarkMode ? "moon" : "sunny"}
+              iconColor={isDarkMode ? "#a78bfa" : "#f59e0b"}
+              title="Dark Mode"
+              subtitle={isDarkMode ? 'Reduce eye strain in low light' : 'Switch to dark theme'}
+              rightComponent={
+                <Switch
+                  value={isDarkMode}
+                  onValueChange={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    toggleTheme();
+                  }}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#a78bfa' }}
+                  thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              }
+            />
+            <View style={styles.separator} />
+            <SettingItem
               icon="language-outline"
-              iconColor="#a78bfa"
+              iconColor="#60a5fa"
               title="Language"
               subtitle="English"
               onPress={() => Alert.alert('Coming Soon', 'Language settings will be available soon')}

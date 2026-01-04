@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { prisma } from '@/lib/prisma';
+import { logLoginAttempt } from '@/lib/audit';
 
 // JWT secret (same as NEXTAUTH_SECRET)
 const JWT_SECRET = new TextEncoder().encode(
@@ -37,6 +38,14 @@ export async function POST(request: NextRequest) {
       });
 
       if (!user || !user.password) {
+        // Audit log: Failed login attempt (user not found)
+        await logLoginAttempt(
+          email,
+          false,
+          { headers: request.headers },
+          'User not found'
+        ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
+
         return NextResponse.json(
           { error: 'Invalid credentials' },
           { status: 401 }
@@ -46,6 +55,14 @@ export async function POST(request: NextRequest) {
       const isValid = await compare(password, user.password);
 
       if (!isValid) {
+        // Audit log: Failed login attempt (invalid password)
+        await logLoginAttempt(
+          user.id,
+          false,
+          { headers: request.headers },
+          'Invalid password'
+        ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
+
         return NextResponse.json(
           { error: 'Invalid credentials' },
           { status: 401 }
@@ -63,6 +80,13 @@ export async function POST(request: NextRequest) {
         .setExpirationTime('7d')
         .setIssuedAt()
         .sign(JWT_SECRET);
+
+      // Audit log: Successful login
+      await logLoginAttempt(
+        user.id,
+        true,
+        { headers: request.headers }
+      ).catch(err => console.error('[Audit] Failed to log login success:', err));
 
       return NextResponse.json({
         user: {

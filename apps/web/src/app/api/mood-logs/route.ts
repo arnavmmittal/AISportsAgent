@@ -6,6 +6,7 @@ import {
   moodLogCreateSchema,
   ValidationError,
 } from '@/lib/validation';
+import { logMoodLogsView } from '@/lib/audit';
 
 export async function POST(req: NextRequest) {
   try {
@@ -99,6 +100,11 @@ export async function GET(req: NextRequest) {
       where: { athleteId },
       orderBy: { createdAt: 'desc' },
       take: limit,
+    });
+
+    // Audit log: User viewed mood logs (especially important for coach access)
+    await logMoodLogsView(user!.id, athleteId, moodLogs.length).catch(err => {
+      console.error('[Audit] Failed to log mood logs view:', err);
     });
 
     return NextResponse.json({ success: true, data: moodLogs });

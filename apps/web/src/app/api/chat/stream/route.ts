@@ -20,6 +20,7 @@ import {
   ValidationError,
   validateAthleteAccess,
 } from '@/lib/validation';
+import { logChatMessageCreation } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -194,13 +195,20 @@ export async function POST(req: NextRequest) {
           });
 
           // Save user message
+          const userMessageId = `msg_${Date.now()}`;
           await prisma.message.create({
             data: {
-              id: `msg_${Date.now()}`,
+              id: userMessageId,
               sessionId: session.id,
               role: 'user',
               content: message,
             },
+          });
+
+          // Audit log: User created a chat message
+          await logChatMessageCreation(athlete_id, session.id, userMessageId).catch(err => {
+            console.error('[Audit] Failed to log message creation:', err);
+            // Don't fail the request if audit logging fails
           });
 
           // Build context
@@ -244,6 +252,11 @@ export async function POST(req: NextRequest) {
               role: 'assistant',
               content: result.response.content,
             },
+          });
+
+          // Audit log: Assistant message created (system action)
+          await logChatMessageCreation('system', session.id, assistantMessageId).catch(err => {
+            console.error('[Audit] Failed to log assistant message:', err);
           });
 
           // Send crisis alert if detected
