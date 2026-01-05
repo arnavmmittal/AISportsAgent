@@ -1,12 +1,25 @@
 import OpenAI from 'openai'
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('Missing OPENAI_API_KEY environment variable')
+// Lazy init OpenAI client (only during runtime, not build)
+let openaiInstance: OpenAI | null = null;
+export function getOpenAI(): OpenAI {
+  if (!openaiInstance) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('Missing OPENAI_API_KEY environment variable');
+    }
+    openaiInstance = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiInstance;
 }
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Keep legacy export for backward compatibility (lazy init on access)
+export const openai = new Proxy({} as OpenAI, {
+  get(_, prop) {
+    return (getOpenAI() as any)[prop];
+  }
+});
 
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview'
 
@@ -50,7 +63,7 @@ Remember: You complement, not replace, human sports psychologists.`
 
 // Helper function to generate embeddings
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
+  const response = await getOpenAI().embeddings.create({
     model: 'text-embedding-3-small',
     input: text,
   })
@@ -67,7 +80,7 @@ export async function generateChatCompletion(
     stream?: boolean
   }
 ) {
-  return await openai.chat.completions.create({
+  return await getOpenAI().chat.completions.create({
     model: OPENAI_MODEL,
     messages,
     temperature: options?.temperature ?? 0.7,

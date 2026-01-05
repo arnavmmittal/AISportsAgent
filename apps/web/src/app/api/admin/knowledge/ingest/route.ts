@@ -16,9 +16,19 @@ import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Lazy init OpenAI client (only during runtime, not build)
+let openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is required');
+    }
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 // Input validation schema
 const ingestSchema = z.object({
@@ -47,7 +57,7 @@ const ingestSchema = z.object({
  */
 async function generateEmbedding(text: string): Promise<number[]> {
   try {
-    const response = await openai.embeddings.create({
+    const response = await getOpenAI().embeddings.create({
       model: 'text-embedding-3-small',
       input: text.substring(0, 8000), // Max 8K tokens
     });
