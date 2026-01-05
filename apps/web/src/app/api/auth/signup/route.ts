@@ -3,17 +3,26 @@ import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 import { signupSchema } from '@/lib/validation/auth';
 
-// Supabase Admin client (for server-side operations)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+// Lazy init Supabase Admin client (only during runtime, not build)
+let supabaseAdminInstance: ReturnType<typeof createClient> | null = null;
+function getSupabaseAdmin() {
+  if (!supabaseAdminInstance) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing Supabase environment variables');
+    }
+    supabaseAdminInstance = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
   }
-);
+  return supabaseAdminInstance;
+}
 
 // Default school ID - in production, this would be determined by subdomain or user selection
 const DEFAULT_SCHOOL_ID = 'default-school';
