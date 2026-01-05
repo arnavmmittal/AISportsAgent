@@ -240,7 +240,7 @@ async function ingestChunks(schoolId?: string, updateEmbeddings = false) {
       const embedding = await generateEmbedding(chunk.content);
 
       // Categorize and tag
-      const category = categorizeContent(chunk.content, chunk.metadata);
+      const category = categorizeContent(chunk.content, chunk.metadata) as any;
       const tags = extractTags(chunk.content, chunk.metadata);
 
       // Create title from first 100 chars
