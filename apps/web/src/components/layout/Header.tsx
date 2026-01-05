@@ -122,7 +122,7 @@ export function Header() {
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-full text-left px-4 py-2 text-sm text-muted-foreground hover:bg-muted-foreground/10 transition-colors"
                     >
                       Sign Out
                     </button>
@@ -190,7 +190,7 @@ export function Header() {
               </Link>
               <button
                 onClick={handleSignOut}
-                className="w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:bg-red-50"
+                className="w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:bg-muted-foreground/10"
               >
                 Sign Out
               </button>

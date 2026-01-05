@@ -153,8 +153,8 @@ export default function DailyReadinessOverview() {
               key={index}
               className={`p-4 rounded-lg border ${
                 alert.priority === 'CRITICAL'
-                  ? 'bg-red-900/20 border-red-700'
-                  : 'bg-amber-900/20 border-amber-700'
+                  ? 'bg-muted-foreground/20 border-muted-foreground'
+                  : 'bg-muted-foreground/20/20 border-muted-foreground'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -170,8 +170,8 @@ export default function DailyReadinessOverview() {
                     <span
                       className={
                         alert.priority === 'CRITICAL'
-                          ? 'text-red-400'
-                          : 'text-amber-400'
+                          ? 'text-muted-foreground'
+                          : 'text-muted-foreground'
                       }
                     >
                       Readiness: {alert.readiness}
@@ -194,11 +194,11 @@ export default function DailyReadinessOverview() {
       <DashboardSection title="Today's Readiness Distribution">
         <div className="grid grid-cols-5 gap-3">
           {[
-            { level: 'OPTIMAL', range: '90-100', count: 3, color: 'bg-green-500' },
+            { level: 'OPTIMAL', range: '90-100', count: 3, color: 'bg-secondary/100' },
             { level: 'GOOD', range: '75-89', count: 8, color: 'bg-blue-500' },
-            { level: 'MODERATE', range: '60-74', count: 4, color: 'bg-yellow-500' },
-            { level: 'LOW', range: '45-59', count: 2, color: 'bg-orange-500' },
-            { level: 'POOR', range: '0-44', count: 0, color: 'bg-red-500' },
+            { level: 'MODERATE', range: '60-74', count: 4, color: 'bg-muted/100' },
+            { level: 'LOW', range: '45-59', count: 2, color: 'bg-muted/100' },
+            { level: 'POOR', range: '0-44', count: 0, color: 'bg-muted-foreground/100' },
           ].map((zone) => (
             <div
               key={zone.level}

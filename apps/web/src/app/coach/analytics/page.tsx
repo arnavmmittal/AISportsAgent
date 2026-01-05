@@ -49,11 +49,11 @@ export default async function CoachAnalyticsPage() {
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Weekly Average:</span>
-                  <span className="font-semibold text-green-600">+12%</span>
+                  <span className="font-semibold text-secondary">+12%</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Monthly Trend:</span>
-                  <span className="font-semibold text-green-600">↑ Improving</span>
+                  <span className="font-semibold text-secondary">↑ Improving</span>
                 </div>
               </div>
             </CardContent>
@@ -86,7 +86,7 @@ export default async function CoachAnalyticsPage() {
                     <span className="font-semibold">8 athletes</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '40%' }}></div>
+                    <div className="bg-secondary h-2 rounded-full" style={{ width: '40%' }}></div>
                   </div>
                 </div>
               </div>
@@ -115,7 +115,7 @@ export default async function CoachAnalyticsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Avg Stress:</span>
-                  <span className="font-semibold text-orange-600">4.3/10</span>
+                  <span className="font-semibold text-muted-foreground">4.3/10</span>
                 </div>
               </div>
             </CardContent>
@@ -143,7 +143,7 @@ export default async function CoachAnalyticsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Engagement Rate:</span>
-                  <span className="font-semibold text-green-600">92%</span>
+                  <span className="font-semibold text-secondary">92%</span>
                 </div>
               </div>
             </CardContent>
@@ -167,11 +167,11 @@ export default async function CoachAnalyticsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Completed:</span>
-                  <span className="font-semibold text-green-600">37</span>
+                  <span className="font-semibold text-secondary">37</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Success Rate:</span>
-                  <span className="font-semibold text-green-600">82%</span>
+                  <span className="font-semibold text-secondary">82%</span>
                 </div>
               </div>
             </CardContent>
@@ -191,15 +191,15 @@ export default async function CoachAnalyticsPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">At-Risk Athletes:</span>
-                  <span className="font-semibold text-red-600">3</span>
+                  <span className="font-semibold text-muted-foreground">3</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Crisis Alerts:</span>
-                  <span className="font-semibold text-orange-600">2</span>
+                  <span className="font-semibold text-muted-foreground">2</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Resolved This Week:</span>
-                  <span className="font-semibold text-green-600">5</span>
+                  <span className="font-semibold text-secondary">5</span>
                 </div>
               </div>
             </CardContent>
@@ -220,13 +220,13 @@ export default async function CoachAnalyticsPage() {
                   <h3 className="font-semibold text-blue-900 mb-2">📊 Custom Reports</h3>
                   <p className="text-sm text-blue-700">Generate custom analytics reports for specific time periods and metrics.</p>
                 </div>
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <h3 className="font-semibold text-purple-900 mb-2">🤖 AI Predictions</h3>
-                  <p className="text-sm text-purple-700">ML-powered predictions for athlete performance and risk levels.</p>
+                <div className="p-4 bg-accent/10 rounded-lg">
+                  <h3 className="font-semibold text-secondary mb-2">🤖 AI Predictions</h3>
+                  <p className="text-sm text-accent">ML-powered predictions for athlete performance and risk levels.</p>
                 </div>
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <h3 className="font-semibold text-green-900 mb-2">📈 Comparative Analysis</h3>
-                  <p className="text-sm text-green-700">Compare individual athletes or teams against benchmarks.</p>
+                <div className="p-4 bg-secondary/10 rounded-lg">
+                  <h3 className="font-semibold text-secondary mb-2">📈 Comparative Analysis</h3>
+                  <p className="text-sm text-secondary">Compare individual athletes or teams against benchmarks.</p>
                 </div>
               </div>
             </CardContent>

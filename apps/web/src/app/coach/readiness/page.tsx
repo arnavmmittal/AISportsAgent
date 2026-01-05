@@ -70,10 +70,10 @@ export default function ReadinessPage() {
   ]);
 
   const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'from-green-500 to-green-600';
-    if (score >= 70) return 'from-yellow-500 to-yellow-600';
-    if (score >= 50) return 'from-orange-500 to-orange-600';
-    return 'from-red-500 to-red-600';
+    if (score >= 85) return 'from-secondary to-secondary';
+    if (score >= 70) return 'from-muted-foreground to-muted-foreground';
+    if (score >= 50) return 'from-muted-foreground to-muted-foreground';
+    return 'from-muted-foreground to-muted-foreground';
   };
 
   const teamAvg = Math.round(athletes.reduce((sum, a) => sum + a.scores[13], 0) / athletes.length);
@@ -92,10 +92,10 @@ export default function ReadinessPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Team Avg</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Team Avg</div>
                 <div className="text-5xl font-black mb-2">{teamAvg}<span className="text-2xl opacity-75">/100</span></div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">WHOOP for mental</div>
               </div>
@@ -103,10 +103,10 @@ export default function ReadinessPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-red-100 text-xs font-bold uppercase tracking-wider mb-2">High Risk</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">High Risk</div>
                 <div className="text-5xl font-black mb-2">{highRisk}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Need intervention</div>
               </div>
@@ -114,10 +114,10 @@ export default function ReadinessPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Declining</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Declining</div>
                 <div className="text-5xl font-black mb-2">{declining}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Watch closely</div>
               </div>
@@ -139,7 +139,7 @@ export default function ReadinessPage() {
             {interventions.map((int, i) => (
               <div key={i} className="p-6 hover:bg-background transition-colors">
                 <div className="flex items-start gap-4">
-                  <div className={`bg-gradient-to-r ${int.priority === 1 ? 'from-red-500 to-red-600' : 'from-orange-500 to-orange-600'} rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-black shadow-lg`}>
+                  <div className={`bg-gradient-to-r ${int.priority === 1 ? 'from-muted-foreground to-muted-foreground' : 'from-muted-foreground to-muted-foreground'} rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-black shadow-lg`}>
                     P{int.priority}
                   </div>
                   <div className="flex-1">
@@ -149,8 +149,8 @@ export default function ReadinessPage() {
                         {int.readiness}/100
                       </span>
                     </div>
-                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-3">
-                      <p className="text-red-900 font-semibold text-sm">{int.reason}</p>
+                    <div className="bg-muted-foreground/10 border-l-4 border-muted-foreground p-4 rounded-lg mb-3">
+                      <p className="text-chrome font-semibold text-sm">{int.reason}</p>
                     </div>
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
                       <p className="text-blue-900 font-semibold text-sm">💡 {int.recommendation}</p>
@@ -205,12 +205,12 @@ export default function ReadinessPage() {
                     ))}
                     <td className="py-4 pl-6 text-center">
                       {athlete.trend === 'improving' && (
-                        <div className="flex items-center justify-center gap-2 text-green-600 font-bold">
+                        <div className="flex items-center justify-center gap-2 text-secondary font-bold">
                           <TrendingUp className="w-5 h-5" />Up
                         </div>
                       )}
                       {athlete.trend === 'declining' && (
-                        <div className="flex items-center justify-center gap-2 text-red-600 font-bold">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground font-bold">
                           <TrendingDown className="w-5 h-5" />Down
                         </div>
                       )}

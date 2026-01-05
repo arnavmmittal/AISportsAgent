@@ -158,11 +158,11 @@ export default function StudentAssignmentsPage() {
   const getStatusColor = (status: AssignmentStatus) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-muted/20 text-muted-foreground';
       case 'SUBMITTED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-secondary/20 text-secondary';
       case 'REVIEWED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-accent/20 text-secondary';
       default:
         return 'bg-muted text-gray-800';
     }
@@ -234,7 +234,7 @@ export default function StudentAssignmentsPage() {
         </Button>
 
         {/* Assignment Details Card */}
-        <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+        <Card className="border-2 border-accent/20 bg-gradient-to-br from-accent/10 to-accent/20">
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-foreground">
@@ -244,8 +244,8 @@ export default function StudentAssignmentsPage() {
                 <div
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
                     isOverdue(selectedAssignment.dueDate)
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-yellow-100 text-yellow-700'
+                      ? 'bg-muted-foreground/20 text-muted-foreground'
+                      : 'bg-muted/20 text-muted-foreground'
                   }`}
                 >
                   {isOverdue(selectedAssignment.dueDate) ? (
@@ -334,7 +334,7 @@ export default function StudentAssignmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <ClipboardList className="w-8 h-8 text-purple-600" />
+            <ClipboardList className="w-8 h-8 text-accent" />
             Tasks
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -468,11 +468,11 @@ function AssignmentCard({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-muted/20 text-muted-foreground';
       case 'SUBMITTED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-secondary/20 text-secondary';
       case 'REVIEWED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-accent/20 text-secondary';
       default:
         return 'bg-muted text-gray-800';
     }
@@ -501,13 +501,13 @@ function AssignmentCard({
           <div className="flex items-start gap-4 flex-1">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                isPending ? 'bg-yellow-100' : 'bg-green-100'
+                isPending ? 'bg-muted/20' : 'bg-secondary/20'
               }`}
             >
               {isPending ? (
-                <ClipboardList className="w-6 h-6 text-yellow-600" />
+                <ClipboardList className="w-6 h-6 text-muted-foreground" />
               ) : (
-                <CheckCircle className="w-6 h-6 text-green-600" />
+                <CheckCircle className="w-6 h-6 text-secondary" />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -522,7 +522,7 @@ function AssignmentCard({
                 {assignment.dueDate && (
                   <div
                     className={`flex items-center gap-1 text-xs ${
-                      isOverdueFlag ? 'text-red-600 font-semibold' : 'text-gray-500'
+                      isOverdueFlag ? 'text-muted-foreground font-semibold' : 'text-gray-500'
                     }`}
                   >
                     {isOverdueFlag ? (

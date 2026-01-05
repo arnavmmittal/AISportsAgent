@@ -141,9 +141,9 @@ export function HRVChart({ athleteId, days = 30 }: HRVChartProps) {
   // Calculate current HRV status
   const latestHRV = data[data.length - 1].hrv;
   const hrvStatus =
-    latestHRV >= 70 ? { label: 'Excellent', color: 'text-green-600' } :
-    latestHRV >= 50 ? { label: 'Good', color: 'text-yellow-600' } :
-    { label: 'Low - Recovery Needed', color: 'text-red-600' };
+    latestHRV >= 70 ? { label: 'Excellent', color: 'text-secondary' } :
+    latestHRV >= 50 ? { label: 'Good', color: 'text-muted-foreground' } :
+    { label: 'Low - Recovery Needed', color: 'text-muted-foreground' };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -234,15 +234,15 @@ export function HRVChart({ athleteId, days = 30 }: HRVChartProps) {
         {/* HRV Zone Legend */}
         <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
           <div className="flex items-center">
-            <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+            <div className="w-3 h-3 rounded-full bg-secondary/100 mr-2"></div>
             <span>Excellent (&gt;70ms)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
+            <div className="w-3 h-3 rounded-full bg-muted/100 mr-2"></div>
             <span>Good (50-70ms)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+            <div className="w-3 h-3 rounded-full bg-muted-foreground/100 mr-2"></div>
             <span>Low (&lt;50ms)</span>
           </div>
         </div>

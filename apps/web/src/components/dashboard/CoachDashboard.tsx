@@ -67,7 +67,7 @@ export function CoachDashboard() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <button
             onClick={loadDashboardData}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -149,9 +149,9 @@ export function CoachDashboard() {
                 key={index}
                 className={`p-4 rounded-lg border-l-4 ${
                   rec.priority === 'high'
-                    ? 'bg-red-50 border-red-500'
+                    ? 'bg-muted-foreground/10 border-muted-foreground'
                     : rec.priority === 'medium'
-                    ? 'bg-yellow-50 border-yellow-500'
+                    ? 'bg-muted/10 border-muted-foreground'
                     : 'bg-blue-50 border-blue-500'
                 }`}
               >
@@ -166,9 +166,9 @@ export function CoachDashboard() {
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded ${
                       rec.priority === 'high'
-                        ? 'bg-red-100 text-red-800'
+                        ? 'bg-muted-foreground/20 text-muted-foreground'
                         : rec.priority === 'medium'
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-muted/20 text-muted-foreground'
                         : 'bg-blue-100 text-blue-800'
                     }`}
                   >
@@ -189,7 +189,7 @@ export function CoachDashboard() {
             {analytics.at_risk_athletes.map((athlete) => (
               <div
                 key={athlete.athlete_id}
-                className="p-4 bg-red-50 rounded-lg border border-red-200"
+                className="p-4 bg-muted-foreground/10 rounded-lg border border-muted-foreground"
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -259,19 +259,19 @@ function MetricCard({ title, value, max, suffix = '', trend, color, inverse }: M
 
   const colorClasses = {
     blue: 'bg-blue-600',
-    green: 'bg-green-600',
-    orange: 'bg-orange-600',
-    purple: 'bg-purple-600',
+    green: 'bg-secondary',
+    orange: 'bg-muted-foreground',
+    purple: 'bg-accent',
   };
 
   const trendColor = inverse
     ? trend === 'improving'
-      ? 'text-green-600'
-      : 'text-red-600'
+      ? 'text-secondary'
+      : 'text-muted-foreground'
     : trend === 'improving'
-    ? 'text-green-600'
+    ? 'text-secondary'
     : trend === 'declining'
-    ? 'text-red-600'
+    ? 'text-muted-foreground'
     : 'text-gray-600';
 
   return (

@@ -102,9 +102,9 @@ export default function RecoveryDashboard() {
               key={index}
               className={`p-4 rounded-lg border ${
                 athlete.priority === 'CRITICAL'
-                  ? 'bg-red-900/20 border-red-700'
+                  ? 'bg-muted-foreground/20 border-muted-foreground'
                   : athlete.priority === 'MODERATE'
-                  ? 'bg-amber-900/20 border-amber-700'
+                  ? 'bg-muted-foreground/20/20 border-muted-foreground'
                   : 'bg-blue-900/20 border-blue-700'
               }`}
             >
@@ -118,9 +118,9 @@ export default function RecoveryDashboard() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         athlete.priority === 'CRITICAL'
-                          ? 'bg-red-900/50 text-red-300'
+                          ? 'bg-muted-foreground/20/50 text-chrome'
                           : athlete.priority === 'MODERATE'
-                          ? 'bg-amber-900/50 text-amber-300'
+                          ? 'bg-muted-foreground/20/50 text-chrome'
                           : 'bg-blue-900/50 text-blue-300'
                       }`}
                     >
@@ -135,8 +135,8 @@ export default function RecoveryDashboard() {
                   <div
                     className={`text-2xl font-bold ${
                       athlete.currentReadiness >= 70
-                        ? 'text-yellow-400'
-                        : 'text-red-400'
+                        ? 'text-muted-foreground'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     {athlete.currentReadiness}
@@ -216,10 +216,10 @@ export default function RecoveryDashboard() {
               key={index}
               className={`p-4 rounded-lg border ${
                 item.color === 'green'
-                  ? 'bg-green-900/20 border-green-700'
+                  ? 'bg-secondary/20 border-secondary'
                   : item.color === 'yellow'
-                  ? 'bg-yellow-900/20 border-yellow-700'
-                  : 'bg-red-900/20 border-red-700'
+                  ? 'bg-muted-foreground/20/20 border-muted-foreground'
+                  : 'bg-muted-foreground/20 border-muted-foreground'
               }`}
             >
               <h4 className="text-sm font-semibold text-white mb-1">
@@ -276,8 +276,8 @@ export default function RecoveryDashboard() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         rec.priority === 'HIGH'
-                          ? 'bg-red-900/30 text-red-400'
-                          : 'bg-amber-900/30 text-amber-400'
+                          ? 'bg-muted-foreground/20/30 text-muted-foreground'
+                          : 'bg-muted-foreground/20/30 text-muted-foreground'
                       }`}
                     >
                       {rec.priority}

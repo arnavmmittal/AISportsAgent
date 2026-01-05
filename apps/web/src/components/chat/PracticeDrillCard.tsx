@@ -38,7 +38,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
   };
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl border-2 border-green-200 p-6 mt-4 shadow-lg">
+    <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl border-2 border-secondary/20 p-6 mt-4 shadow-lg">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -87,8 +87,8 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
 
           {/* Mental & Physical Components */}
           <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div className="bg-card p-4 rounded-lg border border-purple-200">
-              <h4 className="font-semibold text-purple-700 mb-2 flex items-center gap-2">
+            <div className="bg-card p-4 rounded-lg border border-accent/20">
+              <h4 className="font-semibold text-accent mb-2 flex items-center gap-2">
                 <span>🧠</span> Mental Component
               </h4>
               <p className="text-gray-600 text-sm">{drill.mental_component}</p>
@@ -122,7 +122,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
                         currentWeek === index + 1
                           ? 'bg-teal-500 text-white'
                           : currentWeek > index + 1
-                          ? 'bg-green-500 text-white'
+                          ? 'bg-secondary/100 text-white'
                           : 'bg-gray-200 text-gray-600'
                       }`}
                     >
@@ -169,7 +169,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
             <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <span>💡</span> Coaching Notes
             </h4>
-            <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+            <p className="text-sm text-gray-600 bg-muted/10 p-3 rounded-lg border border-muted">
               {drill.coaching_notes}
             </p>
           </div>
@@ -194,7 +194,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
               {onStartDrill && (
                 <button
                   onClick={onStartDrill}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                  className="px-4 py-2 bg-secondary/100 text-white rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
                 >
                   Start Drill
                 </button>

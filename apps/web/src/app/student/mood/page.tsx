@@ -84,17 +84,17 @@ export default function StudentMoodPage() {
   };
 
   const getMoodColor = (value: number) => {
-    if (value <= 3) return 'from-red-500 to-red-600';
+    if (value <= 3) return 'from-muted-foreground to-muted-foreground';
     if (value <= 5) return 'from-yellow-500 to-orange-500';
     if (value <= 7) return 'from-green-500 to-emerald-500';
     return 'from-purple-500 to-violet-600';
   };
 
   const getMoodBgColor = (value: number) => {
-    if (value <= 3) return 'bg-red-100';
-    if (value <= 5) return 'bg-yellow-100';
-    if (value <= 7) return 'bg-green-100';
-    return 'bg-purple-100';
+    if (value <= 3) return 'bg-muted-foreground/20';
+    if (value <= 5) return 'bg-muted/20';
+    if (value <= 7) return 'bg-secondary/20';
+    return 'bg-accent/20';
   };
 
   const handleSubmit = async () => {
@@ -278,12 +278,12 @@ export default function StudentMoodPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-purple-600" />
+                <Heart className="w-5 h-5 text-accent" />
                 <label className="font-semibold text-foreground">Mood</label>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-2xl">{getMoodEmoji(mood)}</span>
-                <span className="text-lg font-bold text-purple-600">{mood}/10</span>
+                <span className="text-lg font-bold text-accent">{mood}/10</span>
               </div>
             </div>
             <Slider
@@ -304,10 +304,10 @@ export default function StudentMoodPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-green-600" />
+                <Zap className="w-5 h-5 text-secondary" />
                 <label className="font-semibold text-foreground">Confidence</label>
               </div>
-              <span className="text-lg font-bold text-green-600">{confidence}/10</span>
+              <span className="text-lg font-bold text-secondary">{confidence}/10</span>
             </div>
             <Slider
               value={[confidence]}
@@ -327,10 +327,10 @@ export default function StudentMoodPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Flame className="w-5 h-5 text-orange-600" />
+                <Flame className="w-5 h-5 text-muted-foreground" />
                 <label className="font-semibold text-foreground">Stress Level</label>
               </div>
-              <span className="text-lg font-bold text-orange-600">{stress}/10</span>
+              <span className="text-lg font-bold text-muted-foreground">{stress}/10</span>
             </div>
             <Slider
               value={[stress]}
@@ -429,34 +429,34 @@ export default function StudentMoodPage() {
       </Card>
 
       {/* Tips Card */}
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+      <Card className="bg-gradient-to-br from-accent/10 to-accent/20 border-accent/20">
         <CardContent className="pt-6">
           <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Smile className="w-5 h-5 text-purple-600" />
+            <Smile className="w-5 h-5 text-accent" />
             Why Track Your Mood?
           </h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-accent font-bold">•</span>
               <span>
                 <strong>Self-awareness:</strong> Recognize patterns in your emotional state
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-accent font-bold">•</span>
               <span>
                 <strong>Early warning:</strong> Spot declining trends before they become serious
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-accent font-bold">•</span>
               <span>
                 <strong>Progress tracking:</strong> See how interventions and strategies help over
                 time
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-accent font-bold">•</span>
               <span>
                 <strong>Communication:</strong> Share accurate data with your coach when you need
                 support

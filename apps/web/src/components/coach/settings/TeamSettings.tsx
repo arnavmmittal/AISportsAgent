@@ -89,7 +89,7 @@ export default function TeamSettings() {
               <span
                 className={`text-xs font-medium px-3 py-1 rounded ${
                   item.status === 'active'
-                    ? 'bg-green-900/30 text-green-400'
+                    ? 'bg-secondary/20/30 text-accent'
                     : 'bg-slate-700 text-slate-400'
                 }`}
               >
@@ -107,7 +107,7 @@ export default function TeamSettings() {
       <div className="flex justify-end">
         <button
           onClick={handleSave}
-          className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
+          className="px-6 py-2 bg-secondary hover:bg-secondary text-white font-medium rounded-md transition-colors"
         >
           Save Changes
         </button>

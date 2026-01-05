@@ -96,11 +96,11 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
   const getSeverityColor = () => {
     switch (crisis?.final_risk_level) {
       case 'CRITICAL':
-        return 'bg-red-100 border-red-500';
+        return 'bg-muted-foreground/20 border-muted-foreground';
       case 'HIGH':
-        return 'bg-orange-100 border-orange-500';
+        return 'bg-muted/20 border-muted-foreground';
       case 'MEDIUM':
-        return 'bg-yellow-100 border-yellow-500';
+        return 'bg-muted/20 border-muted-foreground';
       default:
         return 'bg-blue-100 border-blue-500';
     }
@@ -111,7 +111,7 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <AlertTriangle className="w-6 h-6 text-red-600" />
+            <AlertTriangle className="w-6 h-6 text-muted-foreground" />
             We're Here to Help
           </DialogTitle>
           <DialogDescription className="text-base">
@@ -123,22 +123,22 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
         <div className="space-y-6 mt-4">
           {/* Immediate Crisis Resources */}
           <div>
-            <h3 className="font-semibold text-lg mb-3 text-red-700">
+            <h3 className="font-semibold text-lg mb-3 text-muted-foreground">
               Immediate Crisis Support (24/7)
             </h3>
             <div className="space-y-3">
               {CRISIS_RESOURCES.immediate.map((resource, index) => {
                 const Icon = resource.icon;
                 return (
-                  <Card key={index} className="border-2 border-red-200">
+                  <Card key={index} className="border-2 border-muted-foreground">
                     <CardContent className="pt-4">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-full bg-red-100">
-                          <Icon className="w-5 h-5 text-red-600" />
+                        <div className="p-2 rounded-full bg-muted-foreground/20">
+                          <Icon className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1">
                           <h4 className="font-semibold">{resource.name}</h4>
-                          <p className="text-2xl font-bold text-red-600 my-1">
+                          <p className="text-2xl font-bold text-muted-foreground my-1">
                             {resource.contact}
                           </p>
                           <p className="text-sm text-gray-600">{resource.description}</p>
@@ -146,7 +146,7 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
                             <Button
                               variant="outline"
                               size="sm"
-                              className="mt-2 border-red-300 text-red-600 hover:bg-red-50"
+                              className="mt-2 border-muted-foreground text-muted-foreground hover:bg-muted-foreground/10"
                               onClick={() =>
                                 (window.location.href = `tel:${resource.contact.replace(/\D/g, '')}`)
                               }
@@ -200,8 +200,8 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
                   <Card key={index}>
                     <CardContent className="pt-4">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-full bg-green-100">
-                          <Icon className="w-5 h-5 text-green-600" />
+                        <div className="p-2 rounded-full bg-secondary/20">
+                          <Icon className="w-5 h-5 text-secondary" />
                         </div>
                         <div className="flex-1">
                           <h4 className="font-semibold">{resource.name}</h4>

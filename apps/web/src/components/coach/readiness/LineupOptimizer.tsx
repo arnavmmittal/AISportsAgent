@@ -129,7 +129,7 @@ export default function LineupOptimizer() {
             <div className="text-sm font-semibold">{game.opponent}</div>
             <div className="text-xs opacity-80">{game.date}</div>
             {game.importance === 'Championship' && (
-              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded mt-1 inline-block">
+              <span className="text-xs bg-muted/100/20 text-muted-foreground px-2 py-0.5 rounded mt-1 inline-block">
                 🏆 Championship
               </span>
             )}
@@ -192,7 +192,7 @@ export default function LineupOptimizer() {
                   <p className="text-sm text-slate-300 ml-11">{player.reason}</p>
                 </div>
                 <div className="text-right ml-4">
-                  <div className="text-2xl font-bold text-green-400 mb-1">
+                  <div className="text-2xl font-bold text-accent mb-1">
                     {player.readiness}
                   </div>
                   <div className="text-xs text-slate-400">
@@ -201,10 +201,10 @@ export default function LineupOptimizer() {
                   <span
                     className={`inline-block mt-2 text-xs font-medium px-2 py-1 rounded ${
                       player.riskLevel === 'LOW'
-                        ? 'bg-green-900/30 text-green-400'
+                        ? 'bg-secondary/20/30 text-accent'
                         : player.riskLevel === 'MODERATE'
-                        ? 'bg-yellow-900/30 text-yellow-400'
-                        : 'bg-red-900/30 text-red-400'
+                        ? 'bg-muted-foreground/20/30 text-muted-foreground'
+                        : 'bg-muted-foreground/20/30 text-muted-foreground'
                     }`}
                   >
                     {player.riskLevel} Risk
@@ -235,7 +235,7 @@ export default function LineupOptimizer() {
                 <div className="text-right">
                   <div
                     className={`text-2xl font-bold mb-1 ${
-                      player.readiness >= 70 ? 'text-yellow-400' : 'text-red-400'
+                      player.readiness >= 70 ? 'text-muted-foreground' : 'text-muted-foreground'
                     }`}
                   >
                     {player.readiness}
@@ -243,8 +243,8 @@ export default function LineupOptimizer() {
                   <span
                     className={`inline-block text-xs font-medium px-2 py-1 rounded ${
                       player.riskLevel === 'HIGH'
-                        ? 'bg-red-900/30 text-red-400'
-                        : 'bg-yellow-900/30 text-yellow-400'
+                        ? 'bg-muted-foreground/20/30 text-muted-foreground'
+                        : 'bg-muted-foreground/20/30 text-muted-foreground'
                     }`}
                   >
                     {player.riskLevel} Risk
@@ -294,9 +294,9 @@ export default function LineupOptimizer() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         strategy.priority === 'REQUIRED'
-                          ? 'bg-red-900/30 text-red-400'
+                          ? 'bg-muted-foreground/20/30 text-muted-foreground'
                           : strategy.priority === 'CAUTION'
-                          ? 'bg-amber-900/30 text-amber-400'
+                          ? 'bg-muted-foreground/20/30 text-muted-foreground'
                           : strategy.priority === 'RECOMMENDED'
                           ? 'bg-blue-900/30 text-blue-400'
                           : 'bg-slate-700 text-slate-300'
@@ -320,7 +320,7 @@ export default function LineupOptimizer() {
             {lineupRecommendations.injured.map((player, index) => (
               <div
                 key={index}
-                className="p-3 bg-red-900/10 border border-red-700 rounded-lg"
+                className="p-3 bg-muted-foreground/20/10 border border-muted-foreground rounded-lg"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -330,7 +330,7 @@ export default function LineupOptimizer() {
                     <p className="text-xs text-slate-400">{player.position}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-red-400">{player.status}</div>
+                    <div className="text-sm text-muted-foreground">{player.status}</div>
                     <div className="text-xs text-slate-400">
                       Return: {player.expectedReturn}
                     </div>

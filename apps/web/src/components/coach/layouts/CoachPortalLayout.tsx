@@ -114,7 +114,7 @@ export default function CoachPortalLayout({
                   <>
                     <span className="text-sm font-medium flex-1">{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                      <span className="px-2 py-0.5 bg-muted-foreground/100 text-white text-xs font-bold rounded-full">
                         {item.badge}
                       </span>
                     )}
@@ -174,7 +174,7 @@ export default function CoachPortalLayout({
               {/* Notifications */}
               <button className="relative p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
                 <span className="text-xl">🔔</span>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-muted-foreground/100 rounded-full" />
               </button>
 
               {/* Help */}

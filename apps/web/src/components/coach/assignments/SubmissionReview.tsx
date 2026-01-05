@@ -169,10 +169,10 @@ export default function SubmissionReview() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         submission.responseQuality === 'excellent'
-                          ? 'bg-green-900/30 text-green-400'
+                          ? 'bg-secondary/20/30 text-accent'
                           : submission.responseQuality === 'good'
                           ? 'bg-blue-900/30 text-blue-400'
-                          : 'bg-amber-900/30 text-amber-400'
+                          : 'bg-muted-foreground/20/30 text-muted-foreground'
                       }`}
                     >
                       {submission.responseQuality === 'excellent' && '⭐ Excellent'}
@@ -197,7 +197,7 @@ export default function SubmissionReview() {
                     <ul className="space-y-1">
                       {submission.keyInsights.map((insight, idx) => (
                         <li key={idx} className="text-sm text-slate-300 flex items-start">
-                          <span className="text-green-400 mr-2">✓</span>
+                          <span className="text-accent mr-2">✓</span>
                           {insight}
                         </li>
                       ))}
@@ -231,7 +231,7 @@ export default function SubmissionReview() {
                 </div>
 
                 <div className="ml-4 flex flex-col gap-2">
-                  <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition-colors">
+                  <button className="px-4 py-2 bg-secondary hover:bg-secondary text-white text-sm rounded-md transition-colors">
                     Provide Feedback
                   </button>
                   <button className="px-4 py-2 bg-primary hover:opacity-90 text-white text-sm rounded-md transition-colors">
@@ -279,12 +279,12 @@ export default function SubmissionReview() {
               key={idx}
               className={`p-4 rounded-lg border cursor-pointer hover:bg-slate-800/70 transition-colors ${
                 template.color === 'green'
-                  ? 'bg-green-900/10 border-green-700'
+                  ? 'bg-secondary/20/10 border-secondary'
                   : template.color === 'blue'
                   ? 'bg-blue-900/10 border-blue-700'
                   : template.color === 'amber'
-                  ? 'bg-amber-900/10 border-amber-700'
-                  : 'bg-purple-900/10 border-purple-700'
+                  ? 'bg-muted-foreground/20/10 border-muted-foreground'
+                  : 'bg-accent/20/10 border-accent'
               }`}
             >
               <h5 className="text-sm font-semibold text-white mb-2">{template.type}</h5>

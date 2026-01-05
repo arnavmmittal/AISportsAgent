@@ -80,10 +80,10 @@ export default function StudentHomePage() {
           </div>
 
           {/* Check-in Streak */}
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Streak</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Streak</div>
                 <div className="text-5xl font-black mb-2">
                   {stats.checkInStreak} <span className="text-2xl opacity-75">days</span>
                 </div>
@@ -94,10 +94,10 @@ export default function StudentHomePage() {
           </div>
 
           {/* Goals Progress */}
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Goals</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Goals</div>
                 <div className="text-5xl font-black mb-2">
                   {stats.goalsCompleted}<span className="text-2xl opacity-75">/{stats.goalsTotal}</span>
                 </div>
@@ -110,10 +110,10 @@ export default function StudentHomePage() {
           </div>
 
           {/* Pending Assignments */}
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Tasks</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Tasks</div>
                 <div className="text-5xl font-black mb-2">{stats.assignmentsPending}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
                   {stats.assignmentsPending > 0 ? 'Pending completion' : 'All caught up!'}
@@ -150,7 +150,7 @@ export default function StudentHomePage() {
                 </div>
                 <div>
                   <h3 className="text-2xl font-black">Daily Check-In</h3>
-                  <p className="text-base text-green-100 mt-2 font-semibold">Log your mood and track progress</p>
+                  <p className="text-base text-accent mt-2 font-semibold">Log your mood and track progress</p>
                 </div>
               </div>
             </div>
@@ -211,14 +211,14 @@ export default function StudentHomePage() {
         </div>
 
         {/* Motivational Message */}
-        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg shadow p-6 border border-purple-200">
+        <div className="bg-gradient-to-r from-accent/20 to-accent/30 rounded-lg shadow p-6 border border-accent/20">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-purple-900 mb-2">You're doing great!</h3>
-              <p className="text-sm text-purple-800">
+              <h3 className="font-semibold text-secondary mb-2">You're doing great!</h3>
+              <p className="text-sm text-secondary">
                 Your {stats.checkInStreak}-day check-in streak shows real commitment to your mental wellness.
                 Keep building healthy habits one day at a time.
               </p>

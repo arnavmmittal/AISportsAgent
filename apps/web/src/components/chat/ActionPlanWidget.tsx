@@ -26,7 +26,7 @@ export function ActionPlanWidget({ plan, onCheckItem }: ActionPlanWidgetProps) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-6 mt-6 shadow-lg border-2 border-purple-200 animate-in fade-in slide-in-from-bottom-3 duration-500">
+    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-6 mt-6 shadow-lg border-2 border-accent/20 animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
           <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,13 +118,13 @@ function TimeframeSection({
                 type="checkbox"
                 checked={isChecked}
                 onChange={() => onCheck(idx)}
-                className="mt-1 w-5 h-5 text-purple-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer transition-all"
+                className="mt-1 w-5 h-5 text-accent border-2 border-gray-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer transition-all"
                 id={`action-${key}`}
               />
               <label
                 htmlFor={`action-${key}`}
                 className={`text-base leading-relaxed cursor-pointer transition-all ${
-                  isChecked ? 'text-muted-foreground line-through' : 'text-gray-700 group-hover:text-purple-700'
+                  isChecked ? 'text-muted-foreground line-through' : 'text-gray-700 group-hover:text-accent'
                 }`}
               >
                 {item}

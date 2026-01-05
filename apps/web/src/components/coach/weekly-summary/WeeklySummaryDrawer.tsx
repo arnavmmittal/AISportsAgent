@@ -66,9 +66,9 @@ export default function WeeklySummaryDrawer({
   // Get score color
   const getScoreColor = (score: number | null) => {
     if (!score) return 'text-muted-foreground';
-    if (score >= 8) return 'text-green-600';
-    if (score >= 6) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 8) return 'text-secondary';
+    if (score >= 6) return 'text-muted-foreground';
+    return 'text-muted-foreground';
   };
 
   if (!consentGranted) {
@@ -122,7 +122,7 @@ export default function WeeklySummaryDrawer({
             </div>
           ) : error ? (
             <div className="p-6 text-center">
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
               <button
                 onClick={fetchSummaries}
                 className="mt-2 text-sm text-primary hover:text-blue-700"
@@ -204,8 +204,8 @@ export default function WeeklySummaryDrawer({
 
                   {/* Risk Flags */}
                   {summary.riskFlags && summary.riskFlags.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded p-2">
-                      <h4 className="text-xs font-semibold text-red-800 mb-1 flex items-center">
+                    <div className="bg-muted-foreground/10 border border-muted-foreground rounded p-2">
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-1 flex items-center">
                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
@@ -213,7 +213,7 @@ export default function WeeklySummaryDrawer({
                       </h4>
                       <ul className="list-disc list-inside space-y-1">
                         {summary.riskFlags.map((flag, idx) => (
-                          <li key={idx} className="text-xs text-red-700">
+                          <li key={idx} className="text-xs text-muted-foreground">
                             {flag}
                           </li>
                         ))}

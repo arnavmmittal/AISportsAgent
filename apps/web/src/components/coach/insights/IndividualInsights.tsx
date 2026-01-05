@@ -151,7 +151,7 @@ export default function IndividualInsights() {
       </div>
 
       {/* Athlete Summary Card */}
-      <div className="p-5 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-700 rounded-lg">
+      <div className="p-5 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-accent rounded-lg">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">
@@ -195,9 +195,9 @@ export default function IndividualInsights() {
               <span
                 className={`ml-3 text-xl ${
                   trend.direction === 'up'
-                    ? 'text-green-400'
+                    ? 'text-accent'
                     : trend.direction === 'down'
-                    ? 'text-red-400'
+                    ? 'text-muted-foreground'
                     : 'text-blue-400'
                 }`}
               >

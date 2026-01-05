@@ -14,27 +14,27 @@ interface ActionFeedProps {
 const ACTION_CONFIG: Record<ActionType, { icon: string; color: string; label: string }> = {
   BURNOUT_RISK: {
     icon: '🔥',
-    color: 'text-red-400',
+    color: 'text-muted-foreground',
     label: 'Burnout Risk',
   },
   STRESS_SPIKE: {
     icon: '📈',
-    color: 'text-orange-400',
+    color: 'text-muted-foreground',
     label: 'Stress Spike',
   },
   ENGAGEMENT_DROP: {
     icon: '📉',
-    color: 'text-amber-400',
+    color: 'text-muted-foreground',
     label: 'Engagement Drop',
   },
   PERFORMANCE_DECLINE: {
     icon: '⚠️',
-    color: 'text-yellow-400',
+    color: 'text-muted-foreground',
     label: 'Performance Decline',
   },
   POSITIVE_MOMENTUM: {
     icon: '✨',
-    color: 'text-green-400',
+    color: 'text-accent',
     label: 'Positive Momentum',
   },
 };
@@ -56,7 +56,7 @@ export default function ActionFeed({ items }: ActionFeedProps) {
             className={cn(
               'rounded-lg p-3 border transition-all duration-200 hover:bg-slate-800/50',
               isUrgent
-                ? 'bg-red-900/20 border-red-900'
+                ? 'bg-muted-foreground/20 border-muted-foreground'
                 : 'bg-slate-800/30 border-slate-700'
             )}
           >

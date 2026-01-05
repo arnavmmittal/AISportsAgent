@@ -233,10 +233,10 @@ export default function AssignmentLibrary() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         template.difficulty === 'Beginner'
-                          ? 'bg-green-900/30 text-green-400'
+                          ? 'bg-secondary/20/30 text-accent'
                           : template.difficulty === 'Intermediate'
                           ? 'bg-blue-900/30 text-blue-400'
-                          : 'bg-purple-900/30 text-purple-400'
+                          : 'bg-accent/20/30 text-accent'
                       }`}
                     >
                       {template.difficulty}
@@ -266,13 +266,13 @@ export default function AssignmentLibrary() {
                 <div className="ml-4 text-right">
                   <div className="mb-4">
                     <div className="text-sm text-slate-400 mb-1">Completion Rate</div>
-                    <div className="text-2xl font-bold text-green-400">
+                    <div className="text-2xl font-bold text-accent">
                       {template.completionRate}%
                     </div>
                   </div>
                   <div className="mb-4">
                     <div className="text-sm text-slate-400 mb-1">Athlete Rating</div>
-                    <div className="text-lg font-semibold text-yellow-400">
+                    <div className="text-lg font-semibold text-muted-foreground">
                       ⭐ {template.avgRating}/5
                     </div>
                   </div>

@@ -127,7 +127,7 @@ export function Navigation() {
             </div>
             <button
               onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-              className="w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:bg-red-50"
+              className="w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:bg-muted-foreground/10"
             >
               Sign Out
             </button>

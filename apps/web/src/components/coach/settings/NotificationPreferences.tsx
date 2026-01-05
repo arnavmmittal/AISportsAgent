@@ -89,9 +89,9 @@ export default function NotificationPreferences() {
               key={type.id}
               className={`grid grid-cols-4 gap-4 p-4 rounded-lg border ${
                 type.priority === 'critical'
-                  ? 'bg-red-900/10 border-red-700'
+                  ? 'bg-muted-foreground/20/10 border-muted-foreground'
                   : type.priority === 'high'
-                  ? 'bg-amber-900/10 border-amber-700'
+                  ? 'bg-muted-foreground/20/10 border-muted-foreground'
                   : 'bg-slate-800/50 border-slate-700'
               }`}
             >
@@ -99,7 +99,7 @@ export default function NotificationPreferences() {
                 <h4 className="text-sm font-semibold text-white mb-1">{type.label}</h4>
                 <p className="text-xs text-slate-400">{type.description}</p>
                 {type.priority === 'critical' && (
-                  <span className="inline-block mt-2 text-xs font-medium px-2 py-1 rounded bg-red-900/50 text-red-300">
+                  <span className="inline-block mt-2 text-xs font-medium px-2 py-1 rounded bg-muted-foreground/20/50 text-chrome">
                     CRITICAL
                   </span>
                 )}
@@ -161,7 +161,7 @@ export default function NotificationPreferences() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <button className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors">
+        <button className="px-6 py-2 bg-secondary hover:bg-secondary text-white font-medium rounded-md transition-colors">
           Save Preferences
         </button>
       </div>

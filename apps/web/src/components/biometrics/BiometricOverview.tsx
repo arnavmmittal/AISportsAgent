@@ -138,14 +138,14 @@ export function BiometricOverview({ athleteId }: BiometricOverviewProps) {
   }
 
   const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
-    if (trend === 'up') return <TrendingUp className="h-4 w-4 text-green-600" />;
-    if (trend === 'down') return <TrendingDown className="h-4 w-4 text-red-600" />;
+    if (trend === 'up') return <TrendingUp className="h-4 w-4 text-secondary" />;
+    if (trend === 'down') return <TrendingDown className="h-4 w-4 text-muted-foreground" />;
     return <Minus className="h-4 w-4 text-gray-400" />;
   };
 
   const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
-    if (trend === 'up') return 'text-green-600';
-    if (trend === 'down') return 'text-red-600';
+    if (trend === 'up') return 'text-secondary';
+    if (trend === 'down') return 'text-muted-foreground';
     return 'text-gray-400';
   };
 

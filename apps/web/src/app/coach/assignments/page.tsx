@@ -86,7 +86,7 @@ export default function CoachAssignmentsPage() {
         {/* Main Content */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-accent"></div>
             <p className="mt-6 text-muted-foreground dark:text-gray-400 font-semibold text-lg">Loading assignments...</p>
           </div>
         ) : assignments.length === 0 ? (
@@ -120,7 +120,7 @@ export default function CoachAssignmentsPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-start gap-6">
-                        <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-accent to-accent rounded-2xl flex items-center justify-center shadow-lg">
                           <span className="text-3xl">📋</span>
                         </div>
                         <div className="flex-1">
@@ -133,20 +133,20 @@ export default function CoachAssignmentsPage() {
 
                           <div className="flex flex-wrap items-center gap-3">
                             {/* Submission Stats */}
-                            <div className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 px-4 py-2 rounded-xl border-2 border-green-200 dark:border-green-800">
-                              <span className="text-sm font-bold text-green-900 dark:text-green-200">Submissions:</span>
-                              <span className="text-lg font-black text-green-600 dark:text-green-400">
+                            <div className="flex items-center gap-2 bg-gradient-to-r from-secondary/10 to-secondary/20 dark:from-green-900/20 dark:to-green-900/30 px-4 py-2 rounded-xl border-2 border-secondary/20 dark:border-secondary">
+                              <span className="text-sm font-bold text-secondary dark:text-accent">Submissions:</span>
+                              <span className="text-lg font-black text-secondary dark:text-accent">
                                 {stats.submitted}
                               </span>
-                              <span className="text-sm font-bold text-green-900 dark:text-green-200">/</span>
-                              <span className="text-lg font-black text-green-900 dark:text-green-200">
+                              <span className="text-sm font-bold text-secondary dark:text-accent">/</span>
+                              <span className="text-lg font-black text-secondary dark:text-accent">
                                 {stats.total}
                               </span>
                             </div>
 
                             {/* Pending Count */}
                             {stats.pending > 0 && (
-                              <span className="px-4 py-2 bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-xl text-sm font-black shadow border-2 border-amber-200 dark:border-amber-800">
+                              <span className="px-4 py-2 bg-muted/20 dark:bg-muted-foreground/20/20 text-muted-foreground dark:text-chrome rounded-xl text-sm font-black shadow border-2 border-muted dark:border-muted-foreground">
                                 {stats.pending} pending
                               </span>
                             )}
@@ -156,7 +156,7 @@ export default function CoachAssignmentsPage() {
                               <span
                                 className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
                                   overdue
-                                    ? 'bg-red-100 text-red-800 border-red-200'
+                                    ? 'bg-muted-foreground/20 text-muted-foreground border-muted-foreground'
                                     : 'bg-blue-100 text-blue-800 border-blue-200'
                                 }`}
                               >
@@ -167,7 +167,7 @@ export default function CoachAssignmentsPage() {
 
                             {/* Target Info */}
                             {assignment.targetSport && (
-                              <span className="px-4 py-2 bg-purple-100 text-purple-800 rounded-xl text-sm font-black shadow border-2 border-purple-200">
+                              <span className="px-4 py-2 bg-accent/20 text-secondary rounded-xl text-sm font-black shadow border-2 border-accent/20">
                                 {assignment.targetSport}
                               </span>
                             )}
@@ -296,7 +296,7 @@ function CreateAssignmentModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-muted-foreground/10 border border-muted-foreground text-muted-foreground px-4 py-3 rounded">
               {error}
             </div>
           )}
@@ -369,7 +369,7 @@ function CreateAssignmentModal({
               id="assignToAll"
               checked={formData.assignToAll}
               onChange={(e) => setFormData({ ...formData, assignToAll: e.target.checked })}
-              className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-border rounded"
+              className="mt-1 h-4 w-4 text-accent focus:ring-purple-500 border-border rounded"
             />
             <label htmlFor="assignToAll" className="ml-2 block text-sm text-muted-foreground">
               Assign to all athletes

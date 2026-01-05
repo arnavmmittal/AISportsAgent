@@ -63,29 +63,29 @@ const factorIcons: Record<string, React.ElementType> = {
 
 const levelConfig = {
   GREEN: {
-    bg: 'bg-green-50',
-    border: 'border-green-500',
-    text: 'text-green-700',
-    badgeBg: 'bg-green-100',
-    badgeText: 'text-green-800',
+    bg: 'bg-secondary/10',
+    border: 'border-secondary',
+    text: 'text-secondary',
+    badgeBg: 'bg-secondary/20',
+    badgeText: 'text-secondary',
     label: 'Ready to Compete',
     description: 'Athlete is mentally prepared for peak performance',
   },
   YELLOW: {
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-500',
-    text: 'text-yellow-700',
-    badgeBg: 'bg-yellow-100',
-    badgeText: 'text-yellow-800',
+    bg: 'bg-muted/10',
+    border: 'border-muted-foreground',
+    text: 'text-muted-foreground',
+    badgeBg: 'bg-muted/20',
+    badgeText: 'text-muted-foreground',
     label: 'Monitor Closely',
     description: 'Check in with athlete before competition',
   },
   RED: {
-    bg: 'bg-red-50',
-    border: 'border-red-500',
-    text: 'text-red-700',
-    badgeBg: 'bg-red-100',
-    badgeText: 'text-red-800',
+    bg: 'bg-muted-foreground/10',
+    border: 'border-muted-foreground',
+    text: 'text-muted-foreground',
+    badgeBg: 'bg-muted-foreground/20',
+    badgeText: 'text-muted-foreground',
     label: 'Intervention Needed',
     description: '1-on-1 conversation recommended',
   },
@@ -109,8 +109,8 @@ export function ReadinessScoreCard({
       return <Minus className="w-4 h-4 text-gray-500" />;
     }
     return data.trend === 'improving'
-      ? <TrendingUp className="w-4 h-4 text-green-600" />
-      : <TrendingDown className="w-4 h-4 text-red-600" />;
+      ? <TrendingUp className="w-4 h-4 text-secondary" />
+      : <TrendingDown className="w-4 h-4 text-muted-foreground" />;
   };
 
   if (compact) {
@@ -218,7 +218,7 @@ export function ReadinessScoreCard({
         {scoreChange !== null && (
           <div className="flex items-center gap-2 text-sm">
             <span className="text-gray-600">Change from last game:</span>
-            <span className={scoreChange >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+            <span className={scoreChange >= 0 ? 'text-secondary font-medium' : 'text-muted-foreground font-medium'}>
               {scoreChange >= 0 ? '+' : ''}{scoreChange.toFixed(1)} points
             </span>
           </div>
@@ -251,8 +251,8 @@ export function ReadinessScoreCard({
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div
                       className={`h-1.5 rounded-full ${
-                        data.level === 'GREEN' ? 'bg-green-500' :
-                        data.level === 'YELLOW' ? 'bg-yellow-500' : 'bg-red-500'
+                        data.level === 'GREEN' ? 'bg-secondary/100' :
+                        data.level === 'YELLOW' ? 'bg-muted/100' : 'bg-muted-foreground/100'
                       }`}
                       style={{ width: `${impactPercentage}%` }}
                     />

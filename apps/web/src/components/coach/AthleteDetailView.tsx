@@ -216,7 +216,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
         <div className="text-center bg-card rounded-2xl shadow-2xl p-12 max-w-md">
-          <div className="text-red-500 text-7xl mb-6">⚠️</div>
+          <div className="text-muted-foreground text-7xl mb-6">⚠️</div>
           <h2 className="text-2xl font-bold text-foreground mb-4">
             {error || 'Athlete not found'}
           </h2>
@@ -246,10 +246,10 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
   };
 
   const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'from-green-500 to-green-600';
-    if (score >= 70) return 'from-yellow-500 to-yellow-600';
-    if (score >= 50) return 'from-orange-500 to-orange-600';
-    return 'from-red-500 to-red-600';
+    if (score >= 85) return 'from-secondary to-secondary';
+    if (score >= 70) return 'from-muted-foreground to-muted-foreground';
+    if (score >= 50) return 'from-muted-foreground to-muted-foreground';
+    return 'from-muted-foreground to-muted-foreground';
   };
 
   // Prepare readiness data with last 14 days
@@ -305,7 +305,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             ← Back to Athletes
           </button>
 
-          <div className="bg-card rounded-2xl shadow-xl p-12 text-center border-2 border-yellow-200">
+          <div className="bg-card rounded-2xl shadow-xl p-12 text-center border-2 border-muted">
             <div className="text-6xl mb-6">🔒</div>
             <h2 className="text-3xl font-black text-foreground mb-4">
               {athlete.name}
@@ -313,11 +313,11 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             <p className="text-muted-foreground mb-2">{athlete.sport} • {athlete.year}</p>
             <p className="text-muted-foreground mb-8">{athlete.teamPosition}</p>
 
-            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mb-8">
-              <p className="text-yellow-800 font-semibold">
+            <div className="bg-muted/20 border-2 border-muted rounded-xl p-6 mb-8">
+              <p className="text-muted-foreground font-semibold">
                 This athlete has not granted data sharing consent yet.
               </p>
-              <p className="text-yellow-700 mt-2 text-sm">
+              <p className="text-muted-foreground mt-2 text-sm">
                 You can see basic profile information, but detailed metrics, mood logs, and goals are private until consent is granted.
               </p>
             </div>
@@ -346,7 +346,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-accent/20">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <button
@@ -361,7 +361,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-4 mb-3">
-                <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{athlete.name}</h1>
+                <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-accent bg-clip-text text-transparent">{athlete.name}</h1>
                 {currentReadiness > 0 && (
                   <div className={`bg-gradient-to-br ${getReadinessColor(currentReadiness)} rounded-2xl px-6 py-4 text-white shadow-lg`}>
                     <div className="text-xs font-bold uppercase tracking-wider opacity-90">Readiness</div>
@@ -374,10 +374,10 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               <div className="flex gap-3 flex-wrap">
                 <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow ${
                   athlete.riskLevel === 'LOW'
-                    ? 'bg-green-100 text-green-800'
+                    ? 'bg-secondary/20 text-secondary'
                     : athlete.riskLevel === 'MEDIUM'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
+                    ? 'bg-muted/20 text-muted-foreground'
+                    : 'bg-muted-foreground/20 text-muted-foreground'
                 }`}>
                   {athlete.riskLevel} Risk
                 </span>
@@ -391,13 +391,13 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => setShowCheckIn(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-accent text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
               >
                 📨 Send Check-In
               </button>
               <button
                 onClick={() => setShowAddNote(true)}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
+                className="px-6 py-3 bg-gradient-to-r from-secondary to-blue-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
               >
                 📝 Add Note
               </button>
@@ -418,30 +418,30 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                 <div className="text-6xl opacity-20">😊</div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Confidence</div>
+                  <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Confidence</div>
                   <div className="text-5xl font-black mb-2">{statistics.avgConfidence.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
                   <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Average</div>
                 </div>
                 <div className="text-6xl opacity-20">💪</div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Stress Level</div>
+                  <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Stress Level</div>
                   <div className="text-5xl font-black mb-2">{statistics.avgStress.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
                   <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Lower is better</div>
                 </div>
                 <div className="text-6xl opacity-20">😰</div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+            <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Active Goals</div>
+                  <div className="text-accent/50 text-xs font-bold uppercase tracking-wider mb-2">Active Goals</div>
                   <div className="text-5xl font-black mb-2">{statistics.activeGoals}</div>
                   <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">{statistics.completedGoals} completed</div>
                 </div>
@@ -506,16 +506,16 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             {forecast.length > 0 && (
               <div className={`mt-6 p-4 rounded-xl border-l-4 ${
                 forecast[forecast.length - 1] < currentReadiness - 10
-                  ? 'bg-red-50 border-red-500'
+                  ? 'bg-muted-foreground/10 border-muted-foreground'
                   : forecast[forecast.length - 1] > currentReadiness + 10
-                  ? 'bg-green-50 border-green-500'
+                  ? 'bg-secondary/10 border-secondary'
                   : 'bg-blue-50 border-blue-500'
               }`}>
                 <p className={`font-semibold text-sm ${
                   forecast[forecast.length - 1] < currentReadiness - 10
-                    ? 'text-red-900'
+                    ? 'text-chrome'
                     : forecast[forecast.length - 1] > currentReadiness + 10
-                    ? 'text-green-900'
+                    ? 'text-secondary'
                     : 'text-blue-900'
                 }`}>
                   {forecast[forecast.length - 1] < currentReadiness - 10 && '⚠️ Declining trend detected - forecast shows readiness dropping to ' + forecast[forecast.length - 1] + ' in 7 days. Consider proactive intervention.'}
@@ -552,8 +552,8 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                   <Legend wrapperStyle={{ fontWeight: 700 }} />
                   <Line type="monotone" dataKey="Readiness" stroke="#8b5cf6" strokeWidth={4} dot={{ fill: '#8b5cf6', r: 6 }} name="Readiness Score (0-100)" />
                   <Line type="monotone" dataKey="Mood" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} name="Mood" opacity={0.6} />
-                  <Line type="monotone" dataKey="Confidence" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} name="Confidence" opacity={0.6} />
-                  <Line type="monotone" dataKey="Stress" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 4 }} name="Stress (Inverted)" opacity={0.6} />
+                  <Line type="monotone" dataKey="Confidence" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} name="Confidence" opacity={0.6} />
+                  <Line type="monotone" dataKey="Stress" stroke="#71717a" strokeWidth={2} dot={{ fill: '#71717a', r: 4 }} name="Stress (Inverted)" opacity={0.6} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -579,17 +579,17 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                 Performance Summary
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
-                  <div className="text-4xl font-black text-green-700">
+                <div className="bg-gradient-to-br from-secondary/10 to-secondary/20 rounded-xl p-6 border-2 border-secondary/20">
+                  <div className="text-4xl font-black text-secondary">
                     {performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'WIN').length}
                   </div>
-                  <div className="text-sm font-semibold text-green-600 mt-2">Wins</div>
+                  <div className="text-sm font-semibold text-secondary mt-2">Wins</div>
                 </div>
-                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border-2 border-red-200">
-                  <div className="text-4xl font-black text-red-700">
+                <div className="bg-gradient-to-br from-muted-foreground/10 to-muted-foreground/20 rounded-xl p-6 border-2 border-muted-foreground">
+                  <div className="text-4xl font-black text-muted-foreground">
                     {performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'LOSS').length}
                   </div>
-                  <div className="text-sm font-semibold text-red-600 mt-2">Losses</div>
+                  <div className="text-sm font-semibold text-muted-foreground mt-2">Losses</div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
                   <div className="text-4xl font-black text-blue-700">
@@ -597,8 +597,8 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                   </div>
                   <div className="text-sm font-semibold text-blue-600 mt-2">Win Rate</div>
                 </div>
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
-                  <div className="text-4xl font-black text-purple-700">
+                <div className="bg-gradient-to-br from-accent/20 to-accent/30 rounded-xl p-6 border-2 border-accent">
+                  <div className="text-4xl font-black text-accent">
                     {performanceMetrics.filter(m => m.readinessScore).length > 0
                       ? (performanceMetrics
                           .filter(m => m.readinessScore)
@@ -606,7 +606,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                         performanceMetrics.filter(m => m.readinessScore).length).toFixed(0)
                       : 'N/A'}
                   </div>
-                  <div className="text-sm font-semibold text-purple-600 mt-2">Avg Readiness</div>
+                  <div className="text-sm font-semibold text-accent mt-2">Avg Readiness</div>
                 </div>
               </div>
             </div>
@@ -648,9 +648,9 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                         yAxisId="left"
                         type="monotone"
                         dataKey="points"
-                        stroke="#10b981"
+                        stroke="#3b82f6"
                         strokeWidth={3}
-                        dot={{ fill: '#10b981', r: 5 }}
+                        dot={{ fill: '#3b82f6', r: 5 }}
                         name="Points Scored"
                       />
                       <Line
@@ -695,9 +695,9 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                       </div>
                       <span className={`px-4 py-2 rounded-lg font-black text-sm ${
                         metric.outcome?.toUpperCase() === 'WIN'
-                          ? 'bg-green-100 text-green-800 border-2 border-green-300'
+                          ? 'bg-secondary/20 text-secondary border-2 border-secondary/20'
                           : metric.outcome?.toUpperCase() === 'LOSS'
-                          ? 'bg-red-100 text-red-800 border-2 border-red-300'
+                          ? 'bg-muted-foreground/20 text-muted-foreground border-2 border-muted-foreground'
                           : 'bg-gray-100 text-gray-800 border-2 border-gray-300'
                       }`}>
                         {metric.outcome?.toUpperCase() || 'N/A'}
@@ -713,15 +713,15 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                           </div>
                         )}
                         {metric.stats.assists !== undefined && (
-                          <div className="flex items-center gap-1 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200">
-                            <span className="font-black text-purple-700">{metric.stats.assists}</span>
-                            <span className="text-xs text-purple-600 font-semibold">AST</span>
+                          <div className="flex items-center gap-1 bg-accent/10 px-3 py-1 rounded-lg border border-accent/20">
+                            <span className="font-black text-accent">{metric.stats.assists}</span>
+                            <span className="text-xs text-accent font-semibold">AST</span>
                           </div>
                         )}
                         {metric.stats.rebounds !== undefined && (
-                          <div className="flex items-center gap-1 bg-orange-50 px-3 py-1 rounded-lg border border-orange-200">
-                            <span className="font-black text-orange-700">{metric.stats.rebounds}</span>
-                            <span className="text-xs text-orange-600 font-semibold">REB</span>
+                          <div className="flex items-center gap-1 bg-muted/10 px-3 py-1 rounded-lg border border-muted">
+                            <span className="font-black text-muted-foreground">{metric.stats.rebounds}</span>
+                            <span className="text-xs text-muted-foreground font-semibold">REB</span>
                           </div>
                         )}
                       </div>
@@ -732,10 +732,10 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                         <span className="text-muted-foreground font-semibold">Mental Readiness:</span>
                         <div className={`px-3 py-1 rounded-lg font-bold ${
                           metric.readinessScore >= 80
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-secondary/20 text-secondary'
                             : metric.readinessScore >= 60
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-muted/20 text-muted-foreground'
+                            : 'bg-muted-foreground/20 text-muted-foreground'
                         }`}>
                           {metric.readinessScore}/100
                         </div>
@@ -762,7 +762,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                     key={goal.id}
                     className={`border-2 rounded-xl p-4 ${
                       goal.status === 'COMPLETED'
-                        ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
+                        ? 'border-secondary/20 bg-secondary/10 dark:bg-secondary/20'
                         : goal.status === 'IN_PROGRESS'
                         ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
@@ -772,7 +772,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                       <h3 className="font-bold text-gray-900 dark:text-gray-100">{goal.title}</h3>
                       <span className={`text-xs px-2 py-1 rounded font-bold ${
                         goal.status === 'COMPLETED'
-                          ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-100'
+                          ? 'bg-secondary/30 text-secondary dark:bg-secondary dark:text-accent'
                           : goal.status === 'IN_PROGRESS'
                           ? 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-100'
                           : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
@@ -827,8 +827,8 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
         {/* Crisis Alerts */}
         {crisisAlerts && crisisAlerts.length > 0 && (
-          <div className="bg-red-50 border-2 border-red-300 rounded-2xl shadow-xl p-8 mt-8">
-            <h2 className="text-2xl font-black text-red-900 mb-6 flex items-center gap-2">
+          <div className="bg-muted-foreground/10 border-2 border-muted-foreground rounded-2xl shadow-xl p-8 mt-8">
+            <h2 className="text-2xl font-black text-chrome mb-6 flex items-center gap-2">
               <span className="text-3xl">🚨</span>
               Crisis Alerts
             </h2>
@@ -836,13 +836,13 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               {crisisAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="bg-card border-2 border-red-300 rounded-xl p-4"
+                  className="bg-card border-2 border-muted-foreground rounded-xl p-4"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`text-sm px-3 py-1 rounded-lg font-bold ${
                       alert.severity === 'HIGH'
-                        ? 'bg-red-200 text-red-800'
-                        : 'bg-orange-200 text-orange-800'
+                        ? 'bg-muted-foreground/30 text-muted-foreground'
+                        : 'bg-muted/30 text-muted-foreground'
                     }`}>
                       {alert.severity} SEVERITY
                     </span>
@@ -852,7 +852,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                   </div>
                   <div className="mt-3 text-sm">
                     <span className={`font-semibold ${
-                      alert.reviewed ? 'text-green-700' : 'text-red-700'
+                      alert.reviewed ? 'text-secondary' : 'text-muted-foreground'
                     }`}>
                       {alert.reviewed ? '✓ Reviewed' : '⚠️ Needs Review'}
                     </span>
@@ -928,7 +928,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               <button
                 onClick={handleAddNote}
                 disabled={saving || !newNote.trim()}
-                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 font-semibold disabled:opacity-50 transition-colors"
+                className="flex-1 px-6 py-3 bg-secondary text-white rounded-xl hover:bg-secondary font-semibold disabled:opacity-50 transition-colors"
               >
                 {saving ? 'Saving...' : 'Add Note'}
               </button>

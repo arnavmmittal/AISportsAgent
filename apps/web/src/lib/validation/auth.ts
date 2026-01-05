@@ -103,11 +103,11 @@ export function getPasswordStrengthLabel(strength: number): string {
  */
 export function getPasswordStrengthColor(strength: number): string {
   const colors = [
-    'bg-red-500',      // Very Weak
-    'bg-orange-500',   // Weak
-    'bg-yellow-500',   // Fair
+    'bg-muted-foreground/100',      // Very Weak
+    'bg-muted/100',   // Weak
+    'bg-muted/100',   // Fair
     'bg-blue-500',     // Good
-    'bg-green-500',    // Strong
+    'bg-secondary/100',    // Strong
   ];
   return colors[strength] || 'bg-gray-300';
 }

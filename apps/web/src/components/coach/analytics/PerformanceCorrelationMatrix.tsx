@@ -147,7 +147,7 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
             Sample size: {data.sampleSize} paired observations
           </p>
           {data.isSignificant && (
-            <Badge variant="outline" className="mt-2 text-xs bg-green-50 text-green-700 border-green-300 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
+            <Badge variant="outline" className="mt-2 text-xs bg-secondary/10 text-secondary border-secondary/20 dark:bg-secondary/10/20 dark:text-accent dark:border-secondary">
               Statistically significant (p &lt; 0.05)
             </Badge>
           )}
@@ -159,9 +159,9 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
 
   const getStrengthBadge = (strength: string) => {
     if (strength === 'very_strong' || strength === 'strong') {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">Strong</Badge>;
+      return <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/20 dark:bg-secondary/10/20 dark:text-accent dark:border-secondary">Strong</Badge>;
     } else if (strength === 'moderate') {
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800">Moderate</Badge>;
+      return <Badge variant="outline" className="bg-muted/10 text-muted-foreground border-muted dark:bg-muted-foreground/10/20 dark:text-muted-foreground dark:border-muted-foreground">Moderate</Badge>;
     } else {
       return <Badge variant="default">Weak</Badge>;
     }
@@ -232,7 +232,7 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
                 <span className="text-sm font-medium w-32">{corr.metric}</span>
                 {getStrengthBadge(corr.strength)}
                 {corr.isSignificant && (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <CheckCircle className="h-4 w-4 text-secondary" />
                 )}
               </div>
               <div className="text-right">

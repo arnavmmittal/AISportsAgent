@@ -87,7 +87,7 @@ export default function CoachSettingsPage() {
         <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
           <div className="p-8 border-b-2 border-gray-100">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-xl flex items-center justify-center shadow-lg">
                 <User className="w-6 h-6 text-white" />
               </div>
               <h2 className="text-2xl font-black text-foreground">Profile Information</h2>
@@ -271,7 +271,7 @@ export default function CoachSettingsPage() {
         <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
           <div className="p-8 border-b-2 border-gray-100">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary rounded-xl flex items-center justify-center shadow-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <h2 className="text-2xl font-black text-foreground">Privacy & Data Access</h2>
@@ -308,7 +308,7 @@ export default function CoachSettingsPage() {
                       type="checkbox"
                       checked={privacy.shareMoodLogs}
                       onChange={(e) => setPrivacy({ ...privacy, shareMoodLogs: e.target.checked })}
-                      className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 mr-3"
+                      className="w-5 h-5 text-secondary rounded focus:ring-2 focus:ring-green-500 mr-3"
                     />
                     <span className="text-base font-bold">Mood logs summary</span>
                   </label>
@@ -317,7 +317,7 @@ export default function CoachSettingsPage() {
                       type="checkbox"
                       checked={privacy.shareGoalProgress}
                       onChange={(e) => setPrivacy({ ...privacy, shareGoalProgress: e.target.checked })}
-                      className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 mr-3"
+                      className="w-5 h-5 text-secondary rounded focus:ring-2 focus:ring-green-500 mr-3"
                     />
                     <span className="text-base font-bold">Goal progress</span>
                   </label>
@@ -326,7 +326,7 @@ export default function CoachSettingsPage() {
                       type="checkbox"
                       checked={privacy.shareChatSummaries}
                       onChange={(e) => setPrivacy({ ...privacy, shareChatSummaries: e.target.checked })}
-                      className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 mr-3"
+                      className="w-5 h-5 text-secondary rounded focus:ring-2 focus:ring-green-500 mr-3"
                     />
                     <span className="text-base font-bold">Chat session summaries</span>
                   </label>
@@ -358,9 +358,9 @@ export default function CoachSettingsPage() {
             <p className="text-base text-muted-foreground font-semibold ml-15">Share this code with athletes to join your team</p>
           </div>
           <div className="p-8">
-            <div className="bg-gradient-to-r from-amber-100 to-amber-50 border-2 border-amber-200 rounded-2xl p-6 mb-6 shadow">
+            <div className="bg-gradient-to-r from-amber-100 to-amber-50 border-2 border-muted rounded-2xl p-6 mb-6 shadow">
               <div className="flex items-center gap-4">
-                <code className="flex-1 bg-white px-6 py-4 rounded-xl font-mono text-2xl font-black text-amber-600 border-2 border-amber-300 shadow-inner">
+                <code className="flex-1 bg-white px-6 py-4 rounded-xl font-mono text-2xl font-black text-muted-foreground border-2 border-muted shadow-inner">
                   {inviteCode}
                 </code>
                 <button
@@ -415,18 +415,18 @@ export default function CoachSettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-card rounded-2xl shadow-xl border-2 border-red-200">
-          <div className="p-8 border-b-2 border-red-100">
+        <div className="bg-card rounded-2xl shadow-xl border-2 border-muted-foreground">
+          <div className="p-8 border-b-2 border-muted-foreground/20">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-xl flex items-center justify-center shadow-lg">
                 <AlertTriangle className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-2xl font-black text-red-700">Danger Zone</h2>
+              <h2 className="text-2xl font-black text-muted-foreground">Danger Zone</h2>
             </div>
-            <p className="text-base text-red-600 font-semibold ml-15">Irreversible account actions</p>
+            <p className="text-base text-muted-foreground font-semibold ml-15">Irreversible account actions</p>
           </div>
           <div className="p-8 space-y-4">
-            <button className="w-full px-6 py-4 border-2 border-red-300 text-red-600 rounded-xl hover:bg-red-50 transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2">
+            <button className="w-full px-6 py-4 border-2 border-muted-foreground text-muted-foreground rounded-xl hover:bg-muted-foreground/10 transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2">
               <RefreshCw className="w-5 h-5" />
               Reset All Settings
             </button>

@@ -311,16 +311,16 @@ export function BulkImport({ sport, onImportComplete }: BulkImportProps) {
         </div>
 
         {/* Step 2: Upload CSV */}
-        <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
+        <div className="border-l-4 border-secondary bg-secondary/10 p-4 rounded-r-lg">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+              <div className="w-8 h-8 bg-secondary text-white rounded-full flex items-center justify-center font-bold text-sm">
                 2
               </div>
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-green-900 mb-1">Upload Completed CSV</h4>
-              <p className="text-sm text-green-800 mb-3">
+              <h4 className="font-semibold text-secondary mb-1">Upload Completed CSV</h4>
+              <p className="text-sm text-secondary mb-3">
                 Fill in the template with your game data and upload it here
               </p>
               <input
@@ -385,14 +385,14 @@ export function BulkImport({ sport, onImportComplete }: BulkImportProps) {
 
         {/* Errors */}
         {errors.length > 0 && (
-          <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-            <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+          <div className="border border-muted-foreground rounded-lg p-4 bg-muted-foreground/10">
+            <h4 className="font-semibold text-chrome mb-2 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               Import Errors ({errors.length})
             </h4>
             <div className="max-h-48 overflow-y-auto space-y-2">
               {errors.map((error, index) => (
-                <div key={index} className="text-sm text-red-800 bg-red-100 p-2 rounded">
+                <div key={index} className="text-sm text-muted-foreground bg-muted-foreground/20 p-2 rounded">
                   <strong>Row {error.rowNumber} ({error.athleteName}):</strong> {error.error}
                 </div>
               ))}

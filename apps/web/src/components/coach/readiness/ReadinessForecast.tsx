@@ -134,10 +134,10 @@ export default function ReadinessForecast() {
                     <span
                       className={`font-semibold ${
                         athlete.nextGameReadiness >= 85
-                          ? 'text-green-400'
+                          ? 'text-accent'
                           : athlete.nextGameReadiness >= 70
-                          ? 'text-yellow-400'
-                          : 'text-red-400'
+                          ? 'text-muted-foreground'
+                          : 'text-muted-foreground'
                       }`}
                     >
                       {athlete.nextGameReadiness}
@@ -151,10 +151,10 @@ export default function ReadinessForecast() {
                 <span
                   className={`text-xs font-medium ${
                     athlete.predictedTrend === 'improving'
-                      ? 'text-green-400'
+                      ? 'text-accent'
                       : athlete.predictedTrend === 'declining'
-                      ? 'text-red-400'
-                      : 'text-yellow-400'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground'
                   }`}
                 >
                   {athlete.predictedTrend === 'improving' && '📈 Improving'}
@@ -218,9 +218,9 @@ export default function ReadinessForecast() {
                 <span
                   className={`text-xs font-medium px-2 py-1 rounded ${
                     item.color === 'green'
-                      ? 'bg-green-900/30 text-green-400'
+                      ? 'bg-secondary/20/30 text-accent'
                       : item.color === 'amber'
-                      ? 'bg-amber-900/30 text-amber-400'
+                      ? 'bg-muted-foreground/20/30 text-muted-foreground'
                       : 'bg-blue-900/30 text-blue-400'
                   }`}
                 >

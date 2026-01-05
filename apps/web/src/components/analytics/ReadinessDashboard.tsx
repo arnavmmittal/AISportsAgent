@@ -125,9 +125,9 @@ export function ReadinessDashboard({
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center max-w-md">
-          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <AlertTriangle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Data</h3>
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={handleManualRefresh}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
@@ -187,7 +187,7 @@ export function ReadinessDashboard({
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
               autoRefresh
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                ? 'bg-secondary/20 text-secondary hover:bg-secondary/30'
                 : 'bg-muted text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -206,23 +206,23 @@ export function ReadinessDashboard({
       {/* Team Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Green (Ready) */}
-        <Card className="border-l-4 border-green-500 bg-green-50">
+        <Card className="border-l-4 border-secondary bg-secondary/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-700">
               Ready to Compete
             </CardTitle>
-            <CheckCircle className="w-5 h-5 text-green-600" />
+            <CheckCircle className="w-5 h-5 text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-700">
+            <div className="text-3xl font-bold text-secondary">
               {data.greenCount}
             </div>
             <p className="text-xs text-gray-600 mt-1">
               {((data.greenCount / data.totalAthletes) * 100).toFixed(0)}% of team
             </p>
-            <div className="mt-3 w-full bg-green-200 rounded-full h-2">
+            <div className="mt-3 w-full bg-secondary/30 rounded-full h-2">
               <div
-                className="h-2 rounded-full bg-green-600"
+                className="h-2 rounded-full bg-secondary"
                 style={{ width: `${(data.greenCount / data.totalAthletes) * 100}%` }}
               />
             </div>
@@ -230,23 +230,23 @@ export function ReadinessDashboard({
         </Card>
 
         {/* Yellow (Monitor) */}
-        <Card className="border-l-4 border-yellow-500 bg-yellow-50">
+        <Card className="border-l-4 border-muted-foreground bg-muted/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-700">
               Monitor Closely
             </CardTitle>
-            <TrendingUp className="w-5 h-5 text-yellow-600" />
+            <TrendingUp className="w-5 h-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-700">
+            <div className="text-3xl font-bold text-muted-foreground">
               {data.yellowCount}
             </div>
             <p className="text-xs text-gray-600 mt-1">
               {((data.yellowCount / data.totalAthletes) * 100).toFixed(0)}% of team
             </p>
-            <div className="mt-3 w-full bg-yellow-200 rounded-full h-2">
+            <div className="mt-3 w-full bg-muted/30 rounded-full h-2">
               <div
-                className="h-2 rounded-full bg-yellow-600"
+                className="h-2 rounded-full bg-muted-foreground"
                 style={{ width: `${(data.yellowCount / data.totalAthletes) * 100}%` }}
               />
             </div>
@@ -254,23 +254,23 @@ export function ReadinessDashboard({
         </Card>
 
         {/* Red (At-Risk) */}
-        <Card className="border-l-4 border-red-500 bg-red-50">
+        <Card className="border-l-4 border-muted-foreground bg-muted-foreground/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-700">
               Intervention Needed
             </CardTitle>
-            <AlertTriangle className="w-5 h-5 text-red-600" />
+            <AlertTriangle className="w-5 h-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-700">
+            <div className="text-3xl font-bold text-muted-foreground">
               {data.redCount}
             </div>
             <p className="text-xs text-gray-600 mt-1">
               {((data.redCount / data.totalAthletes) * 100).toFixed(0)}% of team
             </p>
-            <div className="mt-3 w-full bg-red-200 rounded-full h-2">
+            <div className="mt-3 w-full bg-muted-foreground/30 rounded-full h-2">
               <div
-                className="h-2 rounded-full bg-red-600"
+                className="h-2 rounded-full bg-muted-foreground/30"
                 style={{ width: `${(data.redCount / data.totalAthletes) * 100}%` }}
               />
             </div>
@@ -280,9 +280,9 @@ export function ReadinessDashboard({
 
       {/* At-Risk Athletes Alert */}
       {atRiskAthletes.length > 0 && (
-        <Card className="border-l-4 border-red-500 bg-red-50">
+        <Card className="border-l-4 border-muted-foreground bg-muted-foreground/10">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-red-800">
+            <CardTitle className="text-lg flex items-center gap-2 text-muted-foreground">
               <AlertTriangle className="w-5 h-5" />
               {atRiskAthletes.length} Athlete{atRiskAthletes.length > 1 ? 's' : ''} Need Immediate Attention
             </CardTitle>
@@ -333,7 +333,7 @@ export function ReadinessDashboard({
             {atRiskAthletes.length > 0 && (
               <div className="flex gap-3">
                 <div className="flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-muted-foreground mt-0.5" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">High Priority</h4>
@@ -348,7 +348,7 @@ export function ReadinessDashboard({
             {monitorAthletes.length > 0 && (
               <div className="flex gap-3">
                 <div className="flex-shrink-0">
-                  <TrendingUp className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <TrendingUp className="w-5 h-5 text-muted-foreground mt-0.5" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Monitor</h4>
@@ -362,7 +362,7 @@ export function ReadinessDashboard({
             )}
             <div className="flex gap-3">
               <div className="flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                <CheckCircle className="w-5 h-5 text-secondary mt-0.5" />
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900">Team Preparation</h4>

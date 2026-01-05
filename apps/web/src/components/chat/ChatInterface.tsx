@@ -354,10 +354,10 @@ export function ChatInterface() {
 
       {/* Crisis Alert Banner */}
       {crisisAlert && (
-        <div className="bg-gradient-to-r from-red-500 to-pink-500 border-b-4 border-red-600 p-5 animate-in fade-in duration-300 shadow-lg">
+        <div className="bg-gradient-to-r from-red-500 to-pink-500 border-b-4 border-muted-foreground p-5 animate-in fade-in duration-300 shadow-lg">
           <div className="flex items-start gap-4 max-w-4xl mx-auto">
             <div className="flex-shrink-0 bg-card rounded-full p-2">
-              <svg className="w-7 h-7 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-7 h-7 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </div>
@@ -395,7 +395,7 @@ export function ChatInterface() {
                 <p className="text-lg font-bold text-gray-900 mb-2">Crush Pre-Game Nerves</p>
                 <p className="text-sm text-gray-600">"I get so anxious before games..."</p>
               </div>
-              <div className="bg-card rounded-2xl p-6 border-2 border-purple-200 hover:border-purple-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div className="bg-card rounded-2xl p-6 border-2 border-accent/20 hover:border-accent/20 hover:shadow-xl transition-all transform hover:-translate-y-1">
                 <p className="text-2xl mb-2">💪</p>
                 <p className="text-lg font-bold text-gray-900 mb-2">Boost Your Confidence</p>
                 <p className="text-sm text-gray-600">"How do I believe in myself more?"</p>
@@ -429,18 +429,18 @@ export function ChatInterface() {
                   )}
                 </div>
                 <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`rounded-3xl px-6 py-4 shadow-xl ${message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-md' : 'bg-card text-gray-900 border-2 border-purple-200 rounded-tl-md'}`}>
+                  <div className={`rounded-3xl px-6 py-4 shadow-xl ${message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-md' : 'bg-card text-gray-900 border-2 border-accent/20 rounded-tl-md'}`}>
                     {message.content ? (
                       <p className="text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
                     ) : (
                       <div className="flex space-x-2">
-                        <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce"></div>
+                        <div className="w-2.5 h-2.5 bg-accent rounded-full animate-bounce"></div>
                         <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                         <div className="w-2.5 h-2.5 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
                     )}
                   </div>
-                  <p className={`text-sm mt-2 px-2 font-medium ${message.role === 'user' ? 'text-blue-600' : 'text-purple-600'}`}>
+                  <p className={`text-sm mt-2 px-2 font-medium ${message.role === 'user' ? 'text-blue-600' : 'text-accent'}`}>
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -512,7 +512,7 @@ export function ChatInterface() {
       </div>
 
       {/* Input */}
-      <div className="border-t-2 border-purple-200 bg-card/90 backdrop-blur-sm p-6 shadow-2xl">
+      <div className="border-t-2 border-accent/20 bg-card/90 backdrop-blur-sm p-6 shadow-2xl">
         <div className="max-w-5xl mx-auto">
           {/* Audio visualizer when listening */}
           {isListening && (
@@ -541,7 +541,7 @@ export function ChatInterface() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={voiceMode ? "🎤 Voice mode active - click mic to speak" : "What's on your mind? I'm here to help..."}
-              className="flex-1 resize-none border-3 border-purple-300 rounded-3xl px-6 py-4 text-lg focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all disabled:bg-muted shadow-lg placeholder:text-muted-foreground"
+              className="flex-1 resize-none border-3 border-accent/20 rounded-3xl px-6 py-4 text-lg focus:outline-none focus:border-accent focus:ring-4 focus:ring-purple-200 transition-all disabled:bg-muted shadow-lg placeholder:text-muted-foreground"
               rows={2}
               disabled={isLoading || voiceMode}
             />
@@ -571,7 +571,7 @@ export function ChatInterface() {
 
           {/* Voice error display */}
           {voiceError && (
-            <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-2xl text-base text-red-700 shadow-md">
+            <div className="mt-4 p-4 bg-muted-foreground/10 border-2 border-muted-foreground rounded-2xl text-base text-muted-foreground shadow-md">
               <span className="font-bold">Voice error:</span> {voiceError.message}
             </div>
           )}

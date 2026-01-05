@@ -252,13 +252,13 @@ export function RoutineBuilderWidget({
               <div className="flex gap-2 justify-center">
                 <button
                   onClick={togglePause}
-                  className="px-6 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                  className="px-6 py-2 bg-muted/100 text-white rounded-lg font-medium hover:bg-muted-foreground transition-colors flex items-center gap-2"
                 >
                   {isPaused ? '▶️ Resume' : '⏸️ Pause'}
                 </button>
                 <button
                   onClick={stopRoutine}
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center gap-2"
+                  className="px-6 py-2 bg-muted-foreground/100 text-white rounded-lg font-medium hover:bg-muted-foreground/30 transition-colors flex items-center gap-2"
                 >
                   ⏹️ Stop
                 </button>
@@ -341,20 +341,20 @@ export function RoutineBuilderWidget({
             <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <span>✏️</span> Customization Notes
             </h4>
-            <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+            <p className="text-sm text-gray-600 bg-muted/10 p-3 rounded-lg border border-muted">
               {routine.customization_notes}
             </p>
           </div>
 
           {/* Effectiveness Tracking */}
-          <div className="bg-card p-4 rounded-lg border-2 border-purple-300">
+          <div className="bg-card p-4 rounded-lg border-2 border-accent/20">
             <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <span>📊</span> Track Effectiveness
             </h4>
             <ul className="space-y-1 mb-3">
               {routine.effectiveness_tracking.map((item, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span className="text-accent mt-0.5">•</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -362,7 +362,7 @@ export function RoutineBuilderWidget({
             {onSaveCustomization && (
               <button
                 onClick={() => onSaveCustomization(routine)}
-                className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
+                className="w-full px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent transition-colors"
               >
                 Save My Routine
               </button>

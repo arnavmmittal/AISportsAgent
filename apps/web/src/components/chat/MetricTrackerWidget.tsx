@@ -108,7 +108,7 @@ export function MetricTrackerWidget({
               disabled={logged[metric.name]}
               className={`w-full px-5 py-3 rounded-xl font-bold text-base shadow-md transition-all ${
                 logged[metric.name]
-                  ? 'bg-green-500 text-white cursor-not-allowed'
+                  ? 'bg-secondary/100 text-white cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-700 hover:shadow-lg hover:scale-[1.02]'
               }`}
             >
@@ -132,11 +132,11 @@ export function MetricTrackerWidget({
       </div>
 
       {adherence_check && (
-        <div className="mt-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-xl">
-          <p className="text-sm font-bold text-purple-900 mb-2">
+        <div className="mt-6 p-4 bg-accent/10 border-2 border-accent/20 rounded-xl">
+          <p className="text-sm font-bold text-secondary mb-2">
             ✅ Adherence Check
           </p>
-          <p className="text-base text-purple-800">{adherence_check}</p>
+          <p className="text-base text-secondary">{adherence_check}</p>
         </div>
       )}
 

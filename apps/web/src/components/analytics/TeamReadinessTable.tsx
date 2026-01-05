@@ -46,19 +46,19 @@ const levelOrder = { GREEN: 1, YELLOW: 2, RED: 3 };
 
 const levelConfig = {
   GREEN: {
-    badgeBg: 'bg-green-100',
-    badgeText: 'text-green-800',
-    rowBg: 'bg-green-50',
+    badgeBg: 'bg-secondary/20',
+    badgeText: 'text-secondary',
+    rowBg: 'bg-secondary/10',
   },
   YELLOW: {
-    badgeBg: 'bg-yellow-100',
-    badgeText: 'text-yellow-800',
-    rowBg: 'bg-yellow-50',
+    badgeBg: 'bg-muted/20',
+    badgeText: 'text-muted-foreground',
+    rowBg: 'bg-muted/10',
   },
   RED: {
-    badgeBg: 'bg-red-100',
-    badgeText: 'text-red-800',
-    rowBg: 'bg-red-50',
+    badgeBg: 'bg-muted-foreground/20',
+    badgeText: 'text-muted-foreground',
+    rowBg: 'bg-muted-foreground/10',
   },
 };
 
@@ -192,8 +192,8 @@ export function TeamReadinessTable({
               onClick={() => setLevelFilter('GREEN')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 levelFilter === 'GREEN'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-green-100 text-green-800 hover:bg-green-200'
+                  ? 'bg-secondary text-white'
+                  : 'bg-secondary/20 text-secondary hover:bg-secondary/30'
               }`}
             >
               Green ({counts.GREEN})
@@ -202,8 +202,8 @@ export function TeamReadinessTable({
               onClick={() => setLevelFilter('YELLOW')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 levelFilter === 'YELLOW'
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                  ? 'bg-muted-foreground text-white'
+                  : 'bg-muted/20 text-muted-foreground hover:bg-muted/30'
               }`}
             >
               Yellow ({counts.YELLOW})
@@ -212,8 +212,8 @@ export function TeamReadinessTable({
               onClick={() => setLevelFilter('RED')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 levelFilter === 'RED'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                  ? 'bg-muted-foreground/30 text-white'
+                  : 'bg-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/30'
               }`}
             >
               Red ({counts.RED})

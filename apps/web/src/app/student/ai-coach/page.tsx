@@ -189,15 +189,15 @@ export default function AICoachPage() {
           </div>
 
           {/* Crisis Resources */}
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border-t-2 border-gray-100 dark:border-gray-700">
+          <div className="p-4 bg-muted-foreground/10 dark:bg-muted-foreground/20 border-t-2 border-gray-100 dark:border-gray-700">
             <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+              <Phone className="w-5 h-5 text-muted-foreground dark:text-muted-foreground mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="text-red-900 dark:text-red-100 font-bold">Crisis Support Available 24/7</p>
-                <p className="text-red-700 dark:text-red-300 mt-1 font-medium">
-                  National Crisis Hotline: <a href="tel:988" className="underline font-black hover:text-red-900 dark:hover:text-red-100">988</a>
+                <p className="text-chrome dark:text-chrome font-bold">Crisis Support Available 24/7</p>
+                <p className="text-muted-foreground dark:text-chrome mt-1 font-medium">
+                  National Crisis Hotline: <a href="tel:988" className="underline font-black hover:text-chrome dark:hover:text-chrome">988</a>
                   {' '} | {' '}
-                  Crisis Text Line: Text "HELLO" to <a href="sms:741741" className="underline font-black hover:text-red-900 dark:hover:text-red-100">741741</a>
+                  Crisis Text Line: Text "HELLO" to <a href="sms:741741" className="underline font-black hover:text-chrome dark:hover:text-chrome">741741</a>
                 </p>
               </div>
             </div>

@@ -46,11 +46,11 @@ const SIZE_CONFIG = {
 };
 
 const READINESS_STATUS_COLORS = {
-  OPTIMAL: 'bg-green-500',
+  OPTIMAL: 'bg-secondary/100',
   GOOD: 'bg-blue-500',
-  MODERATE: 'bg-amber-500',
-  LOW: 'bg-red-500',
-  POOR: 'bg-red-900',
+  MODERATE: 'bg-muted/100',
+  LOW: 'bg-muted-foreground/100',
+  POOR: 'bg-muted-foreground/20',
 };
 
 function getInitials(name: string): string {
@@ -64,7 +64,7 @@ function getInitials(name: string): string {
 function getColorFromName(name: string): string {
   const colors = [
     'bg-primary',
-    'bg-purple-600',
+    'bg-accent',
     'bg-pink-600',
     'bg-indigo-600',
     'bg-cyan-600',

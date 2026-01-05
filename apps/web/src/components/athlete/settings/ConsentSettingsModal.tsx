@@ -90,14 +90,14 @@ export default function ConsentSettingsModal({
           </div>
 
           {/* What Coaches See */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-green-900 mb-2 flex items-center">
+          <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-secondary mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               What Coaches WILL See:
             </h3>
-            <ul className="space-y-1 text-sm text-green-800">
+            <ul className="space-y-1 text-sm text-secondary">
               <li className="flex items-start">
                 <span className="mr-2">•</span>
                 <span>Average mood and confidence scores (e.g., 7/10)</span>
@@ -118,14 +118,14 @@ export default function ConsentSettingsModal({
           </div>
 
           {/* What Coaches Don't See */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-red-900 mb-2 flex items-center">
+          <div className="bg-muted-foreground/10 border border-muted-foreground rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-chrome mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               What Coaches will NOT See:
             </h3>
-            <ul className="space-y-1 text-sm text-red-800">
+            <ul className="space-y-1 text-sm text-muted-foreground">
               <li className="flex items-start">
                 <span className="mr-2">•</span>
                 <span>Your actual chat messages</span>
@@ -185,16 +185,16 @@ export default function ConsentSettingsModal({
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
+            <div className="bg-muted-foreground/10 border border-muted-foreground rounded p-3 text-sm text-muted-foreground">
               {error}
             </div>
           )}
 
           {/* Confirmation */}
           {showConfirmation && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-yellow-900 mb-2">Confirm Your Choice</h4>
-              <p className="text-sm text-yellow-800 mb-4">
+            <div className="bg-muted/10 border border-muted rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-chrome mb-2">Confirm Your Choice</h4>
+              <p className="text-sm text-muted-foreground mb-4">
                 {consent ? (
                   <>You are about to enable weekly chat summaries. Your coaches will be able to see high-level summaries of your conversations.</>
                 ) : (

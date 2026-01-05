@@ -148,7 +148,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
         <div className="text-center bg-card rounded-2xl shadow-2xl p-12 max-w-md">
-          <div className="text-red-500 text-7xl mb-6">⚠️</div>
+          <div className="text-muted-foreground text-7xl mb-6">⚠️</div>
           <h2 className="text-2xl font-bold text-foreground mb-4">
             {error || 'No data available'}
           </h2>
@@ -295,10 +295,10 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">
                   Avg Team Mood
                 </div>
                 <div className="text-5xl font-black mb-2">
@@ -312,10 +312,10 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-red-100 text-xs font-bold uppercase tracking-wider mb-2">
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">
                   At-Risk Athletes
                 </div>
                 <div className="text-5xl font-black mb-2">
@@ -329,10 +329,10 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">
                   Crisis Alerts
                 </div>
                 <div className="text-5xl font-black mb-2">
@@ -398,7 +398,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* At-Risk Athletes */}
         {atRiskAthletes.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border-2 border-red-200">
+          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border-2 border-muted-foreground">
             <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
               <span className="text-3xl">⚠️</span>
               At-Risk Athletes
@@ -407,7 +407,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
               {atRiskAthletes.map((athlete) => (
                 <div
                   key={athlete.id}
-                  className="border-2 border-red-300 rounded-xl p-6 bg-gradient-to-br from-red-50 to-orange-50 hover:shadow-xl transition-all hover:scale-105 transform cursor-pointer"
+                  className="border-2 border-muted-foreground rounded-xl p-6 bg-gradient-to-br from-red-50 to-orange-50 hover:shadow-xl transition-all hover:scale-105 transform cursor-pointer"
                   onClick={() => router.push(`/coach/athletes/${athlete.id}`)}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -431,7 +431,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                       </div>
                       <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
                         <span className="text-sm font-semibold text-muted-foreground">Stress:</span>
-                        <span className="font-black text-lg text-red-600">{athlete.recentMood.stress}/10</span>
+                        <span className="font-black text-lg text-muted-foreground">{athlete.recentMood.stress}/10</span>
                       </div>
                     </div>
                   )}
@@ -475,12 +475,12 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                   onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
                   className={`border-2 rounded-xl p-6 cursor-pointer ${
                     item.status === 'excellent'
-                      ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50'
+                      ? 'border-secondary/20 bg-gradient-to-br from-green-50 to-emerald-50'
                       : item.status === 'good'
                       ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50'
                       : item.status === 'fair'
-                      ? 'border-yellow-300 bg-gradient-to-br from-yellow-50 to-amber-50'
-                      : 'border-red-300 bg-gradient-to-br from-red-50 to-orange-50'
+                      ? 'border-muted bg-gradient-to-br from-yellow-50 to-amber-50'
+                      : 'border-muted-foreground bg-gradient-to-br from-red-50 to-orange-50'
                   } hover:shadow-xl transition-all hover:scale-105 transform`}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -491,12 +491,12 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                     <div
                       className={`text-3xl font-black ${
                         item.status === 'excellent'
-                          ? 'text-green-600'
+                          ? 'text-secondary'
                           : item.status === 'good'
                           ? 'text-primary'
                           : item.status === 'fair'
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
+                          ? 'text-muted-foreground'
+                          : 'text-muted-foreground'
                       }`}
                     >
                       {item.readiness}
@@ -504,12 +504,12 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                   </div>
                   <div className={`text-xs uppercase font-black tracking-wider px-3 py-2 rounded-lg inline-block ${
                     item.status === 'excellent'
-                      ? 'bg-green-200 text-green-800'
+                      ? 'bg-secondary/30 text-secondary'
                       : item.status === 'good'
                       ? 'bg-blue-200 text-blue-800'
                       : item.status === 'fair'
-                      ? 'bg-yellow-200 text-yellow-800'
-                      : 'bg-red-200 text-red-800'
+                      ? 'bg-muted/30 text-muted-foreground'
+                      : 'bg-muted-foreground/30 text-muted-foreground'
                   }`}>
                     {item.status.replace('-', ' ')}
                   </div>

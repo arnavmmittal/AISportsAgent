@@ -74,7 +74,7 @@ export function StudentNavigation() {
             })}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all text-gray-700 hover:bg-red-50 hover:text-red-600"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all text-gray-700 hover:bg-muted-foreground/10 hover:text-muted-foreground"
             >
               <LogOut className="w-4 h-4" />
               <span className="text-sm">Sign Out</span>
@@ -120,7 +120,7 @@ export function StudentNavigation() {
             })}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-700 hover:bg-red-50 hover:text-red-600 w-full"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-700 hover:bg-muted-foreground/10 hover:text-muted-foreground w-full"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Sign Out</span>

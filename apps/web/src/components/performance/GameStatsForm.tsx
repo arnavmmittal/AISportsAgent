@@ -173,7 +173,7 @@ export function GameStatsForm({
                 ))}
               </select>
               {errors.athleteId && (
-                <p className="text-red-600 text-sm mt-1">{errors.athleteId.message}</p>
+                <p className="text-muted-foreground text-sm mt-1">{errors.athleteId.message}</p>
               )}
             </div>
 
@@ -186,10 +186,10 @@ export function GameStatsForm({
                 <Input
                   type="date"
                   {...register('gameDate')}
-                  className={errors.gameDate ? 'border-red-500' : ''}
+                  className={errors.gameDate ? 'border-muted-foreground' : ''}
                 />
                 {errors.gameDate && (
-                  <p className="text-red-600 text-sm mt-1">{errors.gameDate.message}</p>
+                  <p className="text-muted-foreground text-sm mt-1">{errors.gameDate.message}</p>
                 )}
               </div>
 
@@ -202,10 +202,10 @@ export function GameStatsForm({
                   type="text"
                   placeholder="e.g., Oregon State"
                   {...register('opponentName')}
-                  className={errors.opponentName ? 'border-red-500' : ''}
+                  className={errors.opponentName ? 'border-muted-foreground' : ''}
                 />
                 {errors.opponentName && (
-                  <p className="text-red-600 text-sm mt-1">{errors.opponentName.message}</p>
+                  <p className="text-muted-foreground text-sm mt-1">{errors.opponentName.message}</p>
                 )}
               </div>
             </div>
@@ -223,7 +223,7 @@ export function GameStatsForm({
                     {...register('outcome')}
                     className="sr-only peer"
                   />
-                  <div className="px-4 py-3 text-center border-2 rounded-lg cursor-pointer transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 hover:border-gray-400">
+                  <div className="px-4 py-3 text-center border-2 rounded-lg cursor-pointer transition-all peer-checked:border-secondary peer-checked:bg-secondary/10 peer-checked:text-secondary hover:border-gray-400">
                     <span className="font-semibold">Win</span>
                   </div>
                 </label>
@@ -234,7 +234,7 @@ export function GameStatsForm({
                     {...register('outcome')}
                     className="sr-only peer"
                   />
-                  <div className="px-4 py-3 text-center border-2 rounded-lg cursor-pointer transition-all peer-checked:border-red-500 peer-checked:bg-red-50 peer-checked:text-red-700 hover:border-gray-400">
+                  <div className="px-4 py-3 text-center border-2 rounded-lg cursor-pointer transition-all peer-checked:border-muted-foreground peer-checked:bg-muted-foreground/10 peer-checked:text-muted-foreground hover:border-gray-400">
                     <span className="font-semibold">Loss</span>
                   </div>
                 </label>
