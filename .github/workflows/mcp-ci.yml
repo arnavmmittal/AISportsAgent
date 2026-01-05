@@ -97,7 +97,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379
           OPENAI_API_KEY: sk-test-key-for-ci-testing
-          ENVIRONMENT: test
+          ENVIRONMENT: development
           DEBUG: true
         run: |
           cd ai-sports-mcp/server

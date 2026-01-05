@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # This is critical because app/core/config.py creates settings on import
 os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/test_db')
 os.environ.setdefault('OPENAI_API_KEY', 'sk-test-key-for-ci-testing')
-os.environ.setdefault('ENVIRONMENT', 'development')  # Use development to avoid production validation
+os.environ.setdefault('ENVIRONMENT', 'development')  # Must be: development, staging, or production
 os.environ.setdefault('DEBUG', 'true')
 os.environ.setdefault('LOG_LEVEL', 'DEBUG')
 os.environ.setdefault('LOG_FORMAT', 'text')
