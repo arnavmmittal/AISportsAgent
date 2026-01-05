@@ -51,7 +51,6 @@ describe('Coach Consent-Based Access (RLS)', () => {
       data: {
         userId: coachId,
         sport: 'Basketball',
-        teamName: 'Test Varsity Team',
       },
     });
 
@@ -73,7 +72,6 @@ describe('Coach Consent-Based Access (RLS)', () => {
         userId: athlete1Id,
         sport: 'Basketball',
         year: 'JUNIOR',
-        teamName: 'Test Varsity Team',
         consentChatSummaries: true, // CONSENTED
       },
     });
@@ -96,7 +94,6 @@ describe('Coach Consent-Based Access (RLS)', () => {
         userId: athlete2Id,
         sport: 'Basketball',
         year: 'SOPHOMORE',
-        teamName: 'Test Varsity Team',
         consentChatSummaries: false, // NO CONSENT
       },
     });

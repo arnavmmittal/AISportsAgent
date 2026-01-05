@@ -64,7 +64,6 @@ describe('Cross-Tenant Isolation (RLS)', () => {
         userId: athlete1Id,
         sport: 'Basketball',
         year: 'SOPHOMORE',
-        teamName: 'Test Team 1',
       },
     });
 
@@ -86,7 +85,6 @@ describe('Cross-Tenant Isolation (RLS)', () => {
         userId: athlete2Id,
         sport: 'Soccer',
         year: 'JUNIOR',
-        teamName: 'Test Team 2',
       },
     });
 
