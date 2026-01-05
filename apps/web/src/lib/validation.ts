@@ -10,7 +10,7 @@
  */
 
 import { z } from 'zod';
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeHtmlSync, sanitizeChatMessageSync } from './sanitize';
 
 // ============================================
 // Utility Functions
@@ -21,22 +21,14 @@ import DOMPurify from 'isomorphic-dompurify';
  * Strips all HTML tags and keeps only plain text
  */
 export function sanitizeHtml(input: string): string {
-  return DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [], // No HTML tags allowed
-    ALLOWED_ATTR: [], // No attributes allowed
-    KEEP_CONTENT: true, // Keep text content
-  }).trim();
+  return sanitizeHtmlSync(input);
 }
 
 /**
  * Sanitize message for chat (allows some markdown but strips dangerous HTML)
  */
 export function sanitizeChatMessage(input: string): string {
-  return DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [], // Strip all HTML for safety
-    ALLOWED_ATTR: [],
-    KEEP_CONTENT: true,
-  }).trim();
+  return sanitizeChatMessageSync(input);
 }
 
 // ============================================
