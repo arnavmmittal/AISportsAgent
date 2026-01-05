@@ -160,11 +160,18 @@ export async function checkSchoolCostLimit(schoolId: string): Promise<UsageCheck
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    // Get user IDs for this school
+    const users = await prisma.user.findMany({
+      where: { schoolId },
+      select: { id: true },
+    });
+    const userIds = users.map(u => u.id);
+
     // Get today's cost for this school
     const dailyUsage = await prisma.tokenUsage.aggregate({
       where: {
-        user: {
-          schoolId: schoolId,
+        userId: {
+          in: userIds,
         },
         createdAt: {
           gte: todayStart,

@@ -298,7 +298,7 @@ export function calculateReadiness(
   const physical = calculatePhysicalReadiness(log);
   const mental = calculateMentalReadiness(log);
   const cognitive = calculateCognitiveReadiness(log);
-  const overall = calculateOverallReadiness(physical, mental, cognitive, sportConfig);
+  const overall = calculateOverallReadiness(physical, mental, cognitive, sportConfig || undefined);
 
   const breakdown: Omit<ReadinessBreakdown, 'recommendations'> = {
     overall,
@@ -500,7 +500,7 @@ export function calculateTemporalReadiness(
 
   return {
     current: current || composite,
-    yesterday,
+    yesterday: yesterday || undefined,
     weekAverage: weekAverage || undefined,
     composite,
     volatility: Math.min(1, volatility),

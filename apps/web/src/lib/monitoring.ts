@@ -8,7 +8,18 @@
  *   import { logError, trackMetric, trackPerformance } from '@/lib/monitoring';
  */
 
-import * as Sentry from '@sentry/nextjs';
+// import * as Sentry from '@sentry/nextjs'; // Disabled for MVP - will re-enable post-launch
+
+// Mock Sentry for MVP (will be replaced with real Sentry post-launch)
+const Sentry = {
+  withScope: (callback: any) => callback({ setContext: () => {}, setTags: () => {} }),
+  captureException: (error: Error) => console.error('[Monitoring]', error),
+  captureMessage: (msg: string, options?: any) => console.log('[Monitoring]', msg, options),
+  metrics: {
+    distribution: (name: string, value: number, tags?: any) => {},
+    increment: (name: string, tags?: any) => {},
+  },
+};
 
 /**
  * Log error to Sentry with context

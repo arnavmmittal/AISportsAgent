@@ -38,13 +38,13 @@ export async function analyzeChatSession(sessionId: string): Promise<ChatAnalysi
   const session = await prisma.chatSession.findUnique({
     where: { id: sessionId },
     include: {
-      messages: {
+      Message: {
         where: { role: 'user' },
         orderBy: { createdAt: 'asc' }
       },
-      athlete: {
+      Athlete: {
         include: {
-          performanceMetrics: {
+          PerformanceMetric: {
             where: {
               gameDate: {
                 gte: new Date() // Only future games
@@ -64,25 +64,25 @@ export async function analyzeChatSession(sessionId: string): Promise<ChatAnalysi
     throw new Error(`Session ${sessionId} not found`);
   }
 
-  if (session.messages.length === 0) {
+  if (session.Message.length === 0) {
     // Return default values for empty sessions
     return getDefaultAnalysis(session);
   }
 
   // Extract athlete messages
-  const athleteMessages = session.messages.map(m => m.content);
+  const athleteMessages = session.Message.map(m => m.content);
   const conversationText = athleteMessages.join('\n\n');
 
   // Check for upcoming games
-  const nextGame = session.athlete.performanceMetrics[0];
+  const nextGame = session.Athlete.PerformanceMetric[0];
   const daysUntilGame = nextGame
     ? Math.ceil((nextGame.gameDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : null;
   const isPreGame = daysUntilGame !== null && daysUntilGame <= 7 && daysUntilGame >= 0;
 
   // Session duration
-  const sessionStart = session.messages[0].createdAt;
-  const sessionEnd = session.messages[session.messages.length - 1].createdAt;
+  const sessionStart = session.Message[0].createdAt;
+  const sessionEnd = session.Message[session.Message.length - 1].createdAt;
   const sessionDuration = Math.round(
     (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60)
   );
@@ -93,7 +93,7 @@ export async function analyzeChatSession(sessionId: string): Promise<ChatAnalysi
   return {
     ...analysis,
     sessionDuration,
-    messageCount: session.messages.length,
+    messageCount: session.Message.length,
     isPreGame,
     daysUntilGame
   };
