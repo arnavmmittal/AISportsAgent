@@ -30,13 +30,13 @@ const darkColors = {
   gray800: '#1E293B',
   gray900: '#0F1419',
 
-  // Semantic
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
-  error: '#EF4444',
-  errorLight: '#FEE2E2',
+  // Semantic - Professional palette (blue/silver/steel)
+  success: '#3B82F6', // secondary (bright blue) - was green
+  successLight: '#DBEAFE',
+  warning: '#94A3B8', // muted-foreground (steel gray) - was orange
+  warningLight: '#CBD5E1',
+  error: '#94A3B8', // muted-foreground (steel gray) - was red
+  errorLight: '#CBD5E1',
   info: '#3B82F6',
   infoLight: '#DBEAFE',
 
@@ -84,13 +84,13 @@ const lightColors = {
   gray800: '#1E293B',
   gray900: '#0F1419',
 
-  // Semantic
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
-  error: '#EF4444',
-  errorLight: '#FEE2E2',
+  // Semantic - Professional palette (blue/silver/steel)
+  success: '#3B82F6', // secondary (bright blue) - was green
+  successLight: '#DBEAFE',
+  warning: '#94A3B8', // muted-foreground (steel gray) - was orange
+  warningLight: '#CBD5E1',
+  error: '#94A3B8', // muted-foreground (steel gray) - was red
+  errorLight: '#CBD5E1',
   info: '#3B82F6',
   infoLight: '#DBEAFE',
 
