@@ -12,7 +12,11 @@
 
 // Mock Sentry for MVP (will be replaced with real Sentry post-launch)
 const Sentry = {
-  withScope: (callback: any) => callback({ setContext: () => {}, setTags: () => {} }),
+  withScope: (callback: (scope: any) => void) => {
+    const scope = { setContext: () => {}, setTags: () => {} };
+    callback(scope);
+  },
+  setUser: (user: any) => {},
   captureException: (error: Error) => console.error('[Monitoring]', error),
   captureMessage: (msg: string, options?: any) => console.log('[Monitoring]', msg, options),
   metrics: {
