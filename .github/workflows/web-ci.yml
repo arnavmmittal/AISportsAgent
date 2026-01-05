@@ -80,6 +80,8 @@ jobs:
   security:
     name: Security Scanning
     runs-on: ubuntu-latest
+    # Only run CodeQL on push to main/staging, not on PRs (permission restrictions)
+    if: github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
