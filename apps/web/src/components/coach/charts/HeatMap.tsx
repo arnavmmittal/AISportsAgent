@@ -29,11 +29,11 @@ interface HeatMapProps {
 }
 
 const READINESS_COLORS: Record<ReadinessLevel, string> = {
-  [ReadinessLevel.OPTIMAL]: 'bg-green-500',
-  [ReadinessLevel.GOOD]: 'bg-blue-500',
-  [ReadinessLevel.MODERATE]: 'bg-amber-500',
-  [ReadinessLevel.LOW]: 'bg-red-500',
-  [ReadinessLevel.POOR]: 'bg-red-900',
+  [ReadinessLevel.OPTIMAL]: 'bg-secondary',
+  [ReadinessLevel.GOOD]: 'bg-accent',
+  [ReadinessLevel.MODERATE]: 'bg-muted',
+  [ReadinessLevel.LOW]: 'bg-muted-foreground',
+  [ReadinessLevel.POOR]: 'bg-muted-foreground/70',
 };
 
 function getReadinessLevel(score: number): ReadinessLevel {
@@ -46,11 +46,11 @@ function getReadinessLevel(score: number): ReadinessLevel {
 
 function getColorByValue(value: number, max: number = 100): string {
   const percentage = (value / max) * 100;
-  if (percentage >= 90) return 'bg-green-500';
-  if (percentage >= 75) return 'bg-blue-500';
-  if (percentage >= 60) return 'bg-amber-500';
-  if (percentage >= 45) return 'bg-red-500';
-  return 'bg-red-900';
+  if (percentage >= 90) return 'bg-secondary';
+  if (percentage >= 75) return 'bg-accent';
+  if (percentage >= 60) return 'bg-muted';
+  if (percentage >= 45) return 'bg-muted-foreground';
+  return 'bg-muted-foreground/70';
 }
 
 export default function HeatMap({
@@ -129,23 +129,23 @@ export default function HeatMap({
         <div className="mt-4 flex items-center gap-4 text-xs">
           <span className="text-slate-400">Readiness:</span>
           <div className="flex items-center gap-2">
-            <div className="bg-green-500 w-4 h-4 rounded-sm" />
+            <div className="bg-secondary w-4 h-4 rounded-sm" />
             <span className="text-slate-300">Optimal</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="bg-blue-500 w-4 h-4 rounded-sm" />
+            <div className="bg-accent w-4 h-4 rounded-sm" />
             <span className="text-slate-300">Good</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="bg-amber-500 w-4 h-4 rounded-sm" />
+            <div className="bg-muted w-4 h-4 rounded-sm" />
             <span className="text-slate-300">Moderate</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="bg-red-500 w-4 h-4 rounded-sm" />
+            <div className="bg-muted-foreground w-4 h-4 rounded-sm" />
             <span className="text-slate-300">Low</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="bg-red-900 w-4 h-4 rounded-sm" />
+            <div className="bg-muted-foreground/70 w-4 h-4 rounded-sm" />
             <span className="text-slate-300">Poor</span>
           </div>
         </div>

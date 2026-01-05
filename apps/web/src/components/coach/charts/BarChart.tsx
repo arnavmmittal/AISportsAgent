@@ -218,9 +218,9 @@ export function CohortComparisonChart({
     <BarChart
       data={data}
       bars={[
-        { key: 'readiness', label: 'Readiness', color: '#22c55e' },
-        { key: 'mood', label: 'Mood', color: '#3b82f6' },
-        { key: 'stress', label: 'Stress', color: '#ef4444' },
+        { key: 'readiness', label: 'Readiness', color: '#3B82F6' }, // secondary (bright blue)
+        { key: 'mood', label: 'Mood', color: '#5BA3F5' }, // accent (light blue)
+        { key: 'stress', label: 'Stress', color: '#94A3B8' }, // muted-foreground (steel gray)
       ]}
       xAxisKey="cohort"
       yAxisLabel="Average Score"
@@ -240,7 +240,7 @@ export function SportComparisonChart({
   return (
     <BarChart
       data={data}
-      bars={[{ key: 'athleteCount', label: 'Athletes', color: '#8b5cf6' }]}
+      bars={[{ key: 'athleteCount', label: 'Athletes', color: '#3B82F6' }]} // secondary (bright blue)
       xAxisKey="sport"
       yAxisLabel="Number of Athletes"
       height={height}
@@ -261,9 +261,9 @@ export function GoalCompletionChart({
     <BarChart
       data={data}
       bars={[
-        { key: 'completed', label: 'Completed', color: '#22c55e' },
-        { key: 'active', label: 'Active', color: '#3b82f6' },
-        { key: 'abandoned', label: 'Abandoned', color: '#64748b' },
+        { key: 'completed', label: 'Completed', color: '#3B82F6' }, // secondary (bright blue)
+        { key: 'active', label: 'Active', color: '#5BA3F5' }, // accent (light blue)
+        { key: 'abandoned', label: 'Abandoned', color: '#334155' }, // muted (silver)
       ]}
       xAxisKey="category"
       yAxisLabel="Number of Goals"

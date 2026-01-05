@@ -108,16 +108,16 @@ export default function PerformanceIntelligence() {
         description="Based on current readiness trends"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-green-900/20 border border-green-700 rounded-lg">
-            <h4 className="text-sm font-semibold text-green-400 mb-2">
+          <div className="p-4 bg-secondary/20 border border-secondary rounded-lg">
+            <h4 className="text-sm font-semibold text-accent mb-2">
               ✅ Likely to Excel (5 athletes)
             </h4>
             <p className="text-sm text-slate-300">
               High readiness scores (90+) maintained for 5+ days
             </p>
           </div>
-          <div className="p-4 bg-amber-900/20 border border-amber-700 rounded-lg">
-            <h4 className="text-sm font-semibold text-amber-400 mb-2">
+          <div className="p-4 bg-muted/20 border border-muted rounded-lg">
+            <h4 className="text-sm font-semibold text-chrome mb-2">
               ⚠️ Performance Risk (3 athletes)
             </h4>
             <p className="text-sm text-slate-300">

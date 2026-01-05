@@ -17,19 +17,19 @@
   --color-sidebar-foreground: #FFFFFF;
   --color-sidebar: #0F1419;
   --color-chart-5: #BFBFBF;
-  --color-chart-4: #F59E0B;
-  --color-chart-3: #10B981;
-  --color-chart-2: #5BA3F5;
-  --color-chart-1: #3B82F6;
+  --color-chart-4: #9CA3AF;
+  --color-chart-3: #5BA3F5;
+  --color-chart-2: #3B82F6;
+  --color-chart-1: #1E40AF;
   --color-ring: #3B82F6;
   --color-input: #1A2332;
   --color-border: #2D3E50;
-  --color-destructive: #EF4444;
+  --color-destructive: #4B5563;
   --color-destructive-foreground: #FFFFFF;
-  --color-success: #10B981;
+  --color-success: #5BA3F5;
   --color-success-foreground: #FFFFFF;
-  --color-warning: #F59E0B;
-  --color-warning-foreground: #000000;
+  --color-warning: #9CA3AF;
+  --color-warning-foreground: #FFFFFF;
   --color-accent-foreground: #1C2B3A;
   --color-accent: #5BA3F5;
   --color-muted-foreground: #94A3B8;
@@ -92,22 +92,22 @@
   --input: 217 33% 20%;
   --ring: 217 91% 60%;
 
-  /* Status Colors */
-  --success: 160 84% 39%;
+  /* Status Colors - Professional Chrome/Silver/Blue Palette */
+  --success: 213 94% 68%; /* Light Blue */
   --success-foreground: 0 0% 100%;
-  --warning: 38 92% 50%;
-  --warning-foreground: 0 0% 0%;
-  --destructive: 0 84% 60%;
+  --warning: 220 13% 65%; /* Silver */
+  --warning-foreground: 0 0% 100%;
+  --destructive: 220 13% 34%; /* Steel */
   --destructive-foreground: 0 0% 100%;
-  --info: 217 91% 60%;
+  --info: 217 91% 60%; /* Bright Blue */
   --info-foreground: 0 0% 100%;
 
-  /* Chart colors for analytics */
-  --chart-1: 217 91% 60%; /* Primary blue */
-  --chart-2: 213 94% 68%; /* Accent light blue */
-  --chart-3: 160 84% 39%; /* Success green */
-  --chart-4: 38 92% 50%; /* Warning amber */
-  --chart-5: 0 0% 75%; /* Chrome silver */
+  /* Chart colors for analytics - Monochromatic Blue Scale */
+  --chart-1: 217 91% 40%; /* Deep Blue */
+  --chart-2: 217 91% 60%; /* Bright Blue */
+  --chart-3: 213 94% 68%; /* Light Blue */
+  --chart-4: 220 13% 65%; /* Silver */
+  --chart-5: 0 0% 75%; /* Chrome */
 
   /* Sidebar (for coach dashboard) */
   --sidebar: 210 29% 8%;

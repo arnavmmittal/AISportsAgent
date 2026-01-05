@@ -217,7 +217,7 @@ export default function IndividualInsights() {
             {currentInsight.strengths.map((strength, idx) => (
               <li
                 key={idx}
-                className="p-3 bg-green-900/20 border-l-4 border-green-500 rounded"
+                className="p-3 bg-secondary/20 border-l-4 border-secondary rounded"
               >
                 <p className="text-sm text-slate-200">{strength}</p>
               </li>
@@ -232,8 +232,8 @@ export default function IndividualInsights() {
                 key={idx}
                 className={`p-3 rounded border-l-4 ${
                   concern.includes('None')
-                    ? 'bg-green-900/20 border-green-500'
-                    : 'bg-amber-900/20 border-amber-500'
+                    ? 'bg-secondary/20 border-secondary'
+                    : 'bg-muted/20 border-muted'
                 }`}
               >
                 <p className="text-sm text-slate-200">{concern}</p>
@@ -266,7 +266,7 @@ export default function IndividualInsights() {
             {currentInsight.progressHighlights.map((highlight, idx) => (
               <li
                 key={idx}
-                className="p-3 bg-purple-900/20 border-l-4 border-purple-500 rounded"
+                className="p-3 bg-accent/20 border-l-4 border-accent rounded"
               >
                 <p className="text-sm text-slate-200">{highlight}</p>
               </li>

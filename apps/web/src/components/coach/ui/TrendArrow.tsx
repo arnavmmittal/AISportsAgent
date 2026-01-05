@@ -38,15 +38,15 @@ function getTrendDirection(value: number): TrendDirection {
 }
 
 function getTrendColor(direction: TrendDirection, inverse: boolean): string {
-  if (direction === 'neutral') return 'text-slate-400';
+  if (direction === 'neutral') return 'text-chrome';
 
   if (inverse) {
     // For metrics where down is good (stress, risk)
-    return direction === 'down' ? 'text-green-500' : 'text-red-500';
+    return direction === 'down' ? 'text-secondary' : 'text-muted-foreground';
   }
 
   // For metrics where up is good (readiness, performance)
-  return direction === 'up' ? 'text-green-500' : 'text-red-500';
+  return direction === 'up' ? 'text-secondary' : 'text-muted-foreground';
 }
 
 function getTrendArrow(direction: TrendDirection): string {

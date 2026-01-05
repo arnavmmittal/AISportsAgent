@@ -158,8 +158,8 @@ export function MoodTrendChart({
     <LineChart
       data={data}
       lines={[
-        { key: 'mood', label: 'Mood', color: '#3B82F6' }, // Secondary blue
-        { key: 'confidence', label: 'Confidence', color: '#10B981' }, // Success green
+        { key: 'mood', label: 'Mood', color: '#3B82F6' }, // secondary (bright blue)
+        { key: 'confidence', label: 'Confidence', color: '#5BA3F5' }, // accent (light blue)
       ]}
       xAxisKey="date"
       yAxisLabel="Score (1-10)"
@@ -179,7 +179,7 @@ export function ReadinessTrendChart({
   return (
     <LineChart
       data={data}
-      lines={[{ key: 'score', label: 'Readiness Score', color: '#10B981', strokeWidth: 3 }]} // Success green
+      lines={[{ key: 'score', label: 'Readiness Score', color: '#3B82F6', strokeWidth: 3 }]} // secondary (bright blue)
       xAxisKey="date"
       yAxisLabel="Readiness (0-100)"
       height={height}
@@ -198,7 +198,7 @@ export function StressTrendChart({
   return (
     <LineChart
       data={data}
-      lines={[{ key: 'stress', label: 'Stress Level', color: '#EF4444', strokeWidth: 3 }]} // Destructive red
+      lines={[{ key: 'stress', label: 'Stress Level', color: '#94A3B8', strokeWidth: 3 }]} // muted-foreground (steel gray)
       xAxisKey="date"
       yAxisLabel="Stress (1-10)"
       height={height}
@@ -215,11 +215,11 @@ export function PerformanceTrendChart({
   height?: number;
 }) {
   const lines: LineConfig[] = [
-    { key: 'performance', label: 'Performance', color: '#5BA3F5', strokeWidth: 3 }, // Accent light blue
+    { key: 'performance', label: 'Performance', color: '#5BA3F5', strokeWidth: 3 }, // accent (light blue)
   ];
 
   if (data.some((d) => d.readiness !== undefined)) {
-    lines.push({ key: 'readiness', label: 'Readiness', color: '#10B981' }); // Success green
+    lines.push({ key: 'readiness', label: 'Readiness', color: '#3B82F6' }); // secondary (bright blue)
   }
 
   return (
