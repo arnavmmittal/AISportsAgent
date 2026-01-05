@@ -32,6 +32,7 @@ describe('Cross-Tenant Isolation (RLS)', () => {
         id: `test-school-1-${Date.now()}`,
         name: 'Test University 1',
         email: 'admin@test1.edu',
+        division: 'D1',
       },
     });
     school1Id = school1.id;
@@ -41,6 +42,7 @@ describe('Cross-Tenant Isolation (RLS)', () => {
         id: `test-school-2-${Date.now()}`,
         name: 'Test University 2',
         email: 'admin@test2.edu',
+        division: 'D1',
       },
     });
     school2Id = school2.id;
