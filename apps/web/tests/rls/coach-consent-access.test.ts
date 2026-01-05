@@ -174,7 +174,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       // Coach queries summaries where consent is granted
       const summaries = await prisma.chatSummary.findMany({
         where: {
-          Athlete: {
+          athlete: {
             User: {
               schoolId, // Same school
             },
@@ -193,7 +193,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       const summaries = await prisma.chatSummary.findMany({
         where: {
           athleteId: athlete2Id, // Athlete 2 (no consent)
-          Athlete: {
+          athlete: {
             User: {
               schoolId, // Same school
             },
@@ -219,7 +219,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       // Coach queries all summaries (should only see consented)
       const summaries = await prisma.chatSummary.findMany({
         where: {
-          Athlete: {
+          athlete: {
             User: {
               schoolId,
             },
@@ -243,7 +243,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       const sessions = await prisma.chatSession.findMany({
         where: {
           id: session2Id,
-          Athlete: {
+          athlete: {
             User: {
               schoolId,
             },
@@ -268,7 +268,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       const sessions = await prisma.chatSession.findMany({
         where: {
           id: session1Id,
-          Athlete: {
+          athlete: {
             consentChatSummaries: true,
           },
         },
@@ -285,7 +285,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       let summaries = await prisma.chatSummary.findMany({
         where: {
           athleteId: athlete1Id,
-          Athlete: {
+          athlete: {
             consentChatSummaries: true,
           },
         },
@@ -303,7 +303,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       summaries = await prisma.chatSummary.findMany({
         where: {
           athleteId: athlete1Id,
-          Athlete: {
+          athlete: {
             consentChatSummaries: true,
           },
         },
@@ -351,7 +351,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       // Coach tries to get average mood across team
       const summariesForStats = await prisma.chatSummary.findMany({
         where: {
-          Athlete: {
+          athlete: {
             User: {
               schoolId,
             },
@@ -383,7 +383,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       const summary = await prisma.chatSummary.findUnique({
         where: { id: summary1Id },
         include: {
-          Athlete: {
+          athlete: {
             select: {
               consentChatSummaries: true,
             },
@@ -408,7 +408,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       const summary = await prisma.chatSummary.findUnique({
         where: { id: summary2Id },
         include: {
-          Athlete: {
+          athlete: {
             select: {
               consentChatSummaries: true,
             },
@@ -445,7 +445,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       const summaries = await prisma.chatSummary.findMany({
         where: {
           athleteId: athlete2Id,
-          Athlete: {
+          athlete: {
             consentChatSummaries: true,
           },
         },
@@ -473,7 +473,7 @@ describe('Coach Consent-Based Access (RLS)', () => {
       const summaries = await prisma.chatSummary.findMany({
         where: {
           athleteId: athlete2Id,
-          Athlete: {
+          athlete: {
             consentChatSummaries: true, // Filter by consent
           },
         },
