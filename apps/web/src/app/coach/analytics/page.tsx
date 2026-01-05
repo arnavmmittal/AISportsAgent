@@ -1,7 +1,7 @@
 import { requireAuth } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/shared/ui/card';
 
 export default async function CoachAnalyticsPage() {
   // TODO: Re-implement auth check for Server Component after Supabase auth migration

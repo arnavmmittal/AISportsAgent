@@ -3,8 +3,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
+import { Badge } from '@/components/shared/ui/badge';
 import { AlertTriangle, MessageCircle, TrendingUp, Users } from 'lucide-react';
 
 // Force dynamic rendering to avoid database connection issues during build

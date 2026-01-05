@@ -23,7 +23,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
 import { Activity } from 'lucide-react';
 
 interface HRVDataPoint {

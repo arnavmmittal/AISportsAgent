@@ -11,8 +11,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   LineChart,
   Line,

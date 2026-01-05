@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
-import { VoiceButton, AudioVisualizer } from '@/components/voice/VoiceButton';
-import { ActionPlanWidget } from '@/components/chat/ActionPlanWidget';
-import { MetricTrackerWidget } from '@/components/chat/MetricTrackerWidget';
-import { PracticeDrillCard } from '@/components/chat/PracticeDrillCard';
-import { RoutineBuilderWidget } from '@/components/chat/RoutineBuilderWidget';
-import { CrisisResourcesModal } from '@/components/chat/CrisisResourcesModal';
+import { VoiceButton, AudioVisualizer } from '@/components/shared/voice/VoiceButton';
+import { ActionPlanWidget } from '@/components/shared/chat/ActionPlanWidget';
+import { MetricTrackerWidget } from '@/components/shared/chat/MetricTrackerWidget';
+import { PracticeDrillCard } from '@/components/shared/chat/PracticeDrillCard';
+import { RoutineBuilderWidget } from '@/components/shared/chat/RoutineBuilderWidget';
+import { CrisisResourcesModal } from '@/components/shared/chat/CrisisResourcesModal';
 
 interface Message {
   id: string;

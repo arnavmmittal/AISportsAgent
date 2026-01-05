@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Phone, MessageSquare, Mail, ExternalLink, X } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/shared/ui/dialog';
 
 interface CrisisAlert {
   final_risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';

@@ -1,18 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { Textarea } from '@/components/shared/ui/textarea';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/shared/ui/dialog';
 import {
   ClipboardList,
   Clock,

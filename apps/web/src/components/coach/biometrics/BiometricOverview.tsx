@@ -13,7 +13,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/shared/ui/card';
 import { Activity, Heart, Moon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface BiometricSummary {

@@ -12,8 +12,8 @@
  * - Trend indicator (improving/declining)
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/shared/ui/card';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   TrendingUp,
   TrendingDown,

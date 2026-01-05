@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/shared/ui/button';
 import { cn } from '@/lib/utils';
 import type { VoiceState } from '@/lib/voice/VoiceManager';
 

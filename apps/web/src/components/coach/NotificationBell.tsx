@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, AlertTriangle, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/shared/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+} from '@/components/shared/ui/popover';
+import { Badge } from '@/components/shared/ui/badge';
+import { Card } from '@/components/shared/ui/card';
 
 interface Notification {
   id: string;
