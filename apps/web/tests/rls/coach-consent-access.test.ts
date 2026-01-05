@@ -28,7 +28,6 @@ describe('Coach Consent-Based Access (RLS)', () => {
       data: {
         id: `test-school-consent-${Date.now()}`,
         name: 'Test Consent University',
-        email: 'consent@test.edu',
         division: 'D1',
       },
     });
