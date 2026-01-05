@@ -1,4 +1,5 @@
 /**
+
  * Multi-Modal Correlation Analysis API
  *
  * GET /api/analytics/multi-modal?athleteId=xxx&days=90
@@ -11,6 +12,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeMultiModalCorrelation } from '@/lib/analytics/multi-modal-correlation';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {

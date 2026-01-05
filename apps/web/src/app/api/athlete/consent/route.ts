@@ -1,4 +1,5 @@
 /**
+
  * Athlete Consent Management API
  *
  * Handles athlete consent for weekly chat summaries
@@ -11,6 +12,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { logConsentUpdate, logSummaryRevocation } from '@/lib/audit';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * PUT /api/athlete/consent

@@ -1,4 +1,5 @@
 /**
+
  * Coach Notifications API
  * Returns real-time notifications for coaches (crisis alerts, athlete requests, etc.)
  */
@@ -6,6 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 

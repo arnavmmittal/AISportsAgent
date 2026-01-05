@@ -12,6 +12,7 @@ import { requireCoach } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   // Verify coach authentication

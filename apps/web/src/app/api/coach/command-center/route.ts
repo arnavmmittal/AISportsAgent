@@ -1,4 +1,5 @@
 /**
+
  * Command Center API
  * Returns AI-powered priority athletes, action feed, and quick stats
  */
@@ -12,6 +13,10 @@ import {
   ActionFeedItem,
   CoachIntervention,
 } from '@/types/coach-portal';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {

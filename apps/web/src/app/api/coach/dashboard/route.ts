@@ -1,4 +1,5 @@
 /**
+
  * Coach Dashboard API
  * Returns aggregated team metrics from real database
  */
@@ -6,6 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCoach } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {

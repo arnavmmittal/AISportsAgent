@@ -1,4 +1,5 @@
 /**
+
  * Admin API: Query Audit Logs
  *
  * GET /api/admin/audit-logs
@@ -18,6 +19,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { AuditAction } from '@/lib/audit';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {

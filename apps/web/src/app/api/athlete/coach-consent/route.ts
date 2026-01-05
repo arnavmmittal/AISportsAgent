@@ -1,4 +1,5 @@
 /**
+
  * Athlete Coach Consent API
  * Manages athlete consent for sharing data with coaches
  */
@@ -6,6 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * GET /api/athlete/coach-consent

@@ -1,4 +1,5 @@
 /**
+
  * Cron Job: Generate Weekly Chat Summaries
  *
  * Schedule: Sunday 11:59 PM (Vercel Cron: "59 23 * * 0")
@@ -12,6 +13,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateWeeklySummary } from '@/lib/summarizer';
 import { logWeeklySummaryGeneration } from '@/lib/audit';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * Verify cron job authentication

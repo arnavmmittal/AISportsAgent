@@ -24,6 +24,8 @@ import { logChatMessageCreation } from '@/lib/audit';
 import { streamChatMessage, parseSSEStream, checkMCPHealth } from '@/lib/mcp-client';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 

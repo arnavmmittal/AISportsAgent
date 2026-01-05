@@ -1,10 +1,15 @@
 /**
+
  * Email Verification API
  * Sends verification codes to coach emails
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // In-memory store for verification codes (use Redis in production)
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();

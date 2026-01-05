@@ -1,4 +1,5 @@
 /**
+
  * Admin API: Ingest Knowledge Base Content
  *
  * Allows admins to add new knowledge base entries dynamically.
@@ -15,6 +16,10 @@ import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 import { z } from 'zod';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Lazy init OpenAI client (only during runtime, not build)
 let openai: OpenAI | null = null;

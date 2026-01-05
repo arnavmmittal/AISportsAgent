@@ -1,4 +1,5 @@
 /**
+
  * Coach Athletes List API
  * Returns list of athletes connected to coach
  * SECURITY: Only shows athletes connected via CoachAthleteRelation
@@ -7,6 +8,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
