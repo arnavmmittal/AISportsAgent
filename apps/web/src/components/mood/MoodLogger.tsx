@@ -206,19 +206,19 @@ function SliderField({
   const colorConfig = {
     blue: {
       textClass: 'text-primary',
-      hex: '#1E40AF', // Primary blue
+      hex: '#1E40AF', // primary (deep blue)
     },
     green: {
-      textClass: 'text-success',
-      hex: '#10B981', // Success green
+      textClass: 'text-secondary',
+      hex: '#3B82F6', // secondary (bright blue) - was green
     },
     orange: {
-      textClass: 'text-warning',
-      hex: '#F59E0B', // Warning amber
+      textClass: 'text-muted-foreground',
+      hex: '#94A3B8', // muted-foreground (steel gray) - was orange
     },
     purple: {
       textClass: 'text-accent',
-      hex: '#5BA3F5', // Accent light blue
+      hex: '#5BA3F5', // accent (light blue)
     },
   };
 
