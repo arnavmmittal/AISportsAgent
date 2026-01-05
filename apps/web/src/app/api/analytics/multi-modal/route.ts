@@ -33,6 +33,22 @@ export async function GET(request: NextRequest) {
     // Perform multi-modal analysis
     const analysis = await analyzeMultiModalCorrelation(athleteId, startDate, endDate);
 
+    // Check if we have sufficient data
+    if (!analysis) {
+      return NextResponse.json({
+        success: false,
+        athleteId,
+        dateRange: {
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+          days
+        },
+        error: 'Insufficient data for analysis',
+        message: 'Need at least 5 games with mood logs to perform correlation analysis',
+        analysis: null
+      }, { status: 200 }); // Return 200, not 500, so build doesn't fail
+    }
+
     return NextResponse.json({
       success: true,
       athleteId,

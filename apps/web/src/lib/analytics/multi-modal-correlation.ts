@@ -182,11 +182,12 @@ export async function analyzeMultiModalCorrelation(
   athleteId: string,
   startDate: Date,
   endDate: Date = new Date()
-): Promise<MultiModalInsights> {
+): Promise<MultiModalInsights | null> {
   const data = await collectMultiModalData(athleteId, startDate, endDate);
 
   if (data.length < 5) {
-    throw new Error('Insufficient data for correlation analysis (need at least 5 games)');
+    // Return null instead of throwing - let caller handle gracefully
+    return null;
   }
 
   // 1. Traditional metric correlations
