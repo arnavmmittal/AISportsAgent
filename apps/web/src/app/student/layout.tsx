@@ -1,5 +1,8 @@
 'use client';
 
+// Force dynamic rendering for all student pages
+export const dynamic = 'force-dynamic';
+
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
 import {
