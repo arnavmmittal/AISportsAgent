@@ -439,7 +439,7 @@ model School {
   division      String
   customConfig  Json?
   createdAt     DateTime        @default(now())
-  updatedAt     DateTime
+  updatedAt     DateTime        @updatedAt
   KnowledgeBase KnowledgeBase[]
   TeamConfig    TeamConfig[]
   User          User[]
