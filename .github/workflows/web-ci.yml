@@ -39,6 +39,8 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm --filter web prisma:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
       - name: Run ESLint
         run: pnpm --filter web lint
@@ -71,11 +73,14 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm --filter web prisma:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
       - name: Run tests
         run: pnpm --filter web test
         env:
           NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
   security:
     name: Security Scanning
@@ -102,6 +107,8 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm --filter web prisma:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
       - name: Audit dependencies
         run: pnpm audit --audit-level=high
@@ -175,11 +182,15 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm --filter web prisma:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
       - name: Build application
         run: pnpm --filter web build
         env:
           NODE_ENV: production
+          # Dummy DATABASE_URL for build (not actually used, just for validation)
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
           # Skip telemetry in CI
           NEXT_TELEMETRY_DISABLED: 1
 
