@@ -95,6 +95,12 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
         continue-on-error: false  # Must succeed for tests to run
 
+      - name: Apply RLS Policies
+        run: |
+          cd apps/web
+          PGPASSWORD=postgres psql -h localhost -U postgres -d ci_db -f prisma/migrations/enable_rls_security_supabase_idempotent.sql
+        continue-on-error: false  # RLS must be enabled for tests
+
       - name: Run tests
         run: pnpm --filter web test
         env:
