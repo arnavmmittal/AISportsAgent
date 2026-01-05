@@ -158,16 +158,15 @@ jobs:
           context: .
           file: infra/docker/mcp-server.Dockerfile
           push: false
-          tags: |
-            ai-sports-mcp:${{ github.sha }}
-            ai-sports-mcp:latest
+          load: true  # Load image into Docker for testing
+          tags: mcp-server:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Test Docker image
+      - name: Test Docker image runs
         run: |
-          docker build -f infra/docker/mcp-server.Dockerfile -t mcp-test .
-          echo "✅ Docker image built successfully"
+          docker run --rm mcp-server:test python -c "import app; print('✅ App imports successfully')"
+          echo "✅ Docker image built and tested successfully"
 
   env-validation:
     name: Environment Validation
