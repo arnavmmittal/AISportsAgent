@@ -90,7 +90,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
       - name: Run Prisma Migrations
-        run: pnpm --filter web prisma:migrate
+        run: cd apps/web && npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
         continue-on-error: false  # Must succeed for tests to run
