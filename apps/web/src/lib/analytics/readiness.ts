@@ -183,7 +183,7 @@ function calculateOverallReadiness(
   sportConfig?: SportConfig
 ): number {
   // Default weights (balanced)
-  let weights = {
+  const weights = {
     physical: 0.35,
     mental: 0.35,
     cognitive: 0.30,

@@ -8,17 +8,10 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
-  },
-  // Sentry configuration
-  sentry: {
-    // Hide source maps from generated client bundles
-    hideSourceMaps: true,
-    // Only upload source maps in production builds
-    disableServerWebpackPlugin: process.env.NODE_ENV !== 'production',
-    disableClientWebpackPlugin: process.env.NODE_ENV !== 'production',
-  },
+  // External packages that should not be bundled (moved from experimental)
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
+  // Optimize build performance
+  outputFileTracingRoot: undefined, // Let Next.js auto-detect in monorepo
 };
 
 export default nextConfig;

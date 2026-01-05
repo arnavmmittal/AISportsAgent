@@ -269,7 +269,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
     const avgChange = (recent[recent.length - 1] - recent[0]) / recent.length;
 
     // Project forward 7 days
-    let forecast: number[] = [];
+    const forecast: number[] = [];
     let lastScore = recent[recent.length - 1];
     for (let i = 1; i <= 7; i++) {
       lastScore = Math.max(0, Math.min(100, lastScore + avgChange));

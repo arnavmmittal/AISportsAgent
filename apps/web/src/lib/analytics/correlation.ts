@@ -141,7 +141,7 @@ function incompleteBeta(x: number, a: number, b: number): number {
   let f = 1, c = 1, d = 0;
   for (let i = 0; i <= 200; i++) {
     const m = i / 2;
-    let numerator, denominator;
+    let numerator;
 
     if (i === 0) {
       numerator = 1;
@@ -151,7 +151,7 @@ function incompleteBeta(x: number, a: number, b: number): number {
       numerator = -((a + m) * (a + b + m) * x) / ((a + 2 * m) * (a + 2 * m + 1));
     }
 
-    denominator = 1;
+    const denominator = 1;
     d = denominator + numerator * d;
     if (Math.abs(d) < 1e-30) d = 1e-30;
     c = denominator + numerator / c;
