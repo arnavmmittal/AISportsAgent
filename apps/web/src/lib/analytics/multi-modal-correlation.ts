@@ -146,7 +146,8 @@ export async function collectMultiModalData(
     const preGameInsight = chatInsights.find(i => i.isPreGame);
 
     // Get performance score (already calculated and stored)
-    const performanceScore = game.stats?.performanceScore || calculatePerformanceScore(game.stats, game.sport);
+    const stats = game.stats as Record<string, any> | null;
+    const performanceScore = stats?.performanceScore || calculatePerformanceScore(game.stats, game.sport);
 
     dataPoints.push({
       date: game.gameDate,

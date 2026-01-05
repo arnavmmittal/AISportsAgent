@@ -60,8 +60,6 @@ export async function GET(request: NextRequest) {
               stress: latestMood.stress,
               energy: latestMood.energy || undefined,
               sleep: latestMood.sleep || undefined,
-              focus: latestMood.focus || undefined,
-              motivation: latestMood.motivation || undefined,
               createdAt: latestMood.createdAt,
             },
             user.Athlete?.sport || 'Basketball'

@@ -18,9 +18,9 @@ import { calculateReadiness as calculateAdvancedReadiness } from '@/lib/analytic
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
-    const authResult = await verifyAuthFromRequest(request);
+    const user = await verifyAuthFromRequest(request);
 
-    if (!authResult.success || !authResult.user) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only coaches can import stats
-    if (authResult.user.role !== 'COACH' && authResult.user.role !== 'ADMIN') {
+    if (user.role !== 'COACH' && user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Only coaches can import performance stats' },
         { status: 403 }
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         // Find athlete by name
         const athlete = await prisma.athlete.findFirst({
           where: {
-            user: {
+            User: {
               name: {
                 contains: rowData.name,
                 mode: 'insensitive',
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
             },
           },
           include: {
-            user: true,
+            User: true,
           },
         });
 
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
         const moodLog = await prisma.moodLog.findFirst({
           where: {
             athleteId: athlete.userId,
-            date: {
+            createdAt: {
               gte: new Date(gameDate.setHours(0, 0, 0, 0)),
               lt: new Date(gameDate.setHours(23, 59, 59, 999)),
             },
@@ -183,8 +183,6 @@ export async function POST(request: NextRequest) {
               stress: moodLog.stress,
               energy: moodLog.energy || undefined,
               sleep: moodLog.sleep || undefined,
-              focus: moodLog.focus || undefined,
-              motivation: moodLog.motivation || undefined,
               createdAt: moodLog.createdAt,
             }, sport).overall : null,
           },

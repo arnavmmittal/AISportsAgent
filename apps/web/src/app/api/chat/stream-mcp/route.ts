@@ -177,6 +177,20 @@ export async function POST(req: NextRequest) {
 
     console.log(`[MCP Chat] Processing message for athlete: ${athlete_id}, session: ${session_id}`);
 
+    // Ensure we have a valid session_id (create if not provided)
+    let validSessionId = session_id;
+    if (!validSessionId) {
+      // Create a new session
+      const newSession = await prisma.chatSession.create({
+        data: {
+          id: `session_${Date.now()}`,
+          athleteId: athlete_id,
+        },
+      });
+      validSessionId = newSession.id;
+      console.log(`[MCP Chat] Created new session: ${validSessionId}`);
+    }
+
     // Check MCP server health before proceeding
     const isHealthy = await checkMCPHealth();
     if (!isHealthy) {
@@ -207,14 +221,14 @@ export async function POST(req: NextRequest) {
     await prisma.message.create({
       data: {
         id: userMessageId,
-        sessionId: session_id,
+        sessionId: validSessionId,
         role: 'user',
         content: message,
       },
     });
 
     // Audit log: User created a chat message
-    await logChatMessageCreation(athlete_id, session_id, userMessageId).catch((err) => {
+    await logChatMessageCreation(athlete_id, validSessionId, userMessageId).catch((err) => {
       console.error('[Audit] Failed to log message creation:', err);
     });
 
@@ -224,7 +238,7 @@ export async function POST(req: NextRequest) {
         try {
           // Call MCP server
           const mcpResponse = await streamChatMessage({
-            session_id,
+            session_id: validSessionId,
             message,
             athlete_id,
             stream: true,
@@ -235,7 +249,7 @@ export async function POST(req: NextRequest) {
             encoder.encode(
               `data: ${JSON.stringify({
                 type: 'session',
-                data: { sessionId: session_id },
+                data: { sessionId: validSessionId },
               })}\n\n`
             )
           );
@@ -289,14 +303,14 @@ export async function POST(req: NextRequest) {
           await prisma.message.create({
             data: {
               id: assistantMessageId,
-              sessionId: session_id,
+              sessionId: validSessionId,
               role: 'assistant',
               content: fullResponse,
             },
           });
 
           // Audit log: Assistant message created
-          await logChatMessageCreation('system', session_id, assistantMessageId).catch((err) => {
+          await logChatMessageCreation('system', validSessionId, assistantMessageId).catch((err) => {
             console.error('[Audit] Failed to log assistant message:', err);
           });
 
@@ -306,7 +320,7 @@ export async function POST(req: NextRequest) {
               data: {
                 id: `alert_${Date.now()}`,
                 athleteId: athlete_id,
-                sessionId: session_id,
+                sessionId: validSessionId,
                 messageId: assistantMessageId,
                 severity: crisisDetection.severity || crisisDetection.final_risk_level,
                 detectedAt: new Date(),

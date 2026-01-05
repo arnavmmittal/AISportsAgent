@@ -42,7 +42,12 @@ export async function POST(request: NextRequest) {
         await logLoginAttempt(
           email,
           false,
-          { headers: request.headers },
+          {
+            headers: {
+              'x-forwarded-for': request.headers.get('x-forwarded-for') || undefined,
+              'user-agent': request.headers.get('user-agent') || undefined,
+            },
+          },
           'User not found'
         ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
 
@@ -59,7 +64,12 @@ export async function POST(request: NextRequest) {
         await logLoginAttempt(
           user.id,
           false,
-          { headers: request.headers },
+          {
+            headers: {
+              'x-forwarded-for': request.headers.get('x-forwarded-for') || undefined,
+              'user-agent': request.headers.get('user-agent') || undefined,
+            },
+          },
           'Invalid password'
         ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
 
@@ -85,7 +95,12 @@ export async function POST(request: NextRequest) {
       await logLoginAttempt(
         user.id,
         true,
-        { headers: request.headers }
+        {
+          headers: {
+            'x-forwarded-for': request.headers.get('x-forwarded-for') || undefined,
+            'user-agent': request.headers.get('user-agent') || undefined,
+          },
+        }
       ).catch(err => console.error('[Audit] Failed to log login success:', err));
 
       return NextResponse.json({
