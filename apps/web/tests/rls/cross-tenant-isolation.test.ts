@@ -96,19 +96,67 @@ describe('Cross-Tenant Isolation (RLS)', () => {
   });
 
   afterAll(async () => {
-    // Cleanup: Delete test data
+    // Cleanup: Delete test data in reverse dependency order (children first, parents last)
+
+    // Delete all test crisis alerts
+    await prisma.crisisAlert.deleteMany({
+      where: {
+        athleteId: { in: [athlete1Id, athlete2Id] },
+      },
+    });
+
+    // Delete all test messages (cascade from sessions, but explicit is safer)
+    await prisma.message.deleteMany({
+      where: {
+        ChatSession: {
+          athleteId: { in: [athlete1Id, athlete2Id] },
+        },
+      },
+    });
+
+    // Delete all test chat sessions
+    await prisma.chatSession.deleteMany({
+      where: {
+        athleteId: { in: [athlete1Id, athlete2Id] },
+      },
+    });
+
+    // Delete all test chat summaries
+    await prisma.chatSummary.deleteMany({
+      where: {
+        athleteId: { in: [athlete1Id, athlete2Id] },
+      },
+    });
+
+    // Delete all test mood logs
+    await prisma.moodLog.deleteMany({
+      where: {
+        athleteId: { in: [athlete1Id, athlete2Id] },
+      },
+    });
+
+    // Delete all test goals
+    await prisma.goal.deleteMany({
+      where: {
+        athleteId: { in: [athlete1Id, athlete2Id] },
+      },
+    });
+
+    // Now safe to delete athletes
     await prisma.athlete.deleteMany({
       where: {
         userId: { in: [athlete1Id, athlete2Id] },
       },
     });
 
+    // Delete users
     await prisma.user.deleteMany({
       where: {
         id: { in: [athlete1Id, athlete2Id] },
       },
     });
 
+    // Finally delete schools
     await prisma.school.deleteMany({
       where: {
         id: { in: [school1Id, school2Id] },
@@ -344,6 +392,7 @@ describe('Cross-Tenant Isolation (RLS)', () => {
           sleep: 6,
           confidence: 8,
           notes: 'Feeling good before big game',
+          tags: 'pre-game,confident',
         },
       });
       mood1Id = mood1.id;
@@ -358,6 +407,7 @@ describe('Cross-Tenant Isolation (RLS)', () => {
           sleep: 4,
           confidence: 6,
           notes: 'Stressed about exams',
+          tags: 'stress,academic',
         },
       });
       mood2Id = mood2.id;
@@ -396,7 +446,7 @@ describe('Cross-Tenant Isolation (RLS)', () => {
           athleteId: athlete1Id,
           title: 'Improve free throw percentage',
           description: 'Get to 85% from line',
-          goalType: 'PERFORMANCE',
+          category: 'PERFORMANCE',
           status: 'IN_PROGRESS',
           targetDate: new Date('2025-03-01'),
         },
@@ -409,7 +459,7 @@ describe('Cross-Tenant Isolation (RLS)', () => {
           athleteId: athlete2Id,
           title: 'Increase endurance',
           description: 'Run full 90 minutes',
-          goalType: 'PERFORMANCE',
+          category: 'PERFORMANCE',
           status: 'IN_PROGRESS',
           targetDate: new Date('2025-03-01'),
         },
@@ -444,6 +494,8 @@ describe('Cross-Tenant Isolation (RLS)', () => {
     let alert2Id: string;
     let session1Id: string;
     let session2Id: string;
+    let message1Id: string;
+    let message2Id: string;
 
     beforeAll(async () => {
       // Create sessions first
@@ -463,13 +515,34 @@ describe('Cross-Tenant Isolation (RLS)', () => {
       });
       session2Id = session2.id;
 
+      // Create messages for crisis alerts
+      const message1 = await prisma.message.create({
+        data: {
+          id: `test-crisis-msg-1-${Date.now()}`,
+          sessionId: session1Id,
+          role: 'user',
+          content: 'I am feeling really depressed lately',
+        },
+      });
+      message1Id = message1.id;
+
+      const message2 = await prisma.message.create({
+        data: {
+          id: `test-crisis-msg-2-${Date.now()}`,
+          sessionId: session2Id,
+          role: 'user',
+          content: 'I cannot take this anymore',
+        },
+      });
+      message2Id = message2.id;
+
       // Create crisis alerts
       const alert1 = await prisma.crisisAlert.create({
         data: {
           id: `test-alert-1-${Date.now()}`,
           athleteId: athlete1Id,
           sessionId: session1Id,
-          messageId: `msg-${Date.now()}`,
+          messageId: message1Id,
           severity: 'HIGH',
           detectedAt: new Date(),
           reviewed: false,
@@ -482,7 +555,7 @@ describe('Cross-Tenant Isolation (RLS)', () => {
           id: `test-alert-2-${Date.now()}`,
           athleteId: athlete2Id,
           sessionId: session2Id,
-          messageId: `msg-${Date.now()}`,
+          messageId: message2Id,
           severity: 'CRITICAL',
           detectedAt: new Date(),
           reviewed: false,
@@ -492,9 +565,15 @@ describe('Cross-Tenant Isolation (RLS)', () => {
     });
 
     afterAll(async () => {
+      // Delete in reverse order (children first, then parents)
       await prisma.crisisAlert.deleteMany({
         where: {
           id: { in: [alert1Id, alert2Id] },
+        },
+      });
+      await prisma.message.deleteMany({
+        where: {
+          id: { in: [message1Id, message2Id] },
         },
       });
       await prisma.chatSession.deleteMany({
