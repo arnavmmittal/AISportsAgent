@@ -120,7 +120,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-lg font-medium transition-all whitespace-nowrap"
+              className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/20 hover:text-muted-foreground dark:hover:text-muted-foreground rounded-lg font-medium transition-all whitespace-nowrap"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span>Sign Out</span>

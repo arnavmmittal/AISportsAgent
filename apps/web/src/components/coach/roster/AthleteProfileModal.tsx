@@ -121,8 +121,8 @@ export default function AthleteProfileModal({ athlete, onClose }: AthleteProfile
                 </div>
               </div>
               {!athlete.consentCoachView && (
-                <div className="p-4 bg-amber-900/20 border border-amber-700 rounded-lg">
-                  <p className="text-amber-300 text-sm">
+                <div className="p-4 bg-muted-foreground/20/20 border border-muted-foreground rounded-lg">
+                  <p className="text-chrome text-sm">
                     ⚠️ This athlete has not granted permission to view detailed data.
                   </p>
                 </div>

@@ -10,9 +10,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { GameStatsForm } from '@/components/performance/GameStatsForm';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { GameStatsForm } from '@/components/student/performance/GameStatsForm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 

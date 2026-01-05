@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   TrendingUp,
   TrendingDown,
@@ -81,11 +81,11 @@ export default function StudentDashboardPage() {
                   {moodTrend !== 0 && (
                     <div className="flex items-center gap-1">
                       {moodTrend > 0 ? (
-                        <TrendingUp className="w-4 h-4 text-green-600" />
+                        <TrendingUp className="w-4 h-4 text-secondary" />
                       ) : (
-                        <TrendingDown className="w-4 h-4 text-red-600" />
+                        <TrendingDown className="w-4 h-4 text-muted-foreground" />
                       )}
-                      <span className={`text-xs font-medium ${moodTrend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`text-xs font-medium ${moodTrend > 0 ? 'text-secondary' : 'text-muted-foreground'}`}>
                         {Math.abs(moodTrend).toFixed(1)}
                       </span>
                     </div>
@@ -182,11 +182,11 @@ export default function StudentDashboardPage() {
                 <span className="text-sm text-muted-foreground">Mood</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <div className="w-3 h-3 rounded-full bg-secondary/100"></div>
                 <span className="text-sm text-muted-foreground">Confidence</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-muted-foreground/100"></div>
                 <span className="text-sm text-muted-foreground">Stress</span>
               </div>
             </div>
@@ -229,7 +229,7 @@ export default function StudentDashboardPage() {
 
             <Link href="/student/goals">
               <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                <Target className="w-5 h-5 text-green-600" />
+                <Target className="w-5 h-5 text-secondary" />
                 <div className="text-left">
                   <div className="font-medium text-foreground">Set Goals</div>
                   <div className="text-xs text-gray-500">Track mental & performance goals</div>
@@ -239,7 +239,7 @@ export default function StudentDashboardPage() {
 
             <Link href="/student/assignments">
               <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                <Brain className="w-5 h-5 text-purple-600" />
+                <Brain className="w-5 h-5 text-accent" />
                 <div className="text-left">
                   <div className="font-medium text-foreground">Practice Exercises</div>
                   <div className="text-xs text-gray-500">Build mental skills</div>

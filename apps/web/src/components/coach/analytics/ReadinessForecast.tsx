@@ -11,8 +11,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   LineChart,
   Line,
@@ -129,7 +129,7 @@ export function ReadinessForecastChart({ athleteId, days = 30 }: ReadinessForeca
 
   const TrendIcon = trend === 'improving' ? TrendingUp : trend === 'declining' ? TrendingDown : Minus;
   const trendColor =
-    trend === 'improving' ? 'text-green-600' : trend === 'declining' ? 'text-red-600' : 'text-gray-400';
+    trend === 'improving' ? 'text-secondary' : trend === 'declining' ? 'text-muted-foreground' : 'text-gray-400';
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {

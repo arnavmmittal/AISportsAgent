@@ -78,11 +78,11 @@ export default function AlertsPage() {
   const getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
-        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/30 border-red-600 dark:border-red-800 text-red-900 dark:text-red-200';
+        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/30 border-muted-foreground dark:border-muted-foreground text-chrome dark:text-chrome';
       case 'high':
-        return 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/30 border-orange-600 dark:border-orange-800 text-orange-900 dark:text-orange-200';
+        return 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/30 border-muted-foreground dark:border-muted-foreground text-chrome dark:text-chrome';
       case 'medium':
-        return 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-900/30 border-yellow-600 dark:border-yellow-800 text-yellow-900 dark:text-yellow-200';
+        return 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-900/30 border-muted-foreground dark:border-muted-foreground text-chrome dark:text-chrome';
       default:
         return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-900/30 border-gray-600 dark:border-gray-700 text-gray-900 dark:text-gray-200';
     }
@@ -91,11 +91,11 @@ export default function AlertsPage() {
   const getSeverityBadge = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
-        return 'bg-gradient-to-r from-red-500 to-red-600 text-white border-2 border-red-700';
+        return 'bg-gradient-to-r from-muted-foreground to-muted-foreground text-white border-2 border-muted-foreground';
       case 'high':
-        return 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-2 border-orange-700';
+        return 'bg-gradient-to-r from-muted-foreground to-muted-foreground text-white border-2 border-muted-foreground';
       case 'medium':
-        return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-2 border-yellow-700';
+        return 'bg-gradient-to-r from-muted-foreground to-muted-foreground text-white border-2 border-muted-foreground';
       default:
         return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-2 border-gray-700';
     }
@@ -140,10 +140,10 @@ export default function AlertsPage() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-red-100 text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
                 <div className="text-5xl font-black mb-2">{criticalCount}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Immediate action</div>
               </div>
@@ -151,10 +151,10 @@ export default function AlertsPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">High Priority</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">High Priority</div>
                 <div className="text-5xl font-black mb-2">{highCount}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">24 hours</div>
               </div>
@@ -162,10 +162,10 @@ export default function AlertsPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-yellow-100 text-xs font-bold uppercase tracking-wider mb-2">Medium Priority</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Medium Priority</div>
                 <div className="text-5xl font-black mb-2">{mediumCount}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Monitor closely</div>
               </div>
@@ -173,10 +173,10 @@ export default function AlertsPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Resolved</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Resolved</div>
                 <div className="text-5xl font-black mb-2">
                   {alerts.filter(a => a.status === 'resolved').length}
                 </div>
@@ -266,9 +266,9 @@ export default function AlertsPage() {
                       <div className="flex items-center gap-4 mb-4 flex-wrap">
                         <div className="flex items-center gap-3">
                           <AlertTriangle className={`w-7 h-7 ${
-                            alert.severity === 'critical' ? 'text-red-600' :
-                            alert.severity === 'high' ? 'text-orange-600' :
-                            'text-yellow-600'
+                            alert.severity === 'critical' ? 'text-muted-foreground' :
+                            alert.severity === 'high' ? 'text-muted-foreground' :
+                            'text-muted-foreground'
                           }`} />
                           <Link
                             href={`/coach/athletes/${alert.athleteId}`}
@@ -294,9 +294,9 @@ export default function AlertsPage() {
                         </div>
                         <div className="flex items-center gap-2 font-bold">
                           <span className={`w-3 h-3 rounded-full shadow ${
-                            alert.status === 'active' ? 'bg-red-500' :
-                            alert.status === 'monitoring' ? 'bg-yellow-500' :
-                            'bg-green-500'
+                            alert.status === 'active' ? 'bg-muted-foreground/100' :
+                            alert.status === 'monitoring' ? 'bg-muted/100' :
+                            'bg-secondary/100'
                           }`} />
                           <span className="capitalize">{alert.status}</span>
                         </div>

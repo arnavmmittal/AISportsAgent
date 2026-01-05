@@ -315,10 +315,10 @@ export function formatReadinessDisplay(score: number, level: ReadinessLevel): st
  */
 export function getReadinessColorClass(level: ReadinessLevel): string {
   return {
-    OPTIMAL: 'text-green-600 bg-green-50',
-    GOOD: 'text-green-600 bg-green-50',
-    MODERATE: 'text-yellow-600 bg-yellow-50',
-    LOW: 'text-orange-600 bg-orange-50',
-    POOR: 'text-red-600 bg-red-50',
+    OPTIMAL: 'text-secondary bg-secondary/10',
+    GOOD: 'text-secondary bg-secondary/10',
+    MODERATE: 'text-muted-foreground bg-muted/10',
+    LOW: 'text-muted-foreground bg-muted/10',
+    POOR: 'text-muted-foreground bg-muted-foreground/10',
   }[level];
 }

@@ -8,9 +8,19 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy init OpenAI client (only during runtime, not build)
+let openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is required');
+    }
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -83,7 +93,7 @@ export async function GET(req: NextRequest) {
     // Use OpenAI only if API key is available
     if (process.env.OPENAI_API_KEY) {
       try {
-        const completion = await openai.chat.completions.create({
+        const completion = await getOpenAI().chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
             {

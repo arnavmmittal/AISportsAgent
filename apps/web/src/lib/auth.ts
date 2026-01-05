@@ -62,42 +62,7 @@ export const authOptions: NextAuthConfig = {
           throw new Error('Missing credentials');
         }
 
-        // Demo athlete account for testing (no database required)
-        if (credentials.email === 'demo@athlete.com' && credentials.password === 'demo123') {
-          return {
-            id: 'demo-athlete-123',
-            email: 'demo@athlete.com',
-            name: 'Demo Athlete',
-            role: 'ATHLETE' as Role,
-            schoolId: 'demo-school-123',
-            athlete: {
-              userId: 'demo-athlete-123',
-              sport: 'Basketball',
-              year: 'Junior',
-              teamPosition: 'Point Guard',
-            },
-            coach: null,
-          };
-        }
-
-        // Demo coach account for testing (no database required)
-        if (credentials.email === 'demo@coach.com' && credentials.password === 'demo123') {
-          return {
-            id: 'demo-coach-123',
-            email: 'demo@coach.com',
-            name: 'Demo Coach',
-            role: 'COACH' as Role,
-            schoolId: 'demo-school-123',
-            athlete: null,
-            coach: {
-              userId: 'demo-coach-123',
-              sport: 'Basketball',
-              team: 'Varsity Basketball',
-            },
-          };
-        }
-
-        // Try database authentication for real users
+        // Database authentication for real users
         try {
           const user = await prisma.user.findUnique({
             where: { email: credentials.email as string },

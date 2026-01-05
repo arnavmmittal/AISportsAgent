@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { Input } from '@/components/shared/ui/input';
+import { Textarea } from '@/components/shared/ui/textarea';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@/components/shared/ui/dialog';
 import {
   Target,
   Trophy,
@@ -56,7 +56,7 @@ interface SuggestedGoal {
 const CATEGORY_CONFIG = {
   PERFORMANCE: {
     icon: Trophy,
-    color: 'text-purple-600 bg-purple-100',
+    color: 'text-accent bg-accent/20',
     gradient: 'from-purple-600 to-violet-600',
     bgGradient: 'from-purple-50 to-violet-50',
   },
@@ -68,13 +68,13 @@ const CATEGORY_CONFIG = {
   },
   ACADEMIC: {
     icon: GraduationCap,
-    color: 'text-green-600 bg-green-100',
+    color: 'text-secondary bg-secondary/20',
     gradient: 'from-green-600 to-emerald-600',
     bgGradient: 'from-green-50 to-emerald-50',
   },
   PERSONAL: {
     icon: User,
-    color: 'text-orange-600 bg-orange-100',
+    color: 'text-muted-foreground bg-muted/20',
     gradient: 'from-orange-600 to-amber-600',
     bgGradient: 'from-orange-50 to-amber-50',
   },
@@ -241,7 +241,7 @@ export default function StudentGoalsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Target className="w-8 h-8 text-purple-600" />
+            <Target className="w-8 h-8 text-accent" />
             Goals & Progress
           </h1>
           <p className="text-muted-foreground mt-1">Set targets and track your progress</p>
@@ -361,7 +361,7 @@ export default function StudentGoalsPage() {
                   size="sm"
                   className={
                     selectedCategory === category
-                      ? 'bg-purple-600 hover:bg-purple-700'
+                      ? 'bg-accent hover:bg-accent'
                       : ''
                   }
                 >
@@ -375,10 +375,10 @@ export default function StudentGoalsPage() {
 
       {/* AI-Suggested Goals */}
       {suggestedGoals.length > 0 && (
-        <Card className="border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50">
+        <Card className="border-2 border-muted bg-gradient-to-br from-yellow-50 to-orange-50">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-600" />
+              <Sparkles className="w-5 h-5 text-muted-foreground" />
               <CardTitle className="text-lg">AI-Suggested Goals</CardTitle>
             </div>
             <CardDescription>
@@ -479,7 +479,7 @@ export default function StudentGoalsPage() {
                         onClick={() => deleteGoal(goal.id)}
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-muted-foreground hover:text-muted-foreground hover:bg-muted-foreground/10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

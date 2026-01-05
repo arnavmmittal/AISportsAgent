@@ -218,10 +218,10 @@ export default function TeamSummaries() {
           <span
             className={`px-3 py-1 rounded-lg text-sm font-medium ${
               currentReport.overallTrend === 'improving'
-                ? 'bg-green-900/50 text-green-300'
+                ? 'bg-secondary/20/50 text-accent'
                 : currentReport.overallTrend === 'stable'
                 ? 'bg-blue-900/50 text-blue-300'
-                : 'bg-red-900/50 text-red-300'
+                : 'bg-muted-foreground/20/50 text-chrome'
             }`}
           >
             {currentReport.overallTrend === 'improving' && '📈 Improving'}
@@ -273,9 +273,9 @@ export default function TeamSummaries() {
               key={idx}
               className={`p-4 rounded-lg border ${
                 rec.priority === 'high'
-                  ? 'bg-red-900/20 border-red-700'
+                  ? 'bg-muted-foreground/20 border-muted-foreground'
                   : rec.priority === 'medium'
-                  ? 'bg-amber-900/20 border-amber-700'
+                  ? 'bg-muted-foreground/20/20 border-muted-foreground'
                   : 'bg-blue-900/20 border-blue-700'
               }`}
             >
@@ -284,9 +284,9 @@ export default function TeamSummaries() {
                 <span
                   className={`text-xs font-medium px-2 py-1 rounded ${
                     rec.priority === 'high'
-                      ? 'bg-red-900/50 text-red-300'
+                      ? 'bg-muted-foreground/20/50 text-chrome'
                       : rec.priority === 'medium'
-                      ? 'bg-amber-900/50 text-amber-300'
+                      ? 'bg-muted-foreground/20/50 text-chrome'
                       : 'bg-blue-900/50 text-blue-300'
                   }`}
                 >
@@ -308,7 +308,7 @@ export default function TeamSummaries() {
               {currentReport.athletesOfConcern.map((athlete, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-amber-900/20 border border-amber-700 rounded-lg"
+                  className="p-3 bg-muted-foreground/20/20 border border-muted-foreground rounded-lg"
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <h5 className="text-sm font-semibold text-white">{athlete.name}</h5>
@@ -328,7 +328,7 @@ export default function TeamSummaries() {
               {currentReport.athletesExcelling.map((athlete, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-green-900/20 border border-green-700 rounded-lg"
+                  className="p-3 bg-secondary/20 border border-secondary rounded-lg"
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <h5 className="text-sm font-semibold text-white">{athlete.name}</h5>

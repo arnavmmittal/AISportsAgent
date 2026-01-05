@@ -164,7 +164,7 @@ export default function AIConfiguration() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <button className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors">
+        <button className="px-6 py-2 bg-secondary hover:bg-secondary text-white font-medium rounded-md transition-colors">
           Save Configuration
         </button>
       </div>

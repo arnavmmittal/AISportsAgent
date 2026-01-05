@@ -23,7 +23,7 @@ interface InterventionTrackerProps {
 const INTERVENTION_CONFIG: Record<InterventionType, { icon: string; color: string; label: string }> = {
   [InterventionType.ONE_ON_ONE_MEETING]: {
     icon: '🤝',
-    color: 'text-purple-400',
+    color: 'text-accent',
     label: 'One-on-One Meeting',
   },
   [InterventionType.GROUP_SESSION]: {
@@ -33,7 +33,7 @@ const INTERVENTION_CONFIG: Record<InterventionType, { icon: string; color: strin
   },
   [InterventionType.TEXT_CHECK_IN]: {
     icon: '💬',
-    color: 'text-green-400',
+    color: 'text-accent',
     label: 'Text Check-in',
   },
   [InterventionType.ASSIGNMENT_GIVEN]: {
@@ -43,7 +43,7 @@ const INTERVENTION_CONFIG: Record<InterventionType, { icon: string; color: strin
   },
   [InterventionType.LOAD_ADJUSTMENT]: {
     icon: '⚖️',
-    color: 'text-amber-400',
+    color: 'text-muted-foreground',
     label: 'Load Adjustment',
   },
   [InterventionType.MENTAL_SKILLS_TRAINING]: {
@@ -53,7 +53,7 @@ const INTERVENTION_CONFIG: Record<InterventionType, { icon: string; color: strin
   },
   [InterventionType.CRISIS_INTERVENTION]: {
     icon: '🚨',
-    color: 'text-red-400',
+    color: 'text-muted-foreground',
     label: 'Crisis Intervention',
   },
   [InterventionType.REFERRAL]: {
@@ -125,7 +125,7 @@ export default function InterventionTracker({ interventions }: InterventionTrack
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>{formatTimestamp(intervention.performedAt)}</span>
                   {intervention.outcome && (
-                    <span className="text-green-400">✓ {intervention.outcome}</span>
+                    <span className="text-accent">✓ {intervention.outcome}</span>
                   )}
                 </div>
               </div>

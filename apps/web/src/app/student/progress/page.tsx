@@ -130,9 +130,9 @@ export default function StudentProgressPage() {
       case 'performance':
         return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'mental wellness':
-        return 'bg-green-100 text-green-700 border-green-300';
+        return 'bg-secondary/20 text-secondary border-secondary/20';
       case 'academic':
-        return 'bg-purple-100 text-purple-700 border-purple-300';
+        return 'bg-accent/20 text-accent border-accent/20';
       default:
         return 'bg-gray-100 text-gray-700 border-gray-300';
     }
@@ -193,10 +193,10 @@ export default function StudentProgressPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+              <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Stress</div>
+                    <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Stress</div>
                     <div className="text-5xl font-black mb-2">
                       {calculateAverage('stress')}<span className="text-2xl opacity-75">/10</span>
                     </div>
@@ -227,10 +227,10 @@ export default function StudentProgressPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+              <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Confidence</div>
+                    <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Confidence</div>
                     <div className="text-5xl font-black mb-2">
                       {calculateAverage('confidence')}<span className="text-2xl opacity-75">/10</span>
                     </div>
@@ -288,7 +288,7 @@ export default function StudentProgressPage() {
                         <span className="font-black text-foreground text-lg">{entry.mood.toFixed(1)}/10</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Brain className="w-5 h-5 text-orange-500" />
+                        <Brain className="w-5 h-5 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground font-bold">Stress:</span>
                         <span className="font-black text-foreground text-lg">{entry.stress.toFixed(1)}/10</span>
                       </div>
@@ -298,7 +298,7 @@ export default function StudentProgressPage() {
                         <span className="font-black text-foreground text-lg">{entry.sleep.toFixed(1)}hrs</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-green-500" />
+                        <Activity className="w-5 h-5 text-secondary" />
                         <span className="text-sm text-muted-foreground font-bold">Confidence:</span>
                         <span className="font-black text-foreground text-lg">{entry.confidence.toFixed(1)}/10</span>
                       </div>
@@ -318,9 +318,9 @@ export default function StudentProgressPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-black">Set New Goal</h3>
-                  <p className="text-base text-purple-100 mt-2 font-semibold">Performance, mental wellness, or academic</p>
+                  <p className="text-base text-accent mt-2 font-semibold">Performance, mental wellness, or academic</p>
                 </div>
-                <button className="px-6 py-3 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all font-bold flex items-center gap-2 shadow-lg hover:scale-105 transform">
+                <button className="px-6 py-3 bg-white text-accent rounded-xl hover:bg-accent/10 transition-all font-bold flex items-center gap-2 shadow-lg hover:scale-105 transform">
                   <Plus className="w-5 h-5" />
                   Create Goal
                 </button>
@@ -340,7 +340,7 @@ export default function StudentProgressPage() {
                         <div className="flex items-center gap-3 mb-3">
                           <h3 className="text-2xl font-black text-foreground">{goal.title}</h3>
                           {isComplete && (
-                            <CheckCircle2 className="w-6 h-6 text-green-500" />
+                            <CheckCircle2 className="w-6 h-6 text-secondary" />
                           )}
                         </div>
                         <span className={`inline-block px-4 py-2 rounded-xl text-sm font-black border-2 shadow ${getCategoryColor(goal.category)}`}>
@@ -360,7 +360,7 @@ export default function StudentProgressPage() {
                       <div className="w-full bg-gray-200 rounded-full h-4 shadow-inner">
                         <div
                           className={`h-4 rounded-full transition-all shadow-lg ${
-                            isComplete ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                            isComplete ? 'bg-gradient-to-r from-secondary to-secondary' : 'bg-gradient-to-r from-blue-500 to-blue-600'
                           }`}
                           style={{ width: `${Math.min(progressPercent, 100)}%` }}
                         />

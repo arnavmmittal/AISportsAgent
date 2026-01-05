@@ -196,27 +196,27 @@ export default function AthletesPage() {
     switch (level) {
       case 'critical':
         return {
-          bg: 'bg-red-50 dark:bg-red-900/20',
-          border: 'border-red-200 dark:border-red-800',
-          dot: 'bg-red-500',
-          text: 'text-red-900 dark:text-red-200',
-          badge: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200',
+          bg: 'bg-muted-foreground/10 dark:bg-muted-foreground/20',
+          border: 'border-muted-foreground dark:border-muted-foreground',
+          dot: 'bg-muted-foreground/100',
+          text: 'text-chrome dark:text-chrome',
+          badge: 'bg-muted-foreground/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome',
         };
       case 'warning':
         return {
-          bg: 'bg-orange-50 dark:bg-orange-900/20',
-          border: 'border-orange-200 dark:border-orange-800',
-          dot: 'bg-orange-500',
-          text: 'text-orange-900 dark:text-orange-200',
-          badge: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-200',
+          bg: 'bg-muted/10 dark:bg-muted-foreground/20/20',
+          border: 'border-muted dark:border-muted-foreground',
+          dot: 'bg-muted/100',
+          text: 'text-chrome dark:text-chrome',
+          badge: 'bg-muted/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome',
         };
       case 'good':
         return {
-          bg: 'bg-green-50 dark:bg-green-900/20',
-          border: 'border-green-200 dark:border-green-800',
-          dot: 'bg-green-500',
-          text: 'text-green-900 dark:text-green-200',
-          badge: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200',
+          bg: 'bg-secondary/10 dark:bg-secondary/20',
+          border: 'border-secondary/20 dark:border-secondary',
+          dot: 'bg-secondary/100',
+          text: 'text-secondary dark:text-accent',
+          badge: 'bg-secondary/20 dark:bg-secondary/20/30 text-secondary dark:text-accent',
         };
       case 'no-data':
         return {
@@ -284,10 +284,10 @@ export default function AthletesPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-red-100 text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
                 <div className="text-5xl font-black mb-2">{criticalCount}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Immediate attention</div>
               </div>
@@ -295,10 +295,10 @@ export default function AthletesPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Warning</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Warning</div>
                 <div className="text-5xl font-black mb-2">{warningCount}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Monitor closely</div>
               </div>
@@ -306,10 +306,10 @@ export default function AthletesPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Good</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Good</div>
                 <div className="text-5xl font-black mb-2">{goodCount}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Doing well</div>
               </div>
@@ -350,7 +350,7 @@ export default function AthletesPage() {
               onClick={() => setFilter('critical')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
                 filter === 'critical'
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-muted-foreground/30 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -360,7 +360,7 @@ export default function AthletesPage() {
               onClick={() => setFilter('warning')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
                 filter === 'warning'
-                  ? 'bg-orange-600 text-white'
+                  ? 'bg-muted-foreground text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -370,7 +370,7 @@ export default function AthletesPage() {
               onClick={() => setFilter('good')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
                 filter === 'good'
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-secondary text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -388,13 +388,13 @@ export default function AthletesPage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Loading athletes...</h3>
           </div>
         ) : error ? (
-          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg shadow border-2 border-red-200 dark:border-red-800 p-12 text-center">
-            <div className="text-red-600 dark:text-red-400 mb-4">⚠️</div>
-            <h3 className="text-lg font-semibold text-red-900 dark:text-red-200 mb-2">Error Loading Athletes</h3>
-            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <div className="bg-muted-foreground/10 dark:bg-muted-foreground/20 rounded-lg shadow border-2 border-muted-foreground dark:border-muted-foreground p-12 text-center">
+            <div className="text-muted-foreground dark:text-muted-foreground mb-4">⚠️</div>
+            <h3 className="text-lg font-semibold text-chrome dark:text-chrome mb-2">Error Loading Athletes</h3>
+            <p className="text-sm text-muted-foreground dark:text-chrome">{error}</p>
             <button
               onClick={() => loadAthletes()}
-              className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              className="mt-4 px-6 py-2 bg-muted-foreground/30 text-white rounded-lg hover:bg-muted-foreground/30 transition-colors font-medium"
             >
               Retry
             </button>
@@ -422,7 +422,7 @@ export default function AthletesPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className={`font-semibold ${colors.text}`}>{athlete.name}</h3>
                       {athlete.riskLevel === 'critical' && (
-                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                        <AlertTriangle className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
@@ -447,8 +447,8 @@ export default function AthletesPage() {
                             <span
                               className={`text-xs px-2 py-0.5 rounded ${
                                 athlete.chatContribution > 0
-                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                  ? 'bg-secondary/20 dark:bg-secondary/20/30 text-secondary dark:text-accent'
+                                  : 'bg-muted-foreground/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome'
                               }`}
                             >
                               Chat: {athlete.chatContribution > 0 ? '+' : ''}
@@ -467,9 +467,9 @@ export default function AthletesPage() {
                       <div
                         className={`text-sm ${
                           athlete.riskLevel === 'critical'
-                            ? 'text-red-700 dark:text-red-300'
+                            ? 'text-muted-foreground dark:text-chrome'
                             : athlete.riskLevel === 'warning'
-                            ? 'text-orange-700 dark:text-orange-300'
+                            ? 'text-muted-foreground dark:text-chrome'
                             : 'text-gray-600 dark:text-gray-400'
                         }`}
                       >
@@ -489,7 +489,7 @@ export default function AthletesPage() {
                       </div>
                     )}
                     {!athlete.concern && athlete.riskLevel === 'good' && (
-                      <div className="text-sm text-green-700 dark:text-green-300">
+                      <div className="text-sm text-secondary dark:text-accent">
                         All indicators healthy
                       </div>
                     )}
@@ -499,14 +499,14 @@ export default function AthletesPage() {
                 {/* Actions */}
                 <div className="flex flex-col gap-2">
                   {athlete.riskLevel === 'critical' && (
-                    <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm whitespace-nowrap">
+                    <button className="px-4 py-2 bg-muted-foreground/30 text-white rounded-lg hover:bg-muted-foreground/30 transition-colors font-medium text-sm whitespace-nowrap">
                       Reach Out
                     </button>
                   )}
                   {athlete.riskLevel === 'warning' && (
                     <Link
                       href={`/coach/athletes/${athlete.id}`}
-                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium text-sm text-center whitespace-nowrap"
+                      className="px-4 py-2 bg-muted-foreground text-white rounded-lg hover:bg-muted-foreground transition-colors font-medium text-sm text-center whitespace-nowrap"
                     >
                       View Details
                     </Link>

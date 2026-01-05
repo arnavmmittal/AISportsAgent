@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { Input } from '@/components/shared/ui/input';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   Send,
   Sparkles,
@@ -33,8 +33,8 @@ const SUGGESTED_PROMPTS = [
 
 const QUICK_TOPICS = [
   { icon: Heart, label: 'Pre-Game Anxiety', color: 'text-pink-600 bg-pink-50' },
-  { icon: Trophy, label: 'Building Confidence', color: 'text-yellow-600 bg-yellow-50' },
-  { icon: Lightbulb, label: 'Mental Toughness', color: 'text-purple-600 bg-purple-50' },
+  { icon: Trophy, label: 'Building Confidence', color: 'text-muted-foreground bg-muted/10' },
+  { icon: Lightbulb, label: 'Mental Toughness', color: 'text-accent bg-accent/10' },
   { icon: BookOpen, label: 'Visualization', color: 'text-primary bg-blue-50' },
 ];
 
@@ -106,7 +106,7 @@ export default function StudentChatPage() {
           <p className="text-muted-foreground mt-1">Evidence-based sports psychology guidance, 24/7</p>
         </div>
         <Badge variant="secondary" className="gap-1">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <div className="w-2 h-2 bg-secondary/100 rounded-full animate-pulse"></div>
           Online
         </Badge>
       </div>

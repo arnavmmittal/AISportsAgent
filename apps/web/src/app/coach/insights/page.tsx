@@ -3,8 +3,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
+import { Badge } from '@/components/shared/ui/badge';
 import { AlertTriangle, MessageCircle, TrendingUp, Users } from 'lucide-react';
 
 // Force dynamic rendering to avoid database connection issues during build
@@ -156,7 +156,7 @@ export default async function CoachInsightsPage() {
                     {teamAvgMood > 0 ? teamAvgMood.toFixed(1) : '--'}/10
                   </p>
                 </div>
-                <TrendingUp className="size-8 text-green-500" />
+                <TrendingUp className="size-8 text-secondary" />
               </div>
             </CardContent>
           </Card>
@@ -168,7 +168,7 @@ export default async function CoachInsightsPage() {
                   <p className="text-sm text-muted-foreground">Avg Chat Sessions</p>
                   <p className="text-2xl font-bold text-foreground">{avgChatSessions.toFixed(1)}</p>
                 </div>
-                <MessageCircle className="size-8 text-purple-500" />
+                <MessageCircle className="size-8 text-accent" />
               </div>
             </CardContent>
           </Card>
@@ -180,7 +180,7 @@ export default async function CoachInsightsPage() {
                   <p className="text-sm text-muted-foreground">Crisis Alerts (30d)</p>
                   <p className="text-2xl font-bold text-foreground">{crisisAlerts.length}</p>
                 </div>
-                <AlertTriangle className="size-8 text-red-500" />
+                <AlertTriangle className="size-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -202,11 +202,11 @@ export default async function CoachInsightsPage() {
                     key={alert.id}
                     className={`p-4 rounded-lg border-2 ${
                       alert.severity === 'CRITICAL'
-                        ? 'bg-red-50 border-red-200'
+                        ? 'bg-muted-foreground/10 border-muted-foreground'
                         : alert.severity === 'HIGH'
-                        ? 'bg-orange-50 border-orange-200'
+                        ? 'bg-muted/10 border-muted'
                         : alert.severity === 'MEDIUM'
-                        ? 'bg-yellow-50 border-yellow-200'
+                        ? 'bg-muted/10 border-muted'
                         : 'bg-blue-50 border-blue-200'
                     }`}
                   >
@@ -217,11 +217,11 @@ export default async function CoachInsightsPage() {
                             variant="destructive"
                             className={
                               alert.severity === 'CRITICAL'
-                                ? 'bg-red-600'
+                                ? 'bg-muted-foreground/30'
                                 : alert.severity === 'HIGH'
-                                ? 'bg-orange-500'
+                                ? 'bg-muted/100'
                                 : alert.severity === 'MEDIUM'
-                                ? 'bg-yellow-500'
+                                ? 'bg-muted/100'
                                 : 'bg-blue-500'
                             }
                           >
@@ -243,13 +243,13 @@ export default async function CoachInsightsPage() {
                           {alert.Message.content.length > 150 ? '...' : ''}"
                         </p>
                         {alert.reviewed ? (
-                          <div className="text-xs text-green-600 font-medium">
+                          <div className="text-xs text-secondary font-medium">
                             ✓ Reviewed
                             {alert.reviewedAt &&
                               ` on ${new Date(alert.reviewedAt).toLocaleDateString()}`}
                           </div>
                         ) : (
-                          <div className="text-xs text-orange-600 font-medium">
+                          <div className="text-xs text-muted-foreground font-medium">
                             ⚠️ Needs Review
                           </div>
                         )}
@@ -331,7 +331,7 @@ export default async function CoachInsightsPage() {
                       <span className="text-xs text-muted-foreground">High (7-10)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-green-500 rounded-full h-2"
+                          className="bg-secondary/100 rounded-full h-2"
                           style={{
                             width: `${(allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100}%`,
                           }}
@@ -345,7 +345,7 @@ export default async function CoachInsightsPage() {
                       <span className="text-xs text-muted-foreground">Medium (4-6)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-yellow-500 rounded-full h-2"
+                          className="bg-muted/100 rounded-full h-2"
                           style={{
                             width: `${(allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100}%`,
                           }}
@@ -359,7 +359,7 @@ export default async function CoachInsightsPage() {
                       <span className="text-xs text-muted-foreground">Low (1-3)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-red-500 rounded-full h-2"
+                          className="bg-muted-foreground/100 rounded-full h-2"
                           style={{
                             width: `${(allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100}%`,
                           }}
@@ -379,7 +379,7 @@ export default async function CoachInsightsPage() {
                       <span className="text-xs text-muted-foreground">Low (1-4)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-green-500 rounded-full h-2"
+                          className="bg-secondary/100 rounded-full h-2"
                           style={{
                             width: `${(allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100}%`,
                           }}
@@ -393,7 +393,7 @@ export default async function CoachInsightsPage() {
                       <span className="text-xs text-muted-foreground">Medium (5-7)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-yellow-500 rounded-full h-2"
+                          className="bg-muted/100 rounded-full h-2"
                           style={{
                             width: `${(allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100}%`,
                           }}
@@ -407,7 +407,7 @@ export default async function CoachInsightsPage() {
                       <span className="text-xs text-muted-foreground">High (8-10)</span>
                       <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-red-500 rounded-full h-2"
+                          className="bg-muted-foreground/100 rounded-full h-2"
                           style={{
                             width: `${(allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100}%`,
                           }}

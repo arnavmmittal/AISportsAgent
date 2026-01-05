@@ -222,37 +222,37 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
           <div
             className={`rounded-2xl shadow-lg p-6 border ${
               result.success
-                ? 'bg-green-50 border-green-200'
-                : 'bg-red-50 border-red-200'
+                ? 'bg-secondary/10 border-secondary/20'
+                : 'bg-muted-foreground/10 border-muted-foreground'
             }`}
           >
             <div className="flex items-start gap-3">
               {result.success ? (
-                <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-6 h-6 text-secondary flex-shrink-0 mt-0.5" />
               ) : (
-                <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-6 h-6 text-muted-foreground flex-shrink-0 mt-0.5" />
               )}
               <div className="flex-1">
                 <h3
                   className={`font-semibold mb-2 ${
-                    result.success ? 'text-green-900' : 'text-red-900'
+                    result.success ? 'text-secondary' : 'text-chrome'
                   }`}
                 >
                   {result.success ? 'Import Successful!' : 'Import Failed'}
                 </h3>
                 <p
                   className={`text-sm mb-2 ${
-                    result.success ? 'text-green-800' : 'text-red-800'
+                    result.success ? 'text-secondary' : 'text-muted-foreground'
                   }`}
                 >
                   {result.message}
                 </p>
 
                 {result.success && result.imported !== undefined && (
-                  <div className="mt-3 text-sm text-green-800">
+                  <div className="mt-3 text-sm text-secondary">
                     <p>✓ {result.imported} records imported successfully</p>
                     {result.errors && result.errors > 0 && (
-                      <p className="text-amber-700 mt-1">
+                      <p className="text-muted-foreground mt-1">
                         ⚠ {result.errors} rows had errors (see details below)
                       </p>
                     )}

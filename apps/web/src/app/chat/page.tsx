@@ -1,7 +1,7 @@
 'use client';
 
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { ChatInterface } from '@/components/chat/ChatInterface';
+import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
+import { ChatInterface } from '@/components/shared/chat/ChatInterface';
 
 export default function ChatPage() {
   return (

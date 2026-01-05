@@ -154,7 +154,7 @@ export default function NetworkGraph({
                 y1={positions[sourceIdx].y}
                 x2={positions[targetIdx].x}
                 y2={positions[targetIdx].y}
-                stroke={edge.color || '#475569'}
+                stroke={edge.color || '#94A3B8'}
                 strokeWidth={strokeWidth}
                 opacity={0.6}
               />
@@ -168,7 +168,7 @@ export default function NetworkGraph({
             if (!positions[index]) return null;
 
             const nodeSize = (node.value || 1) * 20 + 20;
-            const nodeColor = node.color || '#3b82f6';
+            const nodeColor = node.color || '#3B82F6';
 
             return (
               <g
@@ -209,11 +209,11 @@ export default function NetworkGraph({
       <div className="px-4 pb-4">
         <div className="flex items-center gap-6 text-xs text-slate-400">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <div className="w-3 h-3 rounded-full bg-secondary" />
             <span>Athlete</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-1 h-6 bg-slate-500" />
+            <div className="w-1 h-6 bg-muted" />
             <span>Connection strength</span>
           </div>
         </div>
@@ -243,7 +243,7 @@ export function TeamChemistryNetwork({
     label: athlete.name.split(' ')[0], // First name only
     imageUrl: athlete.imageUrl,
     value: athlete.connectedness || 1,
-    color: athlete.isLeader ? '#f59e0b' : '#3b82f6',
+    color: athlete.isLeader ? '#5BA3F5' : '#3B82F6', // leader: accent (light blue), regular: secondary (bright blue)
     metadata: athlete,
   }));
 
@@ -259,7 +259,7 @@ export function TeamChemistryNetwork({
         <h4 className="text-sm font-medium text-slate-300">Team Social Network</h4>
         <div className="flex items-center gap-4 text-xs text-slate-400">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500" />
+            <div className="w-3 h-3 rounded-full bg-muted/100" />
             <span>Leader</span>
           </div>
           <div className="flex items-center gap-2">

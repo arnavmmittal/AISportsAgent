@@ -77,7 +77,7 @@ export default function PrivacyConsent() {
             </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-semibold text-green-400 mb-1">With Consent:</p>
+                <p className="font-semibold text-accent mb-1">With Consent:</p>
                 <ul className="space-y-1 text-slate-300">
                   <li>• Readiness scores & trends</li>
                   <li>• Mood & stress logs</li>
@@ -87,7 +87,7 @@ export default function PrivacyConsent() {
                 </ul>
               </div>
               <div>
-                <p className="font-semibold text-amber-400 mb-1">Without Consent:</p>
+                <p className="font-semibold text-muted-foreground mb-1">Without Consent:</p>
                 <ul className="space-y-1 text-slate-300">
                   <li>• Name & sport only</li>
                   <li>• No wellness data</li>
@@ -109,10 +109,10 @@ export default function PrivacyConsent() {
               key={idx}
               className={`p-4 rounded-lg border flex items-center justify-between ${
                 athlete.status === 'granted'
-                  ? 'bg-green-900/10 border-green-700'
+                  ? 'bg-secondary/20/10 border-secondary'
                   : athlete.status === 'pending'
-                  ? 'bg-amber-900/10 border-amber-700'
-                  : 'bg-red-900/10 border-red-700'
+                  ? 'bg-muted-foreground/20/10 border-muted-foreground'
+                  : 'bg-muted-foreground/20/10 border-muted-foreground'
               }`}
             >
               <div>
@@ -123,10 +123,10 @@ export default function PrivacyConsent() {
                 <span
                   className={`inline-block text-xs font-medium px-3 py-1 rounded ${
                     athlete.status === 'granted'
-                      ? 'bg-green-900/50 text-green-300'
+                      ? 'bg-secondary/20/50 text-accent'
                       : athlete.status === 'pending'
-                      ? 'bg-amber-900/50 text-amber-300'
-                      : 'bg-red-900/50 text-red-300'
+                      ? 'bg-muted-foreground/20/50 text-chrome'
+                      : 'bg-muted-foreground/20/50 text-chrome'
                   }`}
                 >
                   {athlete.status === 'granted' && '✓ Access Granted'}

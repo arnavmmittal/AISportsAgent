@@ -157,9 +157,9 @@ export default function PredictionsForecasts() {
               key={prediction.id}
               className={`p-5 rounded-lg border ${
                 prediction.type === 'risk' && prediction.impact === 'high'
-                  ? 'bg-red-900/20 border-red-700'
+                  ? 'bg-muted-foreground/20 border-muted-foreground'
                   : prediction.type === 'performance' && prediction.impact === 'high'
-                  ? 'bg-green-900/20 border-green-700'
+                  ? 'bg-secondary/20 border-secondary'
                   : prediction.type === 'intervention'
                   ? 'bg-blue-900/20 border-blue-700'
                   : 'bg-slate-800/50 border-slate-700'
@@ -180,9 +180,9 @@ export default function PredictionsForecasts() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         prediction.impact === 'high'
-                          ? 'bg-red-900/50 text-red-300'
+                          ? 'bg-muted-foreground/20/50 text-chrome'
                           : prediction.impact === 'medium'
-                          ? 'bg-amber-900/50 text-amber-300'
+                          ? 'bg-muted-foreground/20/50 text-chrome'
                           : 'bg-blue-900/50 text-blue-300'
                       }`}
                     >
@@ -209,10 +209,10 @@ export default function PredictionsForecasts() {
                       <div
                         className={`h-2 rounded-full ${
                           prediction.confidence >= 80
-                            ? 'bg-green-500'
+                            ? 'bg-secondary/100'
                             : prediction.confidence >= 60
                             ? 'bg-blue-500'
-                            : 'bg-yellow-500'
+                            : 'bg-muted/100'
                         }`}
                         style={{ width: `${prediction.confidence}%` }}
                       />

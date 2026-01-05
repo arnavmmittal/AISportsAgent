@@ -4,9 +4,22 @@ import { prisma } from '@/lib/prisma';
  * Cost Controls Configuration
  *
  * These limits prevent runaway OpenAI costs and ensure sustainable usage.
+ *
+ * PRODUCTION REQUIREMENTS:
+ * - Per-tenant (school) daily limits: $500/day
+ * - Circuit breaker triggers at limit
+ * - Monthly budget: $10,000 total across all schools
  */
 const DAILY_MESSAGE_LIMIT_PER_USER = parseInt(process.env.COST_LIMIT_DAILY_PER_USER || '20');
 const MONTHLY_TOKEN_LIMIT_TOTAL = parseInt(process.env.COST_LIMIT_MONTHLY_TOTAL || '2000');
+
+// Production cost limits (USD)
+const COST_LIMIT_DAILY_PER_SCHOOL = parseFloat(process.env.COST_LIMIT_DAILY_PER_SCHOOL || '500'); // $500/day per school
+const COST_LIMIT_MONTHLY_TOTAL = parseFloat(process.env.COST_LIMIT_MONTHLY_TOTAL || '10000'); // $10K/month total
+const CIRCUIT_BREAKER_THRESHOLD = parseFloat(process.env.CIRCUIT_BREAKER_THRESHOLD || '500'); // $500 triggers circuit breaker
+
+// Cost controls must be enabled in production
+const ENABLE_COST_LIMITS = process.env.ENABLE_COST_LIMITS !== 'false';
 
 // OpenAI pricing (as of Dec 2024) - GPT-4 Turbo
 // https://openai.com/pricing
@@ -117,6 +130,137 @@ export async function checkUserCanMakeRequest(userId: string): Promise<UsageChec
     // Allow request on error to avoid blocking users
     return {
       allowed: true,
+      currentUsage: {
+        dailyMessages: 0,
+        monthlyTokens: 0,
+        monthlyBudget: 0,
+      },
+    };
+  }
+}
+
+/**
+ * Check school (tenant) cost limit and circuit breaker status
+ *
+ * CRITICAL FOR PRODUCTION:
+ * - Prevents runaway costs per school ($500/day limit)
+ * - Circuit breaker auto-triggers at threshold
+ * - Blocks ALL requests for school when limit exceeded
+ *
+ * @param schoolId - School ID to check limits for
+ * @returns UsageCheckResult indicating if request is allowed
+ */
+export async function checkSchoolCostLimit(schoolId: string): Promise<UsageCheckResult> {
+  try {
+    // Cost limits can be disabled for development
+    if (!ENABLE_COST_LIMITS) {
+      return { allowed: true };
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Get user IDs for this school
+    const users = await prisma.user.findMany({
+      where: { schoolId },
+      select: { id: true },
+    });
+    const userIds = users.map(u => u.id);
+
+    // Get today's cost for this school
+    const dailyUsage = await prisma.tokenUsage.aggregate({
+      where: {
+        userId: {
+          in: userIds,
+        },
+        createdAt: {
+          gte: todayStart,
+        },
+      },
+      _sum: {
+        cost: true,
+        totalTokens: true,
+      },
+      _count: true,
+    });
+
+    const dailyCost = dailyUsage?._sum?.cost || 0;
+    const dailyTokens = dailyUsage?._sum?.totalTokens || 0;
+    const dailyRequests = dailyUsage?._count || 0;
+
+    // Circuit breaker: Block if daily cost exceeds threshold
+    if (dailyCost >= CIRCUIT_BREAKER_THRESHOLD) {
+      console.error(
+        `[CIRCUIT BREAKER] School ${schoolId} BLOCKED - Daily cost: $${dailyCost.toFixed(2)} >= $${CIRCUIT_BREAKER_THRESHOLD}`
+      );
+
+      return {
+        allowed: false,
+        reason: `Daily budget exceeded ($${CIRCUIT_BREAKER_THRESHOLD}/day). Service will resume at midnight UTC.`,
+        currentUsage: {
+          dailyMessages: dailyRequests,
+          monthlyTokens: dailyTokens,
+          monthlyBudget: dailyCost,
+        },
+      };
+    }
+
+    // Warning at 80% of daily limit
+    const costPercentage = (dailyCost / COST_LIMIT_DAILY_PER_SCHOOL) * 100;
+    if (costPercentage >= 80) {
+      console.warn(
+        `[Cost Control] WARNING: School ${schoolId} at ${costPercentage.toFixed(1)}% of daily budget ($${dailyCost.toFixed(2)}/$${COST_LIMIT_DAILY_PER_SCHOOL})`
+      );
+    }
+
+    // Check monthly global limit
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyUsage = await prisma.tokenUsage.aggregate({
+      where: {
+        createdAt: {
+          gte: monthStart,
+        },
+      },
+      _sum: {
+        cost: true,
+      },
+    });
+
+    const monthlyCost = monthlyUsage?._sum?.cost || 0;
+    if (monthlyCost >= COST_LIMIT_MONTHLY_TOTAL) {
+      console.error(
+        `[CIRCUIT BREAKER] GLOBAL LIMIT - Monthly cost: $${monthlyCost.toFixed(2)} >= $${COST_LIMIT_MONTHLY_TOTAL}`
+      );
+
+      return {
+        allowed: false,
+        reason: 'Monthly system budget exceeded. Please contact administrator.',
+        currentUsage: {
+          dailyMessages: dailyRequests,
+          monthlyTokens: dailyTokens,
+          monthlyBudget: monthlyCost,
+        },
+      };
+    }
+
+    return {
+      allowed: true,
+      currentUsage: {
+        dailyMessages: dailyRequests,
+        monthlyTokens: dailyTokens,
+        monthlyBudget: dailyCost,
+      },
+    };
+  } catch (error) {
+    console.error('[Cost Control] Error checking school cost limit:', error);
+
+    // CRITICAL: In production, BLOCK on error (fail-safe)
+    // In development, ALLOW on error (fail-open for testing)
+    const allowOnError = process.env.NODE_ENV !== 'production';
+
+    return {
+      allowed: allowOnError,
+      reason: allowOnError ? undefined : 'Cost tracking error - request blocked for safety',
       currentUsage: {
         dailyMessages: 0,
         monthlyTokens: 0,

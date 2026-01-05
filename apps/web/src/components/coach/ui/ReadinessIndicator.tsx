@@ -16,32 +16,32 @@ interface ReadinessIndicatorProps {
 
 const READINESS_CONFIG: Record<ReadinessLevel, {color: string; textColor: string; label: string; icon: string}> = {
   [ReadinessLevel.OPTIMAL]: {
-    color: 'bg-green-500',
-    textColor: 'text-green-500',
+    color: 'bg-secondary',
+    textColor: 'text-secondary',
     label: 'Optimal',
     icon: '●',
   },
   [ReadinessLevel.GOOD]: {
-    color: 'bg-blue-500',
-    textColor: 'text-blue-500',
+    color: 'bg-accent',
+    textColor: 'text-accent',
     label: 'Good',
     icon: '●',
   },
   [ReadinessLevel.MODERATE]: {
-    color: 'bg-amber-500',
-    textColor: 'text-amber-500',
+    color: 'bg-muted',
+    textColor: 'text-muted',
     label: 'Moderate',
     icon: '●',
   },
   [ReadinessLevel.LOW]: {
-    color: 'bg-red-500',
-    textColor: 'text-red-500',
+    color: 'bg-muted-foreground',
+    textColor: 'text-muted-foreground',
     label: 'Low',
     icon: '●',
   },
   [ReadinessLevel.POOR]: {
-    color: 'bg-red-900',
-    textColor: 'text-red-900',
+    color: 'bg-muted-foreground/70',
+    textColor: 'text-muted-foreground',
     label: 'Poor',
     icon: '●',
   },

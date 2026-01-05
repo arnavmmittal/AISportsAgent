@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sanitizeHtml } from '@/lib/validation';
 
 /**
  * Sign-up validation schema
@@ -8,7 +9,8 @@ export const signupSchema = z.object({
   name: z.string()
     .min(2, 'Name must be at least 2 characters')
     .max(100, 'Name must be less than 100 characters')
-    .trim(),
+    .trim()
+    .transform(sanitizeHtml), // XSS prevention
 
   email: z.string()
     .email('Invalid email address')
@@ -28,7 +30,8 @@ export const signupSchema = z.object({
   sport: z.string()
     .min(2, 'Sport is required')
     .max(50, 'Sport name too long')
-    .trim(),
+    .trim()
+    .transform(sanitizeHtml), // XSS prevention
 
   year: z.string()
     .optional()
@@ -38,6 +41,7 @@ export const signupSchema = z.object({
 
   title: z.string()
     .optional()
+    .transform((val) => val ? sanitizeHtml(val) : val) // XSS prevention
     .refine((val) => !val || val.length <= 100, {
       message: 'Title must be less than 100 characters',
     }),
@@ -99,11 +103,11 @@ export function getPasswordStrengthLabel(strength: number): string {
  */
 export function getPasswordStrengthColor(strength: number): string {
   const colors = [
-    'bg-red-500',      // Very Weak
-    'bg-orange-500',   // Weak
-    'bg-yellow-500',   // Fair
+    'bg-muted-foreground/100',      // Very Weak
+    'bg-muted/100',   // Weak
+    'bg-muted/100',   // Fair
     'bg-blue-500',     // Good
-    'bg-green-500',    // Strong
+    'bg-secondary/100',    // Strong
   ];
   return colors[strength] || 'bg-gray-300';
 }

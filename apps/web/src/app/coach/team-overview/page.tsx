@@ -74,10 +74,10 @@ export default function TeamOverviewPage() {
   ];
 
   const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'from-green-500 to-green-600';
-    if (score >= 70) return 'from-yellow-500 to-yellow-600';
-    if (score >= 50) return 'from-orange-500 to-orange-600';
-    return 'from-red-500 to-red-600';
+    if (score >= 85) return 'from-secondary to-secondary';
+    if (score >= 70) return 'from-muted-foreground to-muted-foreground';
+    if (score >= 50) return 'from-muted-foreground to-muted-foreground';
+    return 'from-muted-foreground to-muted-foreground';
   };
 
   return (
@@ -93,18 +93,18 @@ export default function TeamOverviewPage() {
 
         {/* Critical Alert */}
         {stats.criticalAlerts > 0 && (
-          <div className="mb-8 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl shadow-2xl p-8 text-white animate-pulse">
+          <div className="mb-8 bg-gradient-to-r from-muted-foreground to-muted-foreground rounded-2xl shadow-2xl p-8 text-white animate-pulse">
             <div className="flex items-start gap-4">
               <div className="text-5xl">⚠️</div>
               <div className="flex-1">
                 <h3 className="text-2xl font-black mb-2">
                   {stats.criticalAlerts} athlete{stats.criticalAlerts > 1 ? 's' : ''} need immediate attention
                 </h3>
-                <p className="text-red-100 text-lg font-semibold">Crisis keywords detected or severe readiness decline</p>
+                <p className="text-chrome text-lg font-semibold">Crisis keywords detected or severe readiness decline</p>
               </div>
               <Link
                 href="/coach/alerts"
-                className="px-8 py-4 bg-white text-red-600 rounded-xl hover:shadow-2xl transition-all font-black text-lg hover:scale-105 transform whitespace-nowrap"
+                className="px-8 py-4 bg-white text-muted-foreground rounded-xl hover:shadow-2xl transition-all font-black text-lg hover:scale-105 transform whitespace-nowrap"
               >
                 Review Now
               </Link>
@@ -114,10 +114,10 @@ export default function TeamOverviewPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Team Readiness</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Team Readiness</div>
                 <div className="text-5xl font-black mb-2">{stats.teamAvgReadiness}<span className="text-2xl opacity-75">/100</span></div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">WHOOP for mental</div>
               </div>
@@ -125,10 +125,10 @@ export default function TeamOverviewPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-red-100 text-xs font-bold uppercase tracking-wider mb-2">High Risk</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">High Risk</div>
                 <div className="text-5xl font-black mb-2">{stats.highRisk}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Need intervention</div>
               </div>
@@ -136,10 +136,10 @@ export default function TeamOverviewPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-2">Declining Trends</div>
+                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Declining Trends</div>
                 <div className="text-5xl font-black mb-2">{stats.decliningTrends}</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Watch closely</div>
               </div>
@@ -179,7 +179,7 @@ export default function TeamOverviewPage() {
             {interventions.map((int) => (
               <div key={int.id} className="p-6 hover:bg-background dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-start gap-4">
-                  <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-black shadow-lg flex-shrink-0">
+                  <div className="bg-gradient-to-r from-muted-foreground to-muted-foreground rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-black shadow-lg flex-shrink-0">
                     P{int.priority}
                   </div>
                   <div className="flex-1">
@@ -189,8 +189,8 @@ export default function TeamOverviewPage() {
                         {int.readiness}/100
                       </span>
                     </div>
-                    <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg mb-3">
-                      <p className="text-red-900 dark:text-red-200 font-semibold text-sm">{int.reason}</p>
+                    <div className="bg-muted-foreground/10 dark:bg-muted-foreground/20 border-l-4 border-muted-foreground p-4 rounded-lg mb-3">
+                      <p className="text-chrome dark:text-chrome font-semibold text-sm">{int.reason}</p>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-lg">
                       <p className="text-blue-900 dark:text-blue-200 font-semibold text-sm">💡 {int.action}</p>
@@ -258,13 +258,13 @@ export default function TeamOverviewPage() {
                     ))}
                     <td className="py-4 pl-6 text-center">
                       {athlete.trend === 'improving' && (
-                        <div className="flex items-center justify-center gap-2 text-green-600 font-bold">
+                        <div className="flex items-center justify-center gap-2 text-secondary font-bold">
                           <TrendingUp className="w-5 h-5" />
                           Up
                         </div>
                       )}
                       {athlete.trend === 'declining' && (
-                        <div className="flex items-center justify-center gap-2 text-red-600 font-bold">
+                        <div className="flex items-center justify-center gap-2 text-muted-foreground font-bold">
                           <TrendingDown className="w-5 h-5" />
                           Down
                         </div>

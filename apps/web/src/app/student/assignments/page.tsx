@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { Textarea } from '@/components/shared/ui/textarea';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/shared/ui/dialog';
 import {
   ClipboardList,
   Clock,
@@ -157,11 +157,11 @@ export default function StudentAssignmentsPage() {
   const getStatusColor = (status: AssignmentStatus) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-muted/20 text-muted-foreground';
       case 'SUBMITTED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-secondary/20 text-secondary';
       case 'REVIEWED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-accent/20 text-secondary';
       default:
         return 'bg-muted text-gray-800';
     }
@@ -236,17 +236,17 @@ export default function StudentAssignmentsPage() {
           </button>
 
           {/* Assignment Details Card */}
-          <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl shadow-xl p-8 border-2 border-purple-200">
+          <div className="bg-gradient-to-br from-accent/20 to-accent/30 rounded-2xl shadow-xl p-8 border-2 border-accent/20">
             <div className="space-y-4">
-              <h2 className="text-4xl font-black text-purple-900">
+              <h2 className="text-4xl font-black text-secondary">
                 {selectedAssignment.title}
               </h2>
               {selectedAssignment.dueDate && (
                 <div
                   className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black shadow ${
                     isOverdue(selectedAssignment.dueDate)
-                      ? 'bg-red-100 text-red-700 border-2 border-red-200'
-                      : 'bg-amber-100 text-amber-700 border-2 border-amber-200'
+                      ? 'bg-muted-foreground/20 text-muted-foreground border-2 border-muted-foreground'
+                      : 'bg-muted/20 text-muted-foreground border-2 border-muted'
                   }`}
                 >
                   {isOverdue(selectedAssignment.dueDate) ? (
@@ -258,22 +258,22 @@ export default function StudentAssignmentsPage() {
                 </div>
               )}
 
-              <p className="text-purple-900 leading-relaxed text-lg font-semibold">
+              <p className="text-secondary leading-relaxed text-lg font-semibold">
                 {selectedAssignment.description}
               </p>
 
               <div className="flex items-center gap-4 flex-wrap">
                 <span className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
                   status === 'PENDING'
-                    ? 'bg-amber-100 text-amber-800 border-amber-200'
+                    ? 'bg-muted/20 text-muted-foreground border-muted'
                     : status === 'SUBMITTED'
-                    ? 'bg-green-100 text-green-800 border-green-200'
-                    : 'bg-purple-100 text-purple-800 border-purple-200'
+                    ? 'bg-secondary/20 text-secondary border-secondary/20'
+                    : 'bg-accent/20 text-secondary border-accent/20'
                 }`}>
                   {getStatusText(status)}
                 </span>
                 {submission?.submittedAt && (
-                  <span className="text-base text-purple-800 font-bold flex items-center gap-2">
+                  <span className="text-base text-secondary font-bold flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
                     Submitted {new Date(submission.submittedAt).toLocaleDateString()}
                   </span>
@@ -473,11 +473,11 @@ function AssignmentCard({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-muted/20 text-muted-foreground';
       case 'SUBMITTED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-secondary/20 text-secondary';
       case 'REVIEWED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-accent/20 text-secondary';
       default:
         return 'bg-muted text-gray-800';
     }
@@ -507,7 +507,7 @@ function AssignmentCard({
             className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
               isPending
                 ? 'bg-gradient-to-br from-amber-500 to-amber-600'
-                : 'bg-gradient-to-br from-green-500 to-green-600'
+                : 'bg-gradient-to-br from-secondary to-secondary'
             }`}
           >
             {isPending ? (
@@ -525,10 +525,10 @@ function AssignmentCard({
             <div className="flex items-center gap-3 flex-wrap">
               <span className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
                 status === 'PENDING'
-                  ? 'bg-amber-100 text-amber-800 border-amber-200'
+                  ? 'bg-muted/20 text-muted-foreground border-muted'
                   : status === 'SUBMITTED'
-                  ? 'bg-green-100 text-green-800 border-green-200'
-                  : 'bg-purple-100 text-purple-800 border-purple-200'
+                  ? 'bg-secondary/20 text-secondary border-secondary/20'
+                  : 'bg-accent/20 text-secondary border-accent/20'
               }`}>
                 {getStatusText(status)}
               </span>
@@ -536,7 +536,7 @@ function AssignmentCard({
               {assignment.dueDate && (
                 <div
                   className={`flex items-center gap-2 text-sm font-bold ${
-                    isOverdueFlag ? 'text-red-600' : 'text-gray-600'
+                    isOverdueFlag ? 'text-muted-foreground' : 'text-gray-600'
                   }`}
                 >
                   {isOverdueFlag ? (

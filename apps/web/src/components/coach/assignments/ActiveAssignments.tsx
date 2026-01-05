@@ -133,8 +133,8 @@ export default function ActiveAssignments() {
     switch (status) {
       case 'pending': return 'bg-slate-900/50 border-slate-600 text-slate-300';
       case 'in-progress': return 'bg-blue-900/20 border-blue-700 text-blue-300';
-      case 'submitted': return 'bg-green-900/20 border-green-700 text-green-300';
-      case 'overdue': return 'bg-red-900/20 border-red-700 text-red-300';
+      case 'submitted': return 'bg-secondary/20 border-secondary text-accent';
+      case 'overdue': return 'bg-muted-foreground/20 border-muted-foreground text-chrome';
       default: return 'bg-slate-900/50 border-slate-600 text-slate-300';
     }
   };
@@ -231,9 +231,9 @@ export default function ActiveAssignments() {
                     <span className="text-xs text-slate-400">{assignment.sport}</span>
                     <span className={`text-xs font-medium px-2 py-1 rounded ${
                       assignment.status === 'submitted'
-                        ? 'bg-green-900/50 text-green-300'
+                        ? 'bg-secondary/20/50 text-accent'
                         : assignment.status === 'overdue'
-                        ? 'bg-red-900/50 text-red-300'
+                        ? 'bg-muted-foreground/20/50 text-chrome'
                         : assignment.status === 'in-progress'
                         ? 'bg-blue-900/50 text-blue-300'
                         : 'bg-slate-700 text-slate-300'
@@ -258,10 +258,10 @@ export default function ActiveAssignments() {
                       <div
                         className={`h-2 rounded-full transition-all ${
                           assignment.progress === 100
-                            ? 'bg-green-500'
+                            ? 'bg-secondary/100'
                             : assignment.progress >= 50
                             ? 'bg-blue-500'
-                            : 'bg-yellow-500'
+                            : 'bg-muted/100'
                         }`}
                         style={{ width: `${assignment.progress}%` }}
                       />
@@ -270,7 +270,7 @@ export default function ActiveAssignments() {
 
                   <div className="flex items-center gap-4 text-xs text-slate-400">
                     <span>Assigned: {new Date(assignment.assignedDate).toLocaleDateString()}</span>
-                    <span className={assignment.daysRemaining < 0 ? 'text-red-400' : assignment.daysRemaining <= 3 ? 'text-yellow-400' : ''}>
+                    <span className={assignment.daysRemaining < 0 ? 'text-muted-foreground' : assignment.daysRemaining <= 3 ? 'text-muted-foreground' : ''}>
                       Due: {new Date(assignment.dueDate).toLocaleDateString()}
                       {assignment.daysRemaining >= 0
                         ? ` (${assignment.daysRemaining} day${assignment.daysRemaining !== 1 ? 's' : ''} left)`
@@ -282,12 +282,12 @@ export default function ActiveAssignments() {
 
                 <div className="ml-4 flex flex-col gap-2">
                   {assignment.status === 'submitted' && (
-                    <button className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded-md transition-colors">
+                    <button className="px-3 py-1 bg-secondary hover:bg-secondary text-white text-xs rounded-md transition-colors">
                       Review Submission
                     </button>
                   )}
                   {assignment.status === 'overdue' && (
-                    <button className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-md transition-colors">
+                    <button className="px-3 py-1 bg-muted-foreground hover:bg-muted-foreground/30 text-white text-xs rounded-md transition-colors">
                       Send Reminder
                     </button>
                   )}

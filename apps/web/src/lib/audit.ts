@@ -9,14 +9,58 @@ import { prisma } from '@/lib/prisma';
 import { Role } from '@prisma/client';
 
 /**
- * Audit actions for weekly summary feature
+ * Audit actions for all sensitive data access (PRODUCTION-READY)
  */
 export enum AuditAction {
+  // Weekly Summary Actions
   VIEW_WEEKLY_SUMMARY = 'VIEW_WEEKLY_SUMMARY',
   GENERATE_WEEKLY_SUMMARY = 'GENERATE_WEEKLY_SUMMARY',
   CONSENT_UPDATE = 'CONSENT_UPDATE',
   REVOKE_SUMMARY = 'REVOKE_SUMMARY',
   DELETE_EXPIRED_SUMMARY = 'DELETE_EXPIRED_SUMMARY',
+
+  // Chat Session Actions
+  VIEW_CHAT_SESSION = 'VIEW_CHAT_SESSION',
+  VIEW_CHAT_MESSAGES = 'VIEW_CHAT_MESSAGES',
+  CREATE_CHAT_MESSAGE = 'CREATE_CHAT_MESSAGE',
+  DELETE_CHAT_SESSION = 'DELETE_CHAT_SESSION',
+  EXPORT_CHAT_HISTORY = 'EXPORT_CHAT_HISTORY',
+
+  // Crisis Alert Actions
+  VIEW_CRISIS_ALERT = 'VIEW_CRISIS_ALERT',
+  REVIEW_CRISIS_ALERT = 'REVIEW_CRISIS_ALERT',
+  ESCALATE_CRISIS_ALERT = 'ESCALATE_CRISIS_ALERT',
+
+  // Athlete Data Access
+  VIEW_ATHLETE_PROFILE = 'VIEW_ATHLETE_PROFILE',
+  UPDATE_ATHLETE_PROFILE = 'UPDATE_ATHLETE_PROFILE',
+  VIEW_MOOD_LOGS = 'VIEW_MOOD_LOGS',
+  VIEW_GOALS = 'VIEW_GOALS',
+  UPDATE_GOALS = 'UPDATE_GOALS',
+
+  // Authentication & Security
+  LOGIN_SUCCESS = 'LOGIN_SUCCESS',
+  LOGIN_FAILURE = 'LOGIN_FAILURE',
+  LOGOUT = 'LOGOUT',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+  UNAUTHORIZED_ACCESS_ATTEMPT = 'UNAUTHORIZED_ACCESS_ATTEMPT',
+
+  // Admin Actions
+  ADMIN_VIEW_USER = 'ADMIN_VIEW_USER',
+  ADMIN_UPDATE_USER = 'ADMIN_UPDATE_USER',
+  ADMIN_DELETE_USER = 'ADMIN_DELETE_USER',
+  ADMIN_IMPERSONATE = 'ADMIN_IMPERSONATE',
+  ADMIN_EXPORT_DATA = 'ADMIN_EXPORT_DATA',
+
+  // Knowledge Base
+  VIEW_KNOWLEDGE = 'VIEW_KNOWLEDGE',
+  ADD_KNOWLEDGE = 'ADD_KNOWLEDGE',
+  UPDATE_KNOWLEDGE = 'UPDATE_KNOWLEDGE',
+  DELETE_KNOWLEDGE = 'DELETE_KNOWLEDGE',
+
+  // System Events
+  DATA_EXPORT_REQUEST = 'DATA_EXPORT_REQUEST',
+  DATA_DELETION_REQUEST = 'DATA_DELETION_REQUEST',
 }
 
 /**
@@ -209,6 +253,327 @@ export async function logExpiredSummaryDeletion(
     resourceType: 'chat_summaries',
     details: {
       deletedCount,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log chat session view
+ *
+ * @param userId - User viewing the session
+ * @param sessionId - ChatSession ID
+ * @param athleteId - Athlete user ID (if different from viewer)
+ * @param request - HTTP request object for IP/User-Agent
+ */
+export async function logChatSessionView(
+  userId: string,
+  sessionId: string,
+  athleteId?: string,
+  request?: {
+    headers?: {
+      'x-forwarded-for'?: string | string[];
+      'user-agent'?: string;
+    };
+  }
+): Promise<void> {
+  const ipAddress = Array.isArray(request?.headers?.['x-forwarded-for'])
+    ? request.headers['x-forwarded-for'][0]
+    : request?.headers?.['x-forwarded-for'];
+
+  await logAudit({
+    userId,
+    action: AuditAction.VIEW_CHAT_SESSION,
+    resourceType: 'chat_sessions',
+    resourceId: sessionId,
+    athleteId: athleteId || userId,
+    ipAddress: ipAddress,
+    userAgent: request?.headers?.['user-agent'],
+  });
+}
+
+/**
+ * Log chat message view
+ *
+ * @param userId - User viewing the messages
+ * @param sessionId - ChatSession ID
+ * @param messageCount - Number of messages viewed
+ * @param athleteId - Athlete user ID
+ */
+export async function logChatMessagesView(
+  userId: string,
+  sessionId: string,
+  messageCount: number,
+  athleteId?: string
+): Promise<void> {
+  await logAudit({
+    userId,
+    action: AuditAction.VIEW_CHAT_MESSAGES,
+    resourceType: 'messages',
+    resourceId: sessionId,
+    athleteId: athleteId || userId,
+    details: {
+      messageCount,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log chat message creation
+ *
+ * @param userId - User creating the message
+ * @param sessionId - ChatSession ID
+ * @param messageId - Message ID
+ */
+export async function logChatMessageCreation(
+  userId: string,
+  sessionId: string,
+  messageId: string
+): Promise<void> {
+  await logAudit({
+    userId,
+    action: AuditAction.CREATE_CHAT_MESSAGE,
+    resourceType: 'messages',
+    resourceId: messageId,
+    athleteId: userId,
+    details: {
+      sessionId,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log crisis alert view
+ *
+ * @param coachId - Coach viewing the alert
+ * @param alertId - CrisisAlert ID
+ * @param athleteId - Athlete user ID
+ * @param request - HTTP request object
+ */
+export async function logCrisisAlertView(
+  coachId: string,
+  alertId: string,
+  athleteId: string,
+  request?: {
+    headers?: {
+      'x-forwarded-for'?: string | string[];
+      'user-agent'?: string;
+    };
+  }
+): Promise<void> {
+  const ipAddress = Array.isArray(request?.headers?.['x-forwarded-for'])
+    ? request.headers['x-forwarded-for'][0]
+    : request?.headers?.['x-forwarded-for'];
+
+  await logAudit({
+    userId: coachId,
+    action: AuditAction.VIEW_CRISIS_ALERT,
+    resourceType: 'crisis_alerts',
+    resourceId: alertId,
+    athleteId,
+    ipAddress: ipAddress,
+    userAgent: request?.headers?.['user-agent'],
+  });
+}
+
+/**
+ * Log crisis alert review (coach acknowledges)
+ *
+ * @param coachId - Coach reviewing the alert
+ * @param alertId - CrisisAlert ID
+ * @param athleteId - Athlete user ID
+ * @param action - Action taken (e.g., "contacted athlete", "referred to counselor")
+ */
+export async function logCrisisAlertReview(
+  coachId: string,
+  alertId: string,
+  athleteId: string,
+  action: string
+): Promise<void> {
+  await logAudit({
+    userId: coachId,
+    action: AuditAction.REVIEW_CRISIS_ALERT,
+    resourceType: 'crisis_alerts',
+    resourceId: alertId,
+    athleteId,
+    details: {
+      action,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log athlete profile view
+ *
+ * @param viewerId - User viewing the profile
+ * @param athleteId - Athlete user ID
+ * @param request - HTTP request object
+ */
+export async function logAthleteProfileView(
+  viewerId: string,
+  athleteId: string,
+  request?: {
+    headers?: {
+      'x-forwarded-for'?: string | string[];
+      'user-agent'?: string;
+    };
+  }
+): Promise<void> {
+  const ipAddress = Array.isArray(request?.headers?.['x-forwarded-for'])
+    ? request.headers['x-forwarded-for'][0]
+    : request?.headers?.['x-forwarded-for'];
+
+  await logAudit({
+    userId: viewerId,
+    action: AuditAction.VIEW_ATHLETE_PROFILE,
+    resourceType: 'athletes',
+    resourceId: athleteId,
+    athleteId,
+    ipAddress: ipAddress,
+    userAgent: request?.headers?.['user-agent'],
+  });
+}
+
+/**
+ * Log mood logs view
+ *
+ * @param viewerId - User viewing the mood logs
+ * @param athleteId - Athlete user ID
+ * @param logCount - Number of logs viewed
+ */
+export async function logMoodLogsView(
+  viewerId: string,
+  athleteId: string,
+  logCount: number
+): Promise<void> {
+  await logAudit({
+    userId: viewerId,
+    action: AuditAction.VIEW_MOOD_LOGS,
+    resourceType: 'mood_logs',
+    athleteId,
+    details: {
+      logCount,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log login attempt
+ *
+ * @param userId - User ID (if successful) or email (if failed)
+ * @param success - Whether login was successful
+ * @param request - HTTP request object
+ * @param failureReason - Reason for failure (if applicable)
+ */
+export async function logLoginAttempt(
+  userId: string,
+  success: boolean,
+  request?: {
+    headers?: {
+      'x-forwarded-for'?: string | string[];
+      'user-agent'?: string;
+    };
+  },
+  failureReason?: string
+): Promise<void> {
+  const ipAddress = Array.isArray(request?.headers?.['x-forwarded-for'])
+    ? request.headers['x-forwarded-for'][0]
+    : request?.headers?.['x-forwarded-for'];
+
+  await logAudit({
+    userId,
+    action: success ? AuditAction.LOGIN_SUCCESS : AuditAction.LOGIN_FAILURE,
+    resourceType: 'users',
+    ipAddress: ipAddress,
+    userAgent: request?.headers?.['user-agent'],
+    details: {
+      success,
+      failureReason: failureReason || null,
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log unauthorized access attempt
+ *
+ * @param userId - User attempting unauthorized access
+ * @param resource - Resource they tried to access
+ * @param resourceId - Resource ID
+ * @param request - HTTP request object
+ */
+export async function logUnauthorizedAccess(
+  userId: string,
+  resource: string,
+  resourceId: string,
+  request?: {
+    headers?: {
+      'x-forwarded-for'?: string | string[];
+      'user-agent'?: string;
+    };
+  }
+): Promise<void> {
+  const ipAddress = Array.isArray(request?.headers?.['x-forwarded-for'])
+    ? request.headers['x-forwarded-for'][0]
+    : request?.headers?.['x-forwarded-for'];
+
+  await logAudit({
+    userId,
+    action: AuditAction.UNAUTHORIZED_ACCESS_ATTEMPT,
+    resourceType: resource,
+    resourceId,
+    ipAddress: ipAddress,
+    userAgent: request?.headers?.['user-agent'],
+    details: {
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log knowledge base view
+ *
+ * @param userId - User accessing knowledge
+ * @param knowledgeId - KnowledgeBase ID
+ */
+export async function logKnowledgeView(
+  userId: string,
+  knowledgeId: string
+): Promise<void> {
+  await logAudit({
+    userId,
+    action: AuditAction.VIEW_KNOWLEDGE,
+    resourceType: 'knowledge_base',
+    resourceId: knowledgeId,
+    details: {
+      timestamp: new Date().toISOString(),
+    },
+  });
+}
+
+/**
+ * Log data export request
+ *
+ * @param userId - User requesting export
+ * @param exportType - Type of export (e.g., "athlete_data", "chat_history")
+ * @param athleteId - Athlete ID if exporting athlete-specific data
+ */
+export async function logDataExport(
+  userId: string,
+  exportType: string,
+  athleteId?: string
+): Promise<void> {
+  await logAudit({
+    userId,
+    action: AuditAction.DATA_EXPORT_REQUEST,
+    resourceType: exportType,
+    athleteId,
+    details: {
+      exportType,
       timestamp: new Date().toISOString(),
     },
   });

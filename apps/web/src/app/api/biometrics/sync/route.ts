@@ -13,6 +13,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, verifyOwnership } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+import {
+  validateRequest,
+  biometricsSyncSchema,
+  ValidationError,
+} from '@/lib/validation';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -51,20 +56,31 @@ export async function POST(req: NextRequest) {
   if (!authorized) return response;
 
   try {
-    // Parse request body
-    const body = await req.json();
-    const { athleteId, deviceType, metrics } = body;
-
-    // Validation
-    if (!athleteId || !deviceType || !Array.isArray(metrics)) {
+    // Validate and sanitize input with Zod
+    let validatedData;
+    try {
+      validatedData = await validateRequest(req, biometricsSyncSchema);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Validation failed',
+            details: error.errors
+          },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         {
           success: false,
-          error: 'Invalid request body. Required: athleteId, deviceType, metrics (array)',
+          error: 'Invalid request'
         },
         { status: 400 }
       );
     }
+
+    const { athleteId, deviceType, metrics } = validatedData;
 
     // Authorization: Users can only upload their own data
     if (user!.role === 'ATHLETE') {
@@ -93,52 +109,6 @@ export async function POST(req: NextRequest) {
         },
         { status: 404 }
       );
-    }
-
-    // Validate device type
-    const validDevices = ['whoop', 'oura', 'garmin', 'apple_watch', 'manual'];
-    if (!validDevices.includes(deviceType)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Invalid device type. Must be one of: ${validDevices.join(', ')}`,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate metrics
-    const validMetricTypes = ['hrv', 'resting_hr', 'sleep_duration', 'spo2', 'recovery_score', 'sleep_stages'];
-    for (const metric of metrics) {
-      if (!metric.metricType || !validMetricTypes.includes(metric.metricType)) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Invalid metricType. Must be one of: ${validMetricTypes.join(', ')}`,
-          },
-          { status: 400 }
-        );
-      }
-
-      if (typeof metric.value !== 'number') {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Invalid metric value. Must be a number.`,
-          },
-          { status: 400 }
-        );
-      }
-
-      if (!metric.recordedAt) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Missing recordedAt timestamp for metric',
-          },
-          { status: 400 }
-        );
-      }
     }
 
     // Transform metrics to WearableData format

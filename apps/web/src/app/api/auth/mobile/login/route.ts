@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { prisma } from '@/lib/prisma';
+import { logLoginAttempt } from '@/lib/audit';
 
 // JWT secret (same as NEXTAUTH_SECRET)
 const JWT_SECRET = new TextEncoder().encode(
@@ -25,72 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Demo athlete account for testing (no database required)
-    if (email === 'demo@athlete.com' && password === 'demo123') {
-      const token = await new SignJWT({
-        id: 'demo-athlete-123',
-        email: 'demo@athlete.com',
-        role: 'ATHLETE',
-        schoolId: 'demo-school-123',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime('7d')
-        .setIssuedAt()
-        .sign(JWT_SECRET);
-
-      return NextResponse.json({
-        user: {
-          id: 'demo-athlete-123',
-          email: 'demo@athlete.com',
-          name: 'Demo Athlete',
-          role: 'ATHLETE',
-          schoolId: 'demo-school-123',
-          athlete: {
-            userId: 'demo-athlete-123',
-            sport: 'Basketball',
-            year: 'Junior',
-            teamPosition: 'Point Guard',
-            consentCoachView: false,
-            consentChatSummaries: false,
-            riskLevel: 'LOW',
-          },
-        },
-        token,
-      });
-    }
-
-    // Demo coach account for testing (no database required)
-    if (email === 'demo@coach.com' && password === 'demo123') {
-      const token = await new SignJWT({
-        id: 'demo-coach-123',
-        email: 'demo@coach.com',
-        role: 'COACH',
-        schoolId: 'demo-school-123',
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime('7d')
-        .setIssuedAt()
-        .sign(JWT_SECRET);
-
-      return NextResponse.json({
-        user: {
-          id: 'demo-coach-123',
-          email: 'demo@coach.com',
-          name: 'Demo Coach',
-          role: 'COACH',
-          schoolId: 'demo-school-123',
-          coach: {
-            userId: 'demo-coach-123',
-            sport: 'Basketball',
-            teamName: 'Demo University Basketball',
-            inviteCode: 'DEMO-COACH-2024',
-          },
-        },
-        token,
-      });
-    }
-
-    // Try database authentication for real users
+    // Database authentication for real users
     try {
       const user = await prisma.user.findUnique({
         where: { email },
@@ -102,6 +38,19 @@ export async function POST(request: NextRequest) {
       });
 
       if (!user || !user.password) {
+        // Audit log: Failed login attempt (user not found)
+        await logLoginAttempt(
+          email,
+          false,
+          {
+            headers: {
+              'x-forwarded-for': request.headers.get('x-forwarded-for') || undefined,
+              'user-agent': request.headers.get('user-agent') || undefined,
+            },
+          },
+          'User not found'
+        ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
+
         return NextResponse.json(
           { error: 'Invalid credentials' },
           { status: 401 }
@@ -111,6 +60,19 @@ export async function POST(request: NextRequest) {
       const isValid = await compare(password, user.password);
 
       if (!isValid) {
+        // Audit log: Failed login attempt (invalid password)
+        await logLoginAttempt(
+          user.id,
+          false,
+          {
+            headers: {
+              'x-forwarded-for': request.headers.get('x-forwarded-for') || undefined,
+              'user-agent': request.headers.get('user-agent') || undefined,
+            },
+          },
+          'Invalid password'
+        ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
+
         return NextResponse.json(
           { error: 'Invalid credentials' },
           { status: 401 }
@@ -128,6 +90,18 @@ export async function POST(request: NextRequest) {
         .setExpirationTime('7d')
         .setIssuedAt()
         .sign(JWT_SECRET);
+
+      // Audit log: Successful login
+      await logLoginAttempt(
+        user.id,
+        true,
+        {
+          headers: {
+            'x-forwarded-for': request.headers.get('x-forwarded-for') || undefined,
+            'user-agent': request.headers.get('user-agent') || undefined,
+          },
+        }
+      ).catch(err => console.error('[Audit] Failed to log login success:', err));
 
       return NextResponse.json({
         user: {

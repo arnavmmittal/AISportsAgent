@@ -2,12 +2,25 @@
  * Chat Stream API - PRODUCTION-READY
  * Uses integrated TypeScript agent system instead of external MCP server
  * Supports both streaming and non-streaming responses
+ *
+ * Security:
+ * - Input validation with Zod
+ * - XSS prevention (HTML sanitization)
+ * - Cost controls (rate limiting)
+ * - Multi-tenant access control
  */
 
 import { NextRequest } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
-import { checkUserCanMakeRequest } from '@/lib/cost-tracking';
+import { checkUserCanMakeRequest, checkSchoolCostLimit } from '@/lib/cost-tracking';
 import { getChatService } from '@/services/ChatService';
+import {
+  validateRequest,
+  chatStreamRequestSchema,
+  ValidationError,
+  validateAthleteAccess,
+} from '@/lib/validation';
+import { logChatMessageCreation } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -40,13 +53,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const body = await req.json();
-    const { session_id, message, athlete_id } = body;
-
-    if (!message || !athlete_id) {
+    // Validate and sanitize input with Zod
+    let validatedData;
+    try {
+      validatedData = await validateRequest(req, chatStreamRequestSchema);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({
+            type: 'error',
+            data: 'Validation failed',
+            details: error.errors
+          }) + '\n\n'),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          }
+        );
+      }
       return new Response(
-        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Missing required fields' }) + '\n\n'),
+        encoder.encode('data: ' + JSON.stringify({ type: 'error', data: 'Invalid request' }) + '\n\n'),
         {
+          status: 400,
           headers: {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
@@ -56,9 +88,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { session_id, message, athlete_id } = validatedData;
+
     // Only check cost limits and permissions for regular user requests (not voice service)
     if (!isVoiceService && user) {
-      // Check cost limits before allowing request
+      // Check per-user cost limits
       const usageCheck = await checkUserCanMakeRequest(user.id);
       if (!usageCheck.allowed) {
         console.warn(`[Cost Control] Request blocked for user ${user.id}: ${usageCheck.reason}`);
@@ -75,6 +109,28 @@ export async function POST(req: NextRequest) {
               'Cache-Control': 'no-cache',
               'Connection': 'keep-alive',
               'Retry-After': '86400', // 24 hours (for daily limit)
+            },
+          }
+        );
+      }
+
+      // Check per-school (tenant) cost limits and circuit breaker
+      const schoolCheck = await checkSchoolCostLimit(user.schoolId);
+      if (!schoolCheck.allowed) {
+        console.error(`[CIRCUIT BREAKER] Request blocked for school ${user.schoolId}: ${schoolCheck.reason}`);
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({
+            type: 'error',
+            data: schoolCheck.reason,
+            usage: schoolCheck.currentUsage,
+          }) + '\n\n'),
+          {
+            status: 429, // Too Many Requests
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+              'Retry-After': '86400', // 24 hours (resets at midnight UTC)
             },
           }
         );
@@ -139,13 +195,20 @@ export async function POST(req: NextRequest) {
           });
 
           // Save user message
+          const userMessageId = `msg_${Date.now()}`;
           await prisma.message.create({
             data: {
-              id: `msg_${Date.now()}`,
+              id: userMessageId,
               sessionId: session.id,
               role: 'user',
               content: message,
             },
+          });
+
+          // Audit log: User created a chat message
+          await logChatMessageCreation(athlete_id, session.id, userMessageId).catch(err => {
+            console.error('[Audit] Failed to log message creation:', err);
+            // Don't fail the request if audit logging fails
           });
 
           // Build context
@@ -189,6 +252,11 @@ export async function POST(req: NextRequest) {
               role: 'assistant',
               content: result.response.content,
             },
+          });
+
+          // Audit log: Assistant message created (system action)
+          await logChatMessageCreation('system', session.id, assistantMessageId).catch(err => {
+            console.error('[Audit] Failed to log assistant message:', err);
           });
 
           // Send crisis alert if detected

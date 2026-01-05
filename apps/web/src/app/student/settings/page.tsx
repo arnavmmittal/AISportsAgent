@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { Input } from '@/components/shared/ui/input';
+import { Label } from '@/components/shared/ui/label';
+import { Switch } from '@/components/shared/ui/switch';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   Settings,
   User,
@@ -117,7 +117,7 @@ export default function StudentSettingsPage() {
         <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
           <div className="p-8 border-b-2 border-gray-100">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-xl flex items-center justify-center shadow-lg">
                 <User className="w-6 h-6 text-white" />
               </div>
               <h2 className="text-2xl font-black text-foreground">Profile Information</h2>
@@ -346,7 +346,7 @@ export default function StudentSettingsPage() {
         <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
           <div className="p-8 border-b-2 border-gray-100">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary rounded-xl flex items-center justify-center shadow-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <h2 className="text-2xl font-black text-foreground">Privacy & Data Sharing</h2>
@@ -453,15 +453,15 @@ export default function StudentSettingsPage() {
         </div>
 
         {/* Account Actions */}
-        <div className="bg-card rounded-2xl shadow-xl border-2 border-red-200">
-          <div className="p-8 border-b-2 border-red-100">
-            <h2 className="text-2xl font-black text-red-700">Account Actions</h2>
-            <p className="text-base text-red-600 font-semibold mt-2">Manage your account</p>
+        <div className="bg-card rounded-2xl shadow-xl border-2 border-muted-foreground">
+          <div className="p-8 border-b-2 border-muted-foreground/20">
+            <h2 className="text-2xl font-black text-muted-foreground">Account Actions</h2>
+            <p className="text-base text-muted-foreground font-semibold mt-2">Manage your account</p>
           </div>
           <div className="p-8">
             <button
               onClick={handleLogout}
-              className="w-full px-6 py-4 border-2 border-red-600 text-red-600 rounded-xl hover:bg-red-50 transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2"
+              className="w-full px-6 py-4 border-2 border-muted-foreground text-muted-foreground rounded-xl hover:bg-muted-foreground/10 transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2"
             >
               <LogOut className="w-5 h-5" />
               Log Out

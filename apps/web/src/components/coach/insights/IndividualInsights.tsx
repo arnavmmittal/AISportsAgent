@@ -151,7 +151,7 @@ export default function IndividualInsights() {
       </div>
 
       {/* Athlete Summary Card */}
-      <div className="p-5 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-700 rounded-lg">
+      <div className="p-5 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-accent rounded-lg">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">
@@ -195,9 +195,9 @@ export default function IndividualInsights() {
               <span
                 className={`ml-3 text-xl ${
                   trend.direction === 'up'
-                    ? 'text-green-400'
+                    ? 'text-accent'
                     : trend.direction === 'down'
-                    ? 'text-red-400'
+                    ? 'text-muted-foreground'
                     : 'text-blue-400'
                 }`}
               >
@@ -217,7 +217,7 @@ export default function IndividualInsights() {
             {currentInsight.strengths.map((strength, idx) => (
               <li
                 key={idx}
-                className="p-3 bg-green-900/20 border-l-4 border-green-500 rounded"
+                className="p-3 bg-secondary/20 border-l-4 border-secondary rounded"
               >
                 <p className="text-sm text-slate-200">{strength}</p>
               </li>
@@ -232,8 +232,8 @@ export default function IndividualInsights() {
                 key={idx}
                 className={`p-3 rounded border-l-4 ${
                   concern.includes('None')
-                    ? 'bg-green-900/20 border-green-500'
-                    : 'bg-amber-900/20 border-amber-500'
+                    ? 'bg-secondary/20 border-secondary'
+                    : 'bg-muted/20 border-muted'
                 }`}
               >
                 <p className="text-sm text-slate-200">{concern}</p>
@@ -266,7 +266,7 @@ export default function IndividualInsights() {
             {currentInsight.progressHighlights.map((highlight, idx) => (
               <li
                 key={idx}
-                className="p-3 bg-purple-900/20 border-l-4 border-purple-500 rounded"
+                className="p-3 bg-accent/20 border-l-4 border-accent rounded"
               >
                 <p className="text-sm text-slate-200">{highlight}</p>
               </li>

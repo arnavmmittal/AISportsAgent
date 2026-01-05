@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
+import {
+  validateRequest,
+  goalCreateSchema,
+  ValidationError,
+} from '@/lib/validation';
 
 export async function GET(req: NextRequest) {
   try {
@@ -68,15 +73,27 @@ export async function POST(req: NextRequest) {
     const { authorized, user, response } = await requireAuth(req);
     if (!authorized) return response;
 
-    const body = await req.json();
-    const { athleteId, title, description, targetDate, category, progress } = body;
-
-    if (!athleteId || !title) {
+    // Validate and sanitize input with Zod
+    let validatedData;
+    try {
+      validatedData = await validateRequest(req, goalCreateSchema);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          {
+            error: 'Validation failed',
+            details: error.errors
+          },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
-        { error: 'Missing required fields: athleteId and title are required' },
+        { error: 'Invalid request' },
         { status: 400 }
       );
     }
+
+    const { athleteId, title, description, targetDate, category, progress } = validatedData;
 
     // Verify user can create goals for this athlete
     if (user!.id !== athleteId && user!.role !== 'ADMIN') {

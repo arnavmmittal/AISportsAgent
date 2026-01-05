@@ -83,7 +83,7 @@ export default function InterventionOutcomes() {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-green-400">
+                <div className="text-2xl font-bold text-accent">
                   {intervention.success}%
                 </div>
                 <p className="text-xs text-slate-400">success rate</p>

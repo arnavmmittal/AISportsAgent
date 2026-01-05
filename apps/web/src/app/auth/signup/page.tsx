@@ -94,7 +94,7 @@ export default function SignUpPage() {
                   required
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
                     fieldErrors.name
-                      ? 'border-red-300 focus:ring-red-500'
+                      ? 'border-muted-foreground focus:ring-muted-foreground'
                       : 'border-border focus:ring-primary'
                   }`}
                   placeholder="John Doe"
@@ -102,7 +102,7 @@ export default function SignUpPage() {
                 {fieldErrors.name && (
                   <div className="mt-1 space-y-1">
                     {fieldErrors.name.map((error, idx) => (
-                      <p key={idx} className="text-xs text-red-600">• {error}</p>
+                      <p key={idx} className="text-xs text-muted-foreground">• {error}</p>
                     ))}
                   </div>
                 )}
@@ -121,7 +121,7 @@ export default function SignUpPage() {
                   required
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
                     fieldErrors.email
-                      ? 'border-red-300 focus:ring-red-500'
+                      ? 'border-muted-foreground focus:ring-muted-foreground'
                       : 'border-border focus:ring-primary'
                   }`}
                   placeholder="athlete@university.edu"
@@ -129,7 +129,7 @@ export default function SignUpPage() {
                 {fieldErrors.email && (
                   <div className="mt-1 space-y-1">
                     {fieldErrors.email.map((error, idx) => (
-                      <p key={idx} className="text-xs text-red-600">• {error}</p>
+                      <p key={idx} className="text-xs text-muted-foreground">• {error}</p>
                     ))}
                   </div>
                 )}
@@ -149,7 +149,7 @@ export default function SignUpPage() {
                   minLength={8}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
                     fieldErrors.password
-                      ? 'border-red-300 focus:ring-red-500'
+                      ? 'border-muted-foreground focus:ring-muted-foreground'
                       : 'border-border focus:ring-primary'
                   }`}
                   placeholder="Create a strong password"
@@ -160,7 +160,7 @@ export default function SignUpPage() {
                 {fieldErrors.password && (
                   <div className="mt-1 space-y-1">
                     {fieldErrors.password.map((error, idx) => (
-                      <p key={idx} className="text-xs text-red-600">• {error}</p>
+                      <p key={idx} className="text-xs text-muted-foreground">• {error}</p>
                     ))}
                   </div>
                 )}

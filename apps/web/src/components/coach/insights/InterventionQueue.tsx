@@ -18,9 +18,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/shared/ui/card';
+import { Badge } from '@/components/shared/ui/badge';
+import { Button } from '@/components/shared/ui/button';
 import {
   AlertTriangle,
   AlertCircle,
@@ -122,9 +122,9 @@ export function InterventionQueueComponent({ coachId }: InterventionQueueProps) 
       case 'URGENT':
         return 'border-l-4 border-destructive bg-destructive/5';
       case 'HIGH':
-        return 'border-l-4 border-orange-500 bg-orange-50 dark:bg-orange-950/20';
+        return 'border-l-4 border-muted-foreground bg-muted/10 dark:bg-muted-foreground/10/20';
       case 'MEDIUM':
-        return 'border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20';
+        return 'border-l-4 border-muted-foreground bg-muted/10 dark:bg-muted-foreground/10/20';
       default:
         return 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20';
     }
@@ -205,7 +205,7 @@ export function InterventionQueueComponent({ coachId }: InterventionQueueProps) 
         {/* Intervention Cards */}
         {filteredInterventions.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-600" />
+            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-secondary" />
             <p>No interventions needed at this priority level</p>
           </div>
         ) : (

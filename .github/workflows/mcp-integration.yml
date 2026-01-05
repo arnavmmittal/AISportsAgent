@@ -1,0 +1,86 @@
+name: MCP Server - Full Integration Tests
+
+# Run less frequently (nightly or manual) to save CI minutes
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 2 * * *'  # 2 AM daily
+  push:
+    branches:
+      - main  # Only on main branch merges
+
+jobs:
+  integration-test:
+    name: Full Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image with full dependencies
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: infra/docker/mcp-server.Dockerfile
+          push: false
+          load: true
+          tags: mcp-server:integration-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ENVIRONMENT: development
+        run: |
+          docker run --rm \
+            --network host \
+            -e DATABASE_URL \
+            -e REDIS_URL \
+            -e OPENAI_API_KEY \
+            -e ENVIRONMENT \
+            mcp-server:integration-test \
+            pytest tests/ -v --cov=app --cov-report=term
+
+      - name: Test ChromaDB integration
+        run: |
+          docker run --rm \
+            mcp-server:integration-test \
+            python -c "import chromadb; print('ChromaDB OK')"
+
+      - name: Test sentence-transformers models
+        run: |
+          docker run --rm \
+            mcp-server:integration-test \
+            python -c "from sentence_transformers import SentenceTransformer; print('Models OK')"

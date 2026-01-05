@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, AlertTriangle, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/shared/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+} from '@/components/shared/ui/popover';
+import { Badge } from '@/components/shared/ui/badge';
+import { Card } from '@/components/shared/ui/card';
 
 interface Notification {
   id: string;
@@ -84,11 +84,11 @@ export function NotificationBell() {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'CRITICAL':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-muted-foreground/20 text-muted-foreground border-muted-foreground';
       case 'HIGH':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
+        return 'bg-muted/20 text-muted-foreground border-muted';
       case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-muted/20 text-muted-foreground border-muted';
       default:
         return 'bg-muted text-foreground border-border';
     }
@@ -137,8 +137,8 @@ export function NotificationBell() {
                   <div className="flex items-start gap-3">
                     <div className="mt-1">
                       {notification.type === 'CRISIS_ALERT' ? (
-                        <div className="p-2 rounded-full bg-red-100">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <div className="p-2 rounded-full bg-muted-foreground/20">
+                          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                         </div>
                       ) : (
                         <div className="p-2 rounded-full bg-blue-100">
@@ -181,7 +181,7 @@ export function NotificationBell() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="mt-2 w-full text-red-600 border-red-300 hover:bg-red-50"
+                          className="mt-2 w-full text-muted-foreground border-muted-foreground hover:bg-muted-foreground/10"
                           onClick={() => {
                             window.location.href = `/coach/athletes/${notification.athleteId}`;
                           }}

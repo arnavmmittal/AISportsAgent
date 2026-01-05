@@ -91,7 +91,7 @@ export default function AssignmentDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
           <p className="mt-4 text-muted-foreground">Loading assignment...</p>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function AssignmentDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-xl text-muted-foreground">Assignment not found</p>
-          <Link href="/coach/assignments" className="mt-4 inline-block text-purple-600 hover:text-purple-700">
+          <Link href="/coach/assignments" className="mt-4 inline-block text-accent hover:text-accent">
             ← Back to Assignments
           </Link>
         </div>
@@ -120,7 +120,7 @@ export default function AssignmentDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
             href="/coach/assignments"
-            className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-4"
+            className="inline-flex items-center text-accent hover:text-accent mb-4"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -142,7 +142,7 @@ export default function AssignmentDetailPage() {
                   <span
                     className={`px-3 py-1 rounded-full font-medium ${
                       isOverdue(assignment.dueDate)
-                        ? 'bg-red-100 text-red-700'
+                        ? 'bg-muted-foreground/20 text-muted-foreground'
                         : 'bg-blue-100 text-blue-700'
                     }`}
                   >
@@ -165,19 +165,19 @@ export default function AssignmentDetailPage() {
               <div className="text-2xl font-bold text-foreground">{stats.total}</div>
             </div>
 
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-green-700 text-sm font-medium mb-1">Submitted</div>
-              <div className="text-2xl font-bold text-green-600">{stats.submitted}</div>
+            <div className="bg-secondary/10 rounded-lg p-4">
+              <div className="text-secondary text-sm font-medium mb-1">Submitted</div>
+              <div className="text-2xl font-bold text-secondary">{stats.submitted}</div>
             </div>
 
-            <div className="bg-amber-50 rounded-lg p-4">
-              <div className="text-amber-700 text-sm font-medium mb-1">Pending</div>
-              <div className="text-2xl font-bold text-amber-600">{stats.pending}</div>
+            <div className="bg-muted/10 rounded-lg p-4">
+              <div className="text-muted-foreground text-sm font-medium mb-1">Pending</div>
+              <div className="text-2xl font-bold text-muted-foreground">{stats.pending}</div>
             </div>
 
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-purple-700 text-sm font-medium mb-1">Reviewed</div>
-              <div className="text-2xl font-bold text-purple-600">{stats.reviewed}</div>
+            <div className="bg-accent/10 rounded-lg p-4">
+              <div className="text-accent text-sm font-medium mb-1">Reviewed</div>
+              <div className="text-2xl font-bold text-accent">{stats.reviewed}</div>
             </div>
           </div>
         </div>
@@ -202,7 +202,7 @@ export default function AssignmentDetailPage() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center">
                       <span className="text-lg">
                         {submission.athlete.name.charAt(0).toUpperCase()}
                       </span>
@@ -221,17 +221,17 @@ export default function AssignmentDetailPage() {
 
                   <div className="flex items-center gap-2">
                     {submission.status === 'PENDING' && (
-                      <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                      <span className="px-3 py-1 bg-muted/20 text-muted-foreground rounded-full text-sm font-medium">
                         Not Submitted
                       </span>
                     )}
                     {submission.status === 'SUBMITTED' && (
-                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                      <span className="px-3 py-1 bg-secondary/20 text-secondary rounded-full text-sm font-medium">
                         ✓ Submitted
                       </span>
                     )}
                     {submission.status === 'REVIEWED' && (
-                      <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                      <span className="px-3 py-1 bg-accent/20 text-accent rounded-full text-sm font-medium">
                         ✓ Reviewed
                       </span>
                     )}
@@ -272,7 +272,7 @@ export default function AssignmentDetailPage() {
                               console.error('Failed to mark as reviewed:', error);
                             }
                           }}
-                          className="px-3 py-1 text-purple-600 hover:text-purple-700 font-medium"
+                          className="px-3 py-1 text-accent hover:text-accent font-medium"
                         >
                           Mark as Reviewed
                         </button>

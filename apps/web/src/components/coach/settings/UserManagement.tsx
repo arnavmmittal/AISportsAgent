@@ -86,14 +86,14 @@ export default function UserManagement() {
                     <h4 className="text-sm font-semibold text-white">{user.name}</h4>
                     <span className={`text-xs font-medium px-2 py-1 rounded ${
                       user.role === 'coach'
-                        ? 'bg-purple-900/30 text-purple-400'
+                        ? 'bg-accent/20/30 text-accent'
                         : 'bg-blue-900/30 text-blue-400'
                     }`}>
                       {user.role.toUpperCase()}
                     </span>
                     <span className={`text-xs font-medium px-2 py-1 rounded ${
                       user.status === 'active'
-                        ? 'bg-green-900/30 text-green-400'
+                        ? 'bg-secondary/20/30 text-accent'
                         : 'bg-slate-700 text-slate-400'
                     }`}>
                       {user.status}
@@ -111,7 +111,7 @@ export default function UserManagement() {
                 <button className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors">
                   Edit
                 </button>
-                <button className="px-3 py-1 text-xs bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded transition-colors">
+                <button className="px-3 py-1 text-xs bg-muted-foreground/20/30 hover:bg-muted-foreground/20/50 text-muted-foreground rounded transition-colors">
                   Remove
                 </button>
               </div>

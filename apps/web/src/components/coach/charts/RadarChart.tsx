@@ -155,7 +155,7 @@ export function ReadinessRadarChart({
           {
             key: 'score',
             label: 'Readiness Dimensions',
-            color: '#22c55e',
+            color: '#3B82F6', // secondary (bright blue)
             fillOpacity: 0.3,
           },
         ]}
@@ -221,13 +221,13 @@ export function ReadinessComparisonRadar({
         {
           key: 'athlete1',
           label: athlete1Name,
-          color: '#3b82f6',
+          color: '#3B82F6', // secondary (bright blue)
           fillOpacity: 0.2,
         },
         {
           key: 'athlete2',
           label: athlete2Name,
-          color: '#8b5cf6',
+          color: '#5BA3F5', // accent (light blue)
           fillOpacity: 0.2,
         },
       ]}
@@ -293,13 +293,13 @@ export function AthleteVsTeamRadar({
           {
             key: 'athlete',
             label: athleteName,
-            color: '#22c55e',
+            color: '#3B82F6', // secondary (bright blue)
             fillOpacity: 0.3,
           },
           {
             key: 'team',
             label: 'Team Average',
-            color: '#64748b',
+            color: '#94A3B8', // muted-foreground (silver)
             fillOpacity: 0.1,
           },
         ]}

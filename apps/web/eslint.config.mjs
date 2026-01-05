@@ -21,6 +21,8 @@ const eslintConfig = [
       "coverage/**/*",
       "**/*.config.js",
       "**/*.config.mjs",
+      "scripts/**/*",      // Ignore CommonJS script files
+      "next-env.d.ts",     // Ignore Next.js generated types
     ],
   },
   // Extend Next.js ESLint config

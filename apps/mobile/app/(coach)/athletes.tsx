@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { apiClient } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 
@@ -54,7 +55,10 @@ export default function CoachAthletesScreen() {
       style={styles.athleteCard}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        // TODO: Navigate to athlete detail screen
+        router.push({
+          pathname: '/(coach)/athlete-detail',
+          params: { athleteId: item.id },
+        });
       }}
       activeOpacity={0.8}
     >

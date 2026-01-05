@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { Input } from '@/components/shared/ui/input';
+import { Label } from '@/components/shared/ui/label';
+import { Switch } from '@/components/shared/ui/switch';
+import { Badge } from '@/components/shared/ui/badge';
 import {
   Settings,
   User,
@@ -104,7 +104,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <Settings className="w-8 h-8 text-purple-600" />
+          <Settings className="w-8 h-8 text-accent" />
           Settings
         </h1>
         <p className="text-gray-600 mt-1">Manage your profile and preferences</p>
@@ -114,7 +114,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <User className="w-5 h-5 text-purple-600" />
+            <User className="w-5 h-5 text-accent" />
             <CardTitle>Profile Information</CardTitle>
           </div>
           <CardDescription>Update your personal and athletic information</CardDescription>
@@ -340,7 +340,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-green-600" />
+            <Shield className="w-5 h-5 text-secondary" />
             <CardTitle>Privacy & Data Sharing</CardTitle>
           </div>
           <CardDescription>Control how your data is used and shared</CardDescription>
@@ -402,7 +402,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleSavePrivacy}
               variant="outline"
-              className="border-green-600 text-green-600 hover:bg-green-50"
+              className="border-secondary text-secondary hover:bg-secondary/10"
             >
               <Save className="w-4 h-4 mr-2" />
               Save Settings
@@ -412,16 +412,16 @@ export default function SettingsPage() {
       </Card>
 
       {/* Account Actions */}
-      <Card className="border-red-200">
+      <Card className="border-muted-foreground">
         <CardHeader>
-          <CardTitle className="text-red-700">Account Actions</CardTitle>
+          <CardTitle className="text-muted-foreground">Account Actions</CardTitle>
           <CardDescription>Manage your account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Button
             onClick={handleLogout}
             variant="outline"
-            className="w-full border-red-600 text-red-600 hover:bg-red-50"
+            className="w-full border-muted-foreground text-muted-foreground hover:bg-muted-foreground/10"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Log Out

@@ -208,9 +208,9 @@ export default function PatternDetection() {
               key={pattern.id}
               className={`p-5 rounded-lg border ${
                 pattern.severity === 'critical'
-                  ? 'bg-red-900/20 border-red-700'
+                  ? 'bg-muted-foreground/20 border-muted-foreground'
                   : pattern.severity === 'warning'
-                  ? 'bg-amber-900/20 border-amber-700'
+                  ? 'bg-muted-foreground/20/20 border-muted-foreground'
                   : 'bg-blue-900/20 border-blue-700'
               }`}
             >
@@ -227,9 +227,9 @@ export default function PatternDetection() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         pattern.severity === 'critical'
-                          ? 'bg-red-900/50 text-red-300'
+                          ? 'bg-muted-foreground/20/50 text-chrome'
                           : pattern.severity === 'warning'
-                          ? 'bg-amber-900/50 text-amber-300'
+                          ? 'bg-muted-foreground/20/50 text-chrome'
                           : 'bg-blue-900/50 text-blue-300'
                       }`}
                     >
@@ -261,7 +261,7 @@ export default function PatternDetection() {
 
                   {/* Implications */}
                   <div className="p-3 bg-slate-900/50 rounded border border-slate-600 mb-3">
-                    <h4 className="text-xs font-semibold text-yellow-400 uppercase mb-1">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">
                       Implications:
                     </h4>
                     <p className="text-sm text-slate-200">{pattern.implications}</p>

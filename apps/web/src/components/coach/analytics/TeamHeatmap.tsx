@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
 import { AlertTriangle, TrendingDown } from 'lucide-react';
 
 interface HeatmapCell {
@@ -104,15 +104,15 @@ export function TeamHeatmap({ coachId, days = 14 }: TeamHeatmapProps) {
   const getCellColor = (level: string) => {
     switch (level) {
       case 'OPTIMAL':
-        return 'bg-green-500';
+        return 'bg-secondary/100';
       case 'GOOD':
         return 'bg-blue-500';
       case 'MODERATE':
-        return 'bg-amber-500';
+        return 'bg-muted/100';
       case 'LOW':
-        return 'bg-orange-500';
+        return 'bg-muted/100';
       case 'POOR':
-        return 'bg-red-500';
+        return 'bg-muted-foreground/100';
       default:
         return 'bg-gray-200';
     }
@@ -220,7 +220,7 @@ export function TeamHeatmap({ coachId, days = 14 }: TeamHeatmapProps) {
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-4 text-xs">
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-green-500 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-secondary/100 mr-2"></div>
             <span>Optimal (85-100)</span>
           </div>
           <div className="flex items-center">
@@ -228,15 +228,15 @@ export function TeamHeatmap({ coachId, days = 14 }: TeamHeatmapProps) {
             <span>Good (70-84)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-amber-500 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-muted/100 mr-2"></div>
             <span>Moderate (60-69)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-orange-500 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-muted/100 mr-2"></div>
             <span>Low (45-59)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-red-500 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-muted-foreground/100 mr-2"></div>
             <span>Poor (&lt;45)</span>
           </div>
           <div className="flex items-center">

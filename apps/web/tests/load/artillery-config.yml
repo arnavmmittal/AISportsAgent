@@ -1,0 +1,185 @@
+# Artillery Load Testing Configuration
+# Tests API endpoints under realistic production load
+#
+# Install: npm install -g artillery
+# Run: artillery run apps/web/tests/load/artillery-config.yml
+# Report: artillery report report.json
+
+config:
+  target: "http://localhost:3000"  # Change to staging/production URL
+  phases:
+    # Warmup phase (1 minute)
+    - duration: 60
+      arrivalRate: 5
+      name: "Warmup - 5 requests/sec"
+
+    # Ramp up phase (2 minutes)
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp up - 10 to 50 requests/sec"
+
+    # Sustained load phase (5 minutes)
+    - duration: 300
+      arrivalRate: 50
+      name: "Sustained load - 50 requests/sec"
+
+    # Peak load phase (2 minutes)
+    - duration: 120
+      arrivalRate: 100
+      name: "Peak load - 100 requests/sec"
+
+    # Cool down phase (1 minute)
+    - duration: 60
+      arrivalRate: 10
+      name: "Cool down - 10 requests/sec"
+
+  # Performance thresholds
+  ensure:
+    maxErrorRate: 1  # Max 1% error rate
+    p95: 2000  # p95 latency < 2000ms
+    p99: 5000  # p99 latency < 5000ms
+
+  # HTTP settings
+  http:
+    timeout: 30  # 30 second timeout
+
+  # Load test plugins
+  plugins:
+    expect: {}
+    metrics-by-endpoint: {}
+
+  # Variables
+  variables:
+    testAthleteId: "test-athlete-1"
+    testSessionId: "test-session-1"
+
+scenarios:
+  # Scenario 1: Athlete chat flow (most common)
+  - name: "Athlete Chat Flow"
+    weight: 60  # 60% of traffic
+    flow:
+      # Health check
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200
+
+      # Login
+      - post:
+          url: "/api/auth/mobile/login"
+          json:
+            email: "athlete{{ $randomNumber() }}@test.edu"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Chat stream (streaming response)
+      - post:
+          url: "/api/chat/stream"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            session_id: "{{ testSessionId }}"
+            athlete_id: "{{ testAthleteId }}"
+            message: "I'm feeling anxious before the big game tomorrow"
+          expect:
+            - statusCode: 200
+            - contentType: "text/event-stream"
+
+      # Get chat messages
+      - get:
+          url: "/api/chat/{{ testSessionId }}/messages"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      # Think time (simulate user reading response)
+      - think: 5
+
+  # Scenario 2: Mood logging
+  - name: "Mood Logging"
+    weight: 20  # 20% of traffic
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/mobile/login"
+          json:
+            email: "athlete{{ $randomNumber() }}@test.edu"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Create mood log
+      - post:
+          url: "/api/mood-logs"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            athleteId: "{{ testAthleteId }}"
+            mood: "{{ $randomNumber(1, 10) }}"
+            confidence: "{{ $randomNumber(1, 10) }}"
+            stress: "{{ $randomNumber(1, 10) }}"
+            energy: "{{ $randomNumber(1, 10) }}"
+            sleep: "{{ $randomNumber(1, 10) }}"
+            notes: "Feeling prepared for today's practice"
+          expect:
+            - statusCode: 201
+
+      # Get mood logs
+      - get:
+          url: "/api/mood-logs?athleteId={{ testAthleteId }}&limit=30"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # Scenario 3: Coach dashboard (less frequent but heavier queries)
+  - name: "Coach Dashboard"
+    weight: 15  # 15% of traffic
+    flow:
+      # Login as coach
+      - post:
+          url: "/api/auth/mobile/login"
+          json:
+            email: "coach{{ $randomNumber() }}@test.edu"
+            password: "TestPassword123!"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Get athlete list
+      - get:
+          url: "/api/athletes"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      # Get weekly summaries
+      - get:
+          url: "/api/coach/summaries?week={{ $randomNumber(1, 52) }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # Scenario 4: Health checks (monitoring systems)
+  - name: "Health Checks"
+    weight: 5  # 5% of traffic
+    flow:
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: status
+
+      - get:
+          url: "/api/health/db"
+          expect:
+            - statusCode: 200
+            - hasProperty: database

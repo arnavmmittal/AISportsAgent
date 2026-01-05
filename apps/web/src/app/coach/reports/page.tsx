@@ -207,10 +207,10 @@ export default function ReportsPage() {
   };
 
   const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'text-green-600 dark:text-green-400';
-    if (score >= 70) return 'text-yellow-600 dark:text-yellow-400';
-    if (score >= 50) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
+    if (score >= 85) return 'text-secondary dark:text-accent';
+    if (score >= 70) return 'text-muted-foreground dark:text-muted-foreground';
+    if (score >= 50) return 'text-muted-foreground dark:text-muted-foreground';
+    return 'text-muted-foreground dark:text-muted-foreground';
   };
 
   const handleViewReport = (report: Report) => {
@@ -342,10 +342,10 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Avg Readiness</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Avg Readiness</div>
                 <div className="text-5xl font-black mb-2">75<span className="text-2xl opacity-75">/100</span></div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">This month</div>
               </div>
@@ -353,10 +353,10 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-green-100 text-xs font-bold uppercase tracking-wider mb-2">Correlation</div>
+                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Correlation</div>
                 <div className="text-5xl font-black mb-2">r=0.78</div>
                 <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Readiness ↔ Performance</div>
               </div>
@@ -443,7 +443,7 @@ export default function ReportsPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-white">Multi-Modal Correlation Analysis</h2>
-                  <p className="text-purple-100 font-semibold">How chat conversations predict performance</p>
+                  <p className="text-accent font-semibold">How chat conversations predict performance</p>
                 </div>
               </div>
             </div>
@@ -457,23 +457,23 @@ export default function ReportsPage() {
                   <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">Strong correlation</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
-                  <div className="text-sm font-bold text-purple-600 dark:text-purple-400 mb-2">R² (Variance Explained)</div>
-                  <div className="text-4xl font-black text-purple-900 dark:text-purple-200">{Math.round(multiModalAnalysis.combinedModel.rSquared * 100)}%</div>
-                  <div className="text-xs text-purple-700 dark:text-purple-300 mt-1">Predictive power</div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border-2 border-accent/20 dark:border-accent">
+                  <div className="text-sm font-bold text-accent dark:text-accent mb-2">R² (Variance Explained)</div>
+                  <div className="text-4xl font-black text-secondary dark:text-accent">{Math.round(multiModalAnalysis.combinedModel.rSquared * 100)}%</div>
+                  <div className="text-xs text-accent dark:text-accent mt-1">Predictive power</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border-2 border-green-200 dark:border-green-800">
-                  <div className="text-sm font-bold text-green-600 dark:text-green-400 mb-2">Predictive Accuracy</div>
-                  <div className="text-4xl font-black text-green-900 dark:text-green-200">{multiModalAnalysis.combinedModel.predictiveAccuracy}%</div>
-                  <div className="text-xs text-green-700 dark:text-green-300 mt-1">Of game outcomes</div>
+                <div className="bg-gradient-to-br from-secondary/10 to-secondary/20 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border-2 border-secondary/20 dark:border-secondary">
+                  <div className="text-sm font-bold text-secondary dark:text-accent mb-2">Predictive Accuracy</div>
+                  <div className="text-4xl font-black text-secondary dark:text-accent">{multiModalAnalysis.combinedModel.predictiveAccuracy}%</div>
+                  <div className="text-xs text-secondary dark:text-accent mt-1">Of game outcomes</div>
                 </div>
               </div>
 
               {/* Topic Impact Table */}
               <div className="mb-8">
                 <h3 className="text-xl font-black text-foreground dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <MessageSquare className="w-5 h-5 text-accent dark:text-accent" />
                   Topic Impact on Performance
                 </h3>
                 <div className="overflow-x-auto">
@@ -495,8 +495,8 @@ export default function ReportsPage() {
                           </td>
                           <td className={`py-3 px-4 text-right font-black ${
                             topic.avgPerformanceImpact < 0
-                              ? 'text-red-600 dark:text-red-400'
-                              : 'text-green-600 dark:text-green-400'
+                              ? 'text-muted-foreground dark:text-muted-foreground'
+                              : 'text-secondary dark:text-accent'
                           }`}>
                             {topic.avgPerformanceImpact > 0 ? '+' : ''}{topic.avgPerformanceImpact.toFixed(1)}%
                           </td>
@@ -509,9 +509,9 @@ export default function ReportsPage() {
                           <td className="py-3 px-4 text-center">
                             <span className={`text-xs font-black px-2 py-1 rounded ${
                               topic.pValue < 0.01
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                ? 'bg-secondary/20 dark:bg-secondary/20/30 text-secondary dark:text-accent'
                                 : topic.pValue < 0.05
-                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                                ? 'bg-muted/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome'
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                             }`}>
                               {topic.pValue < 0.01 ? '***' : topic.pValue < 0.05 ? '**' : '*'}
@@ -536,8 +536,8 @@ export default function ReportsPage() {
                       key={mindset.mindset}
                       className={`rounded-xl p-5 border-2 ${
                         mindset.comparisonToBaseline < 0
-                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                          : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                          ? 'bg-muted-foreground/10 dark:bg-muted-foreground/20 border-muted-foreground dark:border-muted-foreground'
+                          : 'bg-secondary/10 dark:bg-secondary/20 border-secondary/20 dark:border-secondary'
                       }`}
                     >
                       <div className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase">
@@ -545,8 +545,8 @@ export default function ReportsPage() {
                       </div>
                       <div className={`text-3xl font-black mb-1 ${
                         mindset.comparisonToBaseline < 0
-                          ? 'text-red-700 dark:text-red-300'
-                          : 'text-green-700 dark:text-green-300'
+                          ? 'text-muted-foreground dark:text-chrome'
+                          : 'text-secondary dark:text-accent'
                       }`}>
                         {mindset.comparisonToBaseline > 0 ? '+' : ''}{mindset.comparisonToBaseline.toFixed(1)}%
                       </div>
@@ -559,15 +559,15 @@ export default function ReportsPage() {
               </div>
 
               {/* Actionable Insights */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-l-4 border-purple-500 p-6 rounded-lg">
+              <div className="bg-gradient-to-r from-accent/10 to-accent/20 dark:from-purple-900/20 dark:to-pink-900/20 border-l-4 border-accent p-6 rounded-lg">
                 <h4 className="font-black text-foreground dark:text-gray-100 mb-3 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <TrendingUp className="w-5 h-5 text-accent dark:text-accent" />
                   Actionable Insights
                 </h4>
                 <ul className="space-y-2">
                   {multiModalAnalysis.actionableInsights.map((insight, idx) => (
                     <li key={idx} className="text-sm text-foreground dark:text-gray-200 font-semibold flex items-start gap-2">
-                      <span className="text-purple-600 dark:text-purple-400 mt-0.5">•</span>
+                      <span className="text-accent dark:text-accent mt-0.5">•</span>
                       <span>{insight}</span>
                     </li>
                   ))}
@@ -578,19 +578,19 @@ export default function ReportsPage() {
         )}
 
         {/* Recommendation Card */}
-        <div className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-2xl shadow-xl p-8 border-2 border-purple-200 dark:border-purple-800 mt-10">
+        <div className="bg-gradient-to-r from-accent/20 to-accent/30 dark:from-purple-900/30 dark:to-pink-900/30 rounded-2xl shadow-xl p-8 border-2 border-accent/20 dark:border-accent mt-10">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+            <div className="w-16 h-16 bg-gradient-to-br from-accent to-accent rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
               <BarChart3 className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-purple-900 dark:text-purple-200 mb-2">Performance Correlation Insights</h3>
-              <p className="text-purple-800 dark:text-purple-300 font-semibold mb-4">
+              <h3 className="text-xl font-black text-secondary dark:text-accent mb-2">Performance Correlation Insights</h3>
+              <p className="text-secondary dark:text-accent font-semibold mb-4">
                 Strong correlation (r=0.78, p&lt;0.01) found between mental readiness scores and game performance.
                 This is your competitive edge - use readiness forecasts to optimize lineups and interventions.
               </p>
-              <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border-2 border-purple-300 dark:border-purple-700">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-purple-900 dark:text-purple-200">
+              <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border-2 border-accent/20 dark:border-accent">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-secondary dark:text-accent">
                   <div>✅ When readiness &gt;85: Avg 78 PPG</div>
                   <div>⚠️ When readiness &lt;70: Avg 62 PPG (-16 PPG)</div>
                   <div>🎯 Top performer correlation: r=0.82</div>
@@ -628,17 +628,17 @@ export default function ReportsPage() {
                     <div className="text-2xl font-black text-blue-900 dark:text-blue-200 uppercase">{selectedReport.type}</div>
                   </div>
 
-                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-800">
-                    <div className="text-sm font-bold text-purple-600 dark:text-purple-400 mb-2">Avg Readiness</div>
+                  <div className="bg-accent/10 dark:bg-accent/20 rounded-xl p-6 border-2 border-accent/20 dark:border-accent">
+                    <div className="text-sm font-bold text-accent dark:text-accent mb-2">Avg Readiness</div>
                     <div className={`text-4xl font-black ${getReadinessColor(selectedReport.readinessAvg)}`}>
                       {selectedReport.readinessAvg}
                       <span className="text-xl opacity-75">/100</span>
                     </div>
                   </div>
 
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border-2 border-green-200 dark:border-green-800">
-                    <div className="text-sm font-bold text-green-600 dark:text-green-400 mb-2">Generated</div>
-                    <div className="text-xl font-black text-green-900 dark:text-green-200">
+                  <div className="bg-secondary/10 dark:bg-secondary/20 rounded-xl p-6 border-2 border-secondary/20 dark:border-secondary">
+                    <div className="text-sm font-bold text-secondary dark:text-accent mb-2">Generated</div>
+                    <div className="text-xl font-black text-secondary dark:text-accent">
                       {new Date(selectedReport.generatedAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -650,12 +650,12 @@ export default function ReportsPage() {
 
                 {/* Performance Correlation */}
                 {selectedReport.performanceCorrelation && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-l-4 border-green-500 p-6 rounded-lg mb-8">
-                    <h3 className="font-black text-green-900 dark:text-green-200 mb-2 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-l-4 border-secondary p-6 rounded-lg mb-8">
+                    <h3 className="font-black text-secondary dark:text-accent mb-2 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-secondary dark:text-accent" />
                       Performance Correlation
                     </h3>
-                    <p className="text-lg text-green-800 dark:text-green-300 font-semibold">
+                    <p className="text-lg text-secondary dark:text-accent font-semibold">
                       {selectedReport.performanceCorrelation}
                     </p>
                   </div>
@@ -664,7 +664,7 @@ export default function ReportsPage() {
                 {/* Key Insights */}
                 <div className="mb-8">
                   <h3 className="text-2xl font-black text-foreground dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <Brain className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    <Brain className="w-6 h-6 text-accent dark:text-accent" />
                     Key Insights
                   </h3>
                   <div className="space-y-4">
