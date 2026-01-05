@@ -55,7 +55,7 @@ AISportsAgent/
 ├── packages/
 │   ├── api-client/   # Shared API client
 │   └── types/        # Shared TypeScript types
-└── ai-sports-mcp/    # Python MCP server (future advanced features)
+└── services/mcp-server/    # Python MCP server (future advanced features)
 ```
 
 ### Tech Stack

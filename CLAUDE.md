@@ -49,7 +49,7 @@ AI Sports Agent is an evidence-based virtual sports psychology assistant for col
 ```
 SportsAgent/
 ├── ai-sports-agent/        # Next.js frontend application
-├── ai-sports-mcp/          # Python MCP server with agent orchestration
+├── services/mcp-server/          # Python MCP server with agent orchestration
 └── GETTING_STARTED.md      # Setup guide
 ```
 
@@ -121,7 +121,7 @@ npm run prisma:studio    # Database GUI
 - Mood tracking visualizations
 - Goal setting features
 
-## ai-sports-mcp (MCP Server Platform)
+## services/mcp-server (MCP Server Platform)
 
 ### Tech Stack
 - **Framework**: FastAPI (Python)
@@ -249,7 +249,7 @@ OPENAI_API_KEY="sk-..."
 OPENAI_MODEL="gpt-4-turbo-preview"
 ```
 
-**ai-sports-mcp** (.env):
+**services/mcp-server** (.env):
 ```
 DATABASE_URL="postgresql://..."
 OPENAI_API_KEY="sk-..."
@@ -378,7 +378,7 @@ The project is planned in phases:
 ### Two Architecture Options
 The project has TWO separate implementations:
 1. **ai-sports-agent**: Simpler Next.js-only approach (good for MVP)
-2. **ai-sports-mcp**: Advanced MCP agent platform (full-featured)
+2. **services/mcp-server**: Advanced MCP agent platform (full-featured)
 
 Choose which to develop based on requirements. They can coexist or one can be selected.
 
@@ -428,8 +428,8 @@ Choose which to develop based on requirements. They can coexist or one can be se
 
 - **Main Docs**: `GETTING_STARTED.md`, `README.md` files in each directory
 - **Setup Guide**: `ai-sports-agent/SETUP.md`
-- **Architecture**: `ai-sports-mcp/ARCHITECTURE.md`
-- **Implementation**: `ai-sports-mcp/IMPLEMENTATION_GUIDE.md`
+- **Architecture**: `services/mcp-server/ARCHITECTURE.md`
+- **Implementation**: `services/mcp-server/IMPLEMENTATION_GUIDE.md`
 
 ## Notes
 
