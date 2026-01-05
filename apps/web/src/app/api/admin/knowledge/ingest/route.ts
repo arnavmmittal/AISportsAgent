@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         source: validated.source,
         sourceUrl: validated.sourceUrl || null,
         embedding,
-        category: validated.category,
+        category: validated.category as any,
         tags: validated.tags?.join(', ') || '',
         isActive: validated.isActive,
         updatedAt: new Date(),
