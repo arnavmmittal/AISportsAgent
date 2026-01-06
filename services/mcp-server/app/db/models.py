@@ -3,13 +3,14 @@ SQLAlchemy ORM models matching Prisma schema.
 """
 
 from sqlalchemy import (
-    Column, String, Integer, Boolean, DateTime, Text, JSON,
+    Column, String, Integer, Boolean, DateTime, Text, JSON, Float,
     ForeignKey, Enum as SQLEnum, Index
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ARRAY
 from datetime import datetime
 import enum
+import uuid
 
 from .database import Base
 
@@ -465,6 +466,30 @@ class TeamConfig(Base):
 
     __table_args__ = (
         Index("idx_teamconfig_sport", "sport"),
+    )
+
+
+class TokenUsage(Base):
+    """Token usage tracking for billing and cost controls."""
+    __tablename__ = "TokenUsage"
+
+    id = Column(String, primary_key=True, default=lambda: f"usage_{uuid.uuid4().hex}")
+
+    userId = Column(String, ForeignKey("User.id"), nullable=True)
+    tenantId = Column(String, ForeignKey("School.id"), nullable=True)
+
+    tokens = Column(Integer, nullable=False)
+    costUsd = Column(Float, nullable=False)  # Cost in USD (e.g., 0.0234)
+    model = Column(String, nullable=False)  # e.g., "gpt-4-turbo-preview"
+    endpoint = Column(String, nullable=False)  # e.g., "/v1/chat/stream"
+    duration = Column(Float, nullable=False)  # Duration in seconds
+
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_tokenusage_tenantId_timestamp", "tenantId", "timestamp"),
+        Index("idx_tokenusage_userId_timestamp", "userId", "timestamp"),
+        Index("idx_tokenusage_timestamp", "timestamp"),
     )
 
 
