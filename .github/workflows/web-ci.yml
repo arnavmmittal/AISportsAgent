@@ -185,6 +185,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
+      - name: Clean build directory
+        run: rm -rf apps/web/.next apps/web/out
+
       - name: Build application
         run: pnpm --filter web build
         env:
