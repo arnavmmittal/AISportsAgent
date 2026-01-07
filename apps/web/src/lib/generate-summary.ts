@@ -1,8 +1,16 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Lazy initialization to avoid build-time errors
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
+    });
+  }
+  return openai;
+}
 
 export interface SummaryResult {
   summary: string;
@@ -14,6 +22,7 @@ export interface SummaryResult {
 export async function generateChatSummary(
   messages: Array<{ role: string; content: string }>
 ): Promise<SummaryResult> {
+  const client = getOpenAIClient();
   // Prepare conversation for GPT-4
   const conversationText = messages
     .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -43,7 +52,7 @@ Respond in JSON format with these fields:
 }`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [
         { role: 'system', content: systemPrompt },

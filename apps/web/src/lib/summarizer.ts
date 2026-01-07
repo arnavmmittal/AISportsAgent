@@ -11,9 +11,17 @@ import { prisma, Prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 import { encryptFieldSafe, encryptArray } from './encryption';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization to avoid build-time errors
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 /**
  * Metadata extracted from a single message
@@ -233,6 +241,8 @@ async function generateSummaryWithAI(
   aggregated: WeeklyAggregatedMetadata,
   athleteGoals: any[]
 ): Promise<WeeklySummaryOutput> {
+  const client = getOpenAIClient();
+
   // If no activity, return empty summary
   if (aggregated.sessionCount === 0) {
     return {
@@ -316,7 +326,7 @@ Return ONLY a JSON object with this structure:
 }`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
       messages: [
         {

@@ -210,12 +210,19 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
 
+      - name: Clean build directory
+        run: rm -rf apps/web/.next apps/web/out
+
       - name: Build application
         run: pnpm --filter web build
         env:
           NODE_ENV: production
           # Dummy DATABASE_URL for build (not actually used, just for validation)
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
+          # Dummy auth/API keys for build (not used at runtime)
+          NEXTAUTH_SECRET: ci-build-secret-at-least-32-characters-long
+          NEXTAUTH_URL: http://localhost:3000
+          OPENAI_API_KEY: sk-proj-ci-build-dummy-key-not-used-at-build-time
           # Skip telemetry in CI
           NEXT_TELEMETRY_DISABLED: 1
 

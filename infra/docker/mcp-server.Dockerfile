@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy requirements file
-COPY ai-sports-mcp/server/requirements.txt .
+COPY services/mcp-server/requirements.txt .
 
 # Install Python dependencies to user directory (no root needed)
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -43,9 +43,9 @@ ENV PATH=/root/.local/bin:$PATH
 WORKDIR /app
 
 # Copy application code
-COPY ai-sports-mcp/server/app ./app
-COPY ai-sports-mcp/server/alembic ./alembic
-COPY ai-sports-mcp/server/alembic.ini .
+COPY services/mcp-server/app ./app
+COPY services/mcp-server/alembic ./alembic
+COPY services/mcp-server/alembic.ini .
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \

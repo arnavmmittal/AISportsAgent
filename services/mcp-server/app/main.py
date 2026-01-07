@@ -10,7 +10,8 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api.routes import chat, coach, voice, athlete, analytics
+from app.api.routes import chat, coach, voice, athlete, analytics, usage
+from app.middleware.cost_control import CostControlMiddleware
 
 logger = setup_logging()
 
@@ -53,6 +54,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Cost Control Middleware (Token tracking, rate limiting, budget enforcement)
+app.add_middleware(CostControlMiddleware)
 
 
 # Global exception handler
@@ -107,6 +111,12 @@ app.include_router(
 app.include_router(
     analytics.router,
     tags=["Performance Analytics"]
+)
+
+app.include_router(
+    usage.router,
+    prefix="/api",
+    tags=["Usage & Billing"]
 )
 
 

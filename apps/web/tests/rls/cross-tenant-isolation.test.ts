@@ -5,16 +5,22 @@
  * data leakage between different schools (multi-tenant isolation).
  *
  * CRITICAL SECURITY TEST - Must pass 100% before production launch
+ *
+ * NOTE: Skipped in CI (requires live Supabase instance)
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { hash } from 'bcryptjs';
+import { isCI } from '../setup';
 
 // Test configuration
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Skip RLS tests in CI (requires live Supabase with RLS configured)
+const describeOrSkip = isCI || !SUPABASE_URL ? describe.skip : describe;
 
 // Test data
 let school1Id: string;
@@ -24,7 +30,7 @@ let athlete2Id: string;
 let athlete1Token: string;
 let athlete2Token: string;
 
-describe('Cross-Tenant Isolation (RLS)', () => {
+describeOrSkip('Cross-Tenant Isolation (RLS)', () => {
   beforeAll(async () => {
     // Create two separate schools (tenants)
     const school1 = await prisma.school.create({

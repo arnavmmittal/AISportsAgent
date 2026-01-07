@@ -184,6 +184,29 @@ class Settings(BaseSettings):
     RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
 
     # ============================================================================
+    # Redis Configuration (for cost controls & rate limiting)
+    # ============================================================================
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = Field(default=6379, ge=1, le=65535)
+    REDIS_DB: int = Field(default=0, ge=0, le=15)
+    REDIS_PASSWORD: Optional[str] = None
+
+    @field_validator("REDIS_PASSWORD", mode="before")
+    @classmethod
+    def parse_redis_password(cls, v: Any) -> Optional[str]:
+        """Parse Redis password (optional)."""
+        if v == "" or v is None:
+            return None
+        return v
+
+    @property
+    def redis_url(self) -> str:
+        """Build Redis connection URL."""
+        if self.REDIS_PASSWORD:
+            return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
+    # ============================================================================
     # CORS Configuration
     # ============================================================================
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
