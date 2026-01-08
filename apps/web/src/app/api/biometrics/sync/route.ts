@@ -21,6 +21,7 @@ import {
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * POST /api/biometrics/sync

@@ -1,4 +1,5 @@
 /**
+
  * Admin Cost Usage Dashboard API
  * Provides system-wide cost statistics and usage analytics
  */
@@ -7,6 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
 import { getSystemCostStats, getUserUsageStats } from '@/lib/cost-tracking';
 import { prisma } from '@/lib/prisma';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * GET /api/admin/cost-usage

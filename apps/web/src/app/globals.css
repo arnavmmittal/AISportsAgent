@@ -1,56 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: #0F1419;
-  --color-foreground: #FFFFFF;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: #3B82F6;
-  --color-sidebar-border: #2D3E50;
-  --color-sidebar-accent-foreground: #FFFFFF;
-  --color-sidebar-accent: #1E293B;
-  --color-sidebar-primary-foreground: #FFFFFF;
-  --color-sidebar-primary: #3B82F6;
-  --color-sidebar-foreground: #FFFFFF;
-  --color-sidebar: #0F1419;
-  --color-chart-5: #BFBFBF;
-  --color-chart-4: #9CA3AF;
-  --color-chart-3: #5BA3F5;
-  --color-chart-2: #3B82F6;
-  --color-chart-1: #1E40AF;
-  --color-ring: #3B82F6;
-  --color-input: #1A2332;
-  --color-border: #2D3E50;
-  --color-destructive: #4B5563;
-  --color-destructive-foreground: #FFFFFF;
-  --color-success: #5BA3F5;
-  --color-success-foreground: #FFFFFF;
-  --color-warning: #9CA3AF;
-  --color-warning-foreground: #FFFFFF;
-  --color-accent-foreground: #1C2B3A;
-  --color-accent: #5BA3F5;
-  --color-muted-foreground: #94A3B8;
-  --color-muted: #334155;
-  --color-secondary-foreground: #FFFFFF;
-  --color-secondary: #3B82F6;
-  --color-primary-foreground: #F8FAFC;
-  --color-primary: #1E40AF;
-  --color-popover-foreground: #FFFFFF;
-  --color-popover: #1E293B;
-  --color-card-foreground: #FFFFFF;
-  --color-card: #1E293B;
-  --color-chrome: #BFBFBF;
-  --color-chrome-foreground: #1C2B3A;
-  --color-info: #3B82F6;
-  --color-info-foreground: #FFFFFF;
-  --radius-sm: calc(0.75rem - 4px);
-  --radius-md: calc(0.75rem - 2px);
-  --radius-lg: 0.75rem;
-  --radius-xl: calc(0.75rem + 4px);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --radius: 0.75rem;

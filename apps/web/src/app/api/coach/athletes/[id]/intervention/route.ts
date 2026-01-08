@@ -1,4 +1,5 @@
 /**
+
  * Coach Intervention API
  * Allows coaches to flag athletes, update relationship notes, and send check-ins
  */
@@ -6,6 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * PATCH - Update relationship notes or flag status

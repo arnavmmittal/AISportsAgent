@@ -5,6 +5,9 @@ import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, 
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 export default function CoachSettingsPage() {
   const { theme, toggleTheme, isDarkMode } = useTheme();
 

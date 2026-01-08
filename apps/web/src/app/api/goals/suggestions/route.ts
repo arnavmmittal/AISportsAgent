@@ -1,4 +1,5 @@
 /**
+
  * AI Goal Suggestions API
  * Uses OpenAI to generate personalized goal recommendations
  */
@@ -7,6 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
 import OpenAI from 'openai';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Lazy init OpenAI client (only during runtime, not build)
 let openai: OpenAI | null = null;

@@ -24,6 +24,9 @@ import {
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 export default function StudentSettingsPage() {
   const { theme, toggleTheme, isDarkMode } = useTheme();
 

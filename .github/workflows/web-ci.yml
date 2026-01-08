@@ -53,6 +53,19 @@ jobs:
   test:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ci_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,6 +88,18 @@ jobs:
         run: pnpm --filter web prisma:generate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
+
+      - name: Push Prisma Schema to Database
+        run: cd apps/web && npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db
+        continue-on-error: false  # Must succeed for tests to run
+
+      - name: Apply RLS Policies
+        run: |
+          cd apps/web
+          PGPASSWORD=postgres psql -h localhost -U postgres -d ci_db -f prisma/migrations/enable_rls_security_supabase_idempotent.sql
+        continue-on-error: false  # RLS must be enabled for tests
 
       - name: Run tests
         run: pnpm --filter web test

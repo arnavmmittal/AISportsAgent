@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 import { signupSchema } from '@/lib/validation/auth';

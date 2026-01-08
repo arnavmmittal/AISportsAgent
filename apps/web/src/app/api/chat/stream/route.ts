@@ -22,6 +22,8 @@ import {
 } from '@/lib/validation';
 import { logChatMessageCreation } from '@/lib/audit';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 

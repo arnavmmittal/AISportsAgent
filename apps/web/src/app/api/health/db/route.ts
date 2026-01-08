@@ -1,4 +1,5 @@
 /**
+
  * Database Health Check API
  *
  * GET /api/health/db
@@ -11,6 +12,10 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {

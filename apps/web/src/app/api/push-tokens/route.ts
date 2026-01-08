@@ -1,4 +1,5 @@
 /**
+
  * Push Token Registration API
  * Allows mobile devices to register/update their push notification tokens
  */
@@ -7,6 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthFromRequest } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const pushTokenSchema = z.object({
   token: z.string().min(1, 'Push token is required'),

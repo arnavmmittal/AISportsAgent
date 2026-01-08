@@ -1,4 +1,5 @@
 /**
+
  * Chat Analysis API Endpoint
  *
  * POST /api/chat/analyze
@@ -12,6 +13,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeAndStore } from '@/lib/chat-analysis';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {

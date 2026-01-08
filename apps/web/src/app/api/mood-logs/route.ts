@@ -8,6 +8,10 @@ import {
 } from '@/lib/validation';
 import { logMoodLogsView } from '@/lib/audit';
 
+// Force dynamic rendering (don't try to statically generate at build time)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   try {
     // Verify authentication (supports both JWT and session)

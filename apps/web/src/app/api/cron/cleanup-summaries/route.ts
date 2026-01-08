@@ -1,4 +1,5 @@
 /**
+
  * Cron Job: Cleanup Expired Weekly Chat Summaries
  *
  * Schedule: Daily at 2:00 AM (Vercel Cron: "0 2 * * *")
@@ -12,6 +13,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logExpiredSummaryDeletion } from '@/lib/audit';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * Verify cron job authentication

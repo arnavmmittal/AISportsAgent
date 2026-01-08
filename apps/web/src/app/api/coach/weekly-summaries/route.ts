@@ -1,4 +1,5 @@
 /**
+
  * Coach Weekly Summaries API
  *
  * Returns weekly chat summaries for athletes (ONLY if consent granted)
@@ -16,6 +17,10 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
 import { decryptFieldSafe, decryptArray } from '@/lib/encryption';
 import { logWeeklySummaryView } from '@/lib/audit';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * GET /api/coach/weekly-summaries

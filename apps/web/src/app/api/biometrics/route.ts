@@ -15,6 +15,7 @@ import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering (prevent static generation)
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * GET /api/biometrics

@@ -1,4 +1,5 @@
 /**
+
  * Health Check API
  *
  * GET /api/health
@@ -11,6 +12,10 @@
  */
 
 import { NextResponse } from 'next/server';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {

@@ -1,4 +1,5 @@
 /**
+
  * Mobile app login endpoint
  * Returns JWT token for stateless authentication
  */
@@ -8,6 +9,10 @@ import { compare } from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { prisma } from '@/lib/prisma';
 import { logLoginAttempt } from '@/lib/audit';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // JWT secret (same as NEXTAUTH_SECRET)
 const JWT_SECRET = new TextEncoder().encode(

@@ -1,10 +1,15 @@
 /**
+
  * Coach Invite Code API
  * Returns invite code for athletes to join coach's team
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCoach } from '@/lib/auth-helpers';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {

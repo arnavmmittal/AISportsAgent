@@ -1,4 +1,5 @@
 /**
+
  * API route to fetch message history for a chat session.
  *
  * GET /api/chat/[sessionId]/messages
@@ -8,6 +9,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { logChatMessagesView } from '@/lib/audit';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,

@@ -1,4 +1,5 @@
 /**
+
  * Performance Record API - Save game performance metrics
  *
  * POST /api/performance/record
@@ -12,6 +13,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireCoach, verifySchoolAccess } from '@/lib/auth-helpers';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Request validation schema
 const recordPerformanceSchema = z.object({

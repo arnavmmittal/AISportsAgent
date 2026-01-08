@@ -1,4 +1,5 @@
 /**
+
  * Coach Athlete Detail API
  * Returns detailed information about a specific athlete
  * SECURITY: Only shows athletes connected via CoachAthleteRelation with consent
@@ -7,6 +8,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(
   req: NextRequest,
