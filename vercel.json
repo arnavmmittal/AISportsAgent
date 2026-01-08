@@ -1,3 +1,4 @@
 {
-  "installCommand": "npm install -g pnpm@9.14.4 && pnpm install --filter web... --no-frozen-lockfile"
+  "installCommand": "npm install -g pnpm@9.14.4 && pnpm install --filter web... --no-frozen-lockfile",
+  "framework": "nextjs"
 }
