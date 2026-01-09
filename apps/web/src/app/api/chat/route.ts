@@ -20,11 +20,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Call MCP server (using test athlete ID for now)
-    const mcpResponse = await fetch(`${mcpServerUrl}/api/chat`, {
+    const mcpResponse = await fetch(`${mcpServerUrl}/api/chat/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.MCP_SERVICE_TOKEN}`,
       },
       body: JSON.stringify({
         session_id: `session-test-${Date.now()}`,
