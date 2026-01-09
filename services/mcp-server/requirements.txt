@@ -21,6 +21,7 @@ python-multipart==0.0.20
 # Utilities
 python-dotenv==1.0.1
 httpx==0.28.1
+numpy==1.26.4
 
 # Monitoring
 loguru==0.7.3
