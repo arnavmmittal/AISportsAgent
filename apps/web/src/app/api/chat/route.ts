@@ -1,5 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
+import { prisma } from '@/lib/prisma';
+
+// GET /api/chat - Get chat sessions for authenticated user
+export async function GET(request: NextRequest) {
+  try {
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized || !user) {
+      return response;
+    }
+
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '5', 10);
+
+    // Fetch recent chat sessions
+    const sessions = await prisma.chatSession.findMany({
+      where: {
+        athleteId: user.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+      include: {
+        Message: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+          take: 1, // Get first message for preview
+        },
+      },
+    });
+
+    // Transform to expected format
+    const transformedSessions = sessions.map((session) => ({
+      id: session.id,
+      title: session.title || 'Untitled Session',
+      preview: session.Message[0]?.content || 'No messages yet',
+      createdAt: session.createdAt.toISOString(),
+      messageCount: session.Message.length,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: transformedSessions,
+    });
+  } catch (error) {
+    console.error('Error fetching chat sessions:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch chat sessions',
+      },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

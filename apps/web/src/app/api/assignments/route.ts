@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { success: false, error: 'User not found' },
         { status: 404 }
       );
     }
@@ -58,7 +58,10 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({ assignments });
+      return NextResponse.json({
+        success: true,
+        data: assignments
+      });
     } else if (user.role === 'ATHLETE' && user.Athlete) {
       // Athlete: Get all assignments and filter in code (JSON array queries are complex in Prisma)
       const allAssignments = await prisma.assignment.findMany({
@@ -101,17 +104,20 @@ export async function GET(request: NextRequest) {
         return false;
       });
 
-      return NextResponse.json({ assignments });
+      return NextResponse.json({
+        success: true,
+        data: assignments
+      });
     } else {
       return NextResponse.json(
-        { error: 'Invalid user role' },
+        { success: false, error: 'Invalid user role' },
         { status: 403 }
       );
     }
   } catch (error) {
     console.error('Error fetching assignments:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch assignments' },
+      { success: false, error: 'Failed to fetch assignments' },
       { status: 500 }
     );
   }
@@ -132,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     if (!user || user.role !== 'COACH' || !user.Coach) {
       return NextResponse.json(
-        { error: 'Forbidden - Coach access required' },
+        { success: false, error: 'Forbidden - Coach access required' },
         { status: 403 }
       );
     }
@@ -144,6 +150,7 @@ export async function POST(request: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json(
         {
+          success: false,
           error: 'Validation failed',
           details: validationResult.error.format(),
         },
@@ -208,13 +215,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      assignment,
+      success: true,
+      data: assignment,
       message: 'Assignment created successfully',
     });
   } catch (error) {
     console.error('Error creating assignment:', error);
     return NextResponse.json(
-      { error: 'Failed to create assignment' },
+      { success: false, error: 'Failed to create assignment' },
       { status: 500 }
     );
   }

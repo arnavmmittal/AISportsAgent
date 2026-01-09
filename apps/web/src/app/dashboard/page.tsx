@@ -102,12 +102,58 @@ export default function DashboardPage() {
           console.error('Error fetching goals:', err);
         }
 
-        // TODO: Fetch chat sessions from /api/chat/sessions
-        const recentSessions: any[] = [];
+        // Fetch recent chat sessions
+        let recentSessions: any[] = [];
+        try {
+          const sessionsResponse = await fetch(`/api/chat?limit=5`);
+          const sessionsData = await sessionsResponse.json();
+          if (sessionsData.success && sessionsData.data.length > 0) {
+            recentSessions = sessionsData.data;
+          }
+        } catch (err) {
+          console.error('Error fetching chat sessions:', err);
+        }
 
         // Calculate streak from mood logs (consecutive days with entries)
-        // TODO: Implement proper streak calculation
-        const streak = 0;
+        let streak = 0;
+        try {
+          // Fetch more mood logs to calculate streak (last 90 days should be enough)
+          const streakResponse = await fetch(`/api/mood-logs?athleteId=${athleteId}&limit=90`);
+          const streakData = await streakResponse.json();
+
+          if (streakData.success && streakData.data.length > 0) {
+            // Group logs by date (YYYY-MM-DD)
+            const logsByDate = new Map<string, any>();
+            streakData.data.forEach((log: any) => {
+              const date = new Date(log.createdAt).toISOString().split('T')[0];
+              if (!logsByDate.has(date)) {
+                logsByDate.set(date, log);
+              }
+            });
+
+            // Get sorted dates (most recent first)
+            const sortedDates = Array.from(logsByDate.keys()).sort().reverse();
+
+            // Calculate streak starting from today
+            const today = new Date().toISOString().split('T')[0];
+            let currentDate = new Date(today);
+
+            for (let i = 0; i < sortedDates.length; i++) {
+              const checkDate = currentDate.toISOString().split('T')[0];
+
+              if (logsByDate.has(checkDate)) {
+                streak++;
+                // Move to previous day
+                currentDate.setDate(currentDate.getDate() - 1);
+              } else {
+                // Gap found, stop counting
+                break;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error calculating streak:', err);
+        }
 
         const dashboardData: any = {
           athleteId,
@@ -160,11 +206,41 @@ export default function DashboardPage() {
       });
 
       if (response.ok) {
-        // Increment streak (simplified - real logic should check consecutive days)
+        // Recalculate streak after logging mood
+        const streakResponse = await fetch(`/api/mood-logs?athleteId=${athleteId}&limit=90`);
+        const streakData = await streakResponse.json();
+
+        let newStreak = 0;
+        if (streakData.success && streakData.data.length > 0) {
+          // Group logs by date
+          const logsByDate = new Map<string, any>();
+          streakData.data.forEach((log: any) => {
+            const date = new Date(log.createdAt).toISOString().split('T')[0];
+            if (!logsByDate.has(date)) {
+              logsByDate.set(date, log);
+            }
+          });
+
+          // Calculate streak
+          const today = new Date().toISOString().split('T')[0];
+          let currentDate = new Date(today);
+          const sortedDates = Array.from(logsByDate.keys()).sort().reverse();
+
+          for (let i = 0; i < sortedDates.length; i++) {
+            const checkDate = currentDate.toISOString().split('T')[0];
+            if (logsByDate.has(checkDate)) {
+              newStreak++;
+              currentDate.setDate(currentDate.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+        }
+
         if (dashboardData) {
           setDashboardData({
             ...dashboardData,
-            streak: (dashboardData.streak || 0) + 1,
+            streak: newStreak,
           });
         }
       }
