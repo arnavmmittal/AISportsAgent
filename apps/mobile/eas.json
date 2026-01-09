@@ -1,0 +1,88 @@
+{
+  "cli": {
+    "version": ">= 13.2.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "channel": "staging",
+      "ios": {
+        "simulator": false,
+        "buildNumber": "1.0.0"
+      },
+      "android": {
+        "buildType": "apk",
+        "versionCode": 1
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging-aisportsagent.vercel.app",
+        "EXPO_PUBLIC_ENV": "staging"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true,
+      "ios": {
+        "simulator": false,
+        "buildNumber": "1.0.0"
+      },
+      "android": {
+        "buildType": "aab",
+        "versionCode": 1
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://app.aisportsagent.com",
+        "EXPO_PUBLIC_ENV": "production"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@email.com",
+        "ascAppId": "placeholder",
+        "appleTeamId": "placeholder"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./service-account-key.json",
+        "track": "internal"
+      }
+    },
+    "staging": {
+      "ios": {
+        "appleId": "your-apple-id@email.com",
+        "ascAppId": "placeholder",
+        "appleTeamId": "placeholder"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./service-account-key.json",
+        "track": "internal"
+      }
+    }
+  }
+}
