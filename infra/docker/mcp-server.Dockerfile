@@ -46,6 +46,10 @@ WORKDIR /app
 COPY services/mcp-server/app ./app
 COPY services/mcp-server/alembic ./alembic
 COPY services/mcp-server/alembic.ini .
+COPY services/mcp-server/entrypoint.sh ./entrypoint.sh
+
+# Make entrypoint executable
+RUN chmod +x ./entrypoint.sh
 
 # Expose port
 EXPOSE 8000
@@ -54,13 +58,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run with Gunicorn for production
-# Use shell form to allow $PORT environment variable expansion
-CMD gunicorn app.main:app \
-    --workers 4 \
-    --worker-class uvicorn.workers.UvicornWorker \
-    --bind 0.0.0.0:${PORT:-8000} \
-    --timeout 60 \
-    --access-logfile - \
-    --error-logfile - \
-    --log-level info
+# Run with entrypoint script
+CMD ["./entrypoint.sh"]
