@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call MCP server (using test athlete ID for now)
-    const mcpResponse = await fetch(`${mcpServerUrl}/v1/chat`, {
+    const mcpResponse = await fetch(`${mcpServerUrl}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
