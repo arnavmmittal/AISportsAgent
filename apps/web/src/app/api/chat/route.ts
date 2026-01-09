@@ -35,8 +35,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!mcpResponse.ok) {
-      console.error('MCP server error:', await mcpResponse.text());
-      throw new Error('MCP server request failed');
+      const errorText = await mcpResponse.text();
+      console.error('MCP server error:', errorText);
+      return NextResponse.json(
+        { error: 'MCP server error', details: errorText },
+        { status: 500 }
+      );
     }
 
     const data = await mcpResponse.json();
@@ -47,7 +51,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+        mcpUrl: process.env.MCP_SERVER_URL
+      },
       { status: 500 }
     );
   }
