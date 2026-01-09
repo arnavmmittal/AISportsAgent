@@ -53,46 +53,48 @@ export default function StudentAssignmentsPage() {
     loadAssignments();
   }, []);
 
-  const loadAssignments = () => {
-    // Mock assignments data
-    const mockAssignments: Assignment[] = [
-      {
-        id: '1',
-        title: 'Pre-Game Visualization Exercise',
-        description:
-          'Describe your ideal pre-game mental preparation routine. Include specific visualization techniques, breathing exercises, and mental cues you would use. Aim for 200-300 words.',
-        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        submissions: [],
-      },
-      {
-        id: '2',
-        title: 'Thought Record Journal',
-        description:
-          'Complete a thought record for a recent challenging situation. Identify the trigger, your automatic thoughts, emotions, and more balanced alternative thoughts.',
-        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        submissions: [],
-      },
-      {
-        id: '3',
-        title: 'Performance Reflection',
-        description:
-          'Reflect on your last game or competition. What went well? What could be improved? What mental strategies helped or hindered your performance?',
-        dueDate: null,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        submissions: [
-          {
-            id: 's1',
-            status: 'SUBMITTED',
-            response:
-              'Last game I noticed I was getting too anxious before free throws. I tried the breathing technique we discussed and it really helped calm my nerves. My shooting percentage improved from 65% to 78%.',
-            submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-        ],
-      },
-    ];
-    setAssignments(mockAssignments);
+  const loadAssignments = async () => {
+    try {
+      // Get current user
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
+
+      if (!profileData.success || !profileData.data?.userId) {
+        console.log('No user session found');
+        setAssignments([]);
+        return;
+      }
+
+      const userId = profileData.data.userId;
+
+      // Fetch assignments from API
+      // TODO: Implement /api/assignments endpoint
+      const response = await fetch(`/api/assignments?athleteId=${userId}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch assignments');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        const transformedAssignments: Assignment[] = data.data.map((assignment: any) => ({
+          id: assignment.id,
+          title: assignment.title,
+          description: assignment.description,
+          dueDate: assignment.dueDate || null,
+          createdAt: assignment.createdAt,
+          submissions: assignment.submissions || [],
+        }));
+        setAssignments(transformedAssignments);
+      } else {
+        setAssignments([]);
+      }
+    } catch (error) {
+      console.error('Error loading assignments:', error);
+      // Show empty state if API not implemented yet
+      setAssignments([]);
+    }
   };
 
   const handleSelectAssignment = (assignment: Assignment) => {
@@ -119,34 +121,32 @@ export default function StudentAssignmentsPage() {
 
     setIsSubmitting(true);
     try {
-      // TODO: Replace with actual API call
-      // await apiClient.submitAssignment(selectedAssignment.id, responseText);
+      // Submit assignment via API
+      const response = await fetch('/api/assignments/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignmentId: selectedAssignment.id,
+          response: responseText,
+        }),
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        throw new Error('Failed to submit assignment');
+      }
 
-      // Update assignments list
-      setAssignments(
-        assignments.map((a) => {
-          if (a.id === selectedAssignment.id) {
-            return {
-              ...a,
-              submissions: [
-                {
-                  id: `sub_${Date.now()}`,
-                  status: 'SUBMITTED' as AssignmentStatus,
-                  response: responseText,
-                  submittedAt: new Date().toISOString(),
-                },
-              ],
-            };
-          }
-          return a;
-        })
-      );
+      const data = await response.json();
 
-      toast.success('Assignment submitted successfully!');
-      handleBack();
+      if (data.success) {
+        toast.success('Assignment submitted successfully!');
+        // Reload assignments to get updated data
+        await loadAssignments();
+        handleBack();
+      } else {
+        throw new Error(data.error || 'Failed to submit');
+      }
     } catch (error) {
       console.error('Error submitting assignment:', error);
       toast.error('Failed to submit assignment. Please try again.');
