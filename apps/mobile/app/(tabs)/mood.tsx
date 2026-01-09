@@ -69,31 +69,6 @@ export default function MoodScreen() {
     fetchMoodHistory();
   }, []);
 
-  // Generate mock data for the past 7 days
-  const generateMockWeekLogs = (): MoodLogData[] => {
-    const logs: MoodLogData[] = [];
-    const today = new Date();
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-
-      // Only add logs for some days (simulate partial logging)
-      if (i !== 1 && i !== 4) {
-        logs.push({
-          id: `log_${i}`,
-          date,
-          mood: Math.floor(Math.random() * 4) + 6, // 6-10
-          confidence: Math.floor(Math.random() * 4) + 5, // 5-9
-          stress: Math.floor(Math.random() * 6) + 2, // 2-8
-          energy: Math.floor(Math.random() * 4) + 5, // 5-9
-          sleep: Math.floor(Math.random() * 3) + 6, // 6-9
-        });
-      }
-    }
-    return logs;
-  };
-
   const getMoodEmoji = (value: number) => {
     if (value <= 3) return '😔';
     if (value <= 5) return '😐';
