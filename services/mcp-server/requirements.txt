@@ -23,6 +23,7 @@ python-dotenv==1.0.1
 httpx==0.28.1
 numpy==1.26.4
 aiohttp==3.9.5
+redis==5.0.1
 
 # PDF Processing (for voice routes)
 pypdf==5.1.0
