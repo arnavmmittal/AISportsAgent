@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.agents import AthleteAgent, KnowledgeAgent, GovernanceAgent
+from app.agents import AthleteAgent, GovernanceAgent  # KnowledgeAgent disabled for MVP
 from app.core.logging import setup_logging
 from app.core.session import get_session_context
 
@@ -53,8 +53,8 @@ async def chat(
         logger.info(f"Chat request from athlete {request.athlete_id}")
 
         # Initialize agents
-        knowledge_agent = KnowledgeAgent()
-        athlete_agent = AthleteAgent(db=db, knowledge_agent=knowledge_agent)
+        # knowledge_agent = KnowledgeAgent()  # Disabled for MVP (requires chromadb)
+        athlete_agent = AthleteAgent(db=db, knowledge_agent=None)
         governance_agent = GovernanceAgent(db=db)
 
         # Check for crisis indicators
@@ -142,8 +142,8 @@ async def chat_stream(
         )
 
         # Initialize agents
-        knowledge_agent = KnowledgeAgent()
-        athlete_agent = AthleteAgent(db=db, knowledge_agent=knowledge_agent)
+        # knowledge_agent = KnowledgeAgent()  # Disabled for MVP (requires chromadb)
+        athlete_agent = AthleteAgent(db=db, knowledge_agent=None)
 
         # Stream response
         async def generate():

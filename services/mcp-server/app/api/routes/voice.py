@@ -19,7 +19,7 @@ from app.core.logging import setup_logging
 from app.db.database import get_db
 from app.voice import transcribe_audio, synthesize_speech_stream
 from app.agents.athlete_agent import AthleteAgent
-from app.agents.knowledge_agent import KnowledgeAgent
+# from app.agents.knowledge_agent import KnowledgeAgent  # Disabled for MVP (requires chromadb)
 from app.agents.governance_agent import GovernanceAgent
 
 logger = setup_logging()
@@ -42,8 +42,8 @@ class VoiceSession:
         self.is_active = True
 
         # Initialize agents WITH database session
-        self.athlete_agent = AthleteAgent(db=db)
-        self.knowledge_agent = KnowledgeAgent()
+        self.athlete_agent = AthleteAgent(db=db, knowledge_agent=None)
+        # self.knowledge_agent = KnowledgeAgent()  # Disabled for MVP (requires chromadb)
         self.governance_agent = GovernanceAgent(db=db)
 
     async def process_audio_chunk(self, audio_data: bytes):
@@ -93,7 +93,8 @@ class VoiceSession:
                 })
 
             # Retrieve relevant knowledge (RAG)
-            knowledge_context = await self.knowledge_agent.retrieve_context(transcript)
+            # knowledge_context = await self.knowledge_agent.retrieve_context(transcript)  # Disabled for MVP
+            knowledge_context = ""  # No RAG for MVP
 
             # Get AI response from athlete agent
             response_text = await self.athlete_agent.generate_response(
