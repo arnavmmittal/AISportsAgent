@@ -47,13 +47,6 @@ COPY services/mcp-server/app ./app
 COPY services/mcp-server/alembic ./alembic
 COPY services/mcp-server/alembic.ini .
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-
-# Switch to non-root user
-USER appuser
-
 # Expose port
 EXPOSE 8000
 
