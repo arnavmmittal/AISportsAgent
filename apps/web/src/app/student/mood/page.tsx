@@ -47,33 +47,47 @@ export default function StudentMoodPage() {
 
   // Load past week logs on mount
   useEffect(() => {
-    const mockLogs = generateMockWeekLogs();
-    setPastWeekLogs(mockLogs);
+    loadPastWeekLogs();
   }, []);
 
-  // Generate mock data for the past 7 days
-  const generateMockWeekLogs = (): MoodLogData[] => {
-    const logs: MoodLogData[] = [];
-    const today = new Date();
+  const loadPastWeekLogs = async () => {
+    try {
+      // Get current user from Supabase session
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
 
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-
-      // Only add logs for some days (simulate partial logging)
-      if (i !== 1 && i !== 4) {
-        logs.push({
-          id: `log_${i}`,
-          date,
-          mood: Math.floor(Math.random() * 4) + 6, // 6-10
-          confidence: Math.floor(Math.random() * 4) + 5, // 5-9
-          stress: Math.floor(Math.random() * 6) + 2, // 2-8
-          energy: Math.floor(Math.random() * 4) + 5, // 5-9
-          sleep: Math.floor(Math.random() * 3) + 6, // 6-9
-        });
+      if (!profileData.success || !profileData.data?.userId) {
+        console.log('No user session found');
+        return;
       }
+
+      const userId = profileData.data.userId;
+
+      // Fetch mood logs from API (last 7 days)
+      const response = await fetch(`/api/mood-logs?athleteId=${userId}&limit=7`);
+      const data = await response.json();
+
+      if (data.success) {
+        // Transform API data to match component structure
+        const transformedLogs: MoodLogData[] = data.data.map((log: any) => ({
+          id: log.id,
+          date: new Date(log.createdAt),
+          mood: log.mood,
+          confidence: log.confidence,
+          stress: log.stress,
+          energy: log.energy || 5,
+          sleep: log.sleep || 7,
+          notes: log.notes,
+        }));
+        setPastWeekLogs(transformedLogs);
+      } else {
+        console.error('Failed to load mood logs:', data.error);
+        setPastWeekLogs([]);
+      }
+    } catch (error) {
+      console.error('Error loading mood logs:', error);
+      setPastWeekLogs([]);
     }
-    return logs;
   };
 
   const getMoodEmoji = (value: number) => {
@@ -100,42 +114,53 @@ export default function StudentMoodPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // TODO: Replace with actual API call
-      // const userId = session?.user?.id || 'athlete_test_123';
-      // await apiClient.createMoodLog(userId, {
-      //   mood,
-      //   confidence,
-      //   stress,
-      //   energy,
-      //   sleep,
-      //   notes: notes.trim() || undefined,
-      // });
+      // Get current user from Supabase session
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!profileData.success || !profileData.data?.userId) {
+        toast.error('Please log in to save mood logs');
+        setIsSubmitting(false);
+        return;
+      }
 
-      toast.success('Mood log saved successfully!');
+      const userId = profileData.data.userId;
 
-      // Reset form
-      setMood(5);
-      setConfidence(5);
-      setStress(5);
-      setEnergy(5);
-      setSleep(7);
-      setNotes('');
+      // Save mood log via API
+      const response = await fetch('/api/mood-logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          athleteId: userId,
+          mood,
+          confidence,
+          stress,
+          energy,
+          sleep,
+          notes: notes.trim() || undefined,
+        }),
+      });
 
-      // Add new log to past week (for demo purposes)
-      const newLog: MoodLogData = {
-        id: `log_${Date.now()}`,
-        date: new Date(),
-        mood,
-        confidence,
-        stress,
-        energy,
-        sleep,
-        notes: notes.trim() || undefined,
-      };
-      setPastWeekLogs([...pastWeekLogs.slice(1), newLog]);
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Mood log saved successfully!');
+
+        // Reset form
+        setMood(5);
+        setConfidence(5);
+        setStress(5);
+        setEnergy(5);
+        setSleep(7);
+        setNotes('');
+
+        // Reload past week logs to include new entry
+        await loadPastWeekLogs();
+      } else {
+        toast.error(data.error || 'Failed to save mood log');
+      }
     } catch (error) {
       console.error('Error saving mood log:', error);
       toast.error('Failed to save mood log. Please try again.');

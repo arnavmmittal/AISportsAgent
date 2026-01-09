@@ -98,132 +98,244 @@ export default function StudentGoalsPage() {
     loadSuggestedGoals();
   }, []);
 
-  const loadGoals = () => {
-    // Mock goals data
-    const mockGoals: Goal[] = [
-      {
-        id: '1',
-        title: 'Improve free throw percentage to 80%',
-        description: 'Practice 50 free throws daily, focus on form and breathing',
-        category: 'PERFORMANCE',
-        status: 'IN_PROGRESS',
-        progress: 75,
-        targetDate: new Date('2025-03-01'),
-        createdAt: new Date('2025-01-01'),
-      },
-      {
-        id: '2',
-        title: 'Complete mindfulness practice 5x this week',
-        description: 'Daily 10-minute meditation sessions before practice',
-        category: 'MENTAL',
-        status: 'IN_PROGRESS',
-        progress: 60,
-        createdAt: new Date('2025-01-05'),
-      },
-      {
-        id: '3',
-        title: 'Maintain 3.5 GPA this semester',
-        description: 'Study 2 hours before each game, attend all tutoring sessions',
-        category: 'ACADEMIC',
-        status: 'IN_PROGRESS',
-        progress: 40,
-        targetDate: new Date('2025-05-15'),
-        createdAt: new Date('2024-12-15'),
-      },
-    ];
-    setGoals(mockGoals);
+  const loadGoals = async () => {
+    try {
+      // Get current user from Supabase session
+      const response = await fetch('/api/athlete/profile');
+      const profileData = await response.json();
+
+      if (!profileData.success || !profileData.data?.userId) {
+        toast.error('Please log in to view your goals');
+        return;
+      }
+
+      const userId = profileData.data.userId;
+
+      // Fetch goals from API
+      const goalsResponse = await fetch(`/api/goals?athleteId=${userId}`);
+      const goalsData = await goalsResponse.json();
+
+      if (goalsData.success) {
+        // Transform API data to match component structure
+        const transformedGoals = goalsData.data.map((goal: any) => ({
+          ...goal,
+          targetDate: goal.targetDate ? new Date(goal.targetDate) : undefined,
+          createdAt: new Date(goal.createdAt),
+        }));
+        setGoals(transformedGoals);
+      } else {
+        console.error('Failed to load goals:', goalsData.error);
+        setGoals([]);
+      }
+    } catch (error) {
+      console.error('Error loading goals:', error);
+      toast.error('Failed to load goals');
+      setGoals([]);
+    }
   };
 
-  const loadSuggestedGoals = () => {
-    // Mock AI suggestions
-    const mockSuggestions: SuggestedGoal[] = [
-      {
-        id: 's1',
-        title: 'Build pre-game visualization routine',
-        description:
-          'Spend 5 minutes visualizing perfect execution before each game. Research shows this improves performance by 15-20%.',
-        category: 'MENTAL',
-        reason: 'Based on your anxiety patterns',
-      },
-      {
-        id: 's2',
-        title: 'Improve vertical jump by 3 inches',
-        description:
-          'Plyometric training 3x per week. Track progress weekly with vertical jump tests.',
-        category: 'PERFORMANCE',
-        reason: 'Complements current goals',
-      },
-    ];
-    setSuggestedGoals(mockSuggestions);
+  const loadSuggestedGoals = async () => {
+    try {
+      // Get current user from Supabase session
+      const response = await fetch('/api/athlete/profile');
+      const profileData = await response.json();
+
+      if (!profileData.success || !profileData.data?.userId) {
+        return;
+      }
+
+      const userId = profileData.data.userId;
+
+      // Fetch suggestions from API
+      const suggestionsResponse = await fetch(`/api/goals/suggestions?athleteId=${userId}`);
+      const suggestionsData = await suggestionsResponse.json();
+
+      if (suggestionsData.success && Array.isArray(suggestionsData.data)) {
+        setSuggestedGoals(suggestionsData.data);
+      } else {
+        setSuggestedGoals([]);
+      }
+    } catch (error) {
+      console.error('Error loading goal suggestions:', error);
+      setSuggestedGoals([]);
+    }
   };
 
-  const createGoal = () => {
+  const createGoal = async () => {
     if (!newGoal.title.trim()) {
       toast.error('Please enter a goal title');
       return;
     }
 
-    const goal: Goal = {
-      id: `goal_${Date.now()}`,
-      title: newGoal.title,
-      description: newGoal.description || undefined,
-      category: newGoal.category,
-      status: 'NOT_STARTED',
-      progress: 0,
-      targetDate: newGoal.targetDate ? new Date(newGoal.targetDate) : undefined,
-      createdAt: new Date(),
-    };
+    try {
+      // Get current user ID
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
 
-    setGoals([goal, ...goals]);
-    setIsCreateDialogOpen(false);
-    setNewGoal({ title: '', description: '', category: 'PERFORMANCE', targetDate: '' });
-    toast.success('Goal created successfully!');
-  };
+      if (!profileData.success || !profileData.data?.userId) {
+        toast.error('Please log in to create goals');
+        return;
+      }
 
-  const addSuggestedGoal = (suggestion: SuggestedGoal) => {
-    const goal: Goal = {
-      id: `goal_${Date.now()}`,
-      title: suggestion.title,
-      description: suggestion.description,
-      category: suggestion.category,
-      status: 'NOT_STARTED',
-      progress: 0,
-      createdAt: new Date(),
-    };
+      const userId = profileData.data.userId;
 
-    setGoals([goal, ...goals]);
-    setSuggestedGoals(suggestedGoals.filter((s) => s.id !== suggestion.id));
-    toast.success(`"${suggestion.title}" added to your goals!`);
-  };
+      // Create goal via API
+      const response = await fetch('/api/goals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          athleteId: userId,
+          title: newGoal.title,
+          description: newGoal.description || undefined,
+          category: newGoal.category,
+          targetDate: newGoal.targetDate || undefined,
+        }),
+      });
 
-  const updateGoalProgress = (goalId: string, delta: number) => {
-    setGoals(
-      goals.map((goal) => {
-        if (goal.id === goalId) {
-          const newProgress = Math.max(0, Math.min(100, goal.progress + delta));
-          return {
-            ...goal,
-            progress: newProgress,
-            status:
-              newProgress === 100
-                ? 'COMPLETED'
-                : newProgress > 0
-                  ? 'IN_PROGRESS'
-                  : 'NOT_STARTED',
-          };
-        }
-        return goal;
-      })
-    );
+      const data = await response.json();
 
-    if (delta === 100) {
-      toast.success('Goal completed! Great work!');
+      if (data.success) {
+        // Add to local state
+        const createdGoal = {
+          ...data.data,
+          targetDate: data.data.targetDate ? new Date(data.data.targetDate) : undefined,
+          createdAt: new Date(data.data.createdAt),
+        };
+        setGoals([createdGoal, ...goals]);
+        setIsCreateDialogOpen(false);
+        setNewGoal({ title: '', description: '', category: 'PERFORMANCE', targetDate: '' });
+        toast.success('Goal created successfully!');
+      } else {
+        toast.error(data.error || 'Failed to create goal');
+      }
+    } catch (error) {
+      console.error('Error creating goal:', error);
+      toast.error('Failed to create goal');
     }
   };
 
-  const deleteGoal = (goalId: string) => {
-    setGoals(goals.filter((g) => g.id !== goalId));
-    toast.success('Goal deleted');
+  const addSuggestedGoal = async (suggestion: SuggestedGoal) => {
+    try {
+      // Get current user ID
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
+
+      if (!profileData.success || !profileData.data?.userId) {
+        toast.error('Please log in to add goals');
+        return;
+      }
+
+      const userId = profileData.data.userId;
+
+      // Create goal from suggestion via API
+      const response = await fetch('/api/goals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          athleteId: userId,
+          title: suggestion.title,
+          description: suggestion.description,
+          category: suggestion.category,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const createdGoal = {
+          ...data.data,
+          targetDate: data.data.targetDate ? new Date(data.data.targetDate) : undefined,
+          createdAt: new Date(data.data.createdAt),
+        };
+        setGoals([createdGoal, ...goals]);
+        setSuggestedGoals(suggestedGoals.filter((s) => s.id !== suggestion.id));
+        toast.success(`"${suggestion.title}" added to your goals!`);
+      } else {
+        toast.error(data.error || 'Failed to add goal');
+      }
+    } catch (error) {
+      console.error('Error adding suggested goal:', error);
+      toast.error('Failed to add goal');
+    }
+  };
+
+  const updateGoalProgress = async (goalId: string, delta: number) => {
+    const goal = goals.find((g) => g.id === goalId);
+    if (!goal) return;
+
+    const newProgress = Math.max(0, Math.min(100, goal.progress + delta));
+    const newStatus =
+      newProgress === 100
+        ? 'COMPLETED'
+        : newProgress > 0
+          ? 'IN_PROGRESS'
+          : 'NOT_STARTED';
+
+    try {
+      // Update via API
+      const response = await fetch(`/api/goals/${goalId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          progress: newProgress,
+          status: newStatus,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setGoals(
+          goals.map((g) =>
+            g.id === goalId
+              ? {
+                  ...g,
+                  progress: newProgress,
+                  status: newStatus,
+                }
+              : g
+          )
+        );
+
+        if (newProgress === 100) {
+          toast.success('Goal completed! Great work!');
+        }
+      } else {
+        toast.error(data.error || 'Failed to update goal');
+      }
+    } catch (error) {
+      console.error('Error updating goal progress:', error);
+      toast.error('Failed to update goal');
+    }
+  };
+
+  const deleteGoal = async (goalId: string) => {
+    try {
+      // Delete via API
+      const response = await fetch(`/api/goals/${goalId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove from local state
+        setGoals(goals.filter((g) => g.id !== goalId));
+        toast.success('Goal deleted');
+      } else {
+        toast.error(data.error || 'Failed to delete goal');
+      }
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      toast.error('Failed to delete goal');
+    }
   };
 
   const filteredGoals = goals.filter((goal) => {

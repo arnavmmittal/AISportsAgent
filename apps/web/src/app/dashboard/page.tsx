@@ -45,51 +45,79 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        // TODO: Get real athlete ID from session
-        const athleteId = session?.user?.id || 'athlete_test_123';
+        // Get athlete profile to get user ID
+        const profileResponse = await fetch('/api/athlete/profile');
+        const profileData = await profileResponse.json();
 
-        // For now, use mock data since API endpoints aren't created yet
-        // const data = await apiClient.getAthleteDashboard(athleteId, 7);
-        const mockData: any = {
-          athleteId,
-          streak: 5,
-          weeklyGoals: [
-            { id: '1', title: 'Practice mindfulness daily', progress: 85, category: 'MENTAL' },
-            { id: '2', title: 'Improve free throw %', progress: 60, category: 'PERFORMANCE' },
-          ],
-          recentSessions: [
-            { id: '1', date: new Date().toISOString(), topic: 'Pre-game anxiety', messageCount: 12 },
-          ],
-          mood_trend: {
-            mood_values: [3, 4, 3, 5, 4, 4, 5],
-            average: 4.0,
-            trend: 'improving'
-          },
-          goals_progress: {
-            active_goals: 3,
-            overall_progress: 75
-          },
-          recent_sessions: [
-            {
-              id: 'session-1',
-              date: 'Yesterday',
-              duration: '15 min',
-              topic: 'Pre-game anxiety management',
-              message_count: 8
-            },
-            {
-              id: 'session-2',
-              date: '2 days ago',
-              duration: '22 min',
-              topic: 'Performance slump discussion',
-              message_count: 12
-            }
-          ],
-          upcomingEvents: [
-            { id: '1', title: 'Championship Game', date: new Date(Date.now() + 86400000 * 3).toISOString() },
-          ],
+        if (!profileData.success || !profileData.data?.userId) {
+          setError('Please log in to view dashboard');
+          setLoading(false);
+          return;
+        }
+
+        const athleteId = profileData.data.userId;
+
+        // Fetch mood logs (last 7 days)
+        let moodTrend = {
+          mood_values: [0, 0, 0, 0, 0, 0, 0],
+          average: 0,
+          trend: 'stable' as 'improving' | 'stable' | 'declining'
         };
-        setDashboardData(mockData);
+
+        try {
+          const moodResponse = await fetch(`/api/mood-logs?athleteId=${athleteId}&limit=7`);
+          const moodData = await moodResponse.json();
+          if (moodData.success && moodData.data.length > 0) {
+            const moodValues = moodData.data.map((log: any) => log.mood);
+            const average = moodValues.reduce((sum: number, val: number) => sum + val, 0) / moodValues.length;
+            moodTrend = {
+              mood_values: moodValues.reverse(), // Reverse to show chronologically
+              average: Math.round(average * 10) / 10,
+              trend: moodValues[moodValues.length - 1] > moodValues[0] ? 'improving' :
+                     moodValues[moodValues.length - 1] < moodValues[0] ? 'declining' : 'stable'
+            };
+          }
+        } catch (err) {
+          console.error('Error fetching mood data:', err);
+        }
+
+        // Fetch goals
+        let goalsProgress = {
+          active_goals: 0,
+          overall_progress: 0
+        };
+
+        try {
+          const goalsResponse = await fetch(`/api/goals?athleteId=${athleteId}`);
+          const goalsData = await goalsResponse.json();
+          if (goalsData.success && goalsData.data.length > 0) {
+            const activeGoals = goalsData.data.filter((g: any) => g.status === 'ACTIVE');
+            const avgProgress = activeGoals.reduce((sum: number, g: any) => sum + (g.progress || 0), 0) / activeGoals.length;
+            goalsProgress = {
+              active_goals: activeGoals.length,
+              overall_progress: Math.round(avgProgress)
+            };
+          }
+        } catch (err) {
+          console.error('Error fetching goals:', err);
+        }
+
+        // TODO: Fetch chat sessions from /api/chat/sessions
+        const recentSessions: any[] = [];
+
+        // Calculate streak from mood logs (consecutive days with entries)
+        // TODO: Implement proper streak calculation
+        const streak = 0;
+
+        const dashboardData: any = {
+          athleteId,
+          streak,
+          mood_trend: moodTrend,
+          goals_progress: goalsProgress,
+          recent_sessions: recentSessions,
+        };
+
+        setDashboardData(dashboardData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data');
@@ -105,19 +133,40 @@ export default function DashboardPage() {
     setSelectedMood(moodValue);
 
     try {
-      // TODO: Get real athlete ID from session
-      const athleteId = session?.user?.id || 'athlete_test_123';
+      // Get athlete profile
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
 
-      // For now, mock the response since API endpoints aren't created yet
-      // const response = await apiClient.logMood(athleteId, { mood: moodValue });
-      const response = { streak: (dashboardData?.streak || 0) + 1 };
+      if (!profileData.success || !profileData.data?.userId) {
+        return;
+      }
 
-      // Update streak in dashboard data
-      if (dashboardData) {
-        setDashboardData({
-          ...dashboardData,
-          streak: response.streak,
-        });
+      const athleteId = profileData.data.userId;
+
+      // Log mood via API
+      const response = await fetch('/api/mood-logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          athleteId,
+          mood: moodValue,
+          confidence: 5, // Default values for quick check-in
+          stress: 5,
+          energy: 5,
+          sleep: 7,
+        }),
+      });
+
+      if (response.ok) {
+        // Increment streak (simplified - real logic should check consecutive days)
+        if (dashboardData) {
+          setDashboardData({
+            ...dashboardData,
+            streak: (dashboardData.streak || 0) + 1,
+          });
+        }
       }
     } catch (err) {
       console.error('Error logging mood:', err);
