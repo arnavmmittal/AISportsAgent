@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.agents.knowledge_agent import KnowledgeAgent
+# from app.agents.knowledge_agent import KnowledgeAgent  # Disabled for MVP (requires chromadb)
 from app.db import models
 from app.core.session import SessionContext
 from app.core.prompts import build_sports_psych_prompt, get_next_phase
@@ -74,19 +74,19 @@ Guidelines:
 
 Remember: You're a guide, not a prescriber. Help them discover what works for them."""
 
-    def __init__(self, db: Session, knowledge_agent: KnowledgeAgent = None):
+    def __init__(self, db: Session, knowledge_agent: Optional[Any] = None):
         """
         Initialize the AthleteAgent.
 
         Args:
             db: Database session
-            knowledge_agent: Optional KnowledgeAgent instance (creates new if None)
+            knowledge_agent: Optional KnowledgeAgent instance (disabled for MVP)
         """
         logger.info("Initializing AthleteAgent")
 
         self.db = db
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.knowledge_agent = knowledge_agent or KnowledgeAgent()
+        self.knowledge_agent = knowledge_agent  # None for MVP (no RAG)
         self.phase_manager = ProtocolPhaseManager()
         self.intervention_selector = InterventionSelector()
         self.query_rewriter = RAGQueryRewriter()
@@ -174,6 +174,10 @@ Remember: You're a guide, not a prescriber. Help them discover what works for th
             Formatted context string
         """
         try:
+            # MVP: No RAG/knowledge base for now
+            if self.knowledge_agent is None:
+                return ""
+
             context = self.knowledge_agent.get_context_for_athlete(
                 query=query,
                 athlete_sport=athlete_sport,
