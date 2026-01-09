@@ -211,32 +211,73 @@ GET    /v1/sessions          # Session history
 - ✅ **Use specific names**: `feature/mvp-chat-interface`, `fix/voice-websocket-disconnect`, `refactor/agent-singletons`
 - **Why**: Descriptive names make it clear what work is happening on each branch, especially when multiple features are in development simultaneously
 
+**Three-Branch Strategy (CRITICAL FOR COST/SECURITY PROTECTION):**
+
+**Why we need staging:**
+- **Cost Protection**: Test OpenAI cost controls before production (prevent $1000s in runaway spending)
+- **Security Testing**: Verify RLS policies, auth flows, crisis detection without risking production data
+- **Database Safety**: Test migrations on staging DB first, practice rollbacks
+- **Integration Testing**: Test MCP server + Next.js together before universities see bugs
+
+**Branch Roles:**
+
+1. **`main`** = Production (live users, paying universities)
+   - Vercel: `app.aisportsagent.com`
+   - Railway: `mcp-production.railway.app`
+   - **Only merge after thorough staging testing**
+   - Protected branch: requires PR review
+
+2. **`staging`** = Pre-production testing environment
+   - Vercel: `staging.aisportsagent.com` (or preview URL)
+   - Railway: `mcp-staging.railway.app`
+   - **Test ALL changes here first**
+   - Merge feature branches here for integration testing
+   - Test for days/weeks before promoting to main
+
+3. **`feature/*`** = Development work (short-lived)
+   - Create from `staging`: `git checkout -b feature/crisis-detection`
+   - Merge back to `staging` when ready to test
+   - Delete after merging
+
 **Workflow:**
-1. **Before starting new work:**
+
+1. **Daily development:**
    ```bash
-   git checkout main
-   git pull origin main
+   git checkout staging
+   git pull origin staging
    git checkout -b feature/your-feature-name
+   # ... make changes ...
+   git push origin feature/your-feature-name
    ```
 
-2. **During development:**
-   - Make small, focused commits with clear messages
-   - Push to remote regularly: `git push -u origin feature/your-feature-name`
+2. **Ready to test:**
+   ```bash
+   git checkout staging
+   git merge feature/your-feature-name
+   git push origin staging
+   # → Vercel auto-deploys to staging URL
+   # → Railway auto-deploys to staging MCP server
+   # → Test everything thoroughly
+   ```
 
-3. **When feature is complete:**
-   - Ensure all tests pass and code is reviewed
-   - Create pull request to `main` branch
-   - Include summary of changes and testing notes
+3. **Promote to production (only after extensive staging testing):**
+   ```bash
+   git checkout main
+   git merge staging
+   git push origin main
+   # → Deploys to production (live users)
+   ```
 
-4. **After PR merge:**
-   - Delete local branch: `git branch -d feature/your-feature-name`
-   - Delete remote branch: `git push origin --delete feature/your-feature-name`
+4. **Cleanup:**
+   ```bash
+   git branch -d feature/your-feature-name
+   git push origin --delete feature/your-feature-name
+   ```
 
 **Current Branches:**
-- `main` - Production-ready code
-- `feature/mobile-post-mvp-port` - Mobile POST-MVP analytics + voice chat (ready to test & merge)
-- `feature/mcp-agent-integration` - Full MCP agent orchestration + knowledge base
-- Many other feature branches (see `git branch -a` for full list)
+- `main` - Production (live users)
+- `staging` - Pre-production testing (active development)
+- `feature/*` - Short-lived feature branches (delete after merge)
 
 ### Environment Variables
 
