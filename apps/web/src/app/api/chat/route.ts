@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get session for authentication
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { message } = await request.json();
 
     if (!message || typeof message !== 'string') {
@@ -27,7 +19,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Call MCP server
+    // Call MCP server (using test athlete ID for now)
     const mcpResponse = await fetch(`${mcpServerUrl}/v1/chat`, {
       method: 'POST',
       headers: {
@@ -35,9 +27,9 @@ export async function POST(request: NextRequest) {
         'Authorization': `Bearer ${process.env.MCP_SERVICE_TOKEN}`,
       },
       body: JSON.stringify({
-        session_id: `session-${session.user.id}-${Date.now()}`,
+        session_id: `session-test-${Date.now()}`,
         message: message,
-        athlete_id: session.user.id,
+        athlete_id: 'test-athlete-1',
         stream: false,
       }),
     });
