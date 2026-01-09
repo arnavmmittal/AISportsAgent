@@ -47,19 +47,27 @@ export default function RecordPerformancePage() {
 
   const fetchAthletes = async () => {
     try {
-      // TODO: Replace with actual API endpoint to fetch team athletes
-      // For now, using mock data
-      const mockAthletes: Athlete[] = [
-        { id: 'athlete-1', name: 'John Smith', position: 'Point Guard' },
-        { id: 'athlete-2', name: 'Sarah Johnson', position: 'Shooting Guard' },
-        { id: 'athlete-3', name: 'Mike Davis', position: 'Center' },
-        { id: 'athlete-4', name: 'Emily Brown', position: 'Forward' },
-        { id: 'athlete-5', name: 'Chris Lee', position: 'Power Forward' },
-      ];
+      // Fetch athletes from API
+      const response = await fetch('/api/athletes');
 
-      setAthletes(mockAthletes);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to fetch athletes');
+      }
+
+      const data = await response.json();
+
+      // Transform API data to match component structure
+      const transformedAthletes: Athlete[] = data.athletes.map((athlete: any) => ({
+        id: athlete.id,
+        name: athlete.name,
+        position: athlete.position || undefined,
+      }));
+
+      setAthletes(transformedAthletes);
     } catch (error) {
       console.error('Failed to fetch athletes:', error);
+      setAthletes([]); // Clear athletes on error
     } finally {
       setLoading(false);
     }
