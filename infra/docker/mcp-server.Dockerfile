@@ -54,16 +54,13 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run with Gunicorn for production (better than uvicorn alone)
-# - 4 workers for parallelism
-# - Uvicorn worker class for async support
-# - 60 second timeout for long-running requests
-# - Log to stdout/stderr for container logging
-CMD ["gunicorn", "app.main:app", \
-     "--workers", "4", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--bind", "0.0.0.0:8000", \
-     "--timeout", "60", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "--log-level", "info"]
+# Run with Gunicorn for production
+# Use shell form to allow $PORT environment variable expansion
+CMD gunicorn app.main:app \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:${PORT:-8000} \
+    --timeout 60 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info
