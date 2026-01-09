@@ -58,5 +58,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run with entrypoint script
-CMD ["./entrypoint.sh"]
+# Run with entrypoint script (use shell form to execute the script)
+CMD /bin/sh ./entrypoint.sh
