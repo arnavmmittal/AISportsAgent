@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth-helpers';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const { authorized, user, response } = await requireAuth(request);
+    if (!authorized || !user) {
+      return response;
+    }
+
     const { message } = await request.json();
 
     if (!message || typeof message !== 'string') {
@@ -19,16 +26,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Call MCP server (using test athlete ID for now)
+    // Call MCP server with real user ID
     const mcpResponse = await fetch(`${mcpServerUrl}/api/chat/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        session_id: `session-test-${Date.now()}`,
+        session_id: `session-${user.id}-${Date.now()}`,
         message: message,
-        athlete_id: 'test-athlete-1',
+        athlete_id: user.id,
         stream: false,
       }),
     });
