@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api.routes import chat, coach, voice, athlete, analytics, usage, predictions, knowledge
+from app.api.routes import chat, coach, voice, athlete, analytics, usage, predictions, knowledge, orchestrator
 from app.middleware.cost_control import CostControlMiddleware
 
 logger = setup_logging()
@@ -129,6 +129,12 @@ app.include_router(
     knowledge.router,
     prefix="/api",
     tags=["Knowledge Base"]
+)
+
+app.include_router(
+    orchestrator.router,
+    prefix="/api",
+    tags=["Agent Orchestrator"]
 )
 
 
