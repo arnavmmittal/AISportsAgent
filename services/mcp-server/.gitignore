@@ -49,3 +49,9 @@ logs/
 htmlcov/
 .pytest_cache/
 chroma_data/
+
+# Local ChromaDB storage
+chroma_data/
+
+# Training data (regenerate with script)
+training_data/
