@@ -228,249 +228,481 @@ export default function StudentGoalsPage() {
     );
   }
 
+  const handleUpdateStatus = async (goalId: string, newStatus: GoalStatus) => {
+    try {
+      const response = await fetch(`/api/goals/${goalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update status');
+
+      loadGoals();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+    }
+  };
+
+  const goalsByStatus = {
+    NOT_STARTED: filteredGoals.filter(g => g.status === 'NOT_STARTED'),
+    IN_PROGRESS: filteredGoals.filter(g => g.status === 'IN_PROGRESS'),
+    COMPLETED: filteredGoals.filter(g => g.status === 'COMPLETED'),
+  };
+
   return (
-    <motion.div
-      className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-4 sm:px-6 lg:px-8"
-      initial="hidden"
-      animate="show"
-      variants={staggerContainer}
-    >
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div variants={fadeInUp} className="mb-10">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-                Goals
-              </h1>
-              <p className="mt-3 text-gray-600 dark:text-gray-400 text-lg font-body">
-                Track your performance, mental wellness, and personal growth
-              </p>
-            </div>
-            <Button
-              variant="primary"
-              size="lg"
-              leftIcon={<Plus className="w-5 h-5" />}
-              onClick={() => setIsCreateDialogOpen(true)}
-            >
-              New Goal
-            </Button>
-          </div>
-        </motion.div>
-
-        {/* Stats Overview */}
-        <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-          <Card variant="elevated" padding="lg" hover>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-gray-600 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Total Goals</div>
-                <div className="text-5xl font-display font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  <AnimatedCounter value={stats.total} decimals={0} />
+    <div className="min-h-screen bg-background">
+      {/* DESKTOP LAYOUT - Kanban Board */}
+      <div className="hidden lg:block h-screen overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Header Bar with Stats */}
+          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div className="px-8 py-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                    Goals
+                  </h1>
+                  <p className="mt-1 text-gray-600 dark:text-gray-400 font-body">
+                    Track progress across your objectives
+                  </p>
                 </div>
-                <div className="text-sm text-primary-600 dark:text-primary-400 font-medium font-body">Active tracking</div>
-              </div>
-              <Target className="w-16 h-16 text-primary-600 dark:text-primary-400 opacity-80" />
-            </div>
-          </Card>
-
-          <Card variant="elevated" padding="lg" hover className="border-info-200 dark:border-info-800/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-info-600 dark:text-info-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">In Progress</div>
-                <div className="text-5xl font-display font-bold text-info-700 dark:text-info-300 mb-2">
-                  <AnimatedCounter value={stats.inProgress} decimals={0} />
-                </div>
-                <div className="text-sm text-info-600 dark:text-info-400 font-medium font-body">Currently working</div>
-              </div>
-              <TrendingUp className="w-16 h-16 text-info-600 dark:text-info-400 opacity-80" />
-            </div>
-          </Card>
-
-          <Card variant="elevated" padding="lg" hover className="border-success-200 dark:border-success-800/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-success-600 dark:text-success-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Completed</div>
-                <div className="text-5xl font-display font-bold text-success-700 dark:text-success-300 mb-2">
-                  <AnimatedCounter value={stats.completed} decimals={0} />
-                </div>
-                <div className="text-sm text-success-600 dark:text-success-400 font-medium font-body">Achieved</div>
-              </div>
-              <CheckCircle2 className="w-16 h-16 text-success-600 dark:text-success-400 opacity-80" />
-            </div>
-          </Card>
-
-          <Card variant="elevated" padding="lg" hover className="border-warning-200 dark:border-warning-800/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-warning-600 dark:text-warning-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Avg Progress</div>
-                <div className="text-5xl font-display font-bold text-warning-700 dark:text-warning-300 mb-2">
-                  <AnimatedCounter value={stats.avgProgress} decimals={0} />
-                  <span className="text-2xl">%</span>
-                </div>
-                <div className="text-sm text-warning-600 dark:text-warning-400 font-medium font-body">Overall momentum</div>
-              </div>
-              <Trophy className="w-16 h-16 text-warning-600 dark:text-warning-400 opacity-80" />
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Filters */}
-        <motion.div variants={fadeInUp}>
-          <Card variant="elevated" padding="lg" className="mb-6">
-            <div className="flex flex-wrap items-center gap-4">
-              <input
-                type="text"
-                placeholder="Search goals..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 min-w-[200px] px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow font-body"
-              />
-              <div className="flex gap-2">
-                <Button
-                  variant={selectedCategory === 'ALL' ? 'primary' : 'outline'}
-                  size="md"
-                  onClick={() => setSelectedCategory('ALL')}
-                >
-                  All
-                </Button>
-                {Object.entries(CATEGORY_CONFIG).map(([category, config]) => {
-                  const Icon = config.icon;
-                  return (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? 'primary' : 'outline'}
-                      size="md"
-                      leftIcon={<Icon className="w-4 h-4" />}
-                      onClick={() => setSelectedCategory(category)}
-                    >
-                      {config.label}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Goals List */}
-        <motion.div variants={fadeInUp} className="space-y-4 mb-10">
-          {filteredGoals.length === 0 ? (
-            <Card variant="elevated" padding="lg" className="text-center">
-              <Target className="w-20 h-20 text-gray-400 mx-auto mb-6" />
-              <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100 mb-4">
-                {goals.length === 0 ? 'No goals yet' : 'No goals found'}
-              </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 font-body mb-8 max-w-md mx-auto">
-                {goals.length === 0
-                  ? 'Create your first goal to start tracking your progress'
-                  : 'Try adjusting your filters or search query'
-                }
-              </p>
-              {goals.length === 0 && (
                 <Button
                   variant="primary"
                   size="lg"
                   leftIcon={<Plus className="w-5 h-5" />}
                   onClick={() => setIsCreateDialogOpen(true)}
                 >
-                  Create First Goal
+                  New Goal
                 </Button>
-              )}
-            </Card>
-          ) : (
-            filteredGoals.map((goal) => {
-              const config = CATEGORY_CONFIG[goal.category];
-              const Icon = config.icon;
+              </div>
 
-              return (
-                <Card key={goal.id} variant="elevated" padding="lg" hover className={`border-l-4 ${config.borderColor}`}>
-                  <div className="flex items-start gap-6">
-                    {/* Radial Progress */}
-                    <div className="flex-shrink-0">
-                      <RadialProgress
-                        value={goal.progress}
-                        max={100}
-                        size="md"
-                        color={goal.category.toLowerCase() as any}
-                        showValue={true}
-                      />
+              {/* Inline Stats */}
+              <div className="grid grid-cols-4 gap-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Target className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                  <div>
+                    <div className="text-2xl font-display font-bold text-gray-900 dark:text-gray-100">
+                      <AnimatedCounter value={stats.total} decimals={0} />
                     </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 font-body">Total Goals</div>
+                  </div>
+                </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Icon className={`w-5 h-5 ${config.color}`} />
-                            <span className={`px-3 py-1 rounded-lg text-xs font-bold font-mono ${config.bgColor} ${config.color}`}>
+                <div className="flex items-center gap-3 p-3 bg-info-50 dark:bg-info-900/20 rounded-lg">
+                  <TrendingUp className="w-8 h-8 text-info-600 dark:text-info-400" />
+                  <div>
+                    <div className="text-2xl font-display font-bold text-info-700 dark:text-info-300">
+                      <AnimatedCounter value={stats.inProgress} decimals={0} />
+                    </div>
+                    <div className="text-xs text-info-600 dark:text-info-400 font-body">In Progress</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-success-50 dark:bg-success-900/20 rounded-lg">
+                  <CheckCircle2 className="w-8 h-8 text-success-600 dark:text-success-400" />
+                  <div>
+                    <div className="text-2xl font-display font-bold text-success-700 dark:text-success-300">
+                      <AnimatedCounter value={stats.completed} decimals={0} />
+                    </div>
+                    <div className="text-xs text-success-600 dark:text-success-400 font-body">Completed</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-warning-50 dark:bg-warning-900/20 rounded-lg">
+                  <Trophy className="w-8 h-8 text-warning-600 dark:text-warning-400" />
+                  <div>
+                    <div className="text-2xl font-display font-bold text-warning-700 dark:text-warning-300">
+                      <AnimatedCounter value={stats.avgProgress} decimals={0} />%
+                    </div>
+                    <div className="text-xs text-warning-600 dark:text-warning-400 font-body">Avg Progress</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Kanban Columns */}
+          <div className="flex-1 overflow-hidden">
+            <div className="h-full grid grid-cols-3 gap-px bg-gray-200 dark:bg-gray-800">
+              {/* NOT STARTED Column */}
+              <div className="bg-white dark:bg-gray-900 overflow-hidden flex flex-col">
+                <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100">
+                      Not Started
+                    </h2>
+                    <span className="px-2.5 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-mono font-bold text-gray-700 dark:text-gray-300">
+                      {goalsByStatus.NOT_STARTED.length}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {goalsByStatus.NOT_STARTED.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Target className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500 dark:text-gray-500 font-body">No goals</p>
+                    </div>
+                  ) : (
+                    goalsByStatus.NOT_STARTED.map((goal) => {
+                      const config = CATEGORY_CONFIG[goal.category];
+                      const Icon = config.icon;
+                      return (
+                        <Card key={goal.id} variant="elevated" padding="md" hover className={`border-l-4 ${config.borderColor}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon className={`w-4 h-4 ${config.color}`} />
+                            <span className={`text-xs font-bold font-mono ${config.color}`}>
                               {config.label}
                             </span>
                           </div>
-                          <h3 className="text-xl font-display font-bold text-gray-900 dark:text-gray-100 mb-1">
+                          <h3 className="text-sm font-display font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2">
                             {goal.title}
                           </h3>
                           {goal.description && (
-                            <p className="text-gray-600 dark:text-gray-400 text-sm font-body line-clamp-2">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 font-body line-clamp-2 mb-3">
                               {goal.description}
                             </p>
                           )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          leftIcon={<Trash2 className="w-4 h-4" />}
-                          onClick={() => handleDeleteGoal(goal.id)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleUpdateStatus(goal.id, 'IN_PROGRESS')}
+                              className="text-xs"
+                            >
+                              Start
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteGoal(goal.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
 
-                      {/* Progress Bar */}
-                      <div className="mb-3">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 font-body">Progress</span>
-                          <span className="text-xs font-bold text-gray-900 dark:text-gray-100 font-mono">{goal.progress}%</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${config.bgColor.replace('/20', '')} transition-all duration-500`}
-                            style={{ width: `${goal.progress}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUpdateProgress(goal.id, Math.max(0, goal.progress - 10))}
-                        >
-                          -10%
-                        </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleUpdateProgress(goal.id, Math.min(100, goal.progress + 10))}
-                        >
-                          +10%
-                        </Button>
-                        {goal.targetDate && (
-                          <div className="flex items-center gap-2 ml-auto text-gray-600 dark:text-gray-400">
-                            <Calendar className="w-4 h-4" />
-                            <span className="text-sm font-body">
-                              {new Date(goal.targetDate).toLocaleDateString()}
+              {/* IN PROGRESS Column */}
+              <div className="bg-white dark:bg-gray-900 overflow-hidden flex flex-col border-x-2 border-info-200 dark:border-info-800">
+                <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-800 bg-info-50 dark:bg-info-900/20">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display font-semibold text-lg text-info-700 dark:text-info-300">
+                      In Progress
+                    </h2>
+                    <span className="px-2.5 py-1 rounded-full bg-info-200 dark:bg-info-800 text-xs font-mono font-bold text-info-700 dark:text-info-300">
+                      {goalsByStatus.IN_PROGRESS.length}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {goalsByStatus.IN_PROGRESS.length === 0 ? (
+                    <div className="text-center py-12">
+                      <TrendingUp className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500 dark:text-gray-500 font-body">No active goals</p>
+                    </div>
+                  ) : (
+                    goalsByStatus.IN_PROGRESS.map((goal) => {
+                      const config = CATEGORY_CONFIG[goal.category];
+                      const Icon = config.icon;
+                      return (
+                        <Card key={goal.id} variant="elevated" padding="md" hover className={`border-l-4 ${config.borderColor}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon className={`w-4 h-4 ${config.color}`} />
+                            <span className={`text-xs font-bold font-mono ${config.color}`}>
+                              {config.label}
                             </span>
+                          </div>
+                          <h3 className="text-sm font-display font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2">
+                            {goal.title}
+                          </h3>
+                          {goal.description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 font-body line-clamp-2 mb-3">
+                              {goal.description}
+                            </p>
+                          )}
+
+                          {/* Progress Bar */}
+                          <div className="mb-3">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-xs text-gray-600 dark:text-gray-400 font-body">Progress</span>
+                              <span className="text-xs font-bold text-gray-900 dark:text-gray-100 font-mono">{goal.progress}%</span>
+                            </div>
+                            <div className="h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-info-600 dark:bg-info-500 transition-all duration-500"
+                                style={{ width: `${goal.progress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateProgress(goal.id, Math.min(100, goal.progress + 10))}
+                              className="flex-1 text-xs"
+                            >
+                              +10%
+                            </Button>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleUpdateStatus(goal.id, 'COMPLETED')}
+                              className="flex-1 text-xs"
+                            >
+                              Complete
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteGoal(goal.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* COMPLETED Column */}
+              <div className="bg-white dark:bg-gray-900 overflow-hidden flex flex-col">
+                <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-800 bg-success-50 dark:bg-success-900/20">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display font-semibold text-lg text-success-700 dark:text-success-300">
+                      Completed
+                    </h2>
+                    <span className="px-2.5 py-1 rounded-full bg-success-200 dark:bg-success-800 text-xs font-mono font-bold text-success-700 dark:text-success-300">
+                      {goalsByStatus.COMPLETED.length}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {goalsByStatus.COMPLETED.length === 0 ? (
+                    <div className="text-center py-12">
+                      <CheckCircle2 className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500 dark:text-gray-500 font-body">No completed goals yet</p>
+                    </div>
+                  ) : (
+                    goalsByStatus.COMPLETED.map((goal) => {
+                      const config = CATEGORY_CONFIG[goal.category];
+                      const Icon = config.icon;
+                      return (
+                        <Card key={goal.id} variant="elevated" padding="md" hover className={`border-l-4 ${config.borderColor} opacity-75`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon className={`w-4 h-4 ${config.color}`} />
+                            <span className={`text-xs font-bold font-mono ${config.color}`}>
+                              {config.label}
+                            </span>
+                            <CheckCircle2 className="w-4 h-4 text-success-600 dark:text-success-400 ml-auto" />
+                          </div>
+                          <h3 className="text-sm font-display font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-2">
+                            {goal.title}
+                          </h3>
+                          {goal.description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 font-body line-clamp-2 mb-3">
+                              {goal.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs text-success-600 dark:text-success-400 font-bold font-body">✓ Achieved</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteGoal(goal.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE LAYOUT - Priority-First Stack */}
+      <motion.div
+        className="lg:hidden min-h-screen bg-gray-50 dark:bg-gray-950 py-8 px-4"
+        initial="hidden"
+        animate="show"
+        variants={staggerContainer}
+      >
+        <div className="space-y-6">
+          {/* Header */}
+          <motion.div variants={fadeInUp}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                  Goals
+                </h1>
+                <p className="mt-1 text-gray-600 dark:text-gray-400 font-body text-sm">
+                  Track your progress
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="md"
+                leftIcon={<Plus className="w-4 h-4" />}
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
+                New
+              </Button>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-info-50 dark:bg-info-900/20 rounded-lg">
+                <div className="text-xl font-display font-bold text-info-700 dark:text-info-300">
+                  <AnimatedCounter value={stats.inProgress} decimals={0} />
+                </div>
+                <div className="text-xs text-info-600 dark:text-info-400 font-body">In Progress</div>
+              </div>
+
+              <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded-lg">
+                <div className="text-xl font-display font-bold text-success-700 dark:text-success-300">
+                  <AnimatedCounter value={stats.completed} decimals={0} />
+                </div>
+                <div className="text-xs text-success-600 dark:text-success-400 font-body">Completed</div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Filter Tabs */}
+          <motion.div variants={fadeInUp}>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {[
+                { key: 'IN_PROGRESS', label: 'Active', count: goalsByStatus.IN_PROGRESS.length, color: 'info' },
+                { key: 'NOT_STARTED', label: 'Planned', count: goalsByStatus.NOT_STARTED.length, color: 'gray' },
+                { key: 'COMPLETED', label: 'Done', count: goalsByStatus.COMPLETED.length, color: 'success' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setSelectedCategory(tab.key)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-body text-sm font-semibold whitespace-nowrap transition-colors ${
+                    selectedCategory === tab.key
+                      ? `bg-${tab.color}-100 dark:bg-${tab.color}-900/30 text-${tab.color}-700 dark:text-${tab.color}-300`
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold ${
+                    selectedCategory === tab.key
+                      ? `bg-${tab.color}-200 dark:bg-${tab.color}-800 text-${tab.color}-700 dark:text-${tab.color}-300`
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Goals List (filtered by selected tab on mobile) */}
+          <motion.div variants={fadeInUp} className="space-y-3">
+            {filteredGoals.length === 0 ? (
+              <Card variant="elevated" padding="lg" className="text-center">
+                <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-display font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  No goals yet
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-body mb-6">
+                  Create your first goal to start tracking
+                </p>
+                <Button
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Plus className="w-4 h-4" />}
+                  onClick={() => setIsCreateDialogOpen(true)}
+                >
+                  Create Goal
+                </Button>
+              </Card>
+            ) : (
+              filteredGoals.map((goal) => {
+                const config = CATEGORY_CONFIG[goal.category];
+                const Icon = config.icon;
+                return (
+                  <Card key={goal.id} variant="elevated" padding="md" hover className={`border-l-4 ${config.borderColor}`}>
+                    <div className="flex items-start gap-3">
+                      <RadialProgress
+                        value={goal.progress}
+                        max={100}
+                        size="sm"
+                        color={goal.category.toLowerCase() as any}
+                        showValue={true}
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Icon className={`w-4 h-4 ${config.color}`} />
+                          <span className={`text-xs font-bold font-mono ${config.color}`}>
+                            {config.label}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-display font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                          {goal.title}
+                        </h3>
+                        {goal.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 font-body line-clamp-2 mb-2">
+                            {goal.description}
+                          </p>
+                        )}
+
+                        {goal.status === 'IN_PROGRESS' && (
+                          <div className="flex items-center gap-2 mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUpdateProgress(goal.id, Math.min(100, goal.progress + 10))}
+                              className="text-xs"
+                            >
+                              +10%
+                            </Button>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleUpdateStatus(goal.id, 'COMPLETED')}
+                              className="text-xs"
+                            >
+                              Complete
+                            </Button>
+                          </div>
+                        )}
+
+                        {goal.status === 'NOT_STARTED' && (
+                          <div className="mt-3">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleUpdateStatus(goal.id, 'IN_PROGRESS')}
+                              className="text-xs"
+                            >
+                              Start Goal
+                            </Button>
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                </Card>
-              );
-            })
-          )}
-        </motion.div>
+                  </Card>
+                );
+              })
+            )}
+          </motion.div>
+        </div>
+      </motion.div>
 
         {/* Create Goal Modal */}
         {isCreateDialogOpen && (
