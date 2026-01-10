@@ -12,11 +12,11 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.routes import chat, coach, voice, athlete, analytics, usage
 from app.middleware.cost_control import CostControlMiddleware
+from app.middleware.security import SecurityMiddleware, RateLimitMiddleware
 
 # Optional imports for full deployment (require ML dependencies)
 try:
     from app.api.routes import predictions, knowledge, orchestrator
-    from app.middleware.security import SecurityMiddleware, RateLimitMiddleware
     FULL_DEPLOYMENT = True
 except ImportError:
     FULL_DEPLOYMENT = False
@@ -70,10 +70,9 @@ app.add_middleware(
 # 1. Cost Control (innermost - runs closest to route handlers)
 app.add_middleware(CostControlMiddleware)
 
-# 2-3. Security middleware (only in full deployment)
-if FULL_DEPLOYMENT:
-    app.add_middleware(RateLimitMiddleware)
-    app.add_middleware(SecurityMiddleware)
+# 2-3. Security middleware (always enabled - no ML deps required)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(SecurityMiddleware)
 
 
 # Global exception handler
@@ -102,6 +101,8 @@ async def health_check():
             "chat": True,
             "voice": True,
             "coach": True,
+            "security": True,
+            "rate_limiting": True,
             "predictions": FULL_DEPLOYMENT,
             "knowledge": FULL_DEPLOYMENT,
             "orchestrator": FULL_DEPLOYMENT,
