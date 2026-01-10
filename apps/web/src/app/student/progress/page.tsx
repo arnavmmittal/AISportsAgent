@@ -161,156 +161,458 @@ export default function StudentProgressPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Header */}
-        <motion.div
-          className="mb-10"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-gray-100">
-            My Progress
-          </h1>
-          <p className="mt-3 text-gray-600 dark:text-gray-400 text-base font-body">
-            Track your wellness and achieve your goals
-          </p>
-        </motion.div>
+      {/* DESKTOP LAYOUT - Big Radial Wheels Dashboard */}
+      <div className="hidden lg:block h-screen overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Header */}
+          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100">
+                  My Progress
+                </h1>
+                <p className="mt-1 text-gray-600 dark:text-gray-400 font-body">
+                  Track wellness and goals
+                </p>
+              </div>
 
-        {/* Tab Navigation */}
-        <Card variant="elevated" padding="sm" className="mb-10">
+              {/* Tab Pills */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('mood')}
+                  className={`px-6 py-3 rounded-lg font-display font-semibold transition-all ${
+                    activeTab === 'mood'
+                      ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    <span>Wellness</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('goals')}
+                  className={`px-6 py-3 rounded-lg font-display font-semibold transition-all ${
+                    activeTab === 'goals'
+                      ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4" />
+                    <span>Goals</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Mood Tracking Tab */}
+            {activeTab === 'mood' && (
+              <div className="p-8">
+                {/* Big Radial Wheels - 2x2 Grid */}
+                <div className="grid grid-cols-2 gap-8 mb-8">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Card variant="elevated" padding="xl" hover className="h-full">
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <Heart className="w-8 h-8 text-primary-600 dark:text-primary-400 mb-4" />
+                        <RadialProgress
+                          value={calculateAverage('mood') * 10}
+                          max={100}
+                          size="xl"
+                          color="primary"
+                          label="Mood"
+                          showValue
+                          animated
+                        />
+                        <div className="mt-6 w-full max-w-xs">
+                          <Sparkline
+                            data={moodHistory.map((e) => e.mood)}
+                            height={60}
+                            width={280}
+                            color="primary"
+                            showDots={true}
+                            showArea={true}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-body mt-4">
+                          7-day average: <AnimatedCounter value={calculateAverage('mood')} decimals={1} className="font-semibold" />/10
+                        </p>
+                      </div>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    <Card variant="elevated" padding="xl" hover className="h-full">
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <Brain className="w-8 h-8 text-warning-600 dark:text-warning-400 mb-4" />
+                        <RadialProgress
+                          value={calculateAverage('stress') * 10}
+                          max={100}
+                          size="xl"
+                          color="warning"
+                          label="Stress"
+                          showValue
+                          animated
+                        />
+                        <div className="mt-6 w-full max-w-xs">
+                          <Sparkline
+                            data={moodHistory.map((e) => e.stress)}
+                            height={60}
+                            width={280}
+                            color="warning"
+                            showDots={true}
+                            showArea={true}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-body mt-4">
+                          7-day average: <AnimatedCounter value={calculateAverage('stress')} decimals={1} className="font-semibold" />/10
+                        </p>
+                      </div>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    <Card variant="elevated" padding="xl" hover className="h-full">
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <Moon className="w-8 h-8 text-info-600 dark:text-info-400 mb-4" />
+                        <RadialProgress
+                          value={calculateAverage('sleep') * 10}
+                          max={100}
+                          size="xl"
+                          color="info"
+                          label="Sleep"
+                          showValue
+                          animated
+                        />
+                        <div className="mt-6 w-full max-w-xs">
+                          <Sparkline
+                            data={moodHistory.map((e) => e.sleep)}
+                            height={60}
+                            width={280}
+                            color="info"
+                            showDots={true}
+                            showArea={true}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-body mt-4">
+                          7-day average: <AnimatedCounter value={calculateAverage('sleep')} decimals={1} className="font-semibold" /> hrs
+                        </p>
+                      </div>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    <Card variant="elevated" padding="xl" hover className="h-full">
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <Zap className="w-8 h-8 text-success-600 dark:text-success-400 mb-4" />
+                        <RadialProgress
+                          value={calculateAverage('confidence') * 10}
+                          max={100}
+                          size="xl"
+                          color="success"
+                          label="Confidence"
+                          showValue
+                          animated
+                        />
+                        <div className="mt-6 w-full max-w-xs">
+                          <Sparkline
+                            data={moodHistory.map((e) => e.confidence)}
+                            height={60}
+                            width={280}
+                            color="success"
+                            showDots={true}
+                            showArea={true}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-body mt-4">
+                          7-day average: <AnimatedCounter value={calculateAverage('confidence')} decimals={1} className="font-semibold" />/10
+                        </p>
+                      </div>
+                    </Card>
+                  </motion.div>
+                </div>
+
+                {/* Summary Metrics */}
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <MetricCard
+                    label="Overall Wellbeing"
+                    value={(calculateAverage('mood') + (10 - calculateAverage('stress'))) / 2}
+                    decimals={1}
+                    suffix="/10"
+                    trend={getTrend('mood')}
+                    trendValue={getTrendValue('mood')}
+                    sparkline={moodHistory.map((e) => (e.mood + (10 - e.stress)) / 2)}
+                    gradient="primary"
+                    icon={<Heart className="w-5 h-5" />}
+                  />
+
+                  <motion.div whileHover={{ y: -4 }}>
+                    <Card variant="metric" padding="lg" className="cursor-pointer h-full">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-display font-semibold text-gray-900 dark:text-gray-100">
+                            Daily Check-In
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 font-body">
+                            Log today's wellness metrics
+                          </p>
+                        </div>
+                        <button className="px-5 py-2.5 bg-primary-600 dark:bg-primary-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-all font-display font-semibold flex items-center gap-2 shadow-md">
+                          <Plus className="w-4 h-4" />
+                          Log Now
+                        </button>
+                      </div>
+                    </Card>
+                  </motion.div>
+                </div>
+              </div>
+            )}
+
+            {/* Goals Tab - Desktop */}
+            {activeTab === 'goals' && (
+              <div className="p-8 space-y-6">
+                {goals.map((goal) => {
+                  const progressPercent = Math.round((goal.progress / goal.target) * 100);
+                  const isComplete = goal.progress >= goal.target;
+
+                  return (
+                    <motion.div
+                      key={goal.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -4 }}
+                    >
+                      <Card variant="elevated" padding="lg">
+                        <div className="flex items-center gap-6">
+                          <RadialProgress
+                            value={progressPercent}
+                            max={100}
+                            size="lg"
+                            color={isComplete ? 'success' : getCategoryColor(goal.category)}
+                            showValue
+                            animated
+                          />
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-xl font-display font-semibold text-gray-900 dark:text-gray-100">
+                                {goal.title}
+                              </h3>
+                              {isComplete && <CheckCircle2 className="w-5 h-5 text-success-600" />}
+                            </div>
+                            <span
+                              className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                                getCategoryColor(goal.category) === 'primary'
+                                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                                  : getCategoryColor(goal.category) === 'secondary'
+                                  ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/30 dark:text-secondary-300'
+                                  : 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300'
+                              }`}
+                            >
+                              {goal.category}
+                            </span>
+
+                            <div className="flex items-center gap-6 mt-4 text-sm text-gray-600 dark:text-gray-400">
+                              <div>
+                                <span className="font-body">Progress: </span>
+                                <span className="font-display font-semibold text-gray-900 dark:text-gray-100">
+                                  <AnimatedCounter value={goal.progress} decimals={0} /> / {goal.target}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                <span className="font-body">
+                                  {goal.deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button className="px-5 py-2.5 bg-primary-600 dark:bg-primary-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-all font-display font-semibold">
+                              Update
+                            </button>
+                          </div>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE LAYOUT - Compact Stack */}
+      <div className="lg:hidden min-h-screen bg-background">
+        <div className="px-4 py-8 space-y-6">
+          {/* Header */}
+          <div>
+            <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100">
+              My Progress
+            </h1>
+            <p className="mt-1 text-gray-600 dark:text-gray-400 font-body text-sm">
+              Track wellness and goals
+            </p>
+          </div>
+
+          {/* Tab Pills */}
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('mood')}
-              className={`flex-1 px-6 py-4 rounded-lg font-display font-semibold transition-all ${
+              className={`flex-1 px-4 py-3 rounded-lg font-display font-semibold transition-all ${
                 activeTab === 'mood'
                   ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md'
-                  : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <Heart className="w-5 h-5" />
-                <span>Wellness Tracking</span>
+                <Heart className="w-4 h-4" />
+                <span className="text-sm">Wellness</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('goals')}
-              className={`flex-1 px-6 py-4 rounded-lg font-display font-semibold transition-all ${
+              className={`flex-1 px-4 py-3 rounded-lg font-display font-semibold transition-all ${
                 activeTab === 'goals'
                   ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md'
-                  : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
               }`}
             >
               <div className="flex items-center justify-center gap-2">
-                <Target className="w-5 h-5" />
-                <span>Goals</span>
+                <Target className="w-4 h-4" />
+                <span className="text-sm">Goals</span>
               </div>
             </button>
           </div>
-        </Card>
 
-        {/* Mood Tracking Tab */}
-        {activeTab === 'mood' && (
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="space-y-8"
-          >
-            {/* Average Stats with Radial Progress */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <motion.div variants={fadeInUp}>
-                <Card variant="elevated" padding="lg" hover>
-                  <div className="flex flex-col items-center">
-                    <RadialProgress
-                      value={calculateAverage('mood') * 10}
-                      max={100}
-                      size="lg"
-                      color="primary"
-                      label="Mood"
-                    />
-                    <Sparkline
-                      data={moodHistory.map((e) => e.mood)}
-                      height={40}
-                      width={140}
-                      color="primary"
-                      showDots={false}
-                      showArea={true}
-                      className="mt-4"
-                    />
-                  </div>
-                </Card>
-              </motion.div>
+          {/* Mood Tracking Tab - Mobile */}
+          {activeTab === 'mood' && (
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="space-y-6"
+            >
+              {/* Compact Radial Wheels */}
+              <div className="grid grid-cols-2 gap-4">
+                <motion.div variants={fadeInUp}>
+                  <Card variant="elevated" padding="lg" hover>
+                    <div className="flex flex-col items-center">
+                      <RadialProgress
+                        value={calculateAverage('mood') * 10}
+                        max={100}
+                        size="md"
+                        color="primary"
+                        label="Mood"
+                        showValue
+                        animated
+                      />
+                      <Sparkline
+                        data={moodHistory.map((e) => e.mood)}
+                        height={40}
+                        width={100}
+                        color="primary"
+                        showArea={true}
+                        className="mt-3"
+                      />
+                    </div>
+                  </Card>
+                </motion.div>
 
-              <motion.div variants={fadeInUp}>
-                <Card variant="elevated" padding="lg" hover>
-                  <div className="flex flex-col items-center">
-                    <RadialProgress
-                      value={calculateAverage('stress') * 10}
-                      max={100}
-                      size="lg"
-                      color="warning"
-                      label="Stress"
-                    />
-                    <Sparkline
-                      data={moodHistory.map((e) => e.stress)}
-                      height={40}
-                      width={140}
-                      color="warning"
-                      showDots={false}
-                      showArea={true}
-                      className="mt-4"
-                    />
-                  </div>
-                </Card>
-              </motion.div>
+                <motion.div variants={fadeInUp}>
+                  <Card variant="elevated" padding="lg" hover>
+                    <div className="flex flex-col items-center">
+                      <RadialProgress
+                        value={calculateAverage('stress') * 10}
+                        max={100}
+                        size="md"
+                        color="warning"
+                        label="Stress"
+                        showValue
+                        animated
+                      />
+                      <Sparkline
+                        data={moodHistory.map((e) => e.stress)}
+                        height={40}
+                        width={100}
+                        color="warning"
+                        showArea={true}
+                        className="mt-3"
+                      />
+                    </div>
+                  </Card>
+                </motion.div>
 
-              <motion.div variants={fadeInUp}>
-                <Card variant="elevated" padding="lg" hover>
-                  <div className="flex flex-col items-center">
-                    <RadialProgress
-                      value={calculateAverage('sleep') * 10}
-                      max={100}
-                      size="lg"
-                      color="info"
-                      label="Sleep"
-                    />
-                    <Sparkline
-                      data={moodHistory.map((e) => e.sleep)}
-                      height={40}
-                      width={140}
-                      color="info"
-                      showDots={false}
-                      showArea={true}
-                      className="mt-4"
-                    />
-                  </div>
-                </Card>
-              </motion.div>
+                <motion.div variants={fadeInUp}>
+                  <Card variant="elevated" padding="lg" hover>
+                    <div className="flex flex-col items-center">
+                      <RadialProgress
+                        value={calculateAverage('sleep') * 10}
+                        max={100}
+                        size="md"
+                        color="info"
+                        label="Sleep"
+                        showValue
+                        animated
+                      />
+                      <Sparkline
+                        data={moodHistory.map((e) => e.sleep)}
+                        height={40}
+                        width={100}
+                        color="info"
+                        showArea={true}
+                        className="mt-3"
+                      />
+                    </div>
+                  </Card>
+                </motion.div>
 
-              <motion.div variants={fadeInUp}>
-                <Card variant="elevated" padding="lg" hover>
-                  <div className="flex flex-col items-center">
-                    <RadialProgress
-                      value={calculateAverage('confidence') * 10}
-                      max={100}
-                      size="lg"
-                      color="success"
-                      label="Confidence"
-                    />
-                    <Sparkline
-                      data={moodHistory.map((e) => e.confidence)}
-                      height={40}
-                      width={140}
-                      color="success"
-                      showDots={false}
-                      showArea={true}
-                      className="mt-4"
-                    />
-                  </div>
-                </Card>
-              </motion.div>
-            </div>
+                <motion.div variants={fadeInUp}>
+                  <Card variant="elevated" padding="lg" hover>
+                    <div className="flex flex-col items-center">
+                      <RadialProgress
+                        value={calculateAverage('confidence') * 10}
+                        max={100}
+                        size="md"
+                        color="success"
+                        label="Confidence"
+                        showValue
+                        animated
+                      />
+                      <Sparkline
+                        data={moodHistory.map((e) => e.confidence)}
+                        height={40}
+                        width={100}
+                        color="success"
+                        showArea={true}
+                        className="mt-3"
+                      />
+                    </div>
+                  </Card>
+                </motion.div>
+              </div>
 
             {/* Metric Cards with Trends */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
