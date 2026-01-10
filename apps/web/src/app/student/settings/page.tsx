@@ -1,48 +1,65 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
-import { Button } from '@/components/shared/ui/button';
-import { Input } from '@/components/shared/ui/input';
-import { Label } from '@/components/shared/ui/label';
-import { Switch } from '@/components/shared/ui/switch';
-import { Badge } from '@/components/shared/ui/badge';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
-  Settings,
   User,
   Bell,
   Shield,
   LogOut,
-  Save,
-  Mail,
-  Phone,
-  Trophy,
-  Calendar,
+  Loader2,
   Moon,
   Sun,
+  AlertTriangle,
 } from 'lucide-react';
+import { Card, Button, Badge } from '@/design-system/components';
+import { fadeInUp, staggerContainer } from '@/design-system/motion';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
+import { signOut } from 'next-auth/react';
 
-// Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
+
+interface ProfileSettings {
+  name: string;
+  email: string;
+  phone: string;
+  sport: string;
+  team: string;
+  year: string;
+  position: string;
+}
+
+interface NotificationSettings {
+  assignmentReminders: boolean;
+  goalMilestones: boolean;
+  coachMessages: boolean;
+  weeklyReports: boolean;
+  emailDigest: boolean;
+}
+
+interface PrivacySettings {
+  shareWithCoach: boolean;
+  anonymousData: boolean;
+}
 
 export default function StudentSettingsPage() {
   const { theme, toggleTheme, isDarkMode } = useTheme();
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'privacy'>('profile');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Profile settings
-  const [profile, setProfile] = useState({
-    name: 'Alex Johnson',
-    email: 'alex.johnson@university.edu',
-    phone: '(555) 123-4567',
-    sport: 'Basketball',
-    team: 'Varsity',
-    year: 'Junior',
-    position: 'Point Guard',
+  const [profile, setProfile] = useState<ProfileSettings>({
+    name: '',
+    email: '',
+    phone: '',
+    sport: '',
+    team: '',
+    year: '',
+    position: '',
   });
 
-  // Notification preferences
-  const [notifications, setNotifications] = useState({
+  const [notifications, setNotifications] = useState<NotificationSettings>({
     assignmentReminders: true,
     goalMilestones: true,
     coachMessages: true,
@@ -50,27 +67,50 @@ export default function StudentSettingsPage() {
     emailDigest: true,
   });
 
-  // Privacy settings
-  const [privacy, setPrivacy] = useState({
+  const [privacy, setPrivacy] = useState<PrivacySettings>({
     shareWithCoach: true,
     anonymousData: false,
   });
 
-  const [isSaving, setIsSaving] = useState(false);
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/athlete/settings');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setProfile(data.data.profile || profile);
+          setNotifications(data.data.notifications || notifications);
+          setPrivacy(data.data.privacy || privacy);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      // TODO: Replace with actual API call
-      // await apiClient.updateProfile(profile);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast.success('Profile updated successfully!');
+      const response = await fetch('/api/athlete/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'profile', data: profile }),
+      });
+      if (response.ok) {
+        toast.success('Profile updated successfully');
+      } else {
+        toast.error('Failed to update profile');
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast.error('Failed to update profile. Please try again.');
+      toast.error('Failed to update profile');
     } finally {
       setIsSaving(false);
     }
@@ -78,400 +118,312 @@ export default function StudentSettingsPage() {
 
   const handleSaveNotifications = async () => {
     try {
-      // TODO: Replace with actual API call
-      // await apiClient.updateNotificationPreferences(notifications);
-
-      toast.success('Notification preferences saved!');
+      const response = await fetch('/api/athlete/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'notifications', data: notifications }),
+      });
+      if (response.ok) {
+        toast.success('Notification preferences saved');
+      } else {
+        toast.error('Failed to save preferences');
+      }
     } catch (error) {
       console.error('Error saving notifications:', error);
-      toast.error('Failed to save preferences. Please try again.');
+      toast.error('Failed to save preferences');
     }
   };
 
   const handleSavePrivacy = async () => {
     try {
-      // TODO: Replace with actual API call
-      // await apiClient.updatePrivacySettings(privacy);
-
-      toast.success('Privacy settings saved!');
+      const response = await fetch('/api/athlete/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'privacy', data: privacy }),
+      });
+      if (response.ok) {
+        toast.success('Privacy settings saved');
+      } else {
+        toast.error('Failed to save settings');
+      }
     } catch (error) {
       console.error('Error saving privacy settings:', error);
-      toast.error('Failed to save settings. Please try again.');
+      toast.error('Failed to save settings');
     }
   };
 
-  const handleLogout = () => {
-    // TODO: Implement logout
-    toast.success('Logged out successfully');
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' });
   };
 
-  return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Settings
-          </h1>
-          <p className="mt-3 text-muted-foreground text-lg">Manage your profile and preferences</p>
-        </div>
-
-        {/* Profile Information */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-xl flex items-center justify-center shadow-lg">
-                <User className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Profile Information</h2>
-            </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Update your personal and athletic information</p>
-          </div>
-          <div className="p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={profile.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, name: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, email: e.target.value })}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={profile.phone}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, phone: e.target.value })}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="year">Academic Year</Label>
-              <Input
-                id="year"
-                value={profile.year}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, year: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sport">Sport</Label>
-              <div className="relative">
-                <Trophy className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="sport"
-                  value={profile.sport}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, sport: e.target.value })}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="team">Team</Label>
-              <Input
-                id="team"
-                value={profile.team}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, team: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="position">Position</Label>
-              <Input
-                id="position"
-                value={profile.position}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, position: e.target.value })}
-              />
-            </div>
-          </div>
-
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5" />
-                    Save Profile
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Notification Preferences */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Bell className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Notification Preferences</h2>
-            </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Choose what updates you want to receive</p>
-          </div>
-          <div className="p-8 space-y-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="assignment-reminders" className="text-base font-medium">
-                  Assignment Reminders
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Get notified about upcoming assignment due dates
-                </p>
-              </div>
-              <Switch
-                id="assignment-reminders"
-                checked={notifications.assignmentReminders}
-                onCheckedChange={(checked: boolean) =>
-                  setNotifications({ ...notifications, assignmentReminders: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="goal-milestones" className="text-base font-medium">
-                  Goal Milestones
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Celebrate when you reach goal progress milestones
-                </p>
-              </div>
-              <Switch
-                id="goal-milestones"
-                checked={notifications.goalMilestones}
-                onCheckedChange={(checked: boolean) =>
-                  setNotifications({ ...notifications, goalMilestones: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="coach-messages" className="text-base font-medium">
-                  Coach Messages
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Receive notifications for messages from your coach
-                </p>
-              </div>
-              <Switch
-                id="coach-messages"
-                checked={notifications.coachMessages}
-                onCheckedChange={(checked: boolean) =>
-                  setNotifications({ ...notifications, coachMessages: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="weekly-reports" className="text-base font-medium">
-                  Weekly Progress Reports
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Get a summary of your weekly mood and goal progress
-                </p>
-              </div>
-              <Switch
-                id="weekly-reports"
-                checked={notifications.weeklyReports}
-                onCheckedChange={(checked: boolean) =>
-                  setNotifications({ ...notifications, weeklyReports: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="email-digest" className="text-base font-medium">
-                  Email Digest
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Receive daily email summaries of your activity
-                </p>
-              </div>
-              <Switch
-                id="email-digest"
-                checked={notifications.emailDigest}
-                onCheckedChange={(checked: boolean) =>
-                  setNotifications({ ...notifications, emailDigest: checked })
-                }
-              />
-            </div>
-          </div>
-
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={handleSaveNotifications}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2"
-              >
-                <Save className="w-5 h-5" />
-                Save Preferences
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Privacy & Data Sharing */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary rounded-xl flex items-center justify-center shadow-lg">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Privacy & Data Sharing</h2>
-            </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Control how your data is used and shared</p>
-          </div>
-          <div className="p-8 space-y-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="share-coach" className="text-base font-medium">
-                  Share Data with Coach
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Allow your coach to view your mood logs, goals, and progress
-                </p>
-              </div>
-              <Switch
-                id="share-coach"
-                checked={privacy.shareWithCoach}
-                onCheckedChange={(checked: boolean) =>
-                  setPrivacy({ ...privacy, shareWithCoach: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="anonymous-data" className="text-base font-medium">
-                  Anonymous Research Data
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Contribute anonymized data for sports psychology research
-                </p>
-              </div>
-              <Switch
-                id="anonymous-data"
-                checked={privacy.anonymousData}
-                onCheckedChange={(checked: boolean) =>
-                  setPrivacy({ ...privacy, anonymousData: checked })
-                }
-              />
-            </div>
-          </div>
-
-            <div className="bg-gradient-to-r from-blue-100 to-blue-50 border-2 border-blue-200 rounded-2xl p-6 shadow">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-lg font-black text-blue-900">Your Data is Protected</h4>
-                  <p className="text-sm text-blue-800 font-semibold">
-                    All data is encrypted and stored securely. Your coach only sees aggregated trends
-                    unless you explicitly share specific information. You can revoke access at any
-                    time.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={handleSavePrivacy}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2"
-              >
-                <Save className="w-5 h-5" />
-                Save Settings
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Appearance & Theme */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                {isDarkMode ? <Moon className="w-6 h-6 text-white" /> : <Sun className="w-6 h-6 text-white" />}
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Appearance & Theme</h2>
-            </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Customize your visual experience</p>
-          </div>
-          <div className="p-8">
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-              <div>
-                <p className="text-base font-black text-foreground">Dark Mode</p>
-                <p className="text-sm text-muted-foreground font-semibold mt-1">
-                  {isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={isDarkMode}
-                  onChange={toggleTheme}
-                />
-                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-600 peer-checked:to-indigo-700 shadow-inner"></div>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Account Actions */}
-        <div className="bg-card rounded-2xl shadow-xl border-2 border-muted-foreground">
-          <div className="p-8 border-b-2 border-muted-foreground/20">
-            <h2 className="text-2xl font-black text-muted-foreground">Account Actions</h2>
-            <p className="text-base text-muted-foreground font-semibold mt-2">Manage your account</p>
-          </div>
-          <div className="p-8">
-            <button
-              onClick={handleLogout}
-              className="w-full px-6 py-4 border-2 border-muted-foreground text-muted-foreground rounded-xl hover:bg-muted-foreground/10 transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2"
-            >
-              <LogOut className="w-5 h-5" />
-              Log Out
-            </button>
+  if (isLoading) {
+    return (
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary-600 dark:text-primary-400 mx-auto mb-4" />
+            <p className="text-lg text-gray-600 dark:text-gray-400 font-body">Loading settings...</p>
           </div>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-8">
+        {/* Header */}
+        <motion.div variants={fadeInUp}>
+          <h1 className="text-5xl font-display font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 font-body">
+            Manage your account preferences
+          </p>
+        </motion.div>
+
+        {/* Tabs */}
+        <motion.div variants={fadeInUp}>
+          <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`px-6 py-3 font-body font-semibold transition-all border-b-2 ${
+                activeTab === 'profile'
+                  ? 'border-primary-600 dark:border-primary-400 text-primary-700 dark:text-primary-300'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Profile
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`px-6 py-3 font-body font-semibold transition-all border-b-2 ${
+                activeTab === 'notifications'
+                  ? 'border-primary-600 dark:border-primary-400 text-primary-700 dark:text-primary-300'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Notifications
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('privacy')}
+              className={`px-6 py-3 font-body font-semibold transition-all border-b-2 ${
+                activeTab === 'privacy'
+                  ? 'border-primary-600 dark:border-primary-400 text-primary-700 dark:text-primary-300'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Privacy
+              </div>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <motion.div variants={fadeInUp} className="space-y-6">
+            <Card variant="elevated" padding="xl">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">Profile Information</h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-body font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.name}
+                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-body focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-body font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={profile.email}
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-body focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-body font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Sport
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.sport}
+                      onChange={(e) => setProfile({ ...profile, sport: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-body focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-body font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Position
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.position}
+                      onChange={(e) => setProfile({ ...profile, position: e.target.value })}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-body focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSaveProfile}
+                  variant="primary"
+                  size="lg"
+                  disabled={isSaving}
+                  icon={isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : undefined}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </Card>
+
+            {/* Theme */}
+            <Card variant="elevated" padding="xl">
+              <div className="space-y-4">
+                <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white">Appearance</h3>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-body font-semibold text-gray-900 dark:text-white">Dark Mode</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-body">Toggle dark mode theme</p>
+                  </div>
+                  <Button onClick={toggleTheme} variant="secondary" size="md" icon={isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}>
+                    {isDarkMode ? 'Light' : 'Dark'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Logout */}
+            <Card variant="elevated" padding="xl" className="border-l-4 border-danger-600 dark:border-danger-400">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-2">Sign Out</h3>
+                  <p className="text-base text-gray-600 dark:text-gray-400 font-body">
+                    Sign out of your account
+                  </p>
+                </div>
+                <Button onClick={handleLogout} variant="danger" size="lg" icon={<LogOut className="w-5 h-5" />}>
+                  Sign Out
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="xl">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+                  Notification Preferences
+                </h2>
+
+                <div className="space-y-4">
+                  {Object.entries({
+                    assignmentReminders: 'Assignment Reminders',
+                    goalMilestones: 'Goal Milestones',
+                    coachMessages: 'Coach Messages',
+                    weeklyReports: 'Weekly Reports',
+                    emailDigest: 'Email Digest',
+                  }).map(([key, label]) => (
+                    <div key={key} className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                      <span className="font-body font-semibold text-gray-900 dark:text-white">{label}</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notifications[key as keyof NotificationSettings]}
+                          onChange={(e) =>
+                            setNotifications({ ...notifications, [key]: e.target.checked })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer peer-checked:bg-primary-600 dark:peer-checked:bg-primary-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+
+                <Button onClick={handleSaveNotifications} variant="primary" size="lg">
+                  Save Preferences
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Privacy Tab */}
+        {activeTab === 'privacy' && (
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="xl">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+                  Privacy Settings
+                </h2>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                    <div>
+                      <p className="font-body font-semibold text-gray-900 dark:text-white">Share Data with Coach</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-body">
+                        Allow your coach to view your progress
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={privacy.shareWithCoach}
+                        onChange={(e) => setPrivacy({ ...privacy, shareWithCoach: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer peer-checked:bg-primary-600 dark:peer-checked:bg-primary-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="font-body font-semibold text-gray-900 dark:text-white">Anonymous Data Collection</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-body">
+                        Help improve the platform with anonymous usage data
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={privacy.anonymousData}
+                        onChange={(e) => setPrivacy({ ...privacy, anonymousData: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer peer-checked:bg-primary-600 dark:peer-checked:bg-primary-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    </label>
+                  </div>
+                </div>
+
+                <Button onClick={handleSavePrivacy} variant="primary" size="lg">
+                  Save Settings
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 }
