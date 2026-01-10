@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
-import { Button } from '@/components/shared/ui/button';
-import { Input } from '@/components/shared/ui/input';
-import { Badge } from '@/components/shared/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/design-system/components/Button';
+import { Badge } from '@/design-system/components/Badge';
+import { Input } from '@/design-system/components/Input';
+import { fadeInUp, staggerContainer } from '@/design-system/motion';
 import {
   Send,
   Sparkles,
   Bot,
   User,
-  Lightbulb,
-  Heart,
-  Trophy,
-  BookOpen,
   Clock,
+  Phone,
+  AlertTriangle,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Message {
   id: string;
@@ -29,13 +29,6 @@ const SUGGESTED_PROMPTS = [
   "How do I improve my pre-game routine?",
   "I made a mistake and can't stop thinking about it",
   "Tips for staying focused during competition",
-];
-
-const QUICK_TOPICS = [
-  { icon: Heart, label: 'Pre-Game Anxiety', color: 'text-pink-600 bg-pink-50' },
-  { icon: Trophy, label: 'Building Confidence', color: 'text-muted-foreground bg-muted/10' },
-  { icon: Lightbulb, label: 'Mental Toughness', color: 'text-accent bg-accent/10' },
-  { icon: BookOpen, label: 'Visualization', color: 'text-primary bg-blue-50' },
 ];
 
 export default function StudentChatPage() {
@@ -90,167 +83,229 @@ export default function StudentChatPage() {
     setInput(prompt);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary" />
-            AI Mental Performance Coach
-          </h1>
-          <p className="text-muted-foreground mt-1">Evidence-based sports psychology guidance, 24/7</p>
+    <div className="h-screen flex flex-col bg-background">
+      {/* Header Bar - Fixed at top */}
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="px-4 lg:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-primary-600 dark:text-primary-400" />
+              </div>
+              <div>
+                <h1 className="text-lg lg:text-xl font-display font-semibold text-gray-900 dark:text-gray-100">
+                  Mental Performance Coach
+                </h1>
+                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-400 font-body">
+                  Evidence-based sports psychology, 24/7
+                </p>
+              </div>
+            </div>
+            <Badge variant="success" dot>
+              Online
+            </Badge>
+          </div>
         </div>
-        <Badge variant="secondary" className="gap-1">
-          <div className="w-2 h-2 bg-secondary/100 rounded-full animate-pulse"></div>
-          Online
-        </Badge>
       </div>
 
-      {/* Quick Topics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Topics</CardTitle>
-          <CardDescription>Common mental performance areas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {QUICK_TOPICS.map((topic) => {
-              const Icon = topic.icon;
-              return (
-                <button
-                  key={topic.label}
-                  onClick={() => handlePromptClick(`Help me with ${topic.label.toLowerCase()}`)}
-                  className={`p-3 rounded-lg border-2 border-border hover:border-blue-400 transition-all ${topic.color}`}
-                >
-                  <Icon className="w-5 h-5 mx-auto mb-1" />
-                  <p className="text-xs font-medium text-center">{topic.label}</p>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Chat Container */}
-      <Card className="h-[600px] flex flex-col">
-        <CardHeader className="border-b">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-              <Bot className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Mental Performance Coach</CardTitle>
-              <CardDescription className="text-xs">Powered by sports psychology research</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-
-        {/* Messages */}
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-            >
-              {/* Avatar */}
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-green-500 to-emerald-600'
-                    : 'bg-gradient-to-br from-blue-600 to-indigo-600'
-                }`}
-              >
-                {message.role === 'user' ? (
-                  <User className="w-5 h-5 text-white" />
-                ) : (
-                  <Bot className="w-5 h-5 text-white" />
+      {/* Main Chat Area - Scrollable */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
+        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-6 space-y-4">
+          <AnimatePresence mode="popLayout">
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className={cn(
+                  'flex gap-3',
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
                 )}
-              </div>
+              >
+                {/* AI Avatar - Left side */}
+                {message.role === 'assistant' && (
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 lg:w-5 lg:h-5 text-primary-600 dark:text-primary-400" />
+                  </div>
+                )}
 
-              {/* Message Bubble */}
-              <div className={`flex-1 max-w-[70%] ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
+                {/* Message Bubble */}
                 <div
-                  className={`rounded-2xl px-4 py-3 ${
+                  className={cn(
+                    'max-w-[85%] lg:max-w-[70%] rounded-2xl px-4 py-3',
+                    'font-body text-sm lg:text-base leading-relaxed',
                     message.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
-                      : 'bg-muted text-foreground'
-                  }`}
+                      ? 'bg-primary-600 dark:bg-primary-500 text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
+                  )}
                 >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <Clock
+                      className={cn(
+                        'w-3 h-3',
+                        message.role === 'user'
+                          ? 'text-primary-100'
+                          : 'text-gray-400 dark:text-gray-500'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'text-xs',
+                        message.role === 'user'
+                          ? 'text-primary-100'
+                          : 'text-gray-500 dark:text-gray-400'
+                      )}
+                    >
+                      {formatTime(message.timestamp)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 mt-1 px-2">
-                  <Clock className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
-                </div>
-              </div>
-            </div>
-          ))}
 
-          {isLoading && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div className="bg-muted rounded-2xl px-4 py-3">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
-                </div>
-              </div>
-            </div>
-          )}
+                {/* User Avatar - Right side */}
+                {message.role === 'user' && (
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 lg:w-5 lg:h-5 text-gray-600 dark:text-gray-300" />
+                  </div>
+                )}
+              </motion.div>
+            ))}
 
+            {/* Typing Indicator */}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="flex gap-3 justify-start"
+              >
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <Bot className="w-4 h-4 lg:w-5 lg:h-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"
+                      style={{ animationDelay: '0ms' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"
+                      style={{ animationDelay: '150ms' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"
+                      style={{ animationDelay: '300ms' }}
+                    ></div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div ref={messagesEndRef} />
-        </CardContent>
+        </div>
+      </div>
 
-        {/* Input Area */}
-        <div className="border-t p-4 space-y-3">
-          {/* Suggested Prompts */}
+      {/* Input Bar - Fixed at bottom */}
+      <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-3">
+          {/* Suggested Prompts - Only show initially */}
           {messages.length <= 1 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs text-gray-500 w-full">Suggested:</span>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-wrap gap-2"
+            >
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-full uppercase tracking-wider">
+                Quick prompts
+              </span>
               {SUGGESTED_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => handlePromptClick(prompt)}
-                  className="text-xs px-3 py-1.5 bg-muted hover:bg-gray-200 rounded-full text-muted-foreground transition-colors"
+                  className={cn(
+                    'text-xs lg:text-sm px-3 py-1.5 lg:py-2 rounded-full font-body',
+                    'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+                    'hover:bg-primary-50 dark:hover:bg-primary-900/20',
+                    'hover:text-primary-700 dark:hover:text-primary-300',
+                    'hover:border-primary-300 dark:hover:border-primary-700',
+                    'border border-gray-200 dark:border-gray-700',
+                    'transition-all duration-fast active:scale-95'
+                  )}
                 >
                   {prompt}
                 </button>
               ))}
-            </div>
+            </motion.div>
           )}
 
-          {/* Input */}
-          <div className="flex gap-2">
-            <Input
+          {/* Input Field */}
+          <div className="flex gap-2 lg:gap-3">
+            <input
+              type="text"
               value={input}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
-              onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              placeholder="Type your message... (Press Enter to send)"
-              className="flex-1"
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Type your message..."
               disabled={isLoading}
+              className={cn(
+                'flex-1 px-4 py-3 lg:py-3.5 rounded-xl font-body text-sm lg:text-base',
+                'bg-gray-50 dark:bg-gray-800',
+                'border border-gray-200 dark:border-gray-700',
+                'text-gray-900 dark:text-gray-100',
+                'placeholder:text-gray-500 dark:placeholder:text-gray-400',
+                'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'transition-all duration-fast'
+              )}
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              variant="primary"
+              size="icon"
+              className="h-12 w-12 lg:h-14 lg:w-14 flex-shrink-0"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5 lg:w-5 lg:h-5" />
             </Button>
           </div>
 
-          <p className="text-xs text-gray-500 text-center">
-            For crisis support, contact your coach or call the National Suicide Prevention Lifeline: 988
-          </p>
+          {/* Crisis Support Notice */}
+          <div className="flex items-start gap-2 px-2">
+            <AlertTriangle className="w-4 h-4 text-danger-600 dark:text-danger-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-body">
+              Crisis support:{' '}
+              <a
+                href="tel:988"
+                className="text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 font-semibold underline"
+              >
+                988
+              </a>
+              {' '} | {' '}
+              Text "HELLO" to{' '}
+              <a
+                href="sms:741741"
+                className="text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 font-semibold underline"
+              >
+                741741
+              </a>
+            </p>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
