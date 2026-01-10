@@ -12,12 +12,14 @@ import { prisma } from '@/lib/prisma';
 
 // Test data cleanup
 afterAll(async () => {
-  // Clean up test data
-  await prisma.message.deleteMany({ where: { sessionId: { startsWith: 'test-' } } });
+  // Clean up test data (order matters due to foreign key constraints)
+  await prisma.auditLog.deleteMany({ where: { userId: { startsWith: 'test-' } } });
+  await prisma.chatSummary.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
+  await prisma.crisisAlert.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
+  await prisma.message.deleteMany({ where: { id: { startsWith: 'test-' } } });
   await prisma.chatSession.deleteMany({ where: { id: { startsWith: 'test-' } } });
   await prisma.goal.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
   await prisma.moodLog.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
-  await prisma.crisisAlert.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
   await prisma.coachAthleteRelation.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
   await prisma.athlete.deleteMany({ where: { userId: { startsWith: 'test-' } } });
   await prisma.coach.deleteMany({ where: { userId: { startsWith: 'test-' } } });
@@ -196,6 +198,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
         stress: 5,
         energy: 6,
         sleep: 7,
+        tags: 'test',
       },
     });
 
@@ -565,6 +568,7 @@ describe('Integration: Data Lifecycle', () => {
         stress: 4,
         energy: 8,
         sleep: 8,
+        tags: 'test',
       },
     });
 
@@ -668,6 +672,7 @@ describe('Integration: Performance & Scale', () => {
       stress: Math.floor(Math.random() * 10) + 1,
       energy: Math.floor(Math.random() * 10) + 1,
       sleep: Math.floor(Math.random() * 12) + 1,
+      tags: 'test',
       createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
     }));
 
