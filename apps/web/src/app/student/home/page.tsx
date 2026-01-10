@@ -1,8 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Calendar, CheckCircle2, Clock, TrendingUp, MessageSquare, Heart, Trophy } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Calendar,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  MessageSquare,
+  Activity,
+  Target,
+  Zap,
+  ArrowRight,
+  CheckCircle2,
+} from 'lucide-react';
 import Link from 'next/link';
+import { Card, CardMetric, CardHeader, CardTitle, CardContent } from '@/design-system/components/Card';
+import { Button } from '@/design-system/components/Button';
+import { Badge } from '@/design-system/components/Badge';
 
 interface Assignment {
   id: string;
@@ -11,6 +26,30 @@ interface Assignment {
   status: 'pending' | 'submitted' | 'overdue';
   estimatedTime: string;
 }
+
+// Animation variants for staggered reveals
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94] // easeOutQuad
+    }
+  }
+};
 
 export default function StudentHomePage() {
   // Mock data - will be replaced with API call
@@ -49,182 +88,275 @@ export default function StudentHomePage() {
     return `Due in ${Math.floor(seconds / 86400)} days`;
   };
 
+  const wellbeingTrend = stats.wellbeingChange >= 0 ? 'up' : 'down';
+  const goalsPercentage = Math.round((stats.goalsCompleted / stats.goalsTotal) * 100);
+
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Welcome Header */}
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome back!
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <h1 className="font-display font-semibold text-3xl md:text-4xl text-gray-900 dark:text-gray-100 tracking-tight">
+            Performance Dashboard
           </h1>
-          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Here's your wellness overview for today</p>
-        </div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400 font-body">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+        </motion.div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          {/* Wellbeing Score */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Wellbeing</div>
-                <div className="text-5xl font-black mb-2">
-                  {stats.wellbeingScore.toFixed(1)}<span className="text-2xl opacity-75">/10</span>
-                </div>
-                <div className={`text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-flex items-center gap-1 font-semibold`}>
-                  <TrendingUp className="w-4 h-4" />
-                  {stats.wellbeingChange >= 0 ? '+' : ''}{stats.wellbeingChange.toFixed(1)} from last week
-                </div>
-              </div>
-              <div className="text-6xl opacity-20">❤️</div>
-            </div>
-          </div>
-
-          {/* Check-in Streak */}
-          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Streak</div>
-                <div className="text-5xl font-black mb-2">
-                  {stats.checkInStreak} <span className="text-2xl opacity-75">days</span>
-                </div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Keep it up!</div>
-              </div>
-              <div className="text-6xl opacity-20">🔥</div>
-            </div>
-          </div>
-
-          {/* Goals Progress */}
-          <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Goals</div>
-                <div className="text-5xl font-black mb-2">
-                  {stats.goalsCompleted}<span className="text-2xl opacity-75">/{stats.goalsTotal}</span>
-                </div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  {Math.round((stats.goalsCompleted / stats.goalsTotal) * 100)}% complete
-                </div>
-              </div>
-              <div className="text-6xl opacity-20">🏆</div>
-            </div>
-          </div>
-
-          {/* Pending Assignments */}
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Tasks</div>
-                <div className="text-5xl font-black mb-2">{stats.assignmentsPending}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  {stats.assignmentsPending > 0 ? 'Pending completion' : 'All caught up!'}
-                </div>
-              </div>
-              <div className="text-6xl opacity-20">⏰</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-          {/* AI Coach Quick Access */}
-          <Link href="/student/ai-coach">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all cursor-pointer hover:scale-105 transform">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-                  <MessageSquare className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black">Chat with AI Wellness Coach</h3>
-                  <p className="text-base text-blue-100 mt-2 font-semibold">Get personalized support anytime</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Daily Check-in */}
-          <Link href="/student/progress">
-            <div className="bg-gradient-to-br from-green-600 to-teal-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all cursor-pointer hover:scale-105 transform">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-                  <Heart className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black">Daily Check-In</h3>
-                  <p className="text-base text-accent mt-2 font-semibold">Log your mood and track progress</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Upcoming Assignments */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-black text-foreground">Upcoming Assignments</h2>
-              <p className="text-base text-muted-foreground mt-2">Stay on top of your tasks</p>
-            </div>
-            <Link
-              href="/student/assignments"
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform"
-            >
-              View All →
-            </Link>
-          </div>
-
-          <div className="p-6 space-y-4">
-            {upcomingAssignments.length === 0 ? (
-              <div className="p-16 text-center">
-                <div className="text-8xl mb-6">✅</div>
-                <h3 className="text-3xl font-black text-foreground mb-3">All caught up!</h3>
-                <p className="text-lg text-muted-foreground">No pending assignments at the moment</p>
-              </div>
-            ) : (
-              upcomingAssignments.map((assignment) => (
-                <div key={assignment.id} className="p-6 hover:bg-gray-50 transition-colors rounded-xl border-2 border-gray-100 hover:border-blue-200">
-                  <div className="flex items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-black text-foreground mb-2">{assignment.title}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground font-bold">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>{getTimeUntilDue(assignment.dueDate)}</span>
-                        </div>
-                        <span>•</span>
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          <span>{assignment.estimatedTime}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/student/assignments/${assignment.id}`}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold whitespace-nowrap hover:scale-105 transform"
-                    >
-                      Start
-                    </Link>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="space-y-6"
+        >
+          {/* Stats Grid - Bento Box Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Wellbeing Score - Prominent */}
+            <motion.div variants={itemVariants} className="md:col-span-2">
+              <Card variant="elevated" padding="lg" className="h-full">
+                <CardMetric
+                  label="Wellbeing Score"
+                  value={stats.wellbeingScore.toFixed(1)}
+                  trend={wellbeingTrend}
+                  trendValue={`${stats.wellbeingChange >= 0 ? '+' : ''}${stats.wellbeingChange.toFixed(1)} from last week`}
+                  icon={<Activity className="w-5 h-5" />}
+                />
+                <div className="mt-6">
+                  <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    <span>Low</span>
+                    <span>Optimal</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(stats.wellbeingScore / 10) * 100}%` }}
+                      transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+                      className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
+                    />
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+              </Card>
+            </motion.div>
 
-        {/* Motivational Message */}
-        <div className="bg-gradient-to-r from-accent/20 to-accent/30 rounded-lg shadow p-6 border border-accent/20">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-              <Trophy className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-secondary mb-2">You're doing great!</h3>
-              <p className="text-sm text-secondary">
-                Your {stats.checkInStreak}-day check-in streak shows real commitment to your mental wellness.
-                Keep building healthy habits one day at a time.
-              </p>
-            </div>
+            {/* Check-in Streak */}
+            <motion.div variants={itemVariants}>
+              <Card variant="default" padding="md" className="h-full">
+                <CardMetric
+                  label="Daily Streak"
+                  value={stats.checkInStreak}
+                  icon={<Zap className="w-4 h-4" />}
+                />
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
+                  {stats.checkInStreak > 7 ? 'Outstanding consistency!' : 'Keep building the habit'}
+                </p>
+              </Card>
+            </motion.div>
+
+            {/* Goals Progress */}
+            <motion.div variants={itemVariants}>
+              <Card variant="default" padding="md" className="h-full">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Goals
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100 tabular-nums">
+                      {stats.goalsCompleted}
+                    </span>
+                    <span className="text-lg text-gray-500 dark:text-gray-400">
+                      / {stats.goalsTotal}
+                    </span>
+                  </div>
+                  <div className="mt-auto">
+                    <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1.5">
+                      <span>{goalsPercentage}% complete</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${goalsPercentage}%` }}
+                        transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
+                        className="h-full bg-primary-500 rounded-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
           </div>
-        </div>
+
+          {/* Quick Actions - Prominent Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <motion.div variants={itemVariants}>
+              <Link href="/student/ai-coach">
+                <Card
+                  variant="gradient"
+                  interactive
+                  padding="lg"
+                  className="group border-primary-200 dark:border-primary-800"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-900/50 transition-colors">
+                      <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">
+                        AI Performance Coach
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Get personalized mental performance support
+                      </p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
+                  </div>
+                </Card>
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Link href="/student/progress">
+                <Card
+                  variant="gradient"
+                  interactive
+                  padding="lg"
+                  className="group border-secondary-200 dark:border-secondary-800"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-secondary-100 dark:bg-secondary-900/30 flex items-center justify-center flex-shrink-0 group-hover:bg-secondary-200 dark:group-hover:bg-secondary-900/50 transition-colors">
+                      <Activity className="w-6 h-6 text-secondary-600 dark:text-secondary-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">
+                        Daily Check-In
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Track mood, energy, and progress
+                      </p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-secondary-600 dark:group-hover:text-secondary-400 group-hover:translate-x-1 transition-all" />
+                  </div>
+                </Card>
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Upcoming Assignments */}
+          <motion.div variants={itemVariants}>
+            <Card variant="elevated" padding="none">
+              <CardHeader className="px-6 pt-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Upcoming Tasks</CardTitle>
+                  {upcomingAssignments.length > 0 && (
+                    <Badge variant="primary" size="sm">
+                      {stats.assignmentsPending} pending
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="px-6 pb-6">
+                {upcomingAssignments.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success-50 dark:bg-success-900/20 mb-4">
+                      <CheckCircle2 className="w-8 h-8 text-success-600 dark:text-success-400" />
+                    </div>
+                    <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">
+                      All Caught Up
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      No pending assignments at the moment
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 mt-4">
+                    {upcomingAssignments.map((assignment, index) => (
+                      <motion.div
+                        key={assignment.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.8 + index * 0.1 }}
+                      >
+                        <Link href={`/student/assignments/${assignment.id}`}>
+                          <Card
+                            variant="flat"
+                            padding="md"
+                            interactive
+                            className="group hover:border-gray-300 dark:hover:border-gray-700"
+                          >
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-display font-medium text-sm text-gray-900 dark:text-gray-100 mb-2 truncate">
+                                  {assignment.title}
+                                </h4>
+                                <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                                  <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    <span>{getTimeUntilDue(assignment.dueDate)}</span>
+                                  </div>
+                                  <span className="text-gray-400">•</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>{assignment.estimatedTime}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 group-hover:border-primary-300 dark:group-hover:border-primary-700 group-hover:text-primary-700 dark:group-hover:text-primary-300"
+                              >
+                                Start
+                              </Button>
+                            </div>
+                          </Card>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+                {upcomingAssignments.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+                    <Link href="/student/assignments">
+                      <Button variant="ghost" size="sm" className="w-full" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                        View all assignments
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Motivational Insight */}
+          {stats.checkInStreak >= 3 && (
+            <motion.div variants={itemVariants}>
+              <Card variant="flat" padding="md" className="bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-display font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">
+                      Consistency Builds Excellence
+                    </h4>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      Your {stats.checkInStreak}-day check-in streak demonstrates real commitment to mental performance.
+                      Keep building these daily habits for sustained success.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
