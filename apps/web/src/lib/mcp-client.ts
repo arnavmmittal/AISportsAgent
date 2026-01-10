@@ -2,9 +2,11 @@
  * MCP Server Client
  *
  * Handles communication between Next.js and the Python MCP Server.
- * The MCP server runs separately and provides AI agent orchestration.
+ * The MCP server runs separately and provides AI agent orchestration,
+ * knowledge retrieval, ML predictions, and voice processing.
  */
 
+// ===== Chat Types =====
 interface MCPChatRequest {
   session_id: string;
   message: string;
@@ -21,6 +23,134 @@ interface MCPChatResponse {
     severity?: string;
     indicators?: string[];
   };
+}
+
+// ===== Orchestrator Types =====
+export interface OrchestratorChatRequest {
+  message: string;
+  session_id: string;
+  athlete_id: string;
+  user_role?: 'ATHLETE' | 'COACH' | 'ADMIN';
+  sport?: string;
+}
+
+export interface OrchestratorChatResponse {
+  content: string;
+  agent: string;
+  intent: string;
+  phase: string;
+  crisis_detected: boolean;
+  knowledge_sources: Array<{ title?: string; content?: string }>;
+  metadata: Record<string, unknown>;
+}
+
+export interface IntentClassificationRequest {
+  message: string;
+  conversation_history?: Array<{ role: string; content: string }>;
+  user_role?: string;
+}
+
+export interface SessionContext {
+  session_id: string;
+  athlete_id: string;
+  current_phase: string;
+  topics: string[];
+  emotional_state: {
+    primary_emotion: string;
+    intensity: number;
+    trend: string;
+  };
+  active_agent: string;
+  active_framework?: string;
+  sport?: string;
+  message_count: number;
+}
+
+// ===== Knowledge Types =====
+export interface KnowledgeQueryRequest {
+  query: string;
+  top_k?: number;
+  filter_sport?: string;
+  filter_framework?: string;
+  rerank?: boolean;
+}
+
+export interface KnowledgeQueryResponse {
+  query: string;
+  context: string;
+  sources: Array<{
+    id: string;
+    title: string;
+    content: string;
+    score: number;
+    metadata: Record<string, unknown>;
+  }>;
+  reranked: boolean;
+}
+
+// ===== Predictions Types =====
+export interface PredictionRiskRequest {
+  athlete_id: string;
+  features?: Record<string, number>;
+}
+
+export interface PredictionRiskResponse {
+  athlete_id: string;
+  risk_score: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  factors: Array<{
+    feature: string;
+    contribution: number;
+    direction: string;
+  }>;
+  recommendations: string[];
+  timestamp: string;
+}
+
+export interface SlumpPattern {
+  type: string;
+  description: string;
+  severity: string;
+  metrics_affected: string[];
+  started_at?: string;
+}
+
+export interface SlumpDetectionResponse {
+  athlete_id: string;
+  in_slump: boolean;
+  patterns: SlumpPattern[];
+  recommendations: string[];
+}
+
+export interface CorrelationResult {
+  metric_pair: string;
+  correlation: number;
+  p_value: number;
+  significance: string;
+  interpretation: string;
+}
+
+export interface InterventionRecommendation {
+  intervention_id: string;
+  name: string;
+  description: string;
+  evidence_level: string;
+  priority: number;
+  estimated_duration: string;
+  protocol?: Record<string, unknown>;
+}
+
+// ===== Voice Types =====
+export interface VoiceSynthesizeRequest {
+  text: string;
+  voice_id?: string;
+  emotional_context?: 'supportive' | 'calm' | 'encouraging' | 'professional';
+}
+
+export interface VoiceTranscribeRequest {
+  audio: Blob;
+  language?: string;
+  detect_emotion?: boolean;
 }
 
 /**
@@ -169,4 +299,388 @@ export async function* parseSSEStream(
   } finally {
     reader.releaseLock();
   }
+}
+
+// ==========================================
+// ORCHESTRATOR API
+// ==========================================
+
+/**
+ * Send message through the orchestrator (auto-routes to appropriate agent)
+ */
+export async function orchestratorChat(
+  request: OrchestratorChatRequest
+): Promise<OrchestratorChatResponse> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/orchestrator/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(process.env.MCP_SERVICE_TOKEN && {
+        'X-Service-Token': process.env.MCP_SERVICE_TOKEN,
+      }),
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Orchestrator error: ${response.status} - ${error}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Classify intent without generating a response
+ */
+export async function classifyIntent(
+  request: IntentClassificationRequest
+): Promise<{
+  primary_intent: string;
+  confidence: number;
+  secondary_intents: Array<{ intent: string; confidence: number }>;
+  requires_crisis_check: boolean;
+  context_hints: Record<string, string>;
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/orchestrator/classify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Intent classification error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get conversation context for a session
+ */
+export async function getSessionContext(
+  sessionId: string
+): Promise<SessionContext> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/orchestrator/context/${sessionId}`);
+
+  if (!response.ok) {
+    throw new Error(`Get context error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get orchestrator status
+ */
+export async function getOrchestratorStatus(): Promise<{
+  status: string;
+  active_sessions: number;
+  available_intents: string[];
+  features: Record<string, boolean>;
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/orchestrator/status`);
+
+  if (!response.ok) {
+    throw new Error(`Orchestrator status error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ==========================================
+// KNOWLEDGE BASE API
+// ==========================================
+
+/**
+ * Query the knowledge base with RAG
+ */
+export async function queryKnowledge(
+  request: KnowledgeQueryRequest
+): Promise<KnowledgeQueryResponse> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/knowledge/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Knowledge query error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get available sports psychology frameworks
+ */
+export async function getFrameworks(): Promise<{
+  frameworks: Array<{
+    id: string;
+    name: string;
+    description: string;
+    applications: string[];
+  }>;
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/knowledge/frameworks`);
+
+  if (!response.ok) {
+    throw new Error(`Get frameworks error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get knowledge base status
+ */
+export async function getKnowledgeStatus(): Promise<{
+  status: string;
+  document_count: number;
+  collection_name: string;
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/knowledge/status`);
+
+  if (!response.ok) {
+    throw new Error(`Knowledge status error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ==========================================
+// ML PREDICTIONS API
+// ==========================================
+
+/**
+ * Get performance risk prediction for an athlete
+ */
+export async function predictRisk(
+  request: PredictionRiskRequest
+): Promise<PredictionRiskResponse> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/predictions/risk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Risk prediction error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Detect slump patterns for an athlete
+ */
+export async function detectSlump(
+  athleteId: string,
+  metrics: Record<string, number[]>
+): Promise<SlumpDetectionResponse> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/predictions/slump`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ athlete_id: athleteId, metrics }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Slump detection error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Compute correlations between metrics
+ */
+export async function computeCorrelations(
+  athleteId: string,
+  metrics: Record<string, number[]>
+): Promise<{
+  athlete_id: string;
+  correlations: CorrelationResult[];
+  insights: string[];
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/predictions/correlations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ athlete_id: athleteId, metrics }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Correlation error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get intervention recommendations
+ */
+export async function getInterventions(
+  athleteId: string,
+  riskFactors: string[],
+  emotionalState?: string
+): Promise<{
+  athlete_id: string;
+  recommendations: InterventionRecommendation[];
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/predictions/interventions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      athlete_id: athleteId,
+      risk_factors: riskFactors,
+      emotional_state: emotionalState,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Interventions error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get prediction status
+ */
+export async function getPredictionStatus(): Promise<{
+  status: string;
+  model_trained: boolean;
+  features_available: string[];
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/predictions/status`);
+
+  if (!response.ok) {
+    throw new Error(`Prediction status error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ==========================================
+// VOICE API
+// ==========================================
+
+/**
+ * Synthesize text to speech
+ */
+export async function synthesizeSpeech(
+  request: VoiceSynthesizeRequest
+): Promise<Blob> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/voice/synthesize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Voice synthesis error: ${response.status}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * Transcribe audio to text
+ */
+export async function transcribeAudio(
+  audio: Blob,
+  detectEmotion: boolean = true
+): Promise<{
+  text: string;
+  confidence: number;
+  language?: string;
+  emotion?: {
+    detected: string;
+    confidence: number;
+  };
+}> {
+  const url = getMCPServerURL();
+
+  const formData = new FormData();
+  formData.append('file', audio, 'audio.webm');
+  formData.append('detect_emotion', String(detectEmotion));
+
+  const response = await fetch(`${url}/api/voice/transcribe`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Transcription error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get available voices
+ */
+export async function getVoices(): Promise<{
+  voices: Array<{
+    voice_id: string;
+    name: string;
+    description: string;
+    preview_url?: string;
+  }>;
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/voice/voices`);
+
+  if (!response.ok) {
+    throw new Error(`Get voices error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get voice service status
+ */
+export async function getVoiceStatus(): Promise<{
+  status: string;
+  tts_provider: string;
+  stt_provider: string;
+  elevenlabs_available: boolean;
+  deepgram_available: boolean;
+}> {
+  const url = getMCPServerURL();
+
+  const response = await fetch(`${url}/api/voice/status`);
+
+  if (!response.ok) {
+    throw new Error(`Voice status error: ${response.status}`);
+  }
+
+  return response.json();
 }

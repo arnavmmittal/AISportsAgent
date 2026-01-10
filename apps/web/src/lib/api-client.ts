@@ -171,6 +171,69 @@ export interface StreakData {
   last_log_date: string;
 }
 
+// ML Prediction Types
+export interface RiskPrediction {
+  athlete_id: string;
+  risk_score: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  factors: Array<{
+    feature: string;
+    contribution: number;
+    direction: string;
+  }>;
+  recommendations: string[];
+  timestamp: string;
+}
+
+export interface SlumpDetection {
+  athlete_id: string;
+  in_slump: boolean;
+  patterns: Array<{
+    type: string;
+    description: string;
+    severity: string;
+    metrics_affected: string[];
+  }>;
+  recommendations: string[];
+}
+
+export interface CorrelationInsight {
+  metric_pair: string;
+  correlation: number;
+  p_value: number;
+  significance: string;
+  interpretation: string;
+}
+
+export interface Intervention {
+  intervention_id: string;
+  name: string;
+  description: string;
+  evidence_level: string;
+  priority: number;
+  estimated_duration: string;
+  protocol?: Record<string, unknown>;
+}
+
+// Knowledge Types
+export interface KnowledgeResult {
+  query: string;
+  context: string;
+  sources: Array<{
+    id: string;
+    title: string;
+    content: string;
+    score: number;
+  }>;
+}
+
+export interface Framework {
+  id: string;
+  name: string;
+  description: string;
+  applications: string[];
+}
+
 class APIClient {
   private baseURL: string;
 
@@ -406,6 +469,203 @@ class APIClient {
     const response = await fetch(
       `${this.baseURL}/api/athlete/${athleteId}/streak`
     );
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  // ==========================================
+  // ML Predictions
+  // ==========================================
+
+  /**
+   * Get performance risk prediction
+   */
+  async getRiskPrediction(
+    athleteId: string,
+    features?: Record<string, number>
+  ): Promise<RiskPrediction> {
+    const response = await fetch(`${this.baseURL}/api/predictions/risk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ athlete_id: athleteId, features }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Detect slump patterns
+   */
+  async detectSlump(
+    athleteId: string,
+    metrics: Record<string, number[]>
+  ): Promise<SlumpDetection> {
+    const response = await fetch(`${this.baseURL}/api/predictions/slump`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ athlete_id: athleteId, metrics }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get metric correlations and insights
+   */
+  async getCorrelations(
+    athleteId: string,
+    metrics: Record<string, number[]>
+  ): Promise<{ correlations: CorrelationInsight[]; insights: string[] }> {
+    const response = await fetch(`${this.baseURL}/api/predictions/correlations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ athlete_id: athleteId, metrics }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get intervention recommendations
+   */
+  async getInterventions(
+    athleteId: string,
+    riskFactors: string[],
+    emotionalState?: string
+  ): Promise<{ recommendations: Intervention[] }> {
+    const response = await fetch(`${this.baseURL}/api/predictions/interventions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        athlete_id: athleteId,
+        risk_factors: riskFactors,
+        emotional_state: emotionalState,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  // ==========================================
+  // Knowledge Base
+  // ==========================================
+
+  /**
+   * Query the sports psychology knowledge base
+   */
+  async queryKnowledge(
+    query: string,
+    options?: {
+      top_k?: number;
+      filter_sport?: string;
+      filter_framework?: string;
+    }
+  ): Promise<KnowledgeResult> {
+    const response = await fetch(`${this.baseURL}/api/knowledge/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, ...options }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get available sports psychology frameworks
+   */
+  async getFrameworks(): Promise<{ frameworks: Framework[] }> {
+    const response = await fetch(`${this.baseURL}/api/knowledge/frameworks`);
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  // ==========================================
+  // Voice
+  // ==========================================
+
+  /**
+   * Synthesize text to speech
+   */
+  async synthesizeSpeech(
+    text: string,
+    options?: {
+      voice_id?: string;
+      emotional_context?: 'supportive' | 'calm' | 'encouraging' | 'professional';
+    }
+  ): Promise<Blob> {
+    const response = await fetch(`${this.baseURL}/api/voice/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, ...options }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
+   * Transcribe audio to text
+   */
+  async transcribeAudio(
+    audio: Blob,
+    detectEmotion: boolean = true
+  ): Promise<{ text: string; emotion?: { detected: string; confidence: number } }> {
+    const formData = new FormData();
+    formData.append('file', audio, 'audio.webm');
+    formData.append('detect_emotion', String(detectEmotion));
+
+    const response = await fetch(`${this.baseURL}/api/voice/transcribe`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get voice service status
+   */
+  async getVoiceStatus(): Promise<{
+    status: string;
+    tts_provider: string;
+    stt_provider: string;
+  }> {
+    const response = await fetch(`${this.baseURL}/api/voice/status`);
 
     if (!response.ok) {
       throw new Error(`API error: ${response.statusText}`);

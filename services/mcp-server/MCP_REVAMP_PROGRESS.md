@@ -90,29 +90,36 @@ Features:
 
 ### Phase 4: Agent Orchestrator
 
-**Status**: NOT STARTED
+**Status**: COMPLETED
 
-Files to create:
-- `app/orchestrator/__init__.py`
-- `app/orchestrator/router.py` - Intent classification and routing
-- `app/orchestrator/context.py` - Conversation context management
+Files created:
+- `app/orchestrator/__init__.py` - Module exports
+- `app/orchestrator/intent_classifier.py` - Two-stage intent classification
+- `app/orchestrator/context_manager.py` - Conversation state management
+- `app/orchestrator/router.py` - Agent routing logic
+- `app/api/routes/orchestrator.py` - Orchestrator API endpoints
 
-Tasks:
-- [ ] Create intent classifier
-- [ ] Implement agent routing logic
-- [ ] Add conversation context management
-- [ ] Integrate crisis detection as first-pass
+Features:
+- [x] Intent classifier with 15 intent types
+- [x] Two-stage classification: fast keywords → LLM fallback
+- [x] Crisis detection as first-pass check (always)
+- [x] Conversation context with Discovery-First Protocol phases
+- [x] Agent routing (Athlete, Coach, Knowledge, Governance)
+- [x] Knowledge integration for technique/framework questions
+- [x] Session emotional state tracking
+- [x] Redis persistence option for horizontal scaling
 
 ---
 
 ### Phase 5: API Endpoints
 
-**Status**: MOSTLY COMPLETE
+**Status**: COMPLETED
 
 Completed endpoints:
 - [x] Voice: /voice/status, /voice/voices, /voice/synthesize, /voice/transcribe
 - [x] Predictions: /predictions/risk, /predictions/slump, /predictions/correlations, /predictions/interventions
 - [x] Knowledge: /knowledge/query, /knowledge/add, /knowledge/status, /knowledge/frameworks
+- [x] Orchestrator: /orchestrator/chat, /orchestrator/classify, /orchestrator/context, /orchestrator/status
 
 ---
 
@@ -155,11 +162,19 @@ Tasks:
 | `query_rewriter.py` | Query expansion and reformulation |
 | `retriever.py` | Full retrieval pipeline with reranking |
 
+### Orchestrator Module (`app/orchestrator/`)
+| File | Description |
+|------|-------------|
+| `intent_classifier.py` | Two-stage intent classification (keywords + LLM) |
+| `context_manager.py` | Conversation context with Discovery-First Protocol |
+| `router.py` | Agent routing logic and response coordination |
+
 ### API Routes (`app/api/routes/`)
 | File | Description |
 |------|-------------|
 | `predictions.py` | ML prediction endpoints |
 | `knowledge.py` | Knowledge base endpoints |
+| `orchestrator.py` | Agent orchestrator endpoints |
 
 ---
 
@@ -241,17 +256,24 @@ NEXTAUTH_SECRET=xxx
 - `POST /api/knowledge/rewrite` - Test query rewriting
 - `GET /api/knowledge/frameworks` - List frameworks
 
+### Agent Orchestrator Endpoints
+- `POST /api/orchestrator/chat` - Unified chat with auto-routing
+- `POST /api/orchestrator/classify` - Classify intent only
+- `GET /api/orchestrator/context/{session_id}` - Get session context
+- `DELETE /api/orchestrator/context/{session_id}` - Clear session
+- `GET /api/orchestrator/status` - Service status
+- `GET /api/orchestrator/agents` - List available agents
+
 ---
 
 ## Next Steps
 
-1. **Agent Orchestrator** - Implement intent routing and context management
-2. **Next.js Integration** - Update MCP client to use new endpoints
-3. **Testing** - Write integration tests for all new modules
-4. **Deployment** - Test on Railway staging
+1. **Next.js Integration** - Update MCP client to use new endpoints
+2. **Testing** - Write integration tests for all new modules
+3. **Deployment** - Test on Railway staging
 
 ---
 
 ## Last Updated
 
-2026-01-10 - Voice Pipeline, ML Prediction Engine, and Knowledge Base RAG completed
+2026-01-10 - Agent Orchestrator completed. All core MCP modules now complete.
