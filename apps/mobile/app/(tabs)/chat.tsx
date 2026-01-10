@@ -161,14 +161,11 @@ export default function ChatScreen() {
           try {
             const parsed = JSON.parse(data);
 
-            // Handle different event types from OpenAI streaming
             if (parsed.type === 'session') {
-              // Update session ID if provided by backend
               if (parsed.data?.sessionId) {
                 setSessionId(parsed.data.sessionId);
               }
             } else if (parsed.type === 'token' || parsed.type === 'content') {
-              // Handle both new token streaming and legacy content events
               await new Promise(resolve => setTimeout(resolve, 20));
 
               setMessages((prev) => {
@@ -183,15 +180,12 @@ export default function ChatScreen() {
                 return updated;
               });
             } else if (parsed.type === 'crisis_alert' || parsed.type === 'crisis_check') {
-              // Crisis detected - show resources modal
               setCrisisAlert({
                 final_risk_level: parsed.data.severity || parsed.data.final_risk_level || 'HIGH',
                 message: parsed.data.message || 'We noticed your message may indicate distress. Professional support is available 24/7.',
               });
-              // Haptic feedback for crisis alert
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             } else if (parsed.type === 'done') {
-              // Stream complete
               console.log('✅ Stream complete');
             }
           } catch (e) {
@@ -240,7 +234,6 @@ export default function ChatScreen() {
         athleteId: userId,
         onTranscript: (transcript) => {
           console.log('📝 Transcript received:', transcript);
-          // Add user message with transcript
           const userMessage: Message = {
             id: `msg_${Date.now()}`,
             sessionId,
@@ -252,8 +245,7 @@ export default function ChatScreen() {
         },
         onResponse: (response) => {
           console.log('💬 Response received:', response);
-          setIsProcessingVoice(false); // Clear loading state when response arrives
-          // Add assistant message with response
+          setIsProcessingVoice(false);
           const assistantMessage: Message = {
             id: `msg_${Date.now()}_assistant`,
             sessionId,
@@ -266,9 +258,8 @@ export default function ChatScreen() {
         },
         onError: (error) => {
           console.log('Voice not available:', error);
-          setIsProcessingVoice(false); // Clear loading state on error
+          setIsProcessingVoice(false);
           setVoiceError(error);
-          // Don't show alert for connection errors - voice is optional
         },
         onCrisisAlert: (severity, message) => {
           console.warn('⚠️ Crisis alert:', severity, message);
@@ -288,7 +279,6 @@ export default function ChatScreen() {
     } catch (error: any) {
       console.log('Voice client initialization skipped (optional feature):', error);
       setVoiceError(error.message || 'Voice service unavailable');
-      // Don't alert - voice is optional and will be handled when user tries to use it
     }
   };
 
@@ -296,11 +286,10 @@ export default function ChatScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
     if (isRecording) {
-      // Stop recording
       try {
         console.log('🛑 Stopping voice recording...');
         setIsRecording(false);
-        setIsProcessingVoice(true); // Start processing state
+        setIsProcessingVoice(true);
         Animated.timing(micPulseAnim, {
           toValue: 1,
           duration: 200,
@@ -313,15 +302,13 @@ export default function ChatScreen() {
         }
       } catch (error: any) {
         console.error('Error stopping recording:', error);
-        setIsProcessingVoice(false); // Clear processing state on error
+        setIsProcessingVoice(false);
         Alert.alert('Recording Error', 'Failed to stop recording. Please try again.');
       }
     } else {
-      // Start recording
       try {
         console.log('🎤 Starting voice recording...');
 
-        // Initialize voice client if not connected
         if (!voiceClient.current || !voiceConnected) {
           await initializeVoiceClient();
         }
@@ -333,7 +320,6 @@ export default function ChatScreen() {
         await voiceClient.current.startRecording();
         setIsRecording(true);
 
-        // Pulsing animation
         Animated.loop(
           Animated.sequence([
             Animated.timing(micPulseAnim, {
@@ -358,7 +344,6 @@ export default function ChatScreen() {
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (voiceClient.current) {
@@ -384,52 +369,36 @@ export default function ChatScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Crisis Resources Modal */}
       <CrisisResourcesModal crisis={crisisAlert} onClose={() => setCrisisAlert(null)} />
 
-      {/* Dark gradient background */}
-      <LinearGradient
-        colors={[Colors.background, Colors.card, Colors.cardElevated]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+      {/* Clean background */}
+      <View style={styles.background} />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {/* Header */}
+        {/* Professional Header */}
         <View style={styles.header}>
           <LinearGradient
-            colors={[Colors.primary, Colors.secondary, Colors.accent]}
+            colors={['#2563eb', '#3b82f6']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.headerGradient}
           >
             <View style={styles.headerContent}>
               <View style={styles.headerLeft}>
-                <View style={styles.aiIconContainer}>
-                  <LinearGradient
-                    colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
-                    style={styles.aiIconGradient}
-                  >
-                    <Ionicons name="chatbubbles" size={24} color="#fff" />
-                  </LinearGradient>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="fitness" size={24} color="#fff" />
                 </View>
                 <View>
-                  <Text style={styles.headerTitle}>AI Coach</Text>
-                  <Text style={styles.headerSubtitle}>Always here to help</Text>
+                  <Text style={styles.headerTitle}>Performance Coach</Text>
+                  <Text style={styles.headerSubtitle}>Mental Performance Support</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
-                  style={styles.newChatGradient}
-                >
-                  <Ionicons name="add" size={24} color="#fff" />
-                </LinearGradient>
+                <Ionicons name="add" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -439,27 +408,22 @@ export default function ChatScreen() {
         <Animated.View style={[styles.messagesContainer, { opacity: fadeAnim }]}>
           {messages.length === 0 ? (
             <View style={styles.emptyState}>
-              <LinearGradient
-                colors={[Colors.primary, Colors.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.emptyIconContainer}
-              >
-                <Ionicons name="chatbubbles" size={56} color="#fff" />
-              </LinearGradient>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="chatbubbles" size={48} color="#3b82f6" />
+              </View>
 
-              <Text style={styles.emptyTitle}>Ready to talk? 💬</Text>
+              <Text style={styles.emptyTitle}>Your Mental Performance Coach</Text>
 
               <Text style={styles.emptyMessage}>
-                I'm your AI mental performance coach. Share what's on your mind, and let's work through it together.
+                Get immediate support for pre-game anxiety, confidence building, stress management, and peak performance.
               </Text>
 
-              <View style={styles.suggestionsGrid}>
+              <View style={styles.suggestionsContainer}>
                 {[
-                  { emoji: '🎯', text: 'Pre-game anxiety tips', prompt: "I get anxious before games..." },
-                  { emoji: '💪', text: 'Build confidence', prompt: "How do I believe in myself more?" },
-                  { emoji: '🧘', text: 'Stress management', prompt: "I'm feeling overwhelmed..." },
-                  { emoji: '⚡', text: 'Get in the zone', prompt: "Help me find my flow state..." },
+                  { icon: 'fitness-outline', text: 'Pre-game preparation', prompt: "I have a big game coming up and feeling anxious..." },
+                  { icon: 'trophy-outline', text: 'Build confidence', prompt: "How can I build more confidence in my abilities?" },
+                  { icon: 'pulse-outline', text: 'Manage stress', prompt: "I'm feeling overwhelmed with pressure..." },
+                  { icon: 'chatbubble-ellipses-outline', text: 'Find flow state', prompt: "Help me get into the zone during competition..." },
                 ].map((suggestion, index) => (
                   <TouchableOpacity
                     key={index}
@@ -469,7 +433,7 @@ export default function ChatScreen() {
                       setInputValue(suggestion.prompt);
                     }}
                   >
-                    <Text style={styles.suggestionEmoji}>{suggestion.emoji}</Text>
+                    <Ionicons name={suggestion.icon as any} size={24} color="#3b82f6" />
                     <Text style={styles.suggestionText}>{suggestion.text}</Text>
                   </TouchableOpacity>
                 ))}
@@ -488,12 +452,9 @@ export default function ChatScreen() {
                   ]}
                 >
                   {item.role === 'assistant' && (
-                    <LinearGradient
-                      colors={[Colors.primary, Colors.secondary]}
-                      style={styles.avatar}
-                    >
-                      <Ionicons name="chatbubbles" size={20} color="#fff" />
-                    </LinearGradient>
+                    <View style={styles.avatarContainer}>
+                      <Ionicons name="fitness" size={18} color="#3b82f6" />
+                    </View>
                   )}
 
                   <View
@@ -514,19 +475,19 @@ export default function ChatScreen() {
                         <Animated.View
                           style={[
                             styles.typingDot,
-                            { backgroundColor: '#a78bfa', transform: [{ translateY: dot1Anim }] }
+                            { transform: [{ translateY: dot1Anim }] }
                           ]}
                         />
                         <Animated.View
                           style={[
                             styles.typingDot,
-                            { backgroundColor: '#c4b5fd', transform: [{ translateY: dot2Anim }] }
+                            { transform: [{ translateY: dot2Anim }] }
                           ]}
                         />
                         <Animated.View
                           style={[
                             styles.typingDot,
-                            { backgroundColor: '#ddd6fe', transform: [{ translateY: dot3Anim }] }
+                            { transform: [{ translateY: dot3Anim }] }
                           ]}
                         />
                       </View>
@@ -534,12 +495,9 @@ export default function ChatScreen() {
                   </View>
 
                   {item.role === 'user' && (
-                    <LinearGradient
-                      colors={['#3b82f6', '#60a5fa']}
-                      style={styles.avatar}
-                    >
-                      <Ionicons name="person" size={20} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.avatarContainer, styles.userAvatar]}>
+                      <Ionicons name="person" size={18} color="#fff" />
+                    </View>
                   )}
                 </View>
               )}
@@ -549,27 +507,24 @@ export default function ChatScreen() {
           )}
         </Animated.View>
 
-        {/* Input Area - ChatGPT Style */}
+        {/* Input Area */}
         <View style={styles.inputWrapper}>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
               value={inputValue}
               onChangeText={setInputValue}
-              placeholder="Message AI Coach..."
-              placeholderTextColor="rgba(255,255,255,0.4)"
+              placeholder="Message your coach..."
+              placeholderTextColor="rgba(148, 163, 184, 0.6)"
               multiline
               maxLength={2000}
               editable={!isLoading && !isProcessingVoice}
             />
 
             <View style={styles.inputButtons}>
-              {/* Voice/Mic button */}
+              {/* Voice button */}
               <Animated.View
-                style={[
-                  styles.voiceButtonWrapper,
-                  { transform: [{ scale: micPulseAnim }] }
-                ]}
+                style={{ transform: [{ scale: micPulseAnim }] }}
               >
                 <TouchableOpacity
                   style={[
@@ -580,12 +535,12 @@ export default function ChatScreen() {
                   disabled={isLoading || isProcessingVoice}
                 >
                   {isProcessingVoice ? (
-                    <ActivityIndicator color="#8b5cf6" size="small" />
+                    <ActivityIndicator color="#3b82f6" size="small" />
                   ) : (
                     <Ionicons
                       name={isRecording ? "stop-circle" : "mic"}
                       size={22}
-                      color={isRecording ? '#ec4899' : ((isLoading || isProcessingVoice) ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)')}
+                      color={isRecording ? '#ef4444' : '#64748b'}
                     />
                   )}
                 </TouchableOpacity>
@@ -603,8 +558,8 @@ export default function ChatScreen() {
                   <LinearGradient
                     colors={
                       !inputValue.trim()
-                        ? ['rgba(139, 92, 246, 0.3)', 'rgba(217, 70, 239, 0.3)']
-                        : ['#8b5cf6', '#d946ef']
+                        ? ['#94a3b8', '#94a3b8']
+                        : ['#2563eb', '#3b82f6']
                     }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -625,6 +580,11 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0f172a',
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0f172a',
   },
   keyboardView: {
     flex: 1,
@@ -632,11 +592,11 @@ const styles = StyleSheet.create({
   // Header
   header: {
     paddingTop: 60,
-    shadowColor: '#8b5cf6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   headerGradient: {
     paddingBottom: Spacing.lg,
@@ -652,37 +612,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
-  aiIconContainer: {
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  aiIconGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   headerTitle: {
     fontSize: Typography.xl,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#fff',
   },
   headerSubtitle: {
     fontSize: Typography.sm,
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(255,255,255,0.85)',
     fontWeight: '500',
   },
   newChatButton: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  newChatGradient: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -703,33 +657,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xl,
-    shadowColor: '#8b5cf6',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 12,
   },
   emptyTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#f1f5f9',
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
   emptyMessage: {
     fontSize: Typography.base,
-    color: 'rgba(255,255,255,0.7)',
+    color: '#94a3b8',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
     marginBottom: Spacing.xxxl,
   },
-  suggestionsGrid: {
+  suggestionsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.md,
@@ -737,20 +689,17 @@ const styles = StyleSheet.create({
   },
   suggestionCard: {
     width: '48%',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: BorderRadius.xl,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
-  },
-  suggestionEmoji: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
   },
   suggestionText: {
     fontSize: Typography.sm,
-    color: '#fff',
+    color: '#cbd5e1',
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -766,12 +715,19 @@ const styles = StyleSheet.create({
   messageRowAssistant: {
     flexDirection: 'row',
   },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  avatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  userAvatar: {
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   messageBubble: {
     maxWidth: '75%',
@@ -779,16 +735,18 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
   },
   userBubble: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#2563eb',
+    borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: Typography.base,
-    color: '#fff',
+    color: '#e2e8f0',
     lineHeight: 22,
   },
   userMessageText: {
@@ -803,24 +761,25 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: '#64748b',
   },
-  // Input - ChatGPT Style
+  // Input
   inputWrapper: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    paddingBottom: Platform.OS === 'ios' ? Spacing.xxxl + 60 : Spacing.lg, // Extra padding for tab bar
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    paddingBottom: Platform.OS === 'ios' ? Spacing.xxxl + 60 : Spacing.lg,
+    backgroundColor: '#0f172a',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   inputContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 24,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'flex-end',
   },
   input: {
@@ -828,7 +787,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
     maxHeight: 120,
     fontSize: Typography.base,
-    color: '#fff',
+    color: '#f1f5f9',
     paddingTop: 10,
     paddingBottom: 10,
   },
@@ -837,20 +796,18 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     alignItems: 'center',
   },
-  voiceButtonWrapper: {
-    // Wrapper for animation
-  },
   voiceButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   voiceButtonRecording: {
-    backgroundColor: 'rgba(236, 72, 153, 0.2)', // Pink glow when recording
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(236, 72, 153, 0.4)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   sendButton: {
     width: 36,

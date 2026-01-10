@@ -2,90 +2,35 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing, Typography, BorderRadius } from '@/constants/theme';
+import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useRef, useEffect } from 'react';
 
-// Animated Tab Icon Component with Bubble Effect
+// Clean animated tab icon component
 function AnimatedTabIcon({
   name,
   focusedName,
   color,
   focused,
-  gradient = false,
+  primary = false,
 }: {
   name: string;
   focusedName: string;
   color: string;
   focused: boolean;
-  gradient?: boolean;
+  primary?: boolean;
 }) {
   const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
-  const bubbleAnim = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: focused ? 1.1 : 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-      Animated.spring(bubbleAnim, {
-        toValue: focused ? 1 : 0,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.spring(scaleAnim, {
+      toValue: focused ? 1.1 : 1,
+      friction: 8,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
   }, [focused]);
 
-  const bubbleScale = bubbleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.8, 1],
-  });
-
-  const bubbleOpacity = bubbleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
-  if (gradient && focused) {
-    return (
-      <Animated.View
-        style={[
-          styles.iconWrapper,
-          {
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        <Animated.View
-          style={[
-            styles.bubbleContainer,
-            {
-              transform: [{ scale: bubbleScale }],
-              opacity: bubbleOpacity,
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={[Colors.primary, Colors.secondary, Colors.accent]} // Purple → Fuchsia → Pink
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradientBubble}
-          >
-            <View style={styles.glowEffect} />
-            <Ionicons
-              name={focused ? focusedName : name as any}
-              size={28}
-              color="#fff"
-            />
-          </LinearGradient>
-        </Animated.View>
-      </Animated.View>
-    );
-  }
+  const iconSize = primary ? 28 : 26;
 
   return (
     <Animated.View
@@ -96,32 +41,12 @@ function AnimatedTabIcon({
         },
       ]}
     >
-      {focused && (
-        <Animated.View
-          style={[
-            styles.bubbleContainer,
-            {
-              transform: [{ scale: bubbleScale }],
-              opacity: bubbleOpacity,
-            },
-          ]}
-        >
-          <View style={[styles.bubble, focused && styles.bubbleActive]}>
-            <Ionicons
-              name={focused ? focusedName : name as any}
-              size={26}
-              color={focused ? Colors.primary : color}
-            />
-          </View>
-        </Animated.View>
-      )}
-      {!focused && (
-        <Ionicons
-          name={focused ? focusedName : name as any}
-          size={26}
-          color={color}
-        />
-      )}
+      <Ionicons
+        name={(focused ? focusedName : name) as any}
+        size={iconSize}
+        color={color}
+      />
+      {focused && <View style={styles.activeIndicator} />}
     </Animated.View>
   );
 }
@@ -131,34 +56,33 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
+        tabBarActiveTintColor: '#3b82f6',
+        tabBarInactiveTintColor: '#64748b',
         tabBarStyle: {
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.95)', // Dark slate with transparency
+          backgroundColor: '#0f172a',
           borderTopWidth: 1,
-          borderTopColor: 'rgba(255,255,255,0.1)',
+          borderTopColor: 'rgba(255,255,255,0.08)',
           height: Platform.OS === 'ios' ? 90 : 70,
           paddingTop: Spacing.sm,
           paddingBottom: Platform.OS === 'ios' ? Spacing.xl : Spacing.md,
           paddingHorizontal: Spacing.xs,
-          shadowColor: '#8b5cf6',
+          shadowColor: '#000',
           shadowOffset: {
             width: 0,
-            height: -4,
+            height: -2,
           },
-          shadowOpacity: 0.3,
-          shadowRadius: 20,
-          elevation: 24,
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontSize: Typography.xs,
-          fontWeight: '700',
+          fontWeight: '600',
           marginTop: 4,
-          letterSpacing: 0.5,
         },
         tabBarItemStyle: {
           paddingVertical: Spacing.xs,
@@ -216,7 +140,7 @@ export default function TabsLayout() {
               focusedName="chatbubbles"
               color={color}
               focused={focused}
-              gradient
+              primary
             />
           ),
         }}
@@ -296,53 +220,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 56,
     height: 40,
+    position: 'relative',
   },
-  bubbleContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bubble: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(139, 92, 246, 0.2)', // Purple glass
-    borderWidth: 1.5,
-    borderColor: 'rgba(139, 92, 246, 0.4)',
-  },
-  bubbleActive: {
-    shadowColor: '#8b5cf6', // Purple glow
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  gradientBubble: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-    shadowColor: '#ec4899', // Pink glow for gradient bubble
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 16,
-  },
-  glowEffect: {
+  activeIndicator: {
     position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    bottom: -6,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#3b82f6',
   },
 });
