@@ -10,8 +10,6 @@ const nextConfig = {
   },
   // Transpile Supabase packages
   transpilePackages: ['@supabase/ssr', '@supabase/supabase-js'],
-  // External packages that should not be bundled (Next.js 14+ uses serverComponentsExternalPackages)
-  serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs', 'isomorphic-dompurify'],
   // TypeScript configuration for builds
   typescript: {
     // !! WARN !!
