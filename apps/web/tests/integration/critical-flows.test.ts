@@ -69,7 +69,6 @@ describe('Integration: Multi-Tenant Isolation', () => {
         userId: user1.id,
         sport: 'Basketball',
         year: 'JUNIOR',
-        schoolId: school1Id,
       },
     });
     athlete1Id = user1.id;
@@ -87,8 +86,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
     await prisma.coach.create({
       data: {
         userId: coach1User.id,
-        team: 'Basketball',
-        schoolId: school1Id,
+        sport: 'Basketball',
       },
     });
     coach1Id = coach1User.id;
@@ -109,7 +107,6 @@ describe('Integration: Multi-Tenant Isolation', () => {
         userId: user2.id,
         sport: 'Soccer',
         year: 'SOPHOMORE',
-        schoolId: school2Id,
       },
     });
     athlete2Id = user2.id;
@@ -127,8 +124,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
     await prisma.coach.create({
       data: {
         userId: coach2User.id,
-        team: 'Soccer',
-        schoolId: school2Id,
+        sport: 'Soccer',
       },
     });
     coach2Id = coach2User.id;
@@ -150,7 +146,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       where: {
         id: goal1.id,
         Athlete: {
-          schoolId: school2Id, // Wrong school!
+          User: { schoolId: school2Id }, // Wrong school!
         },
       },
     });
@@ -181,7 +177,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       where: {
         id: session1.id,
         Athlete: {
-          schoolId: school2Id, // Wrong school!
+          User: { schoolId: school2Id }, // Wrong school!
         },
       },
     });
@@ -247,7 +243,6 @@ describe('Integration: Coach Consent Flow', () => {
         userId: athleteUser.id,
         sport: 'Track',
         year: 'SENIOR',
-        schoolId,
       },
     });
     athleteId = athleteUser.id;
@@ -265,8 +260,7 @@ describe('Integration: Coach Consent Flow', () => {
     await prisma.coach.create({
       data: {
         userId: coachUser.id,
-        team: 'Track',
-        schoolId,
+        sport: 'Track',
       },
     });
     coachId = coachUser.id;
@@ -316,7 +310,6 @@ describe('Integration: Coach Consent Flow', () => {
         coachId,
         athleteId,
         consentGranted: true,
-        schoolId,
       },
     });
 
@@ -400,7 +393,6 @@ describe('Integration: Crisis Detection Flow', () => {
         userId: user.id,
         sport: 'Swimming',
         year: 'FRESHMAN',
-        schoolId,
       },
     });
     athleteId = user.id;
@@ -465,8 +457,7 @@ describe('Integration: Crisis Detection Flow', () => {
     await prisma.coach.create({
       data: {
         userId: coachUser.id,
-        team: 'Swimming',
-        schoolId,
+        sport: 'Swimming',
       },
     });
 
@@ -474,7 +465,7 @@ describe('Integration: Crisis Detection Flow', () => {
     const alerts = await prisma.crisisAlert.findMany({
       where: {
         Athlete: {
-          schoolId,
+          User: { schoolId },
         },
       },
     });
@@ -536,7 +527,6 @@ describe('Integration: Data Lifecycle', () => {
         userId: user.id,
         sport: 'Volleyball',
         year: 'JUNIOR',
-        schoolId,
       },
     });
     athleteId = user.id;
@@ -651,7 +641,6 @@ describe('Integration: Performance & Scale', () => {
         userId: athleteId,
         sport: 'Football',
         year: 'SENIOR',
-        schoolId,
       },
     });
 
@@ -711,7 +700,6 @@ describe('Integration: Performance & Scale', () => {
         userId: athleteId,
         sport: 'Baseball',
         year: 'SOPHOMORE',
-        schoolId,
       },
     });
 
@@ -783,7 +771,6 @@ describe('Integration: Encryption & Data Protection', () => {
         userId: user.id,
         sport: 'Tennis',
         year: 'SENIOR',
-        schoolId,
       },
     });
     athleteId = user.id;
@@ -866,8 +853,7 @@ describe('Integration: Audit Logging', () => {
     await prisma.coach.create({
       data: {
         userId: coachUser.id,
-        team: 'All Sports',
-        schoolId,
+        sport: 'All Sports',
       },
     });
     coachId = coachUser.id;
@@ -887,7 +873,6 @@ describe('Integration: Audit Logging', () => {
         userId: athleteUser.id,
         sport: 'Swimming',
         year: 'JUNIOR',
-        schoolId,
       },
     });
     athleteId = athleteUser.id;
@@ -898,7 +883,6 @@ describe('Integration: Audit Logging', () => {
         coachId,
         athleteId,
         consentGranted: true,
-        schoolId,
       },
     });
   });
