@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.routes import chat, coach, voice, athlete, analytics, usage, predictions, knowledge, orchestrator
 from app.middleware.cost_control import CostControlMiddleware
+from app.middleware.security import SecurityMiddleware, RateLimitMiddleware
 
 logger = setup_logging()
 
@@ -55,8 +56,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Cost Control Middleware (Token tracking, rate limiting, budget enforcement)
+# Security Middleware Stack (order matters - first added = last executed)
+# 1. Cost Control (innermost - runs closest to route handlers)
 app.add_middleware(CostControlMiddleware)
+
+# 2. Rate Limiting (endpoint-specific limits)
+app.add_middleware(RateLimitMiddleware)
+
+# 3. Security (IP blocking, headers, audit logging - outermost)
+app.add_middleware(SecurityMiddleware)
 
 
 # Global exception handler

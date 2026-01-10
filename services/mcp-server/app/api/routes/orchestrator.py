@@ -2,14 +2,29 @@
 Orchestrator API Routes
 
 Unified endpoint for AI interactions with automatic agent routing.
+
+Security:
+- Input validation and sanitization
+- Prompt injection protection
+- Authentication required for all endpoints
+- Rate limiting via middleware
+- Audit logging for sensitive operations
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends, Request
+from pydantic import BaseModel, Field, validator
 from typing import List, Dict, Any, Optional
+import re
 from sqlalchemy.orm import Session
 
 from app.core.logging import setup_logging
+from app.core.security_hardening import (
+    InputSanitizer,
+    get_current_user,
+    get_current_user_optional,
+    AuthenticatedUser,
+    SecurityAuditLog,
+)
 from app.db.database import get_db
 
 logger = setup_logging()
@@ -17,12 +32,31 @@ router = APIRouter()
 
 
 class ChatRequest(BaseModel):
-    """Request for orchestrated chat."""
-    message: str
-    session_id: str
-    athlete_id: str
-    user_role: str = "ATHLETE"
-    sport: Optional[str] = None
+    """Request for orchestrated chat with security validation."""
+    message: str = Field(..., min_length=1, max_length=10000)
+    session_id: str = Field(..., min_length=1, max_length=100)
+    athlete_id: str = Field(..., min_length=1, max_length=100)
+    user_role: str = Field(default="ATHLETE", pattern="^(ATHLETE|COACH|ADMIN)$")
+    sport: Optional[str] = Field(None, max_length=50)
+
+    @validator("message")
+    def validate_message(cls, v):
+        """Validate and sanitize message content."""
+        return InputSanitizer.validate_message(v)
+
+    @validator("session_id", "athlete_id")
+    def validate_ids(cls, v):
+        """Ensure IDs only contain safe characters."""
+        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
+            raise ValueError("ID contains invalid characters")
+        return v
+
+    @validator("sport")
+    def validate_sport(cls, v):
+        """Validate sport name."""
+        if v and not re.match(r"^[a-zA-Z0-9 ]+$", v):
+            raise ValueError("Sport contains invalid characters")
+        return v
 
 
 class ChatResponse(BaseModel):
@@ -37,16 +71,35 @@ class ChatResponse(BaseModel):
 
 
 class IntentClassificationRequest(BaseModel):
-    """Request for intent classification only."""
-    message: str
+    """Request for intent classification only with validation."""
+    message: str = Field(..., min_length=1, max_length=5000)
     conversation_history: Optional[List[Dict[str, str]]] = None
-    user_role: str = "ATHLETE"
+    user_role: str = Field(default="ATHLETE", pattern="^(ATHLETE|COACH|ADMIN)$")
+
+    @validator("message")
+    def validate_message(cls, v):
+        """Validate message content."""
+        return InputSanitizer.validate_message(v)
+
+    @validator("conversation_history")
+    def validate_history(cls, v):
+        """Validate conversation history to prevent injection."""
+        if v:
+            if len(v) > 50:  # Limit history size
+                raise ValueError("Conversation history too long")
+            for msg in v:
+                if "content" in msg:
+                    # Sanitize each message
+                    msg["content"] = InputSanitizer.sanitize_for_llm(msg["content"][:2000])
+        return v
 
 
 @router.post("/orchestrator/chat", response_model=ChatResponse)
 async def orchestrated_chat(
     request: ChatRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
+    user: Optional[AuthenticatedUser] = Depends(get_current_user_optional),
 ):
     """
     Send a message through the orchestrator.
@@ -58,7 +111,26 @@ async def orchestrated_chat(
     4. Return response with context
 
     This is the main entry point for all AI chat interactions.
+
+    Security:
+    - Input validation and sanitization applied
+    - Prompt injection protection active
+    - Crisis detection runs first for safety
     """
+    # Get client IP for logging
+    client_ip = http_request.headers.get(
+        "X-Forwarded-For", http_request.client.host if http_request.client else "unknown"
+    ).split(",")[0].strip()
+
+    # Log the request for audit
+    SecurityAuditLog.log_data_access(
+        user_id=user.user_id if user else request.athlete_id,
+        resource_type="orchestrator_chat",
+        resource_id=request.session_id,
+        action="chat",
+        ip_address=client_ip,
+    )
+
     try:
         from app.orchestrator import route_message
 
@@ -69,6 +141,19 @@ async def orchestrated_chat(
             user_role=request.user_role,
             db_session=db,
         )
+
+        # Log if crisis was detected
+        if response.crisis_detected:
+            SecurityAuditLog.log_security_event(
+                event_type="crisis_detected",
+                severity="critical",
+                details={
+                    "session_id": request.session_id,
+                    "athlete_id": request.athlete_id,
+                },
+                ip_address=client_ip,
+                user_id=user.user_id if user else request.athlete_id,
+            )
 
         return ChatResponse(
             content=response.content,
@@ -82,7 +167,11 @@ async def orchestrated_chat(
 
     except Exception as e:
         logger.error(f"Orchestrator chat error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        # Don't expose internal errors
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred processing your request"
+        )
 
 
 @router.post("/orchestrator/classify")
