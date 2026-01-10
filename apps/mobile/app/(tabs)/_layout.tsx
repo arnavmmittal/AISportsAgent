@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useRef, useEffect } from 'react';
 
-// Clean animated tab icon component
+// Professional athletic tab icon component (Strava/Whoop style)
 function AnimatedTabIcon({
   name,
   focusedName,
@@ -46,7 +46,14 @@ function AnimatedTabIcon({
         size={iconSize}
         color={color}
       />
-      {focused && <View style={styles.activeIndicator} />}
+      {focused && (
+        <View
+          style={[
+            styles.activeIndicator,
+            { backgroundColor: color },
+          ]}
+        />
+      )}
     </Animated.View>
   );
 }
@@ -56,16 +63,16 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#64748b',
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textSecondary,
         tabBarStyle: {
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: '#0f172a',
+          backgroundColor: Colors.surface,
           borderTopWidth: 1,
-          borderTopColor: 'rgba(255,255,255,0.08)',
+          borderTopColor: Colors.border,
           height: Platform.OS === 'ios' ? 90 : 70,
           paddingTop: Spacing.sm,
           paddingBottom: Platform.OS === 'ios' ? Spacing.xl : Spacing.md,
@@ -83,6 +90,7 @@ export default function TabsLayout() {
           fontSize: Typography.xs,
           fontWeight: '600',
           marginTop: 4,
+          fontFamily: Typography.fontFamily.body,
         },
         tabBarItemStyle: {
           paddingVertical: Spacing.xs,
@@ -228,6 +236,5 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#3b82f6',
   },
 });
