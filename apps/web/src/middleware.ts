@@ -63,15 +63,26 @@ export async function middleware(request: NextRequest) {
   let role: string | null = null;
   if (user?.id) {
     try {
-      const { data: userData } = await supabase
+      const { data: userData, error } = await supabase
         .from('User')
         .select('role')
         .eq('id', user.id)
         .single();
 
-      role = userData?.role || null;
-    } catch (error) {
-      console.error('Error fetching user role:', error);
+      if (error) {
+        // If RLS policies aren't set up, Supabase will return an error
+        // Log it for debugging but don't block the user
+        console.warn('[Middleware] Supabase RLS error (policies may not be configured):', error.message);
+        console.warn('[Middleware] User will be allowed to proceed. Set up RLS policies in Supabase to enable proper role-based access control.');
+        console.warn('[Middleware] See /apps/web/supabase-rls-policies.sql for required policies.');
+
+        // Allow access with null role - pages will handle auth themselves
+        // This prevents login redirect loops when RLS isn't configured yet
+      } else {
+        role = userData?.role || null;
+      }
+    } catch (error: any) {
+      console.error('[Middleware] Error fetching user role:', error.message || error);
     }
   }
 
@@ -112,12 +123,18 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages to their role-specific home
-  if (user && isAuthPage && role) {
-    const redirectUrl = role === 'COACH' ? '/coach/team-overview' : '/student/home';
-    return NextResponse.redirect(new URL(redirectUrl, request.url));
+  if (user && isAuthPage) {
+    if (role) {
+      const redirectUrl = role === 'COACH' ? '/coach/team-overview' : '/student/home';
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
+    } else {
+      // If RLS policies aren't configured and we can't get the role,
+      // redirect to a generic dashboard that will handle role detection on the page
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
   }
 
-  // Role-based access control
+  // Role-based access control (only enforce if we successfully retrieved the role)
   if (user && role) {
     // Coaches cannot access athlete routes
     if (role === 'COACH' && isAthleteRoute) {
