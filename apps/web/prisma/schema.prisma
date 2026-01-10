@@ -85,6 +85,13 @@ model Athlete {
   TaskPattern          TaskPattern[]
   WearableData         WearableData[]
   ChatSummary          ChatSummary[]
+  // New relations for prediction intelligence
+  PerformanceOutcome   PerformanceOutcome[]
+  Intervention         Intervention[]
+  WearableConnection   WearableConnection?
+  WearableDataPoint    WearableDataPoint[]
+  AthleteModel         AthleteModel?
+  PredictionLog        PredictionLog[]
 
   @@index([riskLevel])
   @@index([sport])
@@ -121,12 +128,15 @@ model ChatSession {
   phaseStartedAt      DateTime?
   sessionGoals        Json?
   systemContext       Json?
+  // New: Track interventions suggested in this session
+  interventionsSuggested Json?
   ChatInsight         ChatInsight[]
   Athlete             Athlete               @relation(fields: [athleteId], references: [userId])
   ConversationInsight ConversationInsight[]
   CrisisAlert         CrisisAlert[]
   Message             Message[]
   ChatSummary         ChatSummary[]
+  Intervention        Intervention[]
 
   @@index([athleteId])
   @@index([createdAt])
@@ -376,20 +386,25 @@ model Message {
 }
 
 model MoodLog {
-  id         String   @id @default(cuid())
-  athleteId  String
-  mood       Int
-  confidence Int
-  stress     Int
-  energy     Int?
-  sleep      Int?
-  notes      String?
-  tags       String
-  createdAt  DateTime @default(now())
-  Athlete    Athlete  @relation(fields: [athleteId], references: [userId])
+  id           String   @id @default(cuid())
+  athleteId    String
+  mood         Int
+  confidence   Int
+  stress       Int
+  energy       Int?
+  sleep        Int?
+  notes        String?
+  tags         String
+  createdAt    DateTime @default(now())
+  // New: Pre-game context tracking
+  isPreGame    Boolean  @default(false)
+  gameDate     DateTime?
+  contextTags  String[] @default([])
+  Athlete      Athlete  @relation(fields: [athleteId], references: [userId])
 
   @@index([athleteId])
   @@index([createdAt])
+  @@index([isPreGame, gameDate])
 }
 
 model PerformanceMetric {
@@ -656,6 +671,287 @@ model ErrorLog {
   @@index([errorType, timestamp])
 }
 
+// ============================================
+// PERFORMANCE OUTCOME TRACKING
+// ============================================
+
+model PerformanceOutcome {
+  id            String   @id @default(cuid())
+  athleteId     String
+
+  // Type and timing
+  date          DateTime
+  outcomeType   OutcomeType
+
+  // Universal metrics (1-10 or 0-100)
+  overallRating     Float?      // Self or coach rated
+  consistencyScore  Float?      // Variance from expected
+  clutchScore       Float?      // Pressure moment performance
+  effortScore       Float?      // Perceived exertion
+  focusScore        Float?      // Mental focus rating
+
+  // Sport-specific (flexible JSON)
+  sportMetrics      Json?       // {points: 24, rebounds: 8, ...}
+
+  // Context
+  opponent          String?
+  stakes            StakesLevel @default(MEDIUM)
+  homeAway          HomeAway?
+  gameResult        GameResultType?
+
+  // Captured state at time of competition
+  preEventMood         Float?
+  preEventConfidence   Float?
+  preEventStress       Float?
+  preEventSleep        Float?
+  preEventHRV          Float?
+  preEventRecovery     Float?
+
+  // Prediction tracking
+  predictedDeviation   Float?      // What we predicted
+  actualDeviation      Float?      // What happened (calculated)
+  predictionAccuracy   Float?      // How close were we
+
+  // Metadata
+  recordedBy        String?        // Coach ID if coach entered
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  Athlete                Athlete               @relation(fields: [athleteId], references: [userId])
+  InterventionOutcomes   InterventionOutcome[]
+
+  @@index([athleteId, date])
+  @@index([outcomeType])
+}
+
+// ============================================
+// INTERVENTION TRACKING
+// ============================================
+
+model Intervention {
+  id            String   @id @default(cuid())
+  athleteId     String
+
+  // What
+  type          InterventionType
+  protocol      String              // Specific protocol name
+  description   String?             // Details
+
+  // When/Context
+  performedAt   DateTime
+  context       InterventionContext
+  situation     String?             // Freeform situation description
+
+  // How it was initiated
+  source        InterventionSource  // AI_SUGGESTED, COACH_ASSIGNED, SELF
+  suggestedInSessionId  String?     // Chat session that suggested it
+
+  // Athlete feedback
+  completed     Boolean  @default(false)
+  athleteRating Float?              // 1-5 helpfulness rating
+  athleteNotes  String?
+
+  // Calculated effectiveness (updated by system)
+  effectivenessScore  Float?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  Athlete       Athlete      @relation(fields: [athleteId], references: [userId])
+  ChatSession   ChatSession? @relation(fields: [suggestedInSessionId], references: [id])
+  Outcomes      InterventionOutcome[]
+
+  @@index([athleteId, performedAt])
+  @@index([type])
+  @@index([context])
+}
+
+model InterventionOutcome {
+  id              String   @id @default(cuid())
+  interventionId  String
+
+  // Link to what happened after
+  performanceOutcomeId  String?
+
+  // Measured changes (vs baseline or prior state)
+  moodChange          Float?
+  confidenceChange    Float?
+  stressChange        Float?
+  focusChange         Float?
+  performanceChange   Float?    // If linked to outcome
+
+  // Timing
+  measuredAt          DateTime
+  hoursAfterIntervention  Float?
+
+  // Notes
+  notes               String?
+
+  createdAt           DateTime @default(now())
+
+  Intervention        Intervention        @relation(fields: [interventionId], references: [id])
+  PerformanceOutcome  PerformanceOutcome? @relation(fields: [performanceOutcomeId], references: [id])
+
+  @@index([interventionId])
+  @@index([performanceOutcomeId])
+}
+
+// ============================================
+// WEARABLE INTEGRATION
+// ============================================
+
+model WearableConnection {
+  id            String   @id @default(cuid())
+  athleteId     String   @unique
+
+  provider      WearableProvider
+  accessToken   String            // Should be encrypted at app level
+  refreshToken  String?           // Should be encrypted at app level
+  tokenExpiry   DateTime?
+
+  // Sync status
+  lastSyncAt    DateTime?
+  syncStatus    SyncStatus  @default(PENDING)
+  syncError     String?
+
+  // Preferences
+  syncEnabled   Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  Athlete       Athlete  @relation(fields: [athleteId], references: [userId])
+}
+
+model WearableDataPoint {
+  id            String   @id @default(cuid())
+  athleteId     String
+  source        WearableProvider
+  recordedAt    DateTime
+
+  // Sleep
+  sleepDuration     Float?    // hours
+  sleepQuality      Float?    // 0-100
+  sleepLatency      Float?    // minutes to fall asleep
+  sleepEfficiency   Float?    // % time asleep vs in bed
+  deepSleep         Float?    // hours
+  remSleep          Float?    // hours
+  lightSleep        Float?    // hours
+  awakeTime         Float?    // hours
+
+  // Recovery
+  hrv               Float?    // ms (RMSSD)
+  hrvBaseline       Float?    // personal baseline
+  restingHR         Float?    // bpm
+  recoveryScore     Float?    // 0-100
+
+  // Strain/Activity
+  strain            Float?    // WHOOP 0-21 or normalized
+  calories          Float?
+  activeMinutes     Float?
+
+  // Respiratory
+  respiratoryRate   Float?    // breaths/min
+  spo2              Float?    // blood oxygen %
+
+  // Raw data preserved
+  rawData           Json?
+
+  createdAt         DateTime @default(now())
+
+  Athlete           Athlete  @relation(fields: [athleteId], references: [userId])
+
+  @@unique([athleteId, source, recordedAt])
+  @@index([athleteId, recordedAt])
+}
+
+// ============================================
+// ATHLETE MODEL (ML-DERIVED PERSONALIZATION)
+// ============================================
+
+model AthleteModel {
+  id            String   @id @default(cuid())
+  athleteId     String   @unique
+
+  // Personal baselines
+  baselineMood          Float?
+  baselineConfidence    Float?
+  baselineStress        Float?
+  baselineHRV           Float?
+  baselineSleep         Float?
+  baselinePerformance   Float?
+
+  // Optimal state (what state = best performance)
+  optimalMood           Float?
+  optimalConfidence     Float?
+  optimalStress         Float?
+  optimalHRV            Float?
+  optimalSleep          Float?
+
+  // Prediction model weights
+  predictionWeights     Json?     // {mood: 0.2, hrv: 0.3, sleep: 0.25, ...}
+
+  // Intervention effectiveness profile
+  interventionProfile   Json?     // {breathing: {avg: 0.15, n: 8}, visualization: {...}}
+
+  // Risk factors specific to this athlete
+  riskFactors           Json?     // [{factor: "sleep_deficit", threshold: 6, impact: -0.08}]
+
+  // Model metadata
+  dataPointsUsed        Int       @default(0)
+  lastTrainedAt         DateTime?
+  modelVersion          String?
+  accuracy              Float?    // Recent prediction accuracy
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  Athlete               Athlete   @relation(fields: [athleteId], references: [userId])
+}
+
+// ============================================
+// PREDICTION LOGGING
+// ============================================
+
+model PredictionLog {
+  id            String   @id @default(cuid())
+  athleteId     String
+
+  // When/What
+  predictionDate    DateTime      // Date prediction was for
+  createdAt         DateTime @default(now()) // When prediction was made
+
+  // Prediction
+  predictedDeviation    Float     // % from baseline
+  confidence            Float     // Model confidence
+  riskLevel             RiskLevel
+
+  // Features used (for debugging/analysis)
+  featuresUsed          Json      // Snapshot of input features
+
+  // Contributing factors
+  contributingFactors   Json?     // [{factor: "sleep", impact: -0.05}, ...]
+  recommendedActions    Json?     // [{action: "Extra sleep", expectedImpact: +0.03}, ...]
+
+  // Actual outcome (filled in later)
+  actualDeviation       Float?
+  outcomeId             String?   // Link to PerformanceOutcome
+
+  // Accuracy (calculated when outcome known)
+  predictionError       Float?    // Predicted - Actual
+  wasAccurate           Boolean?  // Within acceptable threshold
+
+  Athlete               Athlete   @relation(fields: [athleteId], references: [userId])
+
+  @@index([athleteId, predictionDate])
+  @@index([createdAt])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
 enum AssignmentStatus {
   PENDING
   SUBMITTED
@@ -751,4 +1047,88 @@ enum Severity {
 enum SummaryType {
   SESSION
   WEEKLY
+}
+
+// ============================================
+// NEW ENUMS FOR PREDICTION INTELLIGENCE
+// ============================================
+
+enum OutcomeType {
+  PRACTICE
+  SCRIMMAGE
+  GAME
+  TOURNAMENT
+  COMPETITION
+}
+
+enum StakesLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum HomeAway {
+  HOME
+  AWAY
+  NEUTRAL
+}
+
+enum GameResultType {
+  WIN
+  LOSS
+  DRAW
+}
+
+enum InterventionType {
+  BREATHING
+  VISUALIZATION
+  SELF_TALK
+  ROUTINE
+  FOCUS_CUE
+  AROUSAL_REGULATION
+  GOAL_SETTING
+  COGNITIVE_REFRAME
+  MINDFULNESS
+  JOURNALING
+  PHYSICAL_WARMUP
+  OTHER
+}
+
+enum InterventionContext {
+  PRE_GAME
+  PRE_PRACTICE
+  DURING_COMPETITION
+  HALFTIME
+  POST_ERROR
+  POST_GAME
+  POST_LOSS
+  RECOVERY
+  SLUMP
+  INJURY_RETURN
+  DAILY_ROUTINE
+  ON_DEMAND
+}
+
+enum InterventionSource {
+  AI_SUGGESTED
+  COACH_ASSIGNED
+  SELF_INITIATED
+  PROTOCOL_SCHEDULED
+}
+
+enum WearableProvider {
+  WHOOP
+  GARMIN
+  OURA
+  APPLE_HEALTH
+  FITBIT
+  POLAR
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCING
+  SYNCED
+  ERROR
 }
