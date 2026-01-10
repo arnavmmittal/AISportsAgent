@@ -9,21 +9,10 @@ pydantic-settings==2.6.0
 sqlalchemy==2.0.36
 psycopg2-binary==2.9.10
 
-# AI/ML
+# AI/ML (minimal - just OpenAI)
 openai==1.58.1
-tiktoken==0.7.0
 
-# ML/Statistics (for prediction engine)
-scikit-learn==1.5.2
-scipy==1.14.1
-xgboost==2.1.3
-shap==0.46.0
-
-# Vector Database (for RAG)
-chromadb==0.5.23
-sentence-transformers==3.3.1
-
-# Auth
+# Auth (minimal - remove firebase for now)
 python-jose[cryptography]==3.3.0
 PyJWT==2.10.1
 passlib[bcrypt]==1.7.4
@@ -35,17 +24,9 @@ httpx==0.28.1
 numpy==1.26.4
 aiohttp==3.9.5
 redis==5.0.1
-websockets==13.1
 
-# PDF Processing (for knowledge base ingestion)
+# PDF Processing (for voice routes)
 pypdf==5.1.0
-langchain==0.3.14
-langchain-community==0.3.14
-langchain-openai==0.2.14
 
 # Monitoring
 loguru==0.7.3
-
-# Testing
-pytest==8.3.4
-pytest-asyncio==0.24.0

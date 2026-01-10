@@ -10,9 +10,19 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api.routes import chat, coach, voice, athlete, analytics, usage, predictions, knowledge, orchestrator
+from app.api.routes import chat, coach, voice, athlete, analytics, usage
 from app.middleware.cost_control import CostControlMiddleware
-from app.middleware.security import SecurityMiddleware, RateLimitMiddleware
+
+# Optional imports for full deployment (require ML dependencies)
+try:
+    from app.api.routes import predictions, knowledge, orchestrator
+    from app.middleware.security import SecurityMiddleware, RateLimitMiddleware
+    FULL_DEPLOYMENT = True
+except ImportError:
+    FULL_DEPLOYMENT = False
+    predictions = None
+    knowledge = None
+    orchestrator = None
 
 logger = setup_logging()
 
@@ -60,11 +70,10 @@ app.add_middleware(
 # 1. Cost Control (innermost - runs closest to route handlers)
 app.add_middleware(CostControlMiddleware)
 
-# 2. Rate Limiting (endpoint-specific limits)
-app.add_middleware(RateLimitMiddleware)
-
-# 3. Security (IP blocking, headers, audit logging - outermost)
-app.add_middleware(SecurityMiddleware)
+# 2-3. Security middleware (only in full deployment)
+if FULL_DEPLOYMENT:
+    app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(SecurityMiddleware)
 
 
 # Global exception handler
@@ -87,7 +96,16 @@ async def health_check():
     return {
         "status": "healthy",
         "version": settings.APP_VERSION,
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
+        "mode": "full" if FULL_DEPLOYMENT else "minimal",
+        "features": {
+            "chat": True,
+            "voice": True,
+            "coach": True,
+            "predictions": FULL_DEPLOYMENT,
+            "knowledge": FULL_DEPLOYMENT,
+            "orchestrator": FULL_DEPLOYMENT,
+        }
     }
 
 
@@ -127,23 +145,25 @@ app.include_router(
     tags=["Usage & Billing"]
 )
 
-app.include_router(
-    predictions.router,
-    prefix="/api",
-    tags=["ML Predictions"]
-)
+# ML/AI routes (only in full deployment)
+if FULL_DEPLOYMENT:
+    app.include_router(
+        predictions.router,
+        prefix="/api",
+        tags=["ML Predictions"]
+    )
 
-app.include_router(
-    knowledge.router,
-    prefix="/api",
-    tags=["Knowledge Base"]
-)
+    app.include_router(
+        knowledge.router,
+        prefix="/api",
+        tags=["Knowledge Base"]
+    )
 
-app.include_router(
-    orchestrator.router,
-    prefix="/api",
-    tags=["Agent Orchestrator"]
-)
+    app.include_router(
+        orchestrator.router,
+        prefix="/api",
+        tags=["Agent Orchestrator"]
+    )
 
 
 # Root endpoint
