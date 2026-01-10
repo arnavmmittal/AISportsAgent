@@ -152,10 +152,11 @@ def test_slump_detector(athlete_logs: Dict[str, List[Dict]], verbose: bool = Fal
 
 def test_predictor(athlete_logs: Dict[str, List[Dict]], verbose: bool = False) -> Dict[str, Any]:
     """Test performance predictor."""
-    from app.ml import PerformancePredictor, FeatureExtractor
+    from app.ml import PerformancePredictor
+    # Use same feature extraction as training
+    from scripts.train_predictor import extract_features as training_extract_features
 
     predictor = PerformancePredictor()
-    extractor = FeatureExtractor()
 
     results = {
         "total_predictions": 0,
@@ -175,25 +176,30 @@ def test_predictor(athlete_logs: Dict[str, List[Dict]], verbose: bool = False) -
         training_logs = logs[:14]
         future_logs = logs[14:21]
 
-        # Convert to mood log format
-        mood_logs = [
-            {
-                "date": log["date"],
-                "mood": log["mood"],
-                "confidence": log["confidence"],
-                "stress": log["stress"],
-                "energy": log["energy"],
-                "sleep_hours": log["sleep_hours"],
-            }
-            for log in training_logs
-        ]
-
         try:
-            # Extract features
-            features = extractor.extract_features(mood_logs=mood_logs)
+            # Extract features using same function as training
+            features = training_extract_features(training_logs)
 
-            # Predict
-            prediction = predictor.predict(features)
+            if features is None:
+                continue
+
+            # Predict directly with model (bypass PerformancePredictor wrapper)
+            import numpy as np
+            feature_vector = np.array([[features[f] for f in predictor.feature_names]])
+            prob = predictor.model.predict_proba(feature_vector)[0][1]
+            risk_score = prob * 100
+
+            # Map to risk level
+            if risk_score >= 70:
+                risk_level = "critical"
+            elif risk_score >= 50:
+                risk_level = "high"
+            elif risk_score >= 30:
+                risk_level = "medium"
+            else:
+                risk_level = "low"
+
+            prediction = {"risk_score": risk_score, "risk_level": risk_level}
             risk_score = prediction.get("risk_score", 0)
             risk_level = prediction.get("risk_level", "unknown")
 
