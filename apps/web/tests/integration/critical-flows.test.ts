@@ -39,6 +39,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       data: {
         id: 'test-school-1',
         name: 'University A',
+        division: 'D1',
       },
     });
     school1Id = school1.id;
@@ -47,6 +48,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       data: {
         id: 'test-school-2',
         name: 'University B',
+        division: 'D1',
       },
     });
     school2Id = school2.id;
@@ -225,6 +227,7 @@ describe('Integration: Coach Consent Flow', () => {
       data: {
         id: 'test-school-consent',
         name: 'Consent Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -377,6 +380,7 @@ describe('Integration: Crisis Detection Flow', () => {
       data: {
         id: 'test-school-crisis',
         name: 'Crisis Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -512,6 +516,7 @@ describe('Integration: Data Lifecycle', () => {
       data: {
         id: 'test-school-lifecycle',
         name: 'Lifecycle Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -628,7 +633,7 @@ describe('Integration: Performance & Scale', () => {
 
     // Create test data
     await prisma.school.create({
-      data: { id: schoolId, name: 'Performance Test School' },
+      data: { id: schoolId, name: 'Performance Test School', division: 'D1' },
     });
 
     await prisma.user.create({
@@ -688,7 +693,7 @@ describe('Integration: Performance & Scale', () => {
 
     // Create test data
     await prisma.school.create({
-      data: { id: schoolId, name: 'Pagination Test School' },
+      data: { id: schoolId, name: 'Pagination Test School', division: 'D1' },
     });
 
     await prisma.user.create({
@@ -758,6 +763,7 @@ describe('Integration: Encryption & Data Protection', () => {
       data: {
         id: 'test-school-encryption',
         name: 'Encryption Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -842,6 +848,7 @@ describe('Integration: Audit Logging', () => {
       data: {
         id: 'test-school-audit',
         name: 'Audit Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
