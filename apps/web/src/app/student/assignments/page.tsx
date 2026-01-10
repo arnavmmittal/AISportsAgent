@@ -1,27 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
-import { Button } from '@/components/shared/ui/button';
-import { Textarea } from '@/components/shared/ui/textarea';
-import { Badge } from '@/components/shared/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/shared/ui/dialog';
+import { motion } from 'framer-motion';
 import {
   ClipboardList,
   Clock,
-  CheckCircle,
+  CheckCircle2,
   AlertTriangle,
   ChevronLeft,
   Send,
   FileText,
-  Calendar,
+  Loader2,
 } from 'lucide-react';
+import { Card, Button, AnimatedCounter, Badge } from '@/design-system/components';
+import { fadeInUp, staggerContainer } from '@/design-system/motion';
 import { toast } from 'sonner';
 
 type AssignmentStatus = 'PENDING' | 'SUBMITTED' | 'REVIEWED';
@@ -46,7 +38,9 @@ export default function StudentAssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [responseText, setResponseText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadAssignments();
@@ -54,6 +48,9 @@ export default function StudentAssignmentsPage() {
 
   const loadAssignments = async () => {
     try {
+      setIsLoading(true);
+      setError(null);
+
       // Get current user
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
@@ -67,7 +64,6 @@ export default function StudentAssignmentsPage() {
       const userId = profileData.data.userId;
 
       // Fetch assignments from API
-      // TODO: Implement /api/assignments endpoint
       const response = await fetch(`/api/assignments?athleteId=${userId}`);
 
       if (!response.ok) {
@@ -89,10 +85,12 @@ export default function StudentAssignmentsPage() {
       } else {
         setAssignments([]);
       }
-    } catch (error) {
+    } catch (err) {
       console.error('Error loading assignments:', error);
-      // Show empty state if API not implemented yet
+      setError('Failed to load assignments');
       setAssignments([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -120,7 +118,6 @@ export default function StudentAssignmentsPage() {
 
     setIsSubmitting(true);
     try {
-      // Submit assignment via API
       const response = await fetch('/api/assignments/submit', {
         method: 'POST',
         headers: {
@@ -139,50 +136,18 @@ export default function StudentAssignmentsPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success('Assignment submitted successfully!');
-        // Reload assignments to get updated data
+        toast.success('Assignment submitted successfully');
         await loadAssignments();
         handleBack();
       } else {
         throw new Error(data.error || 'Failed to submit');
       }
-    } catch (error) {
-      console.error('Error submitting assignment:', error);
-      toast.error('Failed to submit assignment. Please try again.');
+    } catch (err) {
+      console.error('Error submitting assignment:', err);
+      toast.error('Failed to submit assignment');
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const getStatusColor = (status: AssignmentStatus) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-muted/20 text-muted-foreground';
-      case 'SUBMITTED':
-        return 'bg-secondary/20 text-secondary';
-      case 'REVIEWED':
-        return 'bg-accent/20 text-secondary';
-      default:
-        return 'bg-muted text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: AssignmentStatus) => {
-    switch (status) {
-      case 'PENDING':
-        return 'Not Submitted';
-      case 'SUBMITTED':
-        return 'Submitted';
-      case 'REVIEWED':
-        return 'Reviewed';
-      default:
-        return status;
-    }
-  };
-
-  const isOverdue = (dueDate: string | null) => {
-    if (!dueDate) return false;
-    return new Date(dueDate) < new Date();
   };
 
   const formatDueDate = (dueDate: string | null) => {
@@ -193,20 +158,33 @@ export default function StudentAssignmentsPage() {
     const diffTime = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) {
-      return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
-    } else if (diffDays === 0) {
-      return 'Due today';
-    } else if (diffDays === 1) {
-      return 'Due tomorrow';
-    } else if (diffDays <= 7) {
-      return `Due in ${diffDays} days`;
-    } else {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
+    if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
+    if (diffDays === 0) return 'Due today';
+    if (diffDays === 1) return 'Due tomorrow';
+    if (diffDays <= 7) return `Due in ${diffDays} days`;
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const isOverdue = (dueDate: string | null) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
+  };
+
+  const getStatusInfo = (status: AssignmentStatus) => {
+    switch (status) {
+      case 'PENDING':
+        return { text: 'Not Submitted', variant: 'secondary' as const };
+      case 'SUBMITTED':
+        return { text: 'Submitted', variant: 'success' as const };
+      case 'REVIEWED':
+        return { text: 'Reviewed', variant: 'primary' as const };
+      default:
+        return { text: status, variant: 'secondary' as const };
     }
   };
 
@@ -217,154 +195,208 @@ export default function StudentAssignmentsPage() {
     (a) => a.submissions && a.submissions.length > 0 && a.submissions[0].status !== 'PENDING'
   );
 
-  // Assignment Detail View
-  if (selectedAssignment) {
-    const submission = selectedAssignment.submissions?.[0];
-    const status = submission?.status || 'PENDING';
-    const isSubmitted = status !== 'PENDING';
-
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-          {/* Back Button */}
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Back to Assignments
-          </button>
-
-          {/* Assignment Details Card */}
-          <div className="bg-gradient-to-br from-accent/20 to-accent/30 rounded-2xl shadow-xl p-8 border-2 border-accent/20">
-            <div className="space-y-4">
-              <h2 className="text-4xl font-black text-secondary">
-                {selectedAssignment.title}
-              </h2>
-              {selectedAssignment.dueDate && (
-                <div
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black shadow ${
-                    isOverdue(selectedAssignment.dueDate)
-                      ? 'bg-muted-foreground/20 text-muted-foreground border-2 border-muted-foreground'
-                      : 'bg-muted/20 text-muted-foreground border-2 border-muted'
-                  }`}
-                >
-                  {isOverdue(selectedAssignment.dueDate) ? (
-                    <AlertTriangle className="w-5 h-5" />
-                  ) : (
-                    <Clock className="w-5 h-5" />
-                  )}
-                  {formatDueDate(selectedAssignment.dueDate)}
-                </div>
-              )}
-
-              <p className="text-secondary leading-relaxed text-lg font-semibold">
-                {selectedAssignment.description}
-              </p>
-
-              <div className="flex items-center gap-4 flex-wrap">
-                <span className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
-                  status === 'PENDING'
-                    ? 'bg-muted/20 text-muted-foreground border-muted'
-                    : status === 'SUBMITTED'
-                    ? 'bg-secondary/20 text-secondary border-secondary/20'
-                    : 'bg-accent/20 text-secondary border-accent/20'
-                }`}>
-                  {getStatusText(status)}
-                </span>
-                {submission?.submittedAt && (
-                  <span className="text-base text-secondary font-bold flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Submitted {new Date(submission.submittedAt).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Response Card */}
-          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
-            <div className="p-8 border-b-2 border-gray-100 dark:border-gray-700">
-              <h3 className="text-2xl font-black text-foreground">Your Response</h3>
-              {isSubmitted && (
-                <p className="text-base text-muted-foreground mt-2 font-semibold">
-                  You can edit and resubmit if needed
-                </p>
-              )}
-            </div>
-            <div className="p-8 space-y-6">
-              <Textarea
-                value={responseText}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setResponseText(e.target.value)}
-                placeholder="Enter your response here..."
-                className="min-h-[250px] resize-none text-base font-medium"
-                disabled={isSubmitting}
-              />
-
-              <div className="flex gap-4">
-                <button
-                  onClick={handleBack}
-                  className="flex-1 px-6 py-4 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-bold text-lg disabled:opacity-50"
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || !responseText.trim()}
-                  className="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transform flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      {isSubmitted ? 'Update Response' : 'Submit'}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary-600 dark:text-primary-400 mx-auto mb-4" />
+            <p className="text-lg text-gray-600 dark:text-gray-400 font-body">Loading assignments...</p>
           </div>
         </div>
       </div>
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <Card variant="elevated" padding="xl" className="text-center">
+          <AlertTriangle className="w-16 h-16 text-danger-600 dark:text-danger-400 mx-auto mb-6" />
+          <h3 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-4">
+            Failed to load assignments
+          </h3>
+          <p className="text-lg text-gray-600 dark:text-gray-400 font-body mb-8">{error}</p>
+          <Button onClick={loadAssignments} variant="primary" size="lg">
+            Try Again
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Assignment Detail View
+  if (selectedAssignment) {
+    const submission = selectedAssignment.submissions?.[0];
+    const status = submission?.status || 'PENDING';
+    const statusInfo = getStatusInfo(status);
+    const isSubmitted = status !== 'PENDING';
+    const overdue = isOverdue(selectedAssignment.dueDate);
+
+    return (
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-8">
+          {/* Back Button */}
+          <motion.div variants={fadeInUp}>
+            <Button
+              onClick={handleBack}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              icon={<ChevronLeft className="w-5 h-5" />}
+            >
+              Back to Assignments
+            </Button>
+          </motion.div>
+
+          {/* Assignment Details */}
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="xl">
+              <div className="space-y-6">
+                <div>
+                  <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-4">
+                    {selectedAssignment.title}
+                  </h1>
+                  <p className="text-lg text-gray-700 dark:text-gray-300 font-body leading-relaxed">
+                    {selectedAssignment.description}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4 flex-wrap">
+                  <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
+
+                  {selectedAssignment.dueDate && (
+                    <div
+                      className={`flex items-center gap-2 text-sm font-body font-semibold ${
+                        overdue
+                          ? 'text-danger-700 dark:text-danger-300'
+                          : 'text-gray-600 dark:text-gray-400'
+                      }`}
+                    >
+                      {overdue ? (
+                        <AlertTriangle className="w-4 h-4" />
+                      ) : (
+                        <Clock className="w-4 h-4" />
+                      )}
+                      {formatDueDate(selectedAssignment.dueDate)}
+                    </div>
+                  )}
+
+                  {submission?.submittedAt && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 font-body font-semibold">
+                      Submitted {new Date(submission.submittedAt).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Response Editor */}
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="xl">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+                    Your Response
+                  </h2>
+                  {isSubmitted && (
+                    <p className="text-base text-gray-600 dark:text-gray-400 font-body">
+                      You can edit and resubmit if needed
+                    </p>
+                  )}
+                </div>
+
+                <textarea
+                  value={responseText}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  placeholder="Enter your response here..."
+                  className="w-full min-h-[300px] px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-body text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+                  disabled={isSubmitting}
+                />
+
+                <div className="flex gap-4">
+                  <Button onClick={handleBack} variant="secondary" size="lg" className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    variant="primary"
+                    size="lg"
+                    className="flex-1 gap-2"
+                    disabled={isSubmitting || !responseText.trim()}
+                    icon={
+                      isSubmitting ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )
+                    }
+                  >
+                    {isSubmitting ? 'Submitting...' : isSubmitted ? 'Update Response' : 'Submit'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        </motion.div>
+      </div>
+    );
+  }
+
   // Assignment List View
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-6 py-12">
+      <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-10">
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <motion.div variants={fadeInUp}>
+          <h1 className="text-5xl font-display font-bold text-gray-900 dark:text-white mb-4">
             Assignments
           </h1>
-          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">
-            {pendingAssignments.length} pending task
-            {pendingAssignments.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-
-        {assignments.length === 0 ? (
-          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl p-16 text-center border border-gray-100 dark:border-gray-700">
-            <div className="text-8xl mb-6">📋</div>
-            <h3 className="text-3xl font-black text-foreground mb-4">No tasks yet</h3>
-            <p className="text-lg text-muted-foreground">
-              Tasks from your coach will appear here
-            </p>
-          </div>
-        ) : (
-        <>
-          {/* Pending Assignments */}
-          {pendingAssignments.length > 0 && (
-            <div className="space-y-6 mb-10">
-              <h2 className="text-2xl font-black text-foreground uppercase tracking-wide">
+          <div className="flex items-center gap-6">
+            <div>
+              <div className="text-4xl font-display font-bold text-primary-600 dark:text-primary-400">
+                <AnimatedCounter value={pendingAssignments.length} decimals={0} />
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider font-semibold">
                 Pending
-              </h2>
+              </div>
+            </div>
+            <div>
+              <div className="text-4xl font-display font-bold text-success-600 dark:text-success-400">
+                <AnimatedCounter value={submittedAssignments.length} decimals={0} />
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider font-semibold">
+                Completed
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Empty State */}
+        {assignments.length === 0 && (
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="xl" className="text-center">
+              <ClipboardList className="w-24 h-24 text-gray-400 dark:text-gray-600 mx-auto mb-6" />
+              <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">
+                No assignments yet
+              </h3>
+              <p className="text-lg text-gray-600 dark:text-gray-400 font-body">
+                Assignments from your coach will appear here
+              </p>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Pending Assignments */}
+        {pendingAssignments.length > 0 && (
+          <motion.div variants={fadeInUp} className="space-y-6">
+            <h2 className="text-xs font-body font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Pending
+            </h2>
+            <div className="space-y-4">
               {pendingAssignments.map((assignment) => (
                 <AssignmentCard
                   key={assignment.id}
@@ -373,14 +405,16 @@ export default function StudentAssignmentsPage() {
                 />
               ))}
             </div>
-          )}
+          </motion.div>
+        )}
 
-          {/* Submitted Assignments */}
-          {submittedAssignments.length > 0 && (
-            <div className="space-y-6 mb-10">
-              <h2 className="text-2xl font-black text-foreground uppercase tracking-wide">
-                Completed
-              </h2>
+        {/* Submitted Assignments */}
+        {submittedAssignments.length > 0 && (
+          <motion.div variants={fadeInUp} className="space-y-6">
+            <h2 className="text-xs font-body font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              Completed
+            </h2>
+            <div className="space-y-4">
               {submittedAssignments.map((assignment) => (
                 <AssignmentCard
                   key={assignment.id}
@@ -389,65 +423,46 @@ export default function StudentAssignmentsPage() {
                 />
               ))}
             </div>
-          )}
-        </>
-      )}
+          </motion.div>
+        )}
 
-        {/* Tips Card */}
-        <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl shadow-xl p-8 border-2 border-blue-200">
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-              <FileText className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h3 className="text-xl font-black text-blue-900 mb-4">Assignment Tips</h3>
-              <ul className="space-y-3 text-blue-800 font-semibold">
-                <li className="flex items-start gap-3">
-                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
-                  <span>
-                    <strong className="font-black">Be honest:</strong> Your responses help your coach understand how to
-                    support you better
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
-                  <span>
-                    <strong className="font-black">Be specific:</strong> Include concrete examples and details
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
-                  <span>
-                    <strong className="font-black">Take your time:</strong> Thoughtful reflection leads to better insights
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-blue-600 font-black text-xl mt-0.5">•</span>
-                  <span>
-                    <strong className="font-black">Ask questions:</strong> Use assignments as opportunities to discuss
-                    challenges with your coach
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+        {/* Tips */}
+        {assignments.length > 0 && (
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="lg" className="border-l-4 border-primary-600 dark:border-primary-400">
+              <div className="flex items-start gap-4">
+                <FileText className="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-1" />
+                <div className="space-y-3">
+                  <h3 className="text-lg font-display font-bold text-gray-900 dark:text-white">Assignment Tips</h3>
+                  <ul className="space-y-2 text-base text-gray-700 dark:text-gray-300 font-body">
+                    <li className="flex items-start gap-3">
+                      <span className="text-primary-600 dark:text-primary-400 font-bold mt-0.5">•</span>
+                      <span>Be honest and specific in your responses</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-primary-600 dark:text-primary-400 font-bold mt-0.5">•</span>
+                      <span>Include concrete examples and details</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-primary-600 dark:text-primary-400 font-bold mt-0.5">•</span>
+                      <span>Take your time for thoughtful reflection</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 }
 
-function AssignmentCard({
-  assignment,
-  onPress,
-}: {
-  assignment: Assignment;
-  onPress: () => void;
-}) {
+function AssignmentCard({ assignment, onPress }: { assignment: Assignment; onPress: () => void }) {
   const submission = assignment.submissions?.[0];
   const status = submission?.status || 'PENDING';
   const isPending = status === 'PENDING';
-  const isOverdueFlag = assignment.dueDate && new Date(assignment.dueDate) < new Date();
+  const overdue = assignment.dueDate && new Date(assignment.dueDate) < new Date();
 
   const formatDueDate = (dueDate: string | null) => {
     if (!dueDate) return null;
@@ -457,93 +472,65 @@ function AssignmentCard({
     const diffTime = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) {
-      return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
-    } else if (diffDays === 0) {
-      return 'Due today';
-    } else if (diffDays === 1) {
-      return 'Due tomorrow';
-    } else if (diffDays <= 7) {
-      return `Due in ${diffDays} days`;
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
+    if (diffDays === 0) return 'Due today';
+    if (diffDays === 1) return 'Due tomorrow';
+    if (diffDays <= 7) return `Due in ${diffDays} days`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getStatusInfo = (status: AssignmentStatus) => {
+    switch (status) {
+      case 'PENDING':
+        return { text: 'Not Submitted', variant: 'secondary' as const };
+      case 'SUBMITTED':
+        return { text: 'Submitted', variant: 'success' as const };
+      case 'REVIEWED':
+        return { text: 'Reviewed', variant: 'primary' as const };
+      default:
+        return { text: status, variant: 'secondary' as const };
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-muted/20 text-muted-foreground';
-      case 'SUBMITTED':
-        return 'bg-secondary/20 text-secondary';
-      case 'REVIEWED':
-        return 'bg-accent/20 text-secondary';
-      default:
-        return 'bg-muted text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'Not Submitted';
-      case 'SUBMITTED':
-        return 'Submitted';
-      case 'REVIEWED':
-        return 'Reviewed';
-      default:
-        return status;
-    }
-  };
+  const statusInfo = getStatusInfo(status);
 
   return (
-    <div
-      className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 cursor-pointer hover:shadow-2xl transition-all hover:scale-[1.02]"
-      onClick={onPress}
-    >
+    <Card variant="elevated" padding="lg" hover className="cursor-pointer" onClick={onPress}>
       <div className="flex items-start justify-between gap-6">
-        <div className="flex items-start gap-6 flex-1">
+        <div className="flex items-start gap-4 flex-1">
           <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+            className={`w-12 h-12 rounded-lg flex items-center justify-center ${
               isPending
-                ? 'bg-gradient-to-br from-amber-500 to-amber-600'
-                : 'bg-gradient-to-br from-secondary to-secondary'
+                ? 'bg-warning-100 dark:bg-warning-900/30'
+                : 'bg-success-100 dark:bg-success-900/30'
             }`}
           >
             {isPending ? (
-              <ClipboardList className="w-8 h-8 text-white" />
+              <ClipboardList className="w-6 h-6 text-warning-700 dark:text-warning-300" />
             ) : (
-              <CheckCircle className="w-8 h-8 text-white" />
+              <CheckCircle2 className="w-6 h-6 text-success-700 dark:text-success-300" />
             )}
           </div>
+
           <div className="flex-1 min-w-0">
-            <h3 className="text-2xl font-black text-foreground mb-2">{assignment.title}</h3>
-            <p className="text-base text-muted-foreground dark:text-gray-400 line-clamp-2 mb-4 font-semibold">
+            <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-2">
+              {assignment.title}
+            </h3>
+            <p className="text-base text-gray-700 dark:text-gray-300 font-body line-clamp-2 mb-3">
               {assignment.description}
             </p>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <span className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
-                status === 'PENDING'
-                  ? 'bg-muted/20 text-muted-foreground border-muted'
-                  : status === 'SUBMITTED'
-                  ? 'bg-secondary/20 text-secondary border-secondary/20'
-                  : 'bg-accent/20 text-secondary border-accent/20'
-              }`}>
-                {getStatusText(status)}
-              </span>
+              <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
 
               {assignment.dueDate && (
                 <div
-                  className={`flex items-center gap-2 text-sm font-bold ${
-                    isOverdueFlag ? 'text-muted-foreground' : 'text-gray-600'
+                  className={`flex items-center gap-2 text-sm font-body font-semibold ${
+                    overdue ? 'text-danger-700 dark:text-danger-300' : 'text-gray-600 dark:text-gray-400'
                   }`}
                 >
-                  {isOverdueFlag ? (
-                    <AlertTriangle className="w-4 h-4" />
-                  ) : (
-                    <Clock className="w-4 h-4" />
-                  )}
+                  {overdue ? <AlertTriangle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                   {formatDueDate(assignment.dueDate)}
                 </div>
               )}
@@ -551,20 +538,8 @@ function AssignmentCard({
           </div>
         </div>
 
-        <svg
-          className="w-6 h-6 text-muted-foreground flex-shrink-0"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
+        <ChevronLeft className="w-6 h-6 text-gray-400 dark:text-gray-600 flex-shrink-0 rotate-180" />
       </div>
-    </div>
+    </Card>
   );
 }
