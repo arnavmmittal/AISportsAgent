@@ -166,6 +166,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
 
     await prisma.message.create({
       data: {
+        id: 'test-msg-session1',
         sessionId: session1.id,
         role: 'user',
         content: 'I am feeling anxious about the game.',
@@ -203,7 +204,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       where: {
         id: moodLog1.id,
         Athlete: {
-          schoolId: school2Id,
+          User: { schoolId: school2Id },
         },
       },
     });
@@ -276,6 +277,7 @@ describe('Integration: Coach Consent Flow', () => {
 
     await prisma.message.create({
       data: {
+        id: 'test-msg-consent',
         sessionId,
         role: 'user',
         content: 'Private message from athlete',
@@ -289,7 +291,7 @@ describe('Integration: Coach Consent Flow', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true, // Requires consent
@@ -318,7 +320,7 @@ describe('Integration: Coach Consent Flow', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true,
@@ -349,7 +351,7 @@ describe('Integration: Coach Consent Flow', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true,
@@ -407,12 +409,23 @@ describe('Integration: Crisis Detection Flow', () => {
   });
 
   it('should create crisis alert when detected', async () => {
+    // Create a message first (required for crisis alert)
+    const message = await prisma.message.create({
+      data: {
+        id: 'test-msg-crisis',
+        sessionId,
+        role: 'user',
+        content: 'Test crisis content',
+      },
+    });
+
     // Simulate crisis detection creating an alert
     const alert = await prisma.crisisAlert.create({
       data: {
         id: 'test-alert-1',
         athleteId,
         sessionId,
+        messageId: message.id,
         severity: 'HIGH',
         detectedAt: new Date(),
         reviewed: false,
@@ -565,6 +578,7 @@ describe('Integration: Data Lifecycle', () => {
 
     await prisma.message.create({
       data: {
+        id: 'test-msg-lifecycle',
         sessionId: session.id,
         role: 'user',
         content: 'Test message',
@@ -712,6 +726,7 @@ describe('Integration: Performance & Scale', () => {
 
     // Create 100 messages
     const messages = Array.from({ length: 100 }, (_, i) => ({
+      id: `test-msg-pagination-${i}`,
       sessionId,
       role: i % 2 === 0 ? 'user' : 'assistant',
       content: `Message ${i}`,
@@ -788,10 +803,12 @@ describe('Integration: Encryption & Data Protection', () => {
     // Create a chat summary with sensitive content
     const summary = await prisma.chatSummary.create({
       data: {
+        athleteId,
         sessionId,
         summary: 'Athlete discussed anxiety about upcoming championship game and family pressure.',
-        themes: ['anxiety', 'pressure', 'family'],
-        sentiment: 'CONCERNED',
+        keyThemes: ['anxiety', 'pressure', 'family'],
+        messageCount: 10,
+        emotionalState: 'CONCERNED',
       },
     });
 
@@ -799,7 +816,7 @@ describe('Integration: Encryption & Data Protection', () => {
     // This test documents the expected behavior
     expect(summary).toBeDefined();
     expect(summary.summary).toBeTruthy();
-    expect(summary.themes).toContain('anxiety');
+    expect(summary.keyThemes).toContain('anxiety');
   });
 
   it('should redact PII before storing or processing', async () => {
@@ -808,6 +825,7 @@ describe('Integration: Encryption & Data Protection', () => {
 
     const message = await prisma.message.create({
       data: {
+        id: 'test-msg-pii',
         sessionId,
         role: 'user',
         content: messageWithPII,
@@ -893,7 +911,7 @@ describe('Integration: Audit Logging', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true,
@@ -907,14 +925,11 @@ describe('Integration: Audit Logging', () => {
     const auditLog = await prisma.auditLog.create({
       data: {
         userId: coachId,
+        userRole: 'COACH',
         action: 'READ',
-        resource: 'ChatSession',
+        resourceType: 'ChatSession',
         resourceId: sessions[0]?.id || 'none',
-        metadata: {
-          athleteId,
-          sessionCount: sessions.length,
-        },
-        schoolId,
+        athleteId,
       },
     });
 
@@ -922,7 +937,7 @@ describe('Integration: Audit Logging', () => {
     expect(auditLog).toBeDefined();
     expect(auditLog.action).toBe('READ');
     expect(auditLog.userId).toBe(coachId);
-    expect(auditLog.resource).toBe('ChatSession');
+    expect(auditLog.resourceType).toBe('ChatSession');
   });
 
   it('should log consent changes', async () => {
@@ -941,32 +956,33 @@ describe('Integration: Audit Logging', () => {
     const auditLog = await prisma.auditLog.create({
       data: {
         userId: athleteId,
+        userRole: 'ATHLETE',
         action: 'UPDATE',
-        resource: 'CoachAthleteRelation',
+        resourceType: 'CoachAthleteRelation',
         resourceId: `${coachId}-${athleteId}`,
-        metadata: {
-          previousValue: true,
-          newValue: false,
-          field: 'consentGranted',
-        },
-        schoolId,
       },
     });
 
     expect(auditLog).toBeDefined();
     expect(auditLog.action).toBe('UPDATE');
-    expect(auditLog.metadata).toMatchObject({
-      previousValue: true,
-      newValue: false,
-    });
+    expect(auditLog.resourceType).toBe('CoachAthleteRelation');
   });
 
   it('should track all crisis alert reviews', async () => {
-    // Create crisis alert
+    // Create crisis alert with message
     const session = await prisma.chatSession.create({
       data: {
         id: 'test-session-audit-crisis',
         athleteId,
+      },
+    });
+
+    const message = await prisma.message.create({
+      data: {
+        id: 'test-msg-audit-crisis',
+        sessionId: session.id,
+        role: 'user',
+        content: 'Test crisis message',
       },
     });
 
@@ -975,6 +991,7 @@ describe('Integration: Audit Logging', () => {
         id: 'test-alert-audit',
         athleteId,
         sessionId: session.id,
+        messageId: message.id,
         severity: 'MEDIUM',
         detectedAt: new Date(),
         reviewed: false,
@@ -994,39 +1011,32 @@ describe('Integration: Audit Logging', () => {
     const auditLog = await prisma.auditLog.create({
       data: {
         userId: coachId,
+        userRole: 'COACH',
         action: 'UPDATE',
-        resource: 'CrisisAlert',
+        resourceType: 'CrisisAlert',
         resourceId: alert.id,
-        metadata: {
-          severity: alert.severity,
-          reviewed: true,
-          reviewedBy: coachId,
-        },
-        schoolId,
+        athleteId,
       },
     });
 
     expect(auditLog).toBeDefined();
-    expect(auditLog.resource).toBe('CrisisAlert');
-    expect(auditLog.metadata).toMatchObject({
-      reviewed: true,
-      reviewedBy: coachId,
-    });
+    expect(auditLog.resourceType).toBe('CrisisAlert');
+    expect(auditLog.athleteId).toBe(athleteId);
   });
 
   it('should query audit logs for compliance review', async () => {
-    // Query all audit logs for the school in the last 24 hours
+    // Query all audit logs for the user in the last 24 hours
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const auditLogs = await prisma.auditLog.findMany({
       where: {
-        schoolId,
-        createdAt: {
+        userId: coachId,
+        timestamp: {
           gte: yesterday,
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        timestamp: 'desc',
       },
     });
 
@@ -1037,8 +1047,7 @@ describe('Integration: Audit Logging', () => {
     const log = auditLogs[0];
     expect(log).toHaveProperty('userId');
     expect(log).toHaveProperty('action');
-    expect(log).toHaveProperty('resource');
-    expect(log).toHaveProperty('metadata');
-    expect(log).toHaveProperty('createdAt');
+    expect(log).toHaveProperty('resourceType');
+    expect(log).toHaveProperty('timestamp');
   });
 });
