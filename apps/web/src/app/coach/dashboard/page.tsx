@@ -159,7 +159,7 @@ export default function CoachDashboardPage() {
   if (error || !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-        <Card variant="elevated" padding="xl" className="text-center max-w-md">
+        <Card variant="elevated" padding="lg" className="text-center max-w-md">
           <AlertTriangle className="w-20 h-20 text-danger-600 dark:text-danger-400 mx-auto mb-6" />
           <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">Error Loading Data</h3>
           <p className="text-lg text-gray-600 dark:text-gray-400 font-body mb-8">{error}</p>
@@ -379,7 +379,6 @@ export default function CoachDashboardPage() {
                       <Sparkline
                         data={athlete.scores7d}
                         height={30}
-                        width="100%"
                         color={athlete.readiness >= 80 ? 'success' : athlete.readiness >= 60 ? 'warning' : 'danger'}
                         showDots={false}
                       />
@@ -502,7 +501,7 @@ export default function CoachDashboardPage() {
                       {athlete.readiness}
                     </div>
                   </div>
-                  <Sparkline data={athlete.scores7d} height={30} width="100%" color={athlete.readiness >= 80 ? 'success' : 'warning'} showDots={false} />
+                  <Sparkline data={athlete.scores7d} height={30} color={athlete.readiness >= 80 ? 'success' : 'warning'} showDots={false} />
                   <div className="flex items-center gap-2 mt-3">
                     {athlete.trend === 'up' ? (
                       <Badge variant="success" className="gap-1 text-xs">

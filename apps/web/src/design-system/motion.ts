@@ -14,11 +14,11 @@ import { Variants, Transition } from 'framer-motion';
 export const hoverLift = {
   rest: {
     y: 0,
-    transition: { duration: 0.2, ease: 'easeOut' },
+    transition: { duration: 0.2, ease: [0, 0, 0.2, 1] as const },
   },
   hover: {
     y: -3,
-    transition: { duration: 0.2, ease: 'easeOut' },
+    transition: { duration: 0.2, ease: [0, 0, 0.2, 1] as const },
   },
 };
 
@@ -28,11 +28,11 @@ export const hoverLift = {
 export const hoverLiftSmall = {
   rest: {
     y: 0,
-    transition: { duration: 0.15, ease: 'easeOut' },
+    transition: { duration: 0.15, ease: [0, 0, 0.2, 1] as const },
   },
   hover: {
     y: -2,
-    transition: { duration: 0.15, ease: 'easeOut' },
+    transition: { duration: 0.15, ease: [0, 0, 0.2, 1] as const },
   },
 };
 

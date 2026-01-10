@@ -94,7 +94,7 @@ export default function CoachTeamOverviewPage() {
   if (error || !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <Card variant="elevated" padding="xl" className="text-center max-w-md">
+        <Card variant="elevated" padding="lg" className="text-center max-w-md">
           <AlertTriangle className="w-20 h-20 text-danger-600 dark:text-danger-400 mx-auto mb-6" />
           <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">Error Loading Data</h3>
           <p className="text-lg text-gray-600 dark:text-gray-400 font-body mb-8">{error}</p>
@@ -203,7 +203,7 @@ export default function CoachTeamOverviewPage() {
 
                       {/* Trend Sparkline */}
                       <div className="mb-3">
-                        <Sparkline data={athlete.scores14d} height={40} width="100%" color={athlete.currentReadiness >= 80 ? 'success' : athlete.currentReadiness >= 60 ? 'warning' : 'danger'} showDots={false} />
+                        <Sparkline data={athlete.scores14d} height={40} color={athlete.currentReadiness >= 80 ? 'success' : athlete.currentReadiness >= 60 ? 'warning' : 'danger'} showDots={false} />
                       </div>
 
                       {/* Trend Badge */}
@@ -412,7 +412,7 @@ export default function CoachTeamOverviewPage() {
                       {athlete.currentReadiness}
                     </div>
                   </div>
-                  <Sparkline data={athlete.scores14d} height={30} width="100%" color={athlete.currentReadiness >= 80 ? 'success' : 'warning'} showDots={false} />
+                  <Sparkline data={athlete.scores14d} height={30} color={athlete.currentReadiness >= 80 ? 'success' : 'warning'} showDots={false} />
                   <div className="flex items-center gap-2 mt-3">
                     {athlete.trend === 'up' ? (
                       <Badge variant="success" className="gap-1 text-xs">

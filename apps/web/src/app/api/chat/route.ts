@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Transform to expected format
     const transformedSessions = sessions.map((session) => ({
       id: session.id,
-      title: session.title || 'Untitled Session',
+      title: session.topic || session.summary || 'Untitled Session',
       preview: session.Message[0]?.content || 'No messages yet',
       createdAt: session.createdAt.toISOString(),
       messageCount: session.Message.length,

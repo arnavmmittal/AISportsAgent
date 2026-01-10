@@ -213,7 +213,7 @@ export default function StudentAssignmentsPage() {
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <Card variant="elevated" padding="xl" className="text-center">
+        <Card variant="elevated" padding="lg" className="text-center">
           <AlertTriangle className="w-16 h-16 text-danger-600 dark:text-danger-400 mx-auto mb-6" />
           <h3 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-4">
             Failed to load assignments
@@ -244,16 +244,16 @@ export default function StudentAssignmentsPage() {
               onClick={handleBack}
               variant="ghost"
               size="sm"
-              className="gap-2"
-              icon={<ChevronLeft className="w-5 h-5" />}
+              className="flex items-center gap-2"
             >
+              <ChevronLeft className="w-5 h-5" />
               Back to Assignments
             </Button>
           </motion.div>
 
           {/* Assignment Details */}
           <motion.div variants={fadeInUp}>
-            <Card variant="elevated" padding="xl">
+            <Card variant="elevated" padding="lg">
               <div className="space-y-6">
                 <div>
                   <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-4">
@@ -296,7 +296,7 @@ export default function StudentAssignmentsPage() {
 
           {/* Response Editor */}
           <motion.div variants={fadeInUp}>
-            <Card variant="elevated" padding="xl">
+            <Card variant="elevated" padding="lg">
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
@@ -325,16 +325,14 @@ export default function StudentAssignmentsPage() {
                     onClick={handleSubmit}
                     variant="primary"
                     size="lg"
-                    className="flex-1 gap-2"
+                    className="flex-1 flex items-center justify-center gap-2"
                     disabled={isSubmitting || !responseText.trim()}
-                    icon={
-                      isSubmitting ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Send className="w-5 h-5" />
-                      )
-                    }
                   >
+                    {isSubmitting ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Send className="w-5 h-5" />
+                    )}
                     {isSubmitting ? 'Submitting...' : isSubmitted ? 'Update Response' : 'Submit'}
                   </Button>
                 </div>
@@ -378,7 +376,7 @@ export default function StudentAssignmentsPage() {
         {/* Empty State */}
         {assignments.length === 0 && (
           <motion.div variants={fadeInUp}>
-            <Card variant="elevated" padding="xl" className="text-center">
+            <Card variant="elevated" padding="lg" className="text-center">
               <ClipboardList className="w-24 h-24 text-gray-400 dark:text-gray-600 mx-auto mb-6" />
               <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">
                 No assignments yet

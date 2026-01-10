@@ -228,7 +228,7 @@ export default function StudentSettingsPage() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <motion.div variants={fadeInUp} className="space-y-6">
-            <Card variant="elevated" padding="xl">
+            <Card variant="elevated" padding="lg">
               <div className="space-y-6">
                 <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">Profile Information</h2>
 
@@ -287,15 +287,16 @@ export default function StudentSettingsPage() {
                   variant="primary"
                   size="lg"
                   disabled={isSaving}
-                  icon={isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : undefined}
+                  className="flex items-center justify-center gap-2"
                 >
+                  {isSaving && <Loader2 className="w-5 h-5 animate-spin" />}
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
             </Card>
 
             {/* Theme */}
-            <Card variant="elevated" padding="xl">
+            <Card variant="elevated" padding="lg">
               <div className="space-y-4">
                 <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white">Appearance</h3>
                 <div className="flex items-center justify-between">
@@ -303,7 +304,8 @@ export default function StudentSettingsPage() {
                     <p className="font-body font-semibold text-gray-900 dark:text-white">Dark Mode</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-body">Toggle dark mode theme</p>
                   </div>
-                  <Button onClick={toggleTheme} variant="secondary" size="md" icon={isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}>
+                  <Button onClick={toggleTheme} variant="secondary" size="md" className="flex items-center gap-2">
+                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                     {isDarkMode ? 'Light' : 'Dark'}
                   </Button>
                 </div>
@@ -311,7 +313,7 @@ export default function StudentSettingsPage() {
             </Card>
 
             {/* Logout */}
-            <Card variant="elevated" padding="xl" className="border-l-4 border-danger-600 dark:border-danger-400">
+            <Card variant="elevated" padding="lg" className="border-l-4 border-danger-600 dark:border-danger-400">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-2">Sign Out</h3>
@@ -319,7 +321,8 @@ export default function StudentSettingsPage() {
                     Sign out of your account
                   </p>
                 </div>
-                <Button onClick={handleLogout} variant="danger" size="lg" icon={<LogOut className="w-5 h-5" />}>
+                <Button onClick={handleLogout} variant="danger" size="lg" className="flex items-center gap-2">
+                  <LogOut className="w-5 h-5" />
                   Sign Out
                 </Button>
               </div>
@@ -330,7 +333,7 @@ export default function StudentSettingsPage() {
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
           <motion.div variants={fadeInUp}>
-            <Card variant="elevated" padding="xl">
+            <Card variant="elevated" padding="lg">
               <div className="space-y-6">
                 <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
                   Notification Preferences
@@ -372,7 +375,7 @@ export default function StudentSettingsPage() {
         {/* Privacy Tab */}
         {activeTab === 'privacy' && (
           <motion.div variants={fadeInUp}>
-            <Card variant="elevated" padding="xl">
+            <Card variant="elevated" padding="lg">
               <div className="space-y-6">
                 <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
                   Privacy Settings

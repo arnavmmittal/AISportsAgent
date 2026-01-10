@@ -114,7 +114,7 @@ export default function CoachAlertsPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <Card variant="elevated" padding="xl" className="text-center max-w-md">
+        <Card variant="elevated" padding="lg" className="text-center max-w-md">
           <AlertTriangle className="w-20 h-20 text-danger-600 dark:text-danger-400 mx-auto mb-6" />
           <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">Error Loading Alerts</h3>
           <p className="text-lg text-gray-600 dark:text-gray-400 font-body mb-8">{error}</p>
@@ -197,7 +197,7 @@ export default function CoachAlertsPage() {
             <AnimatePresence mode="popLayout">
               {filteredAlerts.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <Card variant="elevated" padding="xl" className="text-center">
+                  <Card variant="elevated" padding="lg" className="text-center">
                     <Shield className="w-24 h-24 text-success-600 dark:text-success-400 mx-auto mb-6" />
                     <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">
                       {filter === 'reviewed' ? 'No resolved alerts yet' : 'All clear!'}
@@ -283,8 +283,9 @@ export default function CoachAlertsPage() {
                             }}
                             variant="secondary"
                             size="sm"
-                            icon={<Eye className="w-4 h-4" />}
+                            className="flex items-center gap-2"
                           >
+                            <Eye className="w-4 h-4" />
                             Review
                           </Button>
                           {!alert.reviewed && (
@@ -295,8 +296,9 @@ export default function CoachAlertsPage() {
                               }}
                               variant="success"
                               size="sm"
-                              icon={<Check className="w-4 h-4" />}
+                              className="flex items-center gap-2"
                             >
+                              <Check className="w-4 h-4" />
                               Resolve
                             </Button>
                           )}
@@ -482,9 +484,9 @@ export default function CoachAlertsPage() {
                       onClick={() => handleResolve(selectedAlert.id)}
                       variant="primary"
                       size="lg"
-                      className="flex-1"
-                      icon={<Check className="w-5 h-5" />}
+                      className="flex-1 flex items-center justify-center gap-2"
                     >
+                      <Check className="w-5 h-5" />
                       Mark Resolved
                     </Button>
                   </div>

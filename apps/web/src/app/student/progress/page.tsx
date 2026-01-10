@@ -220,7 +220,7 @@ export default function StudentProgressPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                   >
-                    <Card variant="elevated" padding="xl" hover className="h-full">
+                    <Card variant="elevated" padding="lg" hover className="h-full">
                       <div className="flex flex-col items-center justify-center h-full">
                         <Heart className="w-8 h-8 text-primary-600 dark:text-primary-400 mb-4" />
                         <RadialProgress
@@ -254,7 +254,7 @@ export default function StudentProgressPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
                   >
-                    <Card variant="elevated" padding="xl" hover className="h-full">
+                    <Card variant="elevated" padding="lg" hover className="h-full">
                       <div className="flex flex-col items-center justify-center h-full">
                         <Brain className="w-8 h-8 text-warning-600 dark:text-warning-400 mb-4" />
                         <RadialProgress
@@ -288,7 +288,7 @@ export default function StudentProgressPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                   >
-                    <Card variant="elevated" padding="xl" hover className="h-full">
+                    <Card variant="elevated" padding="lg" hover className="h-full">
                       <div className="flex flex-col items-center justify-center h-full">
                         <Moon className="w-8 h-8 text-info-600 dark:text-info-400 mb-4" />
                         <RadialProgress
@@ -322,7 +322,7 @@ export default function StudentProgressPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                   >
-                    <Card variant="elevated" padding="xl" hover className="h-full">
+                    <Card variant="elevated" padding="lg" hover className="h-full">
                       <div className="flex flex-col items-center justify-center h-full">
                         <Zap className="w-8 h-8 text-success-600 dark:text-success-400 mb-4" />
                         <RadialProgress
@@ -639,7 +639,7 @@ export default function StudentProgressPage() {
                   trend={getTrend('sleep')}
                   trendValue={getTrendValue('sleep')}
                   sparkline={moodHistory.map((e) => e.sleep)}
-                  gradient="info"
+                  gradient="primary"
                   icon={<Moon className="w-5 h-5" />}
                 />
               </motion.div>
