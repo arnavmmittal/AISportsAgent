@@ -17,15 +17,18 @@ export function Navigation() {
     { href: '/chat', label: 'AI Coach', icon: '💬' },
     { href: '/mood', label: 'Mood', icon: '❤️' },
     { href: '/goals', label: 'Goals', icon: '🎯' },
+    { href: '/interventions', label: 'Techniques', icon: '🧠' },
+    { href: '/wearables', label: 'Wearables', icon: '⌚' },
     { href: '/assignments', label: 'Tasks', icon: '📋' },
   ];
 
   const coachLinks = [
     { href: '/coach/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/coach/athletes', label: 'Athletes', icon: '👥' },
+    { href: '/coach/predictions', label: 'Predictions', icon: '🔮' },
+    { href: '/coach/outcomes', label: 'Outcomes', icon: '🏆' },
     { href: '/coach/analytics', label: 'Analytics', icon: '📈' },
     { href: '/coach/readiness', label: 'Readiness', icon: '⚡' },
-    { href: '/coach/insights', label: 'AI Insights', icon: '💡' },
     { href: '/coach/assignments', label: 'Assignments', icon: '📋' },
     { href: '/coach/settings', label: 'Settings', icon: '⚙️' },
   ];

@@ -12,6 +12,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeMultiModalCorrelation } from '@/lib/analytics/multi-modal-correlation';
+import { requireCoach, verifySchoolAccess } from '@/lib/auth-helpers';
+import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -19,9 +21,25 @@ export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
+    // Require coach authentication
+    const { authorized, user, response } = await requireCoach(request);
+    if (!authorized || !user) return response;
+
     const searchParams = request.nextUrl.searchParams;
     const athleteId = searchParams.get('athleteId');
     const days = parseInt(searchParams.get('days') || '90');
+
+    // Verify coach has access to this athlete's school
+    if (athleteId) {
+      const athlete = await prisma.athlete.findUnique({
+        where: { userId: athleteId },
+        include: { User: { select: { schoolId: true } } },
+      });
+
+      if (!athlete || !verifySchoolAccess(user, athlete.User.schoolId || '')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
 
     if (!athleteId) {
       return NextResponse.json(

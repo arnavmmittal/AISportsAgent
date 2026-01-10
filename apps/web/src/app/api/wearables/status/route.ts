@@ -32,16 +32,44 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get recent data points count
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    // Get recent data points for display
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const recentDataCount = await prisma.wearableDataPoint.count({
+    const recentData = await prisma.wearableDataPoint.findMany({
       where: {
         athleteId: user.id,
-        recordedAt: { gte: oneDayAgo },
+        recordedAt: { gte: sevenDaysAgo },
       },
+      orderBy: { recordedAt: 'desc' },
+      take: 7,
     });
+
+    // Calculate summary stats
+    const validRecovery = recentData.filter((d) => d.recoveryScore !== null);
+    const validHRV = recentData.filter((d) => d.hrv !== null);
+    const validSleep = recentData.filter((d) => d.sleepDuration !== null);
+    const validStrain = recentData.filter((d) => d.strain !== null);
+
+    const summary = {
+      avgRecovery:
+        validRecovery.length > 0
+          ? Math.round(validRecovery.reduce((sum, d) => sum + (d.recoveryScore || 0), 0) / validRecovery.length)
+          : null,
+      avgHRV:
+        validHRV.length > 0
+          ? Math.round(validHRV.reduce((sum, d) => sum + (d.hrv || 0), 0) / validHRV.length)
+          : null,
+      avgSleep:
+        validSleep.length > 0
+          ? Math.round(validSleep.reduce((sum, d) => sum + (d.sleepDuration || 0), 0) / validSleep.length * 10) / 10
+          : null,
+      avgStrain:
+        validStrain.length > 0
+          ? Math.round(validStrain.reduce((sum, d) => sum + (d.strain || 0), 0) / validStrain.length * 10) / 10
+          : null,
+      dataPointCount: recentData.length,
+    };
 
     return NextResponse.json({
       connected: true,
@@ -50,7 +78,17 @@ export async function GET(request: NextRequest) {
       syncStatus: connection.syncStatus,
       syncError: connection.syncError,
       syncEnabled: connection.syncEnabled,
-      recentDataPoints: recentDataCount,
+      summary,
+      recentData: recentData.map((d) => ({
+        id: d.id,
+        recordedAt: d.recordedAt,
+        recoveryScore: d.recoveryScore,
+        hrv: d.hrv,
+        sleepDuration: d.sleepDuration,
+        sleepQuality: d.sleepQuality,
+        strain: d.strain,
+        restingHR: d.restingHR,
+      })),
     });
   } catch (error) {
     console.error('Wearable status error:', error);

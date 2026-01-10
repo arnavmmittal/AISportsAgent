@@ -13,7 +13,7 @@ import { getUser as getSupabaseUser } from './supabase-server';
 import { prisma } from './prisma';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
+  process.env.NEXTAUTH_SECRET || 'test-secret-for-local-development-only-2024'
 );
 
 export interface AuthUser {
