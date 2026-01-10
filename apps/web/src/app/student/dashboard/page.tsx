@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
-import { Button } from '@/components/shared/ui/button';
-import { Badge } from '@/components/shared/ui/badge';
+import { motion } from 'framer-motion';
+import { Card, Button, Badge, MetricCard } from '@/design-system/components';
 import {
   TrendingUp,
   TrendingDown,
@@ -18,6 +17,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { fadeInUp, staggerContainer } from '@/design-system/motion';
+import { PageHeader } from '@/components/shared/page-components';
 
 export default function StudentDashboardPage() {
   const [moodData, setMoodData] = useState([
@@ -42,280 +43,277 @@ export default function StudentDashboardPage() {
   ]);
 
   const [streak, setStreak] = useState(7);
-  const [todayMood, setTodayMood] = useState<number | null>(null);
 
   const avgMood = Math.round(moodData.reduce((sum, d) => sum + d.mood, 0) / moodData.length * 10) / 10;
   const moodTrend = moodData[moodData.length - 1].mood - moodData[0].mood;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome back! 👋</h1>
-        <p className="text-muted-foreground mt-1">Here's your mental performance overview</p>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8">
+          {/* Header */}
+          <PageHeader
+            title="Welcome back! 👋"
+            description="Here's your mental performance overview"
+          />
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Current Streak</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{streak} days</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Quick Stats */}
+          <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <MetricCard
+              label="Current Streak"
+              value={streak}
+              suffix=" days"
+              gradient="warning"
+              icon={<Zap className="w-5 h-5" />}
+            />
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Avg Mood (7d)</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <p className="text-3xl font-bold text-foreground">{avgMood}</p>
-                  {moodTrend !== 0 && (
-                    <div className="flex items-center gap-1">
-                      {moodTrend > 0 ? (
-                        <TrendingUp className="w-4 h-4 text-secondary" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-muted-foreground" />
-                      )}
-                      <span className={`text-xs font-medium ${moodTrend > 0 ? 'text-secondary' : 'text-muted-foreground'}`}>
-                        {Math.abs(moodTrend).toFixed(1)}
+            <MetricCard
+              label="Avg Mood (7d)"
+              value={avgMood}
+              decimals={1}
+              trend={moodTrend > 0 ? 'up' : moodTrend < 0 ? 'down' : 'neutral'}
+              trendValue={`${Math.abs(moodTrend).toFixed(1)}`}
+              gradient="primary"
+              icon={<Heart className="w-5 h-5" />}
+            />
+
+            <MetricCard
+              label="Active Goals"
+              value={activeGoals.length}
+              gradient="success"
+              icon={<Target className="w-5 h-5" />}
+            />
+
+            <MetricCard
+              label="To Complete"
+              value={recentAssignments.length}
+              gradient="secondary"
+              icon={<Award className="w-5 h-5" />}
+            />
+          </motion.div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Mood Tracking */}
+            <motion.div variants={fadeInUp} className="lg:col-span-2">
+              <Card variant="elevated" padding="lg">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+                    Weekly Mood Trends
+                  </h2>
+                  <p className="text-base text-gray-600 dark:text-gray-400 font-body">
+                    Track your emotional patterns over the past week
+                  </p>
+                </div>
+
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={moodData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+                    <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                    <YAxis domain={[0, 10]} stroke="#6b7280" fontSize={12} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '8px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="mood"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      name="Mood"
+                      dot={{ fill: '#3b82f6', r: 4 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="confidence"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Confidence"
+                      dot={{ fill: '#10b981', r: 4 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="stress"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      name="Stress"
+                      dot={{ fill: '#ef4444', r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+
+                <div className="flex items-center justify-center gap-6 mt-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body">Mood</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-success-500"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body">Confidence</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-danger-500"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body">Stress</span>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <Link href="/student/mood">
+                    <Button variant="primary" size="lg" className="w-full">
+                      Log Today's Mood
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Quick Actions */}
+            <motion.div variants={fadeInUp}>
+              <Card variant="elevated" padding="lg">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+                    Quick Actions
+                  </h2>
+                  <p className="text-base text-gray-600 dark:text-gray-400 font-body">
+                    Your mental performance tools
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Link href="/student/chat">
+                    <button className="w-full flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-all text-left">
+                      <MessageSquare className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold text-gray-900 dark:text-white font-body">Talk to AI Coach</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 font-body">Get instant mental skills support</div>
+                      </div>
+                    </button>
+                  </Link>
+
+                  <Link href="/student/mood">
+                    <button className="w-full flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-all text-left">
+                      <Heart className="w-5 h-5 text-danger-600 dark:text-danger-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold text-gray-900 dark:text-white font-body">Log Mood</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 font-body">Track your emotional state</div>
+                      </div>
+                    </button>
+                  </Link>
+
+                  <Link href="/student/goals">
+                    <button className="w-full flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-all text-left">
+                      <Target className="w-5 h-5 text-success-600 dark:text-success-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold text-gray-900 dark:text-white font-body">Set Goals</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 font-body">Track mental & performance goals</div>
+                      </div>
+                    </button>
+                  </Link>
+
+                  <Link href="/student/assignments">
+                    <button className="w-full flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-all text-left">
+                      <Brain className="w-5 h-5 text-secondary-600 dark:text-secondary-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold text-gray-900 dark:text-white font-body">Practice Exercises</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 font-body">Build mental skills</div>
+                      </div>
+                    </button>
+                  </Link>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Goals Progress */}
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="lg">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+                    Active Goals
+                  </h2>
+                  <p className="text-base text-gray-600 dark:text-gray-400 font-body">
+                    Your current mental performance objectives
+                  </p>
+                </div>
+                <Link href="/student/goals">
+                  <Button variant="secondary" size="md">View All</Button>
+                </Link>
+              </div>
+
+              <div className="space-y-4">
+                {activeGoals.map((goal) => (
+                  <div key={goal.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white font-body mb-2">
+                          {goal.title}
+                        </h4>
+                        <Badge variant="secondary" size="sm">{goal.category}</Badge>
+                      </div>
+                      <span className="text-lg font-bold text-primary-600 dark:text-primary-400 font-display ml-4">
+                        {goal.progress}%
                       </span>
                     </div>
-                  )}
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full transition-all"
+                        style={{ width: `${goal.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Upcoming Assignments */}
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="lg">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+                    Upcoming Assignments
+                  </h2>
+                  <p className="text-base text-gray-600 dark:text-gray-400 font-body">
+                    Mental skills exercises from your coach
+                  </p>
                 </div>
+                <Link href="/student/assignments">
+                  <Button variant="secondary" size="md">View All</Button>
+                </Link>
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center">
-                <Heart className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Active Goals</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{activeGoals.length}</p>
+              <div className="space-y-3">
+                {recentAssignments.map((assignment) => (
+                  <div key={assignment.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Award className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 dark:text-white font-body">
+                          {assignment.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-body">
+                          Due in {assignment.dueDate}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={assignment.status === 'pending' ? 'warning' : 'primary'} size="sm">
+                      {assignment.status === 'pending' ? 'To Do' : 'In Progress'}
+                    </Badge>
+                  </div>
+                ))}
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                <Target className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">To Complete</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{recentAssignments.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
-                <Award className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </Card>
+          </motion.div>
+        </motion.div>
       </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Mood Tracking */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Weekly Mood Trends</CardTitle>
-            <CardDescription>Track your emotional patterns over the past week</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={moodData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                <YAxis domain={[0, 10]} stroke="#6b7280" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '8px',
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="mood"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  name="Mood"
-                  dot={{ fill: '#3b82f6', r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="confidence"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  name="Confidence"
-                  dot={{ fill: '#10b981', r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="stress"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  name="Stress"
-                  dot={{ fill: '#ef4444', r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="flex items-center justify-center gap-6 mt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-sm text-muted-foreground">Mood</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-secondary/100"></div>
-                <span className="text-sm text-muted-foreground">Confidence</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-muted-foreground/100"></div>
-                <span className="text-sm text-muted-foreground">Stress</span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Link href="/student/mood">
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                  Log Today's Mood
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Your mental performance tools</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Link href="/student/chat">
-              <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <div className="text-left">
-                  <div className="font-medium text-foreground">Talk to AI Coach</div>
-                  <div className="text-xs text-gray-500">Get instant mental skills support</div>
-                </div>
-              </Button>
-            </Link>
-
-            <Link href="/student/mood">
-              <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                <Heart className="w-5 h-5 text-pink-600" />
-                <div className="text-left">
-                  <div className="font-medium text-foreground">Log Mood</div>
-                  <div className="text-xs text-gray-500">Track your emotional state</div>
-                </div>
-              </Button>
-            </Link>
-
-            <Link href="/student/goals">
-              <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                <Target className="w-5 h-5 text-secondary" />
-                <div className="text-left">
-                  <div className="font-medium text-foreground">Set Goals</div>
-                  <div className="text-xs text-gray-500">Track mental & performance goals</div>
-                </div>
-              </Button>
-            </Link>
-
-            <Link href="/student/assignments">
-              <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                <Brain className="w-5 h-5 text-accent" />
-                <div className="text-left">
-                  <div className="font-medium text-foreground">Practice Exercises</div>
-                  <div className="text-xs text-gray-500">Build mental skills</div>
-                </div>
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Goals Progress */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Active Goals</CardTitle>
-            <CardDescription>Your current mental performance objectives</CardDescription>
-          </div>
-          <Link href="/student/goals">
-            <Button variant="outline" size="sm">View All</Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {activeGoals.map((goal) => (
-              <div key={goal.id} className="p-4 bg-background rounded-lg">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-foreground">{goal.title}</h4>
-                    <Badge variant="secondary" className="mt-1">{goal.category}</Badge>
-                  </div>
-                  <span className="text-sm font-semibold text-primary">{goal.progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all"
-                    style={{ width: `${goal.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Upcoming Assignments */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Upcoming Assignments</CardTitle>
-            <CardDescription>Mental skills exercises from your coach</CardDescription>
-          </div>
-          <Link href="/student/assignments">
-            <Button variant="outline" size="sm">View All</Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {recentAssignments.map((assignment) => (
-              <div key={assignment.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                    <Award className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground">{assignment.title}</h4>
-                    <p className="text-sm text-gray-500">Due in {assignment.dueDate}</p>
-                  </div>
-                </div>
-                <Badge variant={assignment.status === 'pending' ? 'secondary' : 'default'}>
-                  {assignment.status === 'pending' ? 'To Do' : 'In Progress'}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
