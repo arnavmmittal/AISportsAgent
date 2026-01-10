@@ -1,11 +1,27 @@
 'use client';
 
 /**
- * Mood logging component for athletes to track daily mental state
+ * MoodLogger Component - AI Sports Agent
+ * Professional daily check-in interface for athletes
  */
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Smile,
+  Frown,
+  Target,
+  Brain,
+  Zap,
+  Moon,
+  MessageSquare,
+  CheckCircle2,
+  Loader2,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/design-system/components/Card';
+import { Button } from '@/design-system/components/Button';
+import { Input } from '@/design-system/components/Input';
 
 interface MoodLogData {
   mood: number;
@@ -38,7 +54,6 @@ export function MoodLogger() {
     setIsSubmitting(true);
 
     try {
-      // Submit to Prisma database via API route
       const response = await fetch('/api/mood-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,7 +65,6 @@ export function MoodLogger() {
 
       if (response.ok) {
         setShowSuccess(true);
-        // Reset form
         setFormData({
           mood: 5,
           confidence: 5,
@@ -67,188 +81,308 @@ export function MoodLogger() {
 
   if (!session?.user) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-muted-foreground">Please sign in to log your mood</p>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card variant="elevated" padding="lg">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+              <Brain className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 font-body">
+              Please sign in to log your daily check-in
+            </p>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="bg-card rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Daily Check-In</h2>
-        <p className="text-muted-foreground mb-6">How are you feeling today?</p>
-
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Success Banner */}
+      <AnimatePresence>
         {showSuccess && (
-          <div className="mb-4 p-4 bg-success/10 border border-success/20 rounded-lg">
-            <p className="text-success font-medium">Mood logged successfully!</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Mood Slider */}
-          <SliderField
-            label="Mood"
-            value={formData.mood}
-            onChange={(val) => handleSliderChange('mood', val)}
-            min={1}
-            max={10}
-            lowLabel="Very Low"
-            highLabel="Excellent"
-            color="blue"
-          />
-
-          {/* Confidence Slider */}
-          <SliderField
-            label="Confidence"
-            value={formData.confidence}
-            onChange={(val) => handleSliderChange('confidence', val)}
-            min={1}
-            max={10}
-            lowLabel="Not Confident"
-            highLabel="Very Confident"
-            color="green"
-          />
-
-          {/* Stress Slider */}
-          <SliderField
-            label="Stress Level"
-            value={formData.stress}
-            onChange={(val) => handleSliderChange('stress', val)}
-            min={1}
-            max={10}
-            lowLabel="Relaxed"
-            highLabel="Very Stressed"
-            color="orange"
-          />
-
-          {/* Energy Slider */}
-          <SliderField
-            label="Energy Level (Optional)"
-            value={formData.energy || 5}
-            onChange={(val) => handleSliderChange('energy', val)}
-            min={1}
-            max={10}
-            lowLabel="Exhausted"
-            highLabel="Energized"
-            color="purple"
-          />
-
-          {/* Sleep Input */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Hours of Sleep (Optional)
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={24}
-              step={0.5}
-              value={formData.sleep || ''}
-              onChange={(e) => {
-                const value = e.target.value ? parseFloat(e.target.value) : 0;
-                setFormData((prev) => ({ ...prev, sleep: value || undefined }));
-              }}
-              className="w-full bg-input border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="7.5"
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Notes (Optional)
-            </label>
-            <textarea
-              value={formData.notes || ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-              className="w-full bg-input border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              rows={3}
-              placeholder="Any specific thoughts or events affecting your mood today?"
-            />
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full gradient-primary text-white py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all blue-glow-sm"
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: 'spring', duration: 0.5 }}
+            className="mb-6"
           >
-            {isSubmitting ? 'Saving...' : 'Log Mood'}
-          </button>
-        </form>
-      </div>
+            <Card
+              variant="flat"
+              padding="md"
+              className="bg-success-50 dark:bg-success-900/10 border-success-200 dark:border-success-800"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-5 h-5 text-success-600 dark:text-success-400" />
+                </div>
+                <div>
+                  <h4 className="font-display font-semibold text-sm text-gray-900 dark:text-gray-100">
+                    Check-In Recorded
+                  </h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                    Your daily metrics have been saved successfully
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Form */}
+      <Card variant="elevated" padding="none">
+        <CardHeader className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-800">
+          <CardTitle>Daily Performance Check-In</CardTitle>
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-body mt-2">
+            Track your mental readiness and recovery
+          </p>
+        </CardHeader>
+
+        <CardContent className="px-6 py-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Core Metrics */}
+            <div className="space-y-6">
+              <SliderMetric
+                label="Mood"
+                icon={formData.mood >= 6 ? <Smile className="w-5 h-5" /> : <Frown className="w-5 h-5" />}
+                value={formData.mood}
+                onChange={(val) => handleSliderChange('mood', val)}
+                min={1}
+                max={10}
+                lowLabel="Very Low"
+                highLabel="Excellent"
+              />
+
+              <SliderMetric
+                label="Confidence"
+                icon={<Target className="w-5 h-5" />}
+                value={formData.confidence}
+                onChange={(val) => handleSliderChange('confidence', val)}
+                min={1}
+                max={10}
+                lowLabel="Not Confident"
+                highLabel="Very Confident"
+              />
+
+              <SliderMetric
+                label="Stress Level"
+                icon={<Brain className="w-5 h-5" />}
+                value={formData.stress}
+                onChange={(val) => handleSliderChange('stress', val)}
+                min={1}
+                max={10}
+                lowLabel="Relaxed"
+                highLabel="Very Stressed"
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-800" />
+
+            {/* Optional Metrics */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Additional Metrics (Optional)
+                </span>
+              </div>
+
+              <SliderMetric
+                label="Energy Level"
+                icon={<Zap className="w-5 h-5" />}
+                value={formData.energy || 5}
+                onChange={(val) => handleSliderChange('energy', val)}
+                min={1}
+                max={10}
+                lowLabel="Exhausted"
+                highLabel="Energized"
+                optional
+              />
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  <Moon className="w-5 h-5 text-gray-400" />
+                  Hours of Sleep
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={24}
+                  step={0.5}
+                  value={formData.sleep || ''}
+                  onChange={(e) => {
+                    const value = e.target.value ? parseFloat(e.target.value) : 0;
+                    setFormData((prev) => ({ ...prev, sleep: value || undefined }));
+                  }}
+                  placeholder="7.5"
+                  className="font-mono text-lg"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  <MessageSquare className="w-5 h-5 text-gray-400" />
+                  Notes
+                </label>
+                <textarea
+                  value={formData.notes || ''}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 text-gray-900 dark:text-gray-100 font-body text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none"
+                  rows={3}
+                  placeholder="Any specific thoughts or events affecting your performance today?"
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-4">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                fullWidth
+                loading={isSubmitting}
+                disabled={isSubmitting}
+                leftIcon={isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : undefined}
+              >
+                {isSubmitting ? 'Recording Check-In...' : 'Complete Check-In'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-interface SliderFieldProps {
+interface SliderMetricProps {
   label: string;
+  icon: React.ReactNode;
   value: number;
   onChange: (value: number) => void;
   min: number;
   max: number;
   lowLabel: string;
   highLabel: string;
-  color: 'blue' | 'green' | 'orange' | 'purple';
+  optional?: boolean;
 }
 
-function SliderField({
+function SliderMetric({
   label,
+  icon,
   value,
   onChange,
   min,
   max,
   lowLabel,
   highLabel,
-  color,
-}: SliderFieldProps) {
-  const colorConfig = {
-    blue: {
-      textClass: 'text-primary',
-      hex: '#1E40AF', // primary (deep blue)
-    },
-    green: {
-      textClass: 'text-secondary',
-      hex: '#3B82F6', // secondary (bright blue) - was green
-    },
-    orange: {
-      textClass: 'text-muted-foreground',
-      hex: '#94A3B8', // muted-foreground (steel gray) - was orange
-    },
-    purple: {
-      textClass: 'text-accent',
-      hex: '#5BA3F5', // accent (light blue)
-    },
-  };
-
-  const config = colorConfig[color];
-
+  optional = false,
+}: SliderMetricProps) {
   return (
     <div>
-      <div className="flex justify-between items-center mb-2">
-        <label className="text-sm font-medium text-foreground">{label}</label>
-        <span className={`text-2xl font-bold ${config.textClass}`}>
+      {/* Label with Icon */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 dark:text-gray-500">{icon}</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {label}
+            {optional && (
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">(Optional)</span>
+            )}
+          </span>
+        </div>
+
+        {/* Large Numeric Display - Whoop-style */}
+        <motion.span
+          key={value}
+          initial={{ scale: 1.1, opacity: 0.8 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          className="text-4xl font-mono font-bold text-primary-600 dark:text-primary-400 tabular-nums"
+        >
           {value}
-        </span>
+        </motion.span>
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e) => onChange(parseInt(e.target.value))}
-        className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-        style={{
-          background: `linear-gradient(to right, ${config.hex} 0%, ${config.hex} ${
-            ((value - min) / (max - min)) * 100
-          }%, hsl(var(--muted)) ${((value - min) / (max - min)) * 100}%, hsl(var(--muted)) 100%)`,
-        }}
-      />
-      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+
+      {/* Custom Slider */}
+      <div className="relative">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value))}
+          className="slider-athletic w-full h-2 rounded-full appearance-none cursor-pointer outline-none transition-all"
+          style={{
+            background: `linear-gradient(to right, hsl(var(--primary-600)) 0%, hsl(var(--primary-600)) ${
+              ((value - min) / (max - min)) * 100
+            }%, hsl(var(--gray-200)) ${((value - min) / (max - min)) * 100}%, hsl(var(--gray-200)) 100%)`,
+          }}
+        />
+      </div>
+
+      {/* Range Labels */}
+      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
         <span>{lowLabel}</span>
         <span>{highLabel}</span>
       </div>
+
+      {/* Custom slider thumb styling */}
+      <style jsx>{`
+        .slider-athletic::-webkit-slider-thumb {
+          appearance: none;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: hsl(var(--primary-600));
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .slider-athletic::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .slider-athletic::-webkit-slider-thumb:active {
+          transform: scale(1.15);
+          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5);
+        }
+
+        .slider-athletic::-moz-range-thumb {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: hsl(var(--primary-600));
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .slider-athletic::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .slider-athletic::-moz-range-thumb:active {
+          transform: scale(1.15);
+          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5);
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .slider-athletic::-webkit-slider-thumb {
+            background: hsl(var(--primary-500));
+          }
+
+          .slider-athletic::-moz-range-thumb {
+            background: hsl(var(--primary-500));
+          }
+        }
+      `}</style>
     </div>
   );
 }

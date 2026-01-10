@@ -2,6 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Users,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  AlertOctagon,
+  Activity,
+  Target,
+  Calendar,
+  Filter,
+  Copy,
+  Check,
+  ChevronRight,
+  BarChart3,
+  Shield,
+  Zap,
+} from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -12,6 +30,11 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { Card, CardMetric, CardHeader, CardTitle, CardContent } from '@/design-system/components/Card';
+import { Button } from '@/design-system/components/Button';
+import { Badge } from '@/design-system/components/Badge';
+import { Skeleton, SkeletonCard, SkeletonStat } from '@/design-system/components/Skeleton';
+import { cn } from '@/lib/utils';
 
 interface DashboardData {
   overview: {
@@ -69,6 +92,29 @@ interface InviteCodeData {
   athleteCount: number;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94]
+    }
+  }
+};
+
 export default function EnhancedDashboard({ userId }: { userId: string }) {
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -78,6 +124,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
   const [timeRange, setTimeRange] = useState('7');
   const [sportFilter, setSportFilter] = useState<string>('');
   const [showInviteCode, setShowInviteCode] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -117,10 +164,10 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
   const copyInviteCode = () => {
     if (inviteCodeData?.inviteCode) {
       navigator.clipboard.writeText(inviteCodeData.inviteCode);
-      alert('Invite code copied to clipboard!');
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
     }
   };
-
 
   // Prepare chart data
   const chartData = dashboardData?.moodTrend?.map((d) => {
@@ -133,411 +180,465 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
     };
   }) || [];
 
+  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-6 text-muted-foreground font-semibold text-lg">Loading dashboard...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <Skeleton width="300px" height="40px" className="mb-2" />
+            <Skeleton width="200px" height="20px" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+          </div>
+          <SkeletonCard />
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error || !dashboardData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="text-center bg-card rounded-2xl shadow-2xl p-12 max-w-md">
-          <div className="text-muted-foreground text-7xl mb-6">⚠️</div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            {error || 'No data available'}
-          </h2>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-8 py-3 bg-primary text-white rounded-xl hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all"
-          >
-            Retry
-          </button>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
+        <Card variant="elevated" className="max-w-md text-center">
+          <div className="p-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-danger-50 dark:bg-danger-900/20 mb-4">
+              <AlertOctagon className="w-8 h-8 text-danger-600 dark:text-danger-400" />
+            </div>
+            <h2 className="font-display font-semibold text-xl text-gray-900 dark:text-gray-100 mb-2">
+              {error || 'No data available'}
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Unable to load dashboard metrics. Please try again.
+            </p>
+            <Button onClick={() => window.location.reload()} variant="primary">
+              Retry
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
 
-  const { overview, teamMood, atRiskAthletes, athleteReadiness, crisisAlerts } = dashboardData;
+  const { overview, teamMood, atRiskAthletes, athleteReadiness } = dashboardData;
+  const moodTrend = teamMood.avgMood >= 7 ? 'up' : teamMood.avgMood >= 5 ? 'neutral' : 'down';
 
   return (
-    <div className="min-h-screen">
-      {/* Header with Invite Code */}
-      <div className="bg-card shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Coach Dashboard
+              <h1 className="font-display font-semibold text-3xl md:text-4xl text-gray-900 dark:text-gray-100 tracking-tight">
+                Team Analytics
               </h1>
-              <p className="mt-3 text-muted-foreground text-lg">
-                Monitor your team's mental performance
+              <p className="mt-2 text-gray-600 dark:text-gray-400 font-body">
+                Monitor mental performance across your roster
               </p>
             </div>
-            <button
+            <Button
               onClick={() => setShowInviteCode(!showInviteCode)}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all shadow-lg flex items-center gap-3 font-bold text-lg hover:scale-105 transform"
+              variant={showInviteCode ? 'secondary' : 'outline'}
+              leftIcon={<Shield className="w-4 h-4" />}
             >
-              <span className="text-2xl">🔑</span>
-              <span>My Invite Code</span>
-            </button>
+              Team Invite Code
+            </Button>
           </div>
 
           {/* Invite Code Card */}
-          {showInviteCode && inviteCodeData && (
-            <div className="mt-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
-              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <span className="text-3xl">🎯</span>
-                Your Team Invite Code
-              </h3>
-              <div className="bg-card/20 backdrop-blur-md rounded-xl p-6 mb-6 border border-white/30">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-wider opacity-90 mb-2 font-semibold">
-                      Share this code with your athletes
-                    </div>
-                    <div className="text-5xl font-mono font-black tracking-widest">
-                      {inviteCodeData.inviteCode}
-                    </div>
-                  </div>
-                  <button
-                    onClick={copyInviteCode}
-                    className="px-6 py-3 bg-card text-primary rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-lg hover:shadow-xl"
-                  >
-                    📋 Copy Code
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🏀</span>
-                  <span className="opacity-90">Sport:</span>{' '}
-                  <span className="font-bold text-lg">{inviteCodeData.sport}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">👥</span>
-                  <span className="opacity-90">Connected Athletes:</span>{' '}
-                  <span className="font-bold text-lg">{inviteCodeData.athleteCount}</span>
-                </div>
-              </div>
-              <div className="mt-6 bg-card/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <p className="text-sm leading-relaxed">
-                  💡 <strong>How it works:</strong> Athletes enter this code in their mobile app to join your team.
-                  They control their data sharing consent, giving you access to their mental performance metrics.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Filters */}
-        <div className="mb-10 flex flex-col md:flex-row gap-6 items-stretch bg-card rounded-2xl shadow-lg p-6 border border-gray-100">
-          <div className="flex-1">
-            <label className="block text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-              <span className="text-lg">📅</span>
-              Time Range
-            </label>
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:bg-card cursor-pointer"
-            >
-              <option value="7">Last 7 days</option>
-              <option value="14">Last 14 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="60">Last 60 days</option>
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-              <span className="text-lg">🏀</span>
-              Sport Filter
-            </label>
-            <select
-              value={sportFilter}
-              onChange={(e) => setSportFilter(e.target.value)}
-              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:bg-card cursor-pointer"
-            >
-              <option value="">All Sports</option>
-              <option value="Basketball">🏀 Basketball</option>
-              <option value="Football">🏈 Football</option>
-              <option value="Soccer">⚽ Soccer</option>
-              <option value="Volleyball">🏐 Volleyball</option>
-              <option value="Baseball">⚾ Baseball</option>
-              <option value="Track">🏃 Track & Field</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">
-                  Total Athletes
-                </div>
-                <div className="text-5xl font-black mb-2">
-                  {overview.totalAthletes}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  {overview.athletesWithConsent} with consent
-                </div>
-              </div>
-              <div className="text-6xl opacity-20">👥</div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">
-                  Avg Team Mood
-                </div>
-                <div className="text-5xl font-black mb-2">
-                  {teamMood.avgMood.toFixed(1)}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  {teamMood.totalLogs} logs
-                </div>
-              </div>
-              <div className="text-6xl opacity-20">😊</div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">
-                  At-Risk Athletes
-                </div>
-                <div className="text-5xl font-black mb-2">
-                  {overview.atRiskCount}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  Need attention
-                </div>
-              </div>
-              <div className="text-6xl opacity-20">⚠️</div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">
-                  Crisis Alerts
-                </div>
-                <div className="text-5xl font-black mb-2">
-                  {overview.crisisAlertsCount}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  Unresolved
-                </div>
-              </div>
-              <div className="text-6xl opacity-20">🚨</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mood Trend Chart */}
-        {chartData.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
-              <span className="text-3xl">📈</span>
-              Team Mental Performance Trends
-            </h2>
-            <div className="h-96">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" stroke="#6b7280" />
-                  <YAxis domain={[0, 10]} stroke="#6b7280" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="Mood"
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    dot={{ fill: '#3b82f6', r: 5 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Confidence"
-                    stroke="#22c55e"
-                    strokeWidth={3}
-                    dot={{ fill: '#22c55e', r: 5 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Stress"
-                    stroke="#ef4444"
-                    strokeWidth={3}
-                    dot={{ fill: '#ef4444', r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* At-Risk Athletes */}
-        {atRiskAthletes.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border-2 border-muted-foreground">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
-              <span className="text-3xl">⚠️</span>
-              At-Risk Athletes
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {atRiskAthletes.map((athlete) => (
-                <div
-                  key={athlete.id}
-                  className="border-2 border-muted-foreground rounded-xl p-6 bg-gradient-to-br from-red-50 to-orange-50 hover:shadow-xl transition-all hover:scale-105 transform cursor-pointer"
-                  onClick={() => router.push(`/coach/athletes/${athlete.id}`)}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-black text-lg text-foreground">{athlete.name}</h3>
-                      <p className="text-sm text-muted-foreground font-semibold">
-                        {athlete.sport} • {athlete.year}
+          <AnimatePresence>
+            {showInviteCode && inviteCodeData && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card variant="elevated" padding="lg" className="mb-6 border-primary-200 dark:border-primary-800">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                        <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100">
+                          Team Access Code
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Share this code with athletes to join your team roster
                       </p>
-                    </div>
-                    <div className="text-3xl">🔴</div>
-                  </div>
-                  {athlete.recentMood && (
-                    <div className="space-y-3 mb-4">
-                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold text-muted-foreground">Mood:</span>
-                        <span className="font-black text-lg">{athlete.recentMood.mood}/10</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold text-muted-foreground">Confidence:</span>
-                        <span className="font-black text-lg">{athlete.recentMood.confidence}/10</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold text-muted-foreground">Stress:</span>
-                        <span className="font-black text-lg text-muted-foreground">{athlete.recentMood.stress}/10</span>
+                      <div className="inline-flex items-center gap-3 bg-gray-100 dark:bg-gray-800 rounded-lg px-6 py-3 border border-gray-200 dark:border-gray-700">
+                        <code className="font-mono font-bold text-2xl text-gray-900 dark:text-gray-100 tracking-wider">
+                          {inviteCodeData.inviteCode}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={copyInviteCode}
+                          leftIcon={codeCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        >
+                          {codeCopied ? 'Copied' : 'Copy'}
+                        </Button>
                       </div>
                     </div>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/coach/athletes/${athlete.id}`);
-                      }}
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold text-sm"
-                    >
-                      👁️ View
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/coach/athletes/${athlete.id}`);
-                      }}
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:shadow-xl transition-all font-bold text-sm"
-                    >
-                      📨 Check-In
-                    </button>
+                    <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <div>
+                        <span className="font-medium">Sport:</span>{' '}
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">{inviteCodeData.sport}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Athletes:</span>{' '}
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">{inviteCodeData.athleteCount}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                Time Range
+              </label>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm font-medium text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                <option value="7">Last 7 days</option>
+                <option value="14">Last 14 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="60">Last 60 days</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                Sport Filter
+              </label>
+              <select
+                value={sportFilter}
+                onChange={(e) => setSportFilter(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-sm font-medium text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              >
+                <option value="">All Sports</option>
+                <option value="Basketball">Basketball</option>
+                <option value="Football">Football</option>
+                <option value="Soccer">Soccer</option>
+                <option value="Volleyball">Volleyball</option>
+                <option value="Baseball">Baseball</option>
+                <option value="Track">Track & Field</option>
+              </select>
             </div>
           </div>
-        )}
+        </motion.div>
 
-        {/* Today's Readiness */}
-        {athleteReadiness.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
-              <span className="text-3xl">🎯</span>
-              Today's Readiness Scores
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {athleteReadiness.map((item) => (
-                <div
-                  key={item.athlete.id}
-                  onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
-                  className={`border-2 rounded-xl p-6 cursor-pointer ${
-                    item.status === 'excellent'
-                      ? 'border-secondary/20 bg-gradient-to-br from-green-50 to-emerald-50'
-                      : item.status === 'good'
-                      ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50'
-                      : item.status === 'fair'
-                      ? 'border-muted bg-gradient-to-br from-yellow-50 to-amber-50'
-                      : 'border-muted-foreground bg-gradient-to-br from-red-50 to-orange-50'
-                  } hover:shadow-xl transition-all hover:scale-105 transform`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-black text-lg text-foreground">{item.athlete.name}</h3>
-                      <p className="text-sm text-muted-foreground font-semibold">{item.athlete.teamPosition}</p>
-                    </div>
-                    <div
-                      className={`text-3xl font-black ${
-                        item.status === 'excellent'
-                          ? 'text-secondary'
-                          : item.status === 'good'
-                          ? 'text-primary'
-                          : item.status === 'fair'
-                          ? 'text-muted-foreground'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {item.readiness}
-                    </div>
-                  </div>
-                  <div className={`text-xs uppercase font-black tracking-wider px-3 py-2 rounded-lg inline-block ${
-                    item.status === 'excellent'
-                      ? 'bg-secondary/30 text-secondary'
-                      : item.status === 'good'
-                      ? 'bg-blue-200 text-blue-800'
-                      : item.status === 'fair'
-                      ? 'bg-muted/30 text-muted-foreground'
-                      : 'bg-muted-foreground/30 text-muted-foreground'
-                  }`}>
-                    {item.status.replace('-', ' ')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="space-y-6"
+        >
+          {/* Overview Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <motion.div variants={itemVariants}>
+              <Card variant="elevated" padding="md">
+                <CardMetric
+                  label="Total Athletes"
+                  value={overview.totalAthletes}
+                  icon={<Users className="w-4 h-4" />}
+                />
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
+                  {overview.athletesWithConsent} with data sharing consent
+                </p>
+              </Card>
+            </motion.div>
 
-        {/* Empty State */}
-        {overview.totalAthletes === 0 && (
-          <div className="bg-card rounded-2xl shadow-2xl p-16 text-center border-2 border-dashed border-border">
-            <div className="text-8xl mb-6">👋</div>
-            <h3 className="text-3xl font-black text-foreground mb-4">
-              Welcome to Your Coach Dashboard!
-            </h3>
-            <p className="text-muted-foreground mb-8 text-lg max-w-2xl mx-auto">
-              Get started by sharing your invite code with athletes. Once they join and grant consent,
-              you'll see their mental performance metrics right here.
-            </p>
-            <button
-              onClick={() => setShowInviteCode(true)}
-              className="px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-black text-lg hover:scale-105 transform"
-            >
-              🔑 View Invite Code
-            </button>
+            <motion.div variants={itemVariants}>
+              <Card variant="elevated" padding="md">
+                <CardMetric
+                  label="Avg Team Mood"
+                  value={teamMood.avgMood.toFixed(1)}
+                  trend={moodTrend}
+                  trendValue={`${teamMood.totalLogs} logs`}
+                  icon={<Activity className="w-4 h-4" />}
+                />
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card
+                variant="elevated"
+                padding="md"
+                className={cn(
+                  overview.atRiskCount > 0 && 'border-warning-300 dark:border-warning-700'
+                )}
+              >
+                <CardMetric
+                  label="At-Risk Athletes"
+                  value={overview.atRiskCount}
+                  icon={<AlertTriangle className="w-4 h-4" />}
+                />
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
+                  {overview.atRiskCount > 0 ? 'Requires attention' : 'All athletes stable'}
+                </p>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card
+                variant="elevated"
+                padding="md"
+                className={cn(
+                  overview.crisisAlertsCount > 0 && 'border-danger-300 dark:border-danger-700'
+                )}
+              >
+                <CardMetric
+                  label="Crisis Alerts"
+                  value={overview.crisisAlertsCount}
+                  icon={<AlertOctagon className="w-4 h-4" />}
+                />
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
+                  {overview.crisisAlertsCount > 0 ? 'Immediate action needed' : 'No active alerts'}
+                </p>
+              </Card>
+            </motion.div>
           </div>
-        )}
+
+          {/* Mood Trend Chart */}
+          {chartData.length > 0 && (
+            <motion.div variants={itemVariants}>
+              <Card variant="elevated" padding="none">
+                <CardHeader className="px-6 pt-6">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <CardTitle>Performance Trends</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                  <div className="h-80 mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--gray-200))" />
+                        <XAxis
+                          dataKey="date"
+                          stroke="hsl(var(--gray-500))"
+                          style={{ fontSize: '12px', fontFamily: 'var(--font-body)' }}
+                        />
+                        <YAxis
+                          domain={[0, 10]}
+                          stroke="hsl(var(--gray-500))"
+                          style={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            boxShadow: 'var(--shadow-lg)',
+                            fontFamily: 'var(--font-body)',
+                          }}
+                        />
+                        <Legend
+                          wrapperStyle={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '12px',
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="Mood"
+                          stroke="hsl(var(--primary-600))"
+                          strokeWidth={2.5}
+                          dot={{ fill: 'hsl(var(--primary-600))', r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="Confidence"
+                          stroke="hsl(var(--success-600))"
+                          strokeWidth={2.5}
+                          dot={{ fill: 'hsl(var(--success-600))', r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="Stress"
+                          stroke="hsl(var(--warning-600))"
+                          strokeWidth={2.5}
+                          dot={{ fill: 'hsl(var(--warning-600))', r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* At-Risk Athletes */}
+          {atRiskAthletes.length > 0 && (
+            <motion.div variants={itemVariants}>
+              <Card variant="elevated" padding="none">
+                <CardHeader className="px-6 pt-6 border-b border-warning-200 dark:border-warning-800 bg-warning-50 dark:bg-warning-900/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-warning-600 dark:text-warning-400" />
+                      <CardTitle>Athletes Requiring Attention</CardTitle>
+                    </div>
+                    <Badge variant="warning" size="sm">
+                      {atRiskAthletes.length} at-risk
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                    {atRiskAthletes.map((athlete, index) => (
+                      <motion.div
+                        key={athlete.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 + index * 0.05 }}
+                      >
+                        <Card
+                          variant="flat"
+                          padding="md"
+                          interactive
+                          className="group border-warning-200 dark:border-warning-800 hover:border-warning-400 dark:hover:border-warning-600"
+                          onClick={() => router.push(`/coach/athletes/${athlete.id}`)}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-display font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">
+                                {athlete.name}
+                              </h4>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {athlete.sport} • {athlete.year}
+                              </p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          {athlete.recentMood && (
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">Mood</span>
+                                <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
+                                  {athlete.recentMood.mood}/10
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">Confidence</span>
+                                <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
+                                  {athlete.recentMood.confidence}/10
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">Stress</span>
+                                <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
+                                  {athlete.recentMood.stress}/10
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Today's Readiness */}
+          {athleteReadiness.length > 0 && (
+            <motion.div variants={itemVariants}>
+              <Card variant="elevated" padding="none">
+                <CardHeader className="px-6 pt-6">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <CardTitle>Today's Readiness</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                    {athleteReadiness.map((item, index) => {
+                      const statusConfig = {
+                        excellent: {
+                          badge: 'success',
+                          border: 'border-success-200 dark:border-success-800',
+                          bg: 'bg-success-50 dark:bg-success-900/10'
+                        },
+                        good: {
+                          badge: 'primary',
+                          border: 'border-primary-200 dark:border-primary-800',
+                          bg: 'bg-primary-50 dark:bg-primary-900/10'
+                        },
+                        fair: {
+                          badge: 'warning',
+                          border: 'border-warning-200 dark:border-warning-800',
+                          bg: 'bg-warning-50 dark:bg-warning-900/10'
+                        },
+                        'at-risk': {
+                          badge: 'danger',
+                          border: 'border-danger-200 dark:border-danger-800',
+                          bg: 'bg-danger-50 dark:bg-danger-900/10'
+                        }
+                      };
+
+                      const config = statusConfig[item.status];
+
+                      return (
+                        <motion.div
+                          key={item.athlete.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 1 + index * 0.04 }}
+                        >
+                          <Card
+                            variant="flat"
+                            padding="md"
+                            interactive
+                            className={cn('group', config.border, config.bg)}
+                            onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h4 className="font-display font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">
+                                  {item.athlete.name}
+                                </h4>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                  {item.athlete.teamPosition}
+                                </p>
+                              </div>
+                              <Badge variant={config.badge as any} size="sm">
+                                {item.readiness}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 capitalize">
+                              {item.status.replace('-', ' ')}
+                            </div>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
