@@ -86,6 +86,7 @@ const buttonVariants = cva(
         md: 'h-10 px-4 text-sm gap-2',
         lg: 'h-12 px-6 text-base gap-2.5',
         xl: 'h-14 px-8 text-lg gap-3',
+        icon: 'h-10 w-10 p-0',
       },
       fullWidth: {
         true: 'w-full',

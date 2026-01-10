@@ -30,7 +30,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardMetric, CardHeader, CardTitle, CardContent } from '@/design-system/components/Card';
+import { Card, CardMetric, CardHeader, CardTitle, CardContent, AnimatedCounter, Sparkline } from '@/design-system/components';
 import { Button } from '@/design-system/components/Button';
 import { Badge } from '@/design-system/components/Badge';
 import { Skeleton, SkeletonCard, SkeletonStat } from '@/design-system/components/Skeleton';
@@ -534,21 +534,21 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                             <div className="space-y-2">
                               <div className="flex justify-between items-center text-xs">
                                 <span className="text-gray-600 dark:text-gray-400">Mood</span>
-                                <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
-                                  {athlete.recentMood.mood}/10
-                                </span>
+                                <div className="font-mono font-semibold text-gray-900 dark:text-gray-100">
+                                  <AnimatedCounter value={athlete.recentMood.mood} decimals={0} suffix="/10" />
+                                </div>
                               </div>
                               <div className="flex justify-between items-center text-xs">
                                 <span className="text-gray-600 dark:text-gray-400">Confidence</span>
-                                <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
-                                  {athlete.recentMood.confidence}/10
-                                </span>
+                                <div className="font-mono font-semibold text-gray-900 dark:text-gray-100">
+                                  <AnimatedCounter value={athlete.recentMood.confidence} decimals={0} suffix="/10" />
+                                </div>
                               </div>
                               <div className="flex justify-between items-center text-xs">
                                 <span className="text-gray-600 dark:text-gray-400">Stress</span>
-                                <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
-                                  {athlete.recentMood.stress}/10
-                                </span>
+                                <div className="font-mono font-semibold text-gray-900 dark:text-gray-100">
+                                  <AnimatedCounter value={athlete.recentMood.stress} decimals={0} suffix="/10" />
+                                </div>
                               </div>
                             </div>
                           )}
@@ -623,7 +623,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
                                 </p>
                               </div>
                               <Badge variant={config.badge as any} size="sm">
-                                {item.readiness}
+                                <AnimatedCounter value={item.readiness} decimals={0} />
                               </Badge>
                             </div>
                             <div className="text-xs text-gray-600 dark:text-gray-400 capitalize">

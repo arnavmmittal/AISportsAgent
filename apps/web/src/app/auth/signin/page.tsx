@@ -63,7 +63,7 @@ function SignInForm() {
       if (userData.role === 'COACH' || userData.role === 'ADMIN') {
         router.push('/coach/dashboard');
       } else {
-        router.push('/student/dashboard');
+        router.push('/student/home');
       }
 
       router.refresh();
@@ -74,21 +74,21 @@ function SignInForm() {
   };
 
   return (
-    <div className="min-h-screen gradient-dark flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-card rounded-2xl shadow-xl overflow-hidden blue-glow">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-800">
           {/* Header */}
-          <div className="px-8 pt-8 pb-6 gradient-primary">
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-white/80">Sign in to continue your journey</p>
+          <div className="px-8 pt-8 pb-6 bg-primary-600 dark:bg-primary-500">
+            <h1 className="text-3xl font-display font-bold text-white mb-2">Welcome Back</h1>
+            <p className="text-white/90 font-body">Sign in to continue your journey</p>
           </div>
 
           <div className="px-8 py-6">
             {/* Success Message */}
             {success && (
-              <div className="mb-6 p-4 bg-success/10 border-l-4 border-success rounded-r">
-                <p className="text-sm text-success flex items-center">
+              <div className="mb-6 p-4 bg-success-50 dark:bg-success-900/20 border-l-4 border-success-600 dark:border-success-500 rounded-r">
+                <p className="text-sm text-success-700 dark:text-success-300 flex items-center font-body">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
@@ -99,8 +99,8 @@ function SignInForm() {
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-destructive/10 border-l-4 border-destructive rounded-r">
-                <p className="text-sm text-destructive flex items-center">
+              <div className="mb-6 p-4 bg-danger-50 dark:bg-danger-900/20 border-l-4 border-danger-600 dark:border-danger-500 rounded-r">
+                <p className="text-sm text-danger-700 dark:text-danger-300 flex items-center font-body">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
@@ -112,7 +112,7 @@ function SignInForm() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
                   Email Address
                 </label>
                 <input
@@ -121,13 +121,13 @@ function SignInForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow font-body"
                   placeholder="athlete@university.edu"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
                   Password
                 </label>
                 <input
@@ -136,7 +136,7 @@ function SignInForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow font-body"
                   placeholder="Enter your password"
                 />
               </div>
@@ -144,7 +144,7 @@ function SignInForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full gradient-primary text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl blue-glow-sm"
+                className="w-full bg-primary-600 dark:bg-primary-500 hover:bg-primary-700 dark:hover:bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-display"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">

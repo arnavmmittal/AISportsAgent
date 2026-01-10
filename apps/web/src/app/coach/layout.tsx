@@ -57,11 +57,11 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Hamburger Menu Button - Visible on all screen sizes */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-xl hover:shadow-2xl transition-all hover:scale-105 transform border border-gray-200 dark:border-gray-700"
+        className="fixed top-4 left-4 z-50 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all border border-gray-200 dark:border-gray-700"
         aria-label="Toggle sidebar"
       >
         {isSidebarOpen ? (
@@ -74,17 +74,17 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-white dark:bg-gray-900 shadow-2xl z-40 transition-all duration-300 ease-in-out
+          fixed top-0 left-0 h-full bg-white dark:bg-gray-900 shadow-2xl z-40 transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-800
           ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Logo/Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 mt-16">
-            <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-800 mt-16">
+            <h1 className="text-2xl font-display font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
               Coach Portal
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 whitespace-nowrap">AI Sports Agent</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-nowrap font-body">AI Sports Agent</p>
           </div>
 
           {/* Navigation */}
@@ -103,9 +103,9 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
                         router.push(item.href);
                       }}
                       className={`
-                        flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap
+                        flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap font-body
                         ${isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                          ? 'bg-secondary-600 dark:bg-secondary-500 text-white'
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }
                       `}
@@ -120,10 +120,10 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
           </nav>
 
           {/* Sign Out Button */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/20 hover:text-muted-foreground dark:hover:text-muted-foreground rounded-lg font-medium transition-all whitespace-nowrap"
+              className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-danger-600 dark:hover:text-danger-400 rounded-lg font-medium transition-all whitespace-nowrap font-body"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span>Sign Out</span>

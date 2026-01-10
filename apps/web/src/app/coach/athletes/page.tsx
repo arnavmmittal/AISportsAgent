@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, User, Calendar, TrendingDown, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Search, User, Calendar, TrendingDown, MessageSquare, AlertTriangle, Users, Activity, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { SportFilter } from '@/components/SportFilter';
+import { Card } from '@/design-system/components';
+import { AnimatedCounter } from '@/design-system/components';
 
 type RiskLevel = 'critical' | 'warning' | 'good' | 'no-data';
 
@@ -82,33 +84,33 @@ export default function AthletesPage() {
     switch (level) {
       case 'critical':
         return {
-          bg: 'bg-muted-foreground/10 dark:bg-muted-foreground/20',
-          border: 'border-muted-foreground dark:border-muted-foreground',
-          dot: 'bg-muted-foreground/100',
-          text: 'text-chrome dark:text-chrome',
-          badge: 'bg-muted-foreground/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome',
+          bg: 'bg-danger-50 dark:bg-danger-900/20',
+          border: 'border-danger-200 dark:border-danger-800',
+          dot: 'bg-danger-600',
+          text: 'text-danger-700 dark:text-danger-300',
+          badge: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300',
         };
       case 'warning':
         return {
-          bg: 'bg-muted/10 dark:bg-muted-foreground/20/20',
-          border: 'border-muted dark:border-muted-foreground',
-          dot: 'bg-muted/100',
-          text: 'text-chrome dark:text-chrome',
-          badge: 'bg-muted/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome',
+          bg: 'bg-warning-50 dark:bg-warning-900/20',
+          border: 'border-warning-200 dark:border-warning-800',
+          dot: 'bg-warning-600',
+          text: 'text-warning-700 dark:text-warning-300',
+          badge: 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300',
         };
       case 'good':
         return {
-          bg: 'bg-secondary/10 dark:bg-secondary/20',
-          border: 'border-secondary/20 dark:border-secondary',
-          dot: 'bg-secondary/100',
-          text: 'text-secondary dark:text-accent',
-          badge: 'bg-secondary/20 dark:bg-secondary/20/30 text-secondary dark:text-accent',
+          bg: 'bg-success-50 dark:bg-success-900/20',
+          border: 'border-success-200 dark:border-success-800',
+          dot: 'bg-success-600',
+          text: 'text-success-700 dark:text-success-300',
+          badge: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300',
         };
       case 'no-data':
         return {
           bg: 'bg-gray-50 dark:bg-gray-900/20',
           border: 'border-gray-200 dark:border-gray-700',
-          dot: 'bg-gray-400',
+          dot: 'bg-gray-400 dark:bg-gray-500',
           text: 'text-gray-900 dark:text-gray-200',
           badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
         };
@@ -145,67 +147,75 @@ export default function AthletesPage() {
   const goodCount = displayAthletes.filter(a => a.riskLevel === 'good').length;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-gray-100 tracking-tight">
             Athletes
           </h1>
-          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Quick status overview with readiness tracking</p>
+          <p className="mt-3 text-gray-600 dark:text-gray-400 text-lg font-body">Quick status overview with readiness tracking</p>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+          <Card variant="elevated" padding="lg" hover>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Total Athletes</div>
-                <div className="text-5xl font-black mb-2">{displayAthletes.length}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                <div className="text-gray-600 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Total Athletes</div>
+                <div className="text-4xl font-display font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  <AnimatedCounter value={displayAthletes.length} decimals={0} />
+                </div>
+                <div className="text-sm text-primary-600 dark:text-primary-400 font-medium font-body">
                   {selectedSports.length > 0 ? `Filtered` : 'Active roster'}
                 </div>
               </div>
-              <div className="text-6xl opacity-20">👥</div>
+              <Users className="w-12 h-12 text-primary-600 dark:text-primary-400 opacity-80" />
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <Card variant="elevated" padding="lg" hover className="border-danger-200 dark:border-danger-800/50">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
-                <div className="text-5xl font-black mb-2">{criticalCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Immediate attention</div>
+                <div className="text-danger-600 dark:text-danger-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Critical</div>
+                <div className="text-4xl font-display font-bold text-danger-700 dark:text-danger-300 mb-2">
+                  <AnimatedCounter value={criticalCount} decimals={0} />
+                </div>
+                <div className="text-sm text-danger-600 dark:text-danger-400 font-medium font-body">Immediate attention</div>
               </div>
-              <div className="text-6xl opacity-20">🚨</div>
+              <AlertTriangle className="w-12 h-12 text-danger-600 dark:text-danger-400 opacity-80" />
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <Card variant="elevated" padding="lg" hover className="border-warning-200 dark:border-warning-800/50">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Warning</div>
-                <div className="text-5xl font-black mb-2">{warningCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Monitor closely</div>
+                <div className="text-warning-600 dark:text-warning-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Warning</div>
+                <div className="text-4xl font-display font-bold text-warning-700 dark:text-warning-300 mb-2">
+                  <AnimatedCounter value={warningCount} decimals={0} />
+                </div>
+                <div className="text-sm text-warning-600 dark:text-warning-400 font-medium font-body">Monitor closely</div>
               </div>
-              <div className="text-6xl opacity-20">⚠️</div>
+              <Activity className="w-12 h-12 text-warning-600 dark:text-warning-400 opacity-80" />
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
+          <Card variant="elevated" padding="lg" hover className="border-success-200 dark:border-success-800/50">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Good</div>
-                <div className="text-5xl font-black mb-2">{goodCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Doing well</div>
+                <div className="text-success-600 dark:text-success-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Good</div>
+                <div className="text-4xl font-display font-bold text-success-700 dark:text-success-300 mb-2">
+                  <AnimatedCounter value={goodCount} decimals={0} />
+                </div>
+                <div className="text-sm text-success-600 dark:text-success-400 font-medium font-body">Doing well</div>
               </div>
-              <div className="text-6xl opacity-20">✅</div>
+              <CheckCircle2 className="w-12 h-12 text-success-600 dark:text-success-400 opacity-80" />
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 mb-8">
+        <Card variant="elevated" padding="lg" className="mb-8">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -214,7 +224,7 @@ export default function AthletesPage() {
               placeholder="Search by name or sport..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-foreground dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 font-body"
             />
           </div>
 
@@ -224,9 +234,9 @@ export default function AthletesPage() {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap font-body ${
                 filter === 'all'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary-600 dark:bg-primary-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -234,63 +244,63 @@ export default function AthletesPage() {
             </button>
             <button
               onClick={() => setFilter('critical')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap font-body ${
                 filter === 'critical'
-                  ? 'bg-muted-foreground/30 text-white'
+                  ? 'bg-danger-600 dark:bg-danger-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              🔴 Critical
+              Critical
             </button>
             <button
               onClick={() => setFilter('warning')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap font-body ${
                 filter === 'warning'
-                  ? 'bg-muted-foreground text-white'
+                  ? 'bg-warning-600 dark:bg-warning-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              🟡 Warning
+              Warning
             </button>
             <button
               onClick={() => setFilter('good')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap font-body ${
                 filter === 'good'
-                  ? 'bg-secondary text-white'
+                  ? 'bg-success-600 dark:bg-success-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              🟢 Good
+              Good
             </button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Athletes List */}
       <div className="space-y-3">
         {isLoading ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Loading athletes...</h3>
-          </div>
+          <Card variant="elevated" padding="lg" className="text-center">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600 mb-4"></div>
+            <h3 className="text-lg font-display font-semibold text-gray-900 dark:text-gray-100">Loading athletes...</h3>
+          </Card>
         ) : error ? (
-          <div className="bg-muted-foreground/10 dark:bg-muted-foreground/20 rounded-lg shadow border-2 border-muted-foreground dark:border-muted-foreground p-12 text-center">
-            <div className="text-muted-foreground dark:text-muted-foreground mb-4">⚠️</div>
-            <h3 className="text-lg font-semibold text-chrome dark:text-chrome mb-2">Error Loading Athletes</h3>
-            <p className="text-sm text-muted-foreground dark:text-chrome">{error}</p>
+          <Card variant="elevated" padding="lg" className="border-danger-200 dark:border-danger-800 text-center">
+            <AlertTriangle className="w-16 h-16 text-danger-600 dark:text-danger-400 mx-auto mb-4" />
+            <h3 className="text-lg font-display font-semibold text-danger-700 dark:text-danger-300 mb-2">Error Loading Athletes</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-body mb-4">{error}</p>
             <button
               onClick={() => loadAthletes()}
-              className="mt-4 px-6 py-2 bg-muted-foreground/30 text-white rounded-lg hover:bg-muted-foreground/30 transition-colors font-medium"
+              className="px-6 py-2 bg-danger-600 dark:bg-danger-500 text-white rounded-lg hover:bg-danger-700 dark:hover:bg-danger-600 transition-colors font-medium font-body"
             >
               Retry
             </button>
-          </div>
+          </Card>
         ) : filteredAthletes.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <Card variant="elevated" padding="lg" className="text-center">
             <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No athletes found</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Try adjusting your search or filter</p>
-          </div>
+            <h3 className="text-lg font-display font-semibold text-gray-900 dark:text-gray-100">No athletes found</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 font-body">Try adjusting your search or filter</p>
+          </Card>
         ) : (
           filteredAthletes.map((athlete) => {
             const colors = getRiskColor(athlete.riskLevel);
@@ -333,8 +343,8 @@ export default function AthletesPage() {
                             <span
                               className={`text-xs px-2 py-0.5 rounded ${
                                 athlete.chatContribution > 0
-                                  ? 'bg-secondary/20 dark:bg-secondary/20/30 text-secondary dark:text-accent'
-                                  : 'bg-muted-foreground/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome'
+                                  ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300'
+                                  : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300'
                               }`}
                             >
                               Chat: {athlete.chatContribution > 0 ? '+' : ''}
@@ -351,11 +361,11 @@ export default function AthletesPage() {
                     )}
                     {athlete.concern && (
                       <div
-                        className={`text-sm ${
+                        className={`text-sm font-body ${
                           athlete.riskLevel === 'critical'
-                            ? 'text-muted-foreground dark:text-chrome'
+                            ? 'text-danger-700 dark:text-danger-300'
                             : athlete.riskLevel === 'warning'
-                            ? 'text-muted-foreground dark:text-chrome'
+                            ? 'text-warning-700 dark:text-warning-300'
                             : 'text-gray-600 dark:text-gray-400'
                         }`}
                       >
@@ -367,7 +377,7 @@ export default function AthletesPage() {
                         {athlete.chatInsights.themes.slice(0, 2).map((theme) => (
                           <span
                             key={theme}
-                            className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                            className="text-xs px-2 py-0.5 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-body"
                           >
                             {theme.replace(/-/g, ' ')}
                           </span>
@@ -375,7 +385,7 @@ export default function AthletesPage() {
                       </div>
                     )}
                     {!athlete.concern && athlete.riskLevel === 'good' && (
-                      <div className="text-sm text-secondary dark:text-accent">
+                      <div className="text-sm text-success-700 dark:text-success-300 font-body">
                         All indicators healthy
                       </div>
                     )}
@@ -385,14 +395,14 @@ export default function AthletesPage() {
                 {/* Actions */}
                 <div className="flex flex-col gap-2">
                   {athlete.riskLevel === 'critical' && (
-                    <button className="px-4 py-2 bg-muted-foreground/30 text-white rounded-lg hover:bg-muted-foreground/30 transition-colors font-medium text-sm whitespace-nowrap">
+                    <button className="px-4 py-2 bg-danger-600 dark:bg-danger-500 text-white rounded-lg hover:bg-danger-700 dark:hover:bg-danger-600 transition-colors font-medium text-sm whitespace-nowrap font-body">
                       Reach Out
                     </button>
                   )}
                   {athlete.riskLevel === 'warning' && (
                     <Link
                       href={`/coach/athletes/${athlete.id}`}
-                      className="px-4 py-2 bg-muted-foreground text-white rounded-lg hover:bg-muted-foreground transition-colors font-medium text-sm text-center whitespace-nowrap"
+                      className="px-4 py-2 bg-warning-600 dark:bg-warning-500 text-white rounded-lg hover:bg-warning-700 dark:hover:bg-warning-600 transition-colors font-medium text-sm text-center whitespace-nowrap font-body"
                     >
                       View Details
                     </Link>
@@ -400,7 +410,7 @@ export default function AthletesPage() {
                   {athlete.riskLevel === 'good' && (
                     <Link
                       href={`/coach/athletes/${athlete.id}`}
-                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium text-sm text-center whitespace-nowrap"
+                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium text-sm text-center whitespace-nowrap font-body"
                     >
                       View Profile
                     </Link>

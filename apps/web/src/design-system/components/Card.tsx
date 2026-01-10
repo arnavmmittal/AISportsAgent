@@ -51,6 +51,12 @@ const cardVariants = cva(
           'border border-gray-200/50 dark:border-gray-700/50',
           'shadow-sm',
         ],
+        // Metric - Data-focused with primary accent
+        metric: [
+          'bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800',
+          'border border-primary-200/50 dark:border-primary-800/50',
+          'shadow-lg shadow-primary-500/10',
+        ],
       },
       interactive: {
         true: [

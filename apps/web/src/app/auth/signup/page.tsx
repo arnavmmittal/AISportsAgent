@@ -56,21 +56,21 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen gradient-dark flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-card rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-800">
           {/* Header */}
-          <div className="px-8 pt-8 pb-6 gradient-primary">
-            <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-            <p className="text-white/80">Join the AI Sports Agent platform</p>
+          <div className="px-8 pt-8 pb-6 bg-primary-600 dark:bg-primary-500">
+            <h1 className="text-3xl font-display font-bold text-white mb-2">Create Account</h1>
+            <p className="text-white/90 font-body">Join the AI Sports Agent platform</p>
           </div>
 
           <div className="px-8 py-6">
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-destructive/10 border-l-4 border-destructive rounded-r">
-                <p className="text-sm text-destructive flex items-center">
+              <div className="mb-6 p-4 bg-danger-50 dark:bg-danger-900/20 border-l-4 border-danger-600 dark:border-danger-500 rounded-r">
+                <p className="text-sm text-danger-700 dark:text-danger-300 flex items-center font-body">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
@@ -83,7 +83,7 @@ export default function SignUpPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
                   Full Name
                 </label>
                 <input
@@ -92,17 +92,17 @@ export default function SignUpPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
+                  className={`w-full px-4 py-3 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-shadow font-body ${
                     fieldErrors.name
-                      ? 'border-muted-foreground focus:ring-muted-foreground'
-                      : 'border-border focus:ring-primary'
+                      ? 'border-danger-300 dark:border-danger-700 focus:ring-danger-500'
+                      : 'border-gray-300 dark:border-gray-700 focus:ring-primary-500 focus:border-primary-500'
                   }`}
                   placeholder="John Doe"
                 />
                 {fieldErrors.name && (
                   <div className="mt-1 space-y-1">
                     {fieldErrors.name.map((error, idx) => (
-                      <p key={idx} className="text-xs text-muted-foreground">• {error}</p>
+                      <p key={idx} className="text-xs text-danger-600 dark:text-danger-400 font-body">• {error}</p>
                     ))}
                   </div>
                 )}
@@ -110,7 +110,7 @@ export default function SignUpPage() {
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
                   Email Address
                 </label>
                 <input
@@ -119,17 +119,17 @@ export default function SignUpPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
+                  className={`w-full px-4 py-3 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-shadow font-body ${
                     fieldErrors.email
-                      ? 'border-muted-foreground focus:ring-muted-foreground'
-                      : 'border-border focus:ring-primary'
+                      ? 'border-danger-300 dark:border-danger-700 focus:ring-danger-500'
+                      : 'border-gray-300 dark:border-gray-700 focus:ring-primary-500 focus:border-primary-500'
                   }`}
                   placeholder="athlete@university.edu"
                 />
                 {fieldErrors.email && (
                   <div className="mt-1 space-y-1">
                     {fieldErrors.email.map((error, idx) => (
-                      <p key={idx} className="text-xs text-muted-foreground">• {error}</p>
+                      <p key={idx} className="text-xs text-danger-600 dark:text-danger-400 font-body">• {error}</p>
                     ))}
                   </div>
                 )}
@@ -137,7 +137,7 @@ export default function SignUpPage() {
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
                   Password
                 </label>
                 <input
@@ -147,20 +147,20 @@ export default function SignUpPage() {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                   minLength={8}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow ${
+                  className={`w-full px-4 py-3 bg-white dark:bg-gray-800 border rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-shadow font-body ${
                     fieldErrors.password
-                      ? 'border-muted-foreground focus:ring-muted-foreground'
-                      : 'border-border focus:ring-primary'
+                      ? 'border-danger-300 dark:border-danger-700 focus:ring-danger-500'
+                      : 'border-gray-300 dark:border-gray-700 focus:ring-primary-500 focus:border-primary-500'
                   }`}
                   placeholder="Create a strong password"
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 font-body">
                   Must be 8+ characters with uppercase, lowercase, and number
                 </p>
                 {fieldErrors.password && (
                   <div className="mt-1 space-y-1">
                     {fieldErrors.password.map((error, idx) => (
-                      <p key={idx} className="text-xs text-muted-foreground">• {error}</p>
+                      <p key={idx} className="text-xs text-danger-600 dark:text-danger-400 font-body">• {error}</p>
                     ))}
                   </div>
                 )}
@@ -168,40 +168,42 @@ export default function SignUpPage() {
 
               {/* Role */}
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="role" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
                   I am a...
                 </label>
                 <select
                   id="role"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ATHLETE' | 'COACH' })}
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow font-body"
                 >
                   <option value="ATHLETE">Student Athlete</option>
                   <option value="COACH">Coach</option>
                 </select>
               </div>
 
-              {/* Sport */}
-              <div>
-                <label htmlFor="sport" className="block text-sm font-medium text-foreground mb-2">
-                  Sport
-                </label>
-                <input
-                  id="sport"
-                  type="text"
-                  value={formData.sport}
-                  onChange={(e) => setFormData({ ...formData, sport: e.target.value })}
-                  required
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-                  placeholder="Basketball, Football, Soccer, etc."
-                />
-              </div>
+              {/* Sport (only for athletes) */}
+              {formData.role === 'ATHLETE' && (
+                <div>
+                  <label htmlFor="sport" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
+                    Sport
+                  </label>
+                  <input
+                    id="sport"
+                    type="text"
+                    value={formData.sport}
+                    onChange={(e) => setFormData({ ...formData, sport: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow font-body"
+                    placeholder="Basketball, Football, Soccer, etc."
+                  />
+                </div>
+              )}
 
               {/* Year (only for athletes) */}
               {formData.role === 'ATHLETE' && (
                 <div>
-                  <label htmlFor="year" className="block text-sm font-medium text-foreground mb-2">
+                  <label htmlFor="year" className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-body">
                     Year
                   </label>
                   <select
@@ -209,7 +211,7 @@ export default function SignUpPage() {
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                     required
-                    className="w-full px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-shadow font-body"
                   >
                     <option value="">Select Year</option>
                     <option value="FRESHMAN">Freshman</option>
@@ -224,7 +226,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full gradient-primary text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl mt-6"
+                className="w-full bg-primary-600 dark:bg-primary-500 hover:bg-primary-700 dark:hover:bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-display"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
@@ -243,17 +245,17 @@ export default function SignUpPage() {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
+                <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-card text-muted-foreground">Already have an account?</span>
+                <span className="px-4 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 font-body">Already have an account?</span>
               </div>
             </div>
 
             {/* Sign In Link */}
             <Link
               href="/auth/signin"
-              className="block w-full text-center py-3 px-4 chrome-border text-foreground rounded-lg font-semibold hover:bg-muted transition-colors"
+              className="block w-full text-center py-3 px-4 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-display"
             >
               Sign In
             </Link>

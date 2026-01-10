@@ -33,19 +33,10 @@ const DEFAULT_SCHOOL_ID = 'default-school';
 
 /**
  * POST /api/auth/signup
- * DISABLED - Only seeded users can log in (coach@uw.edu and athlete1-150@uw.edu)
+ * Creates user in both Supabase Auth and Prisma database
  */
 export async function POST(request: NextRequest) {
-  return NextResponse.json(
-    {
-      error: 'Registration is disabled. Please use your assigned credentials.',
-      message: 'Contact your administrator for access.'
-    },
-    { status: 403 }
-  );
-
-  // Original signup code disabled below
-  /* try {
+  try {
     const body = await request.json();
 
     // Validate input
@@ -75,6 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user in Supabase Auth
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -195,5 +187,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-  */ // End of disabled signup code
 }

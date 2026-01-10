@@ -7,7 +7,9 @@
 
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { pulse as pulseVariant } from '../motion';
 
 const badgeVariants = cva(
   // Base styles
@@ -53,6 +55,7 @@ export interface BadgeProps
   dot?: boolean;
   dotColor?: string;
   icon?: React.ReactNode;
+  pulse?: boolean;
 }
 
 const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
@@ -64,15 +67,23 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
       dot = false,
       dotColor,
       icon,
+      pulse = false,
       children,
       ...props
     },
     ref
   ) => {
+    const Component = pulse ? motion.div : 'div';
+
     return (
-      <div
+      <Component
         ref={ref}
         className={cn(badgeVariants({ variant, size, dot, className }))}
+        {...(pulse && {
+          variants: pulseVariant,
+          initial: 'rest',
+          animate: 'animate',
+        })}
         {...props}
       >
         {dot && (
@@ -90,7 +101,7 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
           </span>
         )}
         {children}
-      </div>
+      </Component>
     );
   }
 );

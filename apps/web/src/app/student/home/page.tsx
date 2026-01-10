@@ -6,7 +6,6 @@ import {
   Calendar,
   Clock,
   TrendingUp,
-  TrendingDown,
   MessageSquare,
   Activity,
   Target,
@@ -15,9 +14,19 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Card, CardMetric, CardHeader, CardTitle, CardContent } from '@/design-system/components/Card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  RadialProgress,
+  Sparkline,
+  AnimatedCounter,
+  MetricCard,
+} from '@/design-system/components';
 import { Button } from '@/design-system/components/Button';
 import { Badge } from '@/design-system/components/Badge';
+import { fadeInUp, staggerContainer, hoverLift } from '@/design-system/motion';
 
 interface Assignment {
   id: string;
@@ -26,30 +35,6 @@ interface Assignment {
   status: 'pending' | 'submitted' | 'overdue';
   estimatedTime: string;
 }
-
-// Animation variants for staggered reveals
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94] // easeOutQuad
-    }
-  }
-};
 
 export default function StudentHomePage() {
   // Mock data - will be replaced with API call
@@ -61,6 +46,9 @@ export default function StudentHomePage() {
     goalsTotal: 7,
     assignmentsPending: 2,
   });
+
+  // Mock 7-day wellbeing history for sparkline
+  const [wellbeingHistory] = useState([7.2, 7.5, 7.1, 7.8, 7.4, 7.9, 7.8]);
 
   const [upcomingAssignments] = useState<Assignment[]>([
     {
@@ -92,7 +80,7 @@ export default function StudentHomePage() {
   const goalsPercentage = Math.round((stats.goalsCompleted / stats.goalsTotal) * 100);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
@@ -110,84 +98,77 @@ export default function StudentHomePage() {
         </motion.div>
 
         <motion.div
-          variants={containerVariants}
+          variants={staggerContainer}
           initial="hidden"
           animate="show"
           className="space-y-6"
         >
-          {/* Stats Grid - Bento Box Layout */}
+          {/* Stats Grid - Enhanced with Data Viz */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Wellbeing Score - Prominent */}
-            <motion.div variants={itemVariants} className="md:col-span-2">
-              <Card variant="elevated" padding="lg" className="h-full">
-                <CardMetric
-                  label="Wellbeing Score"
-                  value={stats.wellbeingScore.toFixed(1)}
-                  trend={wellbeingTrend}
-                  trendValue={`${stats.wellbeingChange >= 0 ? '+' : ''}${stats.wellbeingChange.toFixed(1)} from last week`}
-                  icon={<Activity className="w-5 h-5" />}
-                />
-                <div className="mt-6">
-                  <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
-                    <span>Low</span>
-                    <span>Optimal</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(stats.wellbeingScore / 10) * 100}%` }}
-                      transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
-                      className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
+            {/* Wellbeing Score - Prominent with Sparkline */}
+            <motion.div variants={fadeInUp} className="md:col-span-2">
+              <MetricCard
+                label="Wellbeing Score"
+                value={stats.wellbeingScore}
+                decimals={1}
+                suffix="/10"
+                trend={wellbeingTrend}
+                trendValue={`${stats.wellbeingChange >= 0 ? '+' : ''}${stats.wellbeingChange.toFixed(1)}`}
+                sparkline={wellbeingHistory}
+                gradient="primary"
+                icon={<Activity className="w-5 h-5" />}
+                description="7-day average"
+              />
+            </motion.div>
+
+            {/* Check-in Streak with AnimatedCounter */}
+            <motion.div variants={fadeInUp}>
+              <Card variant="elevated" padding="lg" className="h-full" hover>
+                <div className="flex flex-col items-center text-center">
+                  <Zap className="w-8 h-8 text-warning-600 dark:text-warning-500 mb-3" />
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    Daily Streak
+                  </span>
+                  <div className="flex items-baseline mb-2">
+                    <AnimatedCounter
+                      value={stats.checkInStreak}
+                      decimals={0}
+                      className="text-3xl font-display"
                     />
+                    <span className="text-gray-600 dark:text-gray-400 ml-1 text-sm">days</span>
                   </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    {stats.checkInStreak > 7 ? 'Outstanding!' : 'Keep building'}
+                  </p>
                 </div>
               </Card>
             </motion.div>
 
-            {/* Check-in Streak */}
-            <motion.div variants={itemVariants}>
-              <Card variant="default" padding="md" className="h-full">
-                <CardMetric
-                  label="Daily Streak"
-                  value={stats.checkInStreak}
-                  icon={<Zap className="w-4 h-4" />}
-                />
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
-                  {stats.checkInStreak > 7 ? 'Outstanding consistency!' : 'Keep building the habit'}
-                </p>
-              </Card>
-            </motion.div>
-
-            {/* Goals Progress */}
-            <motion.div variants={itemVariants}>
-              <Card variant="default" padding="md" className="h-full">
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Goals
+            {/* Goals Progress with RadialProgress */}
+            <motion.div variants={fadeInUp}>
+              <Card variant="elevated" padding="lg" className="h-full" hover>
+                <div className="flex flex-col items-center text-center">
+                  <RadialProgress
+                    value={goalsPercentage}
+                    max={100}
+                    size="md"
+                    color="success"
+                    showValue
+                    animated
+                  />
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mt-3">
+                    Goals Complete
+                  </span>
+                  <div className="flex items-baseline mt-2">
+                    <AnimatedCounter
+                      value={stats.goalsCompleted}
+                      decimals={0}
+                      className="text-lg font-display"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 mx-1">/</span>
+                    <span className="text-lg text-gray-600 dark:text-gray-400">
+                      {stats.goalsTotal}
                     </span>
-                  </div>
-                  <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-3xl font-display font-bold text-gray-900 dark:text-gray-100 tabular-nums">
-                      {stats.goalsCompleted}
-                    </span>
-                    <span className="text-lg text-gray-500 dark:text-gray-400">
-                      / {stats.goalsTotal}
-                    </span>
-                  </div>
-                  <div className="mt-auto">
-                    <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1.5">
-                      <span>{goalsPercentage}% complete</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${goalsPercentage}%` }}
-                        transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
-                        className="h-full bg-primary-500 rounded-full"
-                      />
-                    </div>
                   </div>
                 </div>
               </Card>
@@ -196,61 +177,63 @@ export default function StudentHomePage() {
 
           {/* Quick Actions - Prominent Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <motion.div variants={itemVariants}>
-              <Link href="/student/ai-coach">
-                <Card
-                  variant="gradient"
-                  interactive
-                  padding="lg"
-                  className="group border-primary-200 dark:border-primary-800"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-900/50 transition-colors">
-                      <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            <motion.div variants={fadeInUp}>
+              <motion.div whileHover={hoverLift.hover}>
+                <Link href="/student/ai-coach">
+                  <Card
+                    variant="metric"
+                    padding="lg"
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">
+                          AI Performance Coach
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Get personalized mental performance support
+                        </p>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">
-                        AI Performance Coach
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Get personalized mental performance support
-                      </p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
-                  </div>
-                </Card>
-              </Link>
+                  </Card>
+                </Link>
+              </motion.div>
             </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <Link href="/student/progress">
-                <Card
-                  variant="gradient"
-                  interactive
-                  padding="lg"
-                  className="group border-secondary-200 dark:border-secondary-800"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-secondary-100 dark:bg-secondary-900/30 flex items-center justify-center flex-shrink-0 group-hover:bg-secondary-200 dark:group-hover:bg-secondary-900/50 transition-colors">
-                      <Activity className="w-6 h-6 text-secondary-600 dark:text-secondary-400" />
+            <motion.div variants={fadeInUp}>
+              <motion.div whileHover={hoverLift.hover}>
+                <Link href="/student/progress">
+                  <Card
+                    variant="metric"
+                    padding="lg"
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-secondary-100 dark:bg-secondary-900/30 flex items-center justify-center flex-shrink-0">
+                        <Activity className="w-6 h-6 text-secondary-600 dark:text-secondary-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">
+                          Daily Check-In
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Track mood, energy, and progress
+                        </p>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-secondary-600 dark:text-secondary-400" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-display font-semibold text-lg text-gray-900 dark:text-gray-100 mb-1">
-                        Daily Check-In
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Track mood, energy, and progress
-                      </p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-secondary-600 dark:group-hover:text-secondary-400 group-hover:translate-x-1 transition-all" />
-                  </div>
-                </Card>
-              </Link>
+                  </Card>
+                </Link>
+              </motion.div>
             </motion.div>
           </div>
 
           {/* Upcoming Assignments */}
-          <motion.div variants={itemVariants}>
+          <motion.div variants={fadeInUp}>
             <Card variant="elevated" padding="none">
               <CardHeader className="px-6 pt-6">
                 <div className="flex items-center justify-between">
@@ -288,8 +271,7 @@ export default function StudentHomePage() {
                           <Card
                             variant="flat"
                             padding="md"
-                            interactive
-                            className="group hover:border-gray-300 dark:hover:border-gray-700"
+                            className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                           >
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">
@@ -311,7 +293,7 @@ export default function StudentHomePage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 group-hover:border-primary-300 dark:group-hover:border-primary-700 group-hover:text-primary-700 dark:group-hover:text-primary-300"
+                                className="hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300"
                               >
                                 Start
                               </Button>
@@ -325,7 +307,12 @@ export default function StudentHomePage() {
                 {upcomingAssignments.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
                     <Link href="/student/assignments">
-                      <Button variant="ghost" size="sm" className="w-full" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        rightIcon={<ArrowRight className="w-4 h-4" />}
+                      >
                         View all assignments
                       </Button>
                     </Link>
@@ -337,8 +324,12 @@ export default function StudentHomePage() {
 
           {/* Motivational Insight */}
           {stats.checkInStreak >= 3 && (
-            <motion.div variants={itemVariants}>
-              <Card variant="flat" padding="md" className="bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800">
+            <motion.div variants={fadeInUp}>
+              <Card
+                variant="flat"
+                padding="md"
+                className="bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800"
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
                     <TrendingUp className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -347,8 +338,8 @@ export default function StudentHomePage() {
                     <h4 className="font-display font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">
                       Consistency Builds Excellence
                     </h4>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                      Your {stats.checkInStreak}-day check-in streak demonstrates real commitment to mental performance.
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-body">
+                      Your <AnimatedCounter value={stats.checkInStreak} decimals={0} className="inline font-semibold" />-day check-in streak demonstrates real commitment to mental performance.
                       Keep building these daily habits for sustained success.
                     </p>
                   </div>

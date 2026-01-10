@@ -1,24 +1,32 @@
 'use client';
 
+/**
+ * Student Mood Page - Redesigned
+ * Professional athletic minimalist design with rich data visualization
+ */
+
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
-import { Button } from '@/components/shared/ui/button';
-import { Textarea } from '@/components/shared/ui/textarea';
-import { Badge } from '@/components/shared/ui/badge';
-import { Slider } from '@/components/shared/ui/slider';
+import { motion } from 'framer-motion';
 import {
   Heart,
   Zap,
-  Flame,
-  Battery,
+  Brain,
   Moon,
-  Save,
   Smile,
   Meh,
   Frown,
   TrendingUp,
   Calendar,
+  Activity,
 } from 'lucide-react';
+import {
+  Card,
+  HeatmapCalendar,
+  AnimatedCounter,
+  ActivityRing,
+} from '@/design-system/components';
+import { MoodLogger } from '@/components/shared/mood/MoodLogger';
+import { fadeInUp, staggerContainer } from '@/design-system/motion';
 import { toast } from 'sonner';
 
 interface MoodLogData {
@@ -33,38 +41,32 @@ interface MoodLogData {
 }
 
 export default function StudentMoodPage() {
-  // Today's check-in state
-  const [mood, setMood] = useState(5);
-  const [confidence, setConfidence] = useState(5);
-  const [stress, setStress] = useState(5);
-  const [energy, setEnergy] = useState(5);
-  const [sleep, setSleep] = useState(7);
-  const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // Historical data
   const [pastWeekLogs, setPastWeekLogs] = useState<MoodLogData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load past week logs on mount
+  // Load past 30 days logs on mount (for heatmap)
   useEffect(() => {
-    loadPastWeekLogs();
+    loadMoodLogs();
   }, []);
 
-  const loadPastWeekLogs = async () => {
+  const loadMoodLogs = async () => {
     try {
+      setIsLoading(true);
       // Get current user from Supabase session
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
 
       if (!profileData.success || !profileData.data?.userId) {
         console.log('No user session found');
+        setIsLoading(false);
         return;
       }
 
       const userId = profileData.data.userId;
 
-      // Fetch mood logs from API (last 7 days)
-      const response = await fetch(`/api/mood-logs?athleteId=${userId}&limit=7`);
+      // Fetch mood logs from API (last 30 days)
+      const response = await fetch(`/api/mood-logs?athleteId=${userId}&limit=30`);
       const data = await response.json();
 
       if (data.success) {
@@ -87,409 +89,271 @@ export default function StudentMoodPage() {
     } catch (error) {
       console.error('Error loading mood logs:', error);
       setPastWeekLogs([]);
-    }
-  };
-
-  const getMoodEmoji = (value: number) => {
-    if (value <= 3) return '😔';
-    if (value <= 5) return '😐';
-    if (value <= 7) return '🙂';
-    return '😊';
-  };
-
-  const getMoodColor = (value: number) => {
-    if (value <= 3) return 'from-muted-foreground to-muted-foreground';
-    if (value <= 5) return 'from-yellow-500 to-orange-500';
-    if (value <= 7) return 'from-green-500 to-emerald-500';
-    return 'from-purple-500 to-violet-600';
-  };
-
-  const getMoodBgColor = (value: number) => {
-    if (value <= 3) return 'bg-muted-foreground/20';
-    if (value <= 5) return 'bg-muted/20';
-    if (value <= 7) return 'bg-secondary/20';
-    return 'bg-accent/20';
-  };
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      // Get current user from Supabase session
-      const profileResponse = await fetch('/api/athlete/profile');
-      const profileData = await profileResponse.json();
-
-      if (!profileData.success || !profileData.data?.userId) {
-        toast.error('Please log in to save mood logs');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const userId = profileData.data.userId;
-
-      // Save mood log via API
-      const response = await fetch('/api/mood-logs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          athleteId: userId,
-          mood,
-          confidence,
-          stress,
-          energy,
-          sleep,
-          notes: notes.trim() || undefined,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success('Mood log saved successfully!');
-
-        // Reset form
-        setMood(5);
-        setConfidence(5);
-        setStress(5);
-        setEnergy(5);
-        setSleep(7);
-        setNotes('');
-
-        // Reload past week logs to include new entry
-        await loadPastWeekLogs();
-      } else {
-        toast.error(data.error || 'Failed to save mood log');
-      }
-    } catch (error) {
-      console.error('Error saving mood log:', error);
-      toast.error('Failed to save mood log. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  // Get past 7 days including today
-  const getLast7Days = () => {
-    const days = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      days.push(date);
-    }
-    return days;
+  const getMoodIcon = (value: number) => {
+    if (value <= 3) return <Frown className="w-8 h-8 text-danger-500" />;
+    if (value <= 5) return <Meh className="w-8 h-8 text-warning-500" />;
+    if (value <= 7) return <Smile className="w-8 h-8 text-success-500" />;
+    return <Heart className="w-8 h-8 text-primary-500" />;
   };
 
-  const days = getLast7Days();
+  const calculateAverage = (key: 'mood' | 'stress' | 'sleep' | 'confidence' | 'energy') => {
+    if (pastWeekLogs.length === 0) return 0;
+    const sum = pastWeekLogs.reduce((acc, entry) => acc + entry[key], 0);
+    return Number((sum / pastWeekLogs.length).toFixed(1));
+  };
+
+  // Prepare heatmap data
+  const heatmapData = pastWeekLogs.map((log) => ({
+    date: log.date,
+    value: log.mood,
+    label: `Mood: ${log.mood}/10`,
+  }));
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Heart className="w-8 h-8 text-pink-600" />
-            Daily Mood Tracker
-          </h1>
-          <p className="text-muted-foreground mt-1">Track your mental state and build self-awareness</p>
-        </div>
-        <Badge variant="secondary" className="gap-1">
-          <Calendar className="w-4 h-4" />
-          {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-        </Badge>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Header */}
+        <motion.div
+          className="mb-10"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+                <Heart className="w-10 h-10 text-primary-600 dark:text-primary-500" />
+                Daily Mood Tracker
+              </h1>
+              <p className="mt-3 text-gray-600 dark:text-gray-400 text-base font-body">
+                Track your mental state and build self-awareness
+              </p>
+            </div>
+          </div>
+        </motion.div>
 
-      {/* 7-Day Calendar View */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Past 7 Days</CardTitle>
-          <CardDescription>Your mood tracking history</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-3">
-            {days.map((date, index) => {
-              const log = pastWeekLogs.find(
-                (l) => l.date.toDateString() === date.toDateString()
-              );
-              const isToday = date.toDateString() === new Date().toDateString();
-
-              return (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg border-2 ${
-                    log
-                      ? `bg-gradient-to-br ${getMoodColor(log.mood)} text-white border-transparent`
-                      : 'bg-background border-border'
-                  } ${isToday ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
-                >
-                  <div className="text-center space-y-1">
-                    <p
-                      className={`text-xs font-semibold uppercase ${
-                        log ? 'text-white/80' : 'text-gray-500'
-                      }`}
-                    >
-                      {date.toLocaleDateString('en-US', { weekday: 'short' })}
-                    </p>
-                    <p
-                      className={`text-2xl font-bold ${
-                        isToday && !log ? 'text-primary' : log ? 'text-white' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {date.getDate()}
-                    </p>
-                    {log ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-2xl">{getMoodEmoji(log.mood)}</span>
-                        <span className="text-xs font-semibold text-white">{log.mood}/10</span>
-                      </div>
-                    ) : (
-                      <div className="h-10 flex items-center justify-center">
-                        <div className="w-4 h-4 rounded-full border-2 border-dashed border-gray-300"></div>
-                      </div>
-                    )}
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="space-y-8"
+        >
+          {/* Overview Cards */}
+          {!isLoading && pastWeekLogs.length > 0 && (
+            <motion.div variants={fadeInUp}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Average Mood */}
+                <Card variant="elevated" padding="lg">
+                  <div className="flex flex-col items-center">
+                    <div className="mb-3">{getMoodIcon(calculateAverage('mood'))}</div>
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Average Mood
+                    </span>
+                    <AnimatedCounter
+                      value={calculateAverage('mood')}
+                      decimals={1}
+                      suffix="/10"
+                      className="text-3xl font-display"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                      Last 30 days
+                    </span>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                </Card>
 
-          {/* Weekly Summary */}
-          {pastWeekLogs.length > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <h4 className="font-semibold text-blue-900">Weekly Summary</h4>
+                {/* Check-ins */}
+                <Card variant="elevated" padding="lg">
+                  <div className="flex flex-col items-center">
+                    <Activity className="w-8 h-8 text-success-600 dark:text-success-500 mb-3" />
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Check-Ins
+                    </span>
+                    <div className="flex items-baseline">
+                      <AnimatedCounter value={pastWeekLogs.length} className="text-3xl font-display" />
+                      <span className="text-gray-600 dark:text-gray-400 ml-1">/30 days</span>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                      {Math.round((pastWeekLogs.length / 30) * 100)}% consistency
+                    </span>
+                  </div>
+                </Card>
+
+                {/* Average Sleep */}
+                <Card variant="elevated" padding="lg">
+                  <div className="flex flex-col items-center">
+                    <Moon className="w-8 h-8 text-info-600 dark:text-info-500 mb-3" />
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Average Sleep
+                    </span>
+                    <AnimatedCounter
+                      value={calculateAverage('sleep')}
+                      decimals={1}
+                      suffix="h"
+                      className="text-3xl font-display"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                      Per night
+                    </span>
+                  </div>
+                </Card>
+
+                {/* Stress Level */}
+                <Card variant="elevated" padding="lg">
+                  <div className="flex flex-col items-center">
+                    <Brain className="w-8 h-8 text-warning-600 dark:text-warning-500 mb-3" />
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Avg Stress
+                    </span>
+                    <AnimatedCounter
+                      value={calculateAverage('stress')}
+                      decimals={1}
+                      suffix="/10"
+                      className="text-3xl font-display"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                      Last 30 days
+                    </span>
+                  </div>
+                </Card>
               </div>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Avg Mood</p>
-                  <p className="text-lg font-bold text-blue-900">
-                    {(
-                      pastWeekLogs.reduce((sum, log) => sum + log.mood, 0) / pastWeekLogs.length
-                    ).toFixed(1)}
-                    /10
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Check-ins</p>
-                  <p className="text-lg font-bold text-blue-900">{pastWeekLogs.length}/7 days</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Avg Sleep</p>
-                  <p className="text-lg font-bold text-blue-900">
-                    {(
-                      pastWeekLogs.reduce((sum, log) => sum + log.sleep, 0) / pastWeekLogs.length
-                    ).toFixed(1)}
-                    h
-                  </p>
-                </div>
-              </div>
-            </div>
+            </motion.div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Today's Check-In Form */}
-      <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <CardHeader>
-          <CardTitle className="text-xl">Today's Check-In</CardTitle>
-          <CardDescription>
-            How are you feeling today? Take a moment to check in with yourself.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Mood Slider */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-accent" />
-                <label className="font-semibold text-foreground">Mood</label>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{getMoodEmoji(mood)}</span>
-                <span className="text-lg font-bold text-accent">{mood}/10</span>
-              </div>
-            </div>
-            <Slider
-              value={[mood]}
-              onValueChange={(value: number[]) => setMood(value[0])}
-              min={1}
-              max={10}
-              step={1}
-              className="cursor-pointer"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Low</span>
-              <span>High</span>
-            </div>
-          </div>
+          {/* 30-Day Heatmap Calendar */}
+          {!isLoading && pastWeekLogs.length > 0 && (
+            <motion.div variants={fadeInUp}>
+              <Card variant="elevated" padding="lg">
+                <div className="mb-6">
+                  <h2 className="text-xl font-display font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    30-Day Mood Pattern
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 font-body">
+                    Visualize your emotional trends over time
+                  </p>
+                </div>
+                <HeatmapCalendar
+                  data={heatmapData}
+                  startDate={thirtyDaysAgo}
+                  colorScale="primary"
+                  cellSize={18}
+                  gap={4}
+                  showDayLabels={true}
+                  showMonthLabels={true}
+                />
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
+                  <span className="text-xs text-gray-500 dark:text-gray-500">Less</span>
+                  <div className="flex gap-1">
+                    <div className="w-4 h-4 rounded-sm bg-gray-100 dark:bg-gray-800" />
+                    <div className="w-4 h-4 rounded-sm bg-primary-100 dark:bg-primary-950" />
+                    <div className="w-4 h-4 rounded-sm bg-primary-200 dark:bg-primary-900" />
+                    <div className="w-4 h-4 rounded-sm bg-primary-400 dark:bg-primary-700" />
+                    <div className="w-4 h-4 rounded-sm bg-primary-600 dark:bg-primary-500" />
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-500">More</span>
+                </div>
+              </Card>
+            </motion.div>
+          )}
 
-          {/* Confidence Slider */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-secondary" />
-                <label className="font-semibold text-foreground">Confidence</label>
-              </div>
-              <span className="text-lg font-bold text-secondary">{confidence}/10</span>
-            </div>
-            <Slider
-              value={[confidence]}
-              onValueChange={(value: number[]) => setConfidence(value[0])}
-              min={1}
-              max={10}
-              step={1}
-              className="cursor-pointer"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Low</span>
-              <span>High</span>
-            </div>
-          </div>
+          {/* Activity Rings - Multi-metric view */}
+          {!isLoading && pastWeekLogs.length > 0 && (
+            <motion.div variants={fadeInUp}>
+              <Card variant="elevated" padding="lg">
+                <div className="mb-6">
+                  <h2 className="text-xl font-display font-semibold text-gray-900 dark:text-gray-100">
+                    Wellness Rings
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 font-body">
+                    Your overall mental performance metrics
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <ActivityRing
+                    rings={[
+                      {
+                        value: calculateAverage('mood') * 10,
+                        max: 100,
+                        color: 'primary',
+                        label: 'Mood',
+                      },
+                      {
+                        value: calculateAverage('confidence') * 10,
+                        max: 100,
+                        color: 'success',
+                        label: 'Confidence',
+                      },
+                      {
+                        value: (10 - calculateAverage('stress')) * 10,
+                        max: 100,
+                        color: 'warning',
+                        label: 'Calm',
+                      },
+                    ]}
+                    size="xl"
+                    spacing={8}
+                    showLabels={true}
+                    animated={true}
+                  />
+                </div>
+              </Card>
+            </motion.div>
+          )}
 
-          {/* Stress Slider */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Flame className="w-5 h-5 text-muted-foreground" />
-                <label className="font-semibold text-foreground">Stress Level</label>
-              </div>
-              <span className="text-lg font-bold text-muted-foreground">{stress}/10</span>
-            </div>
-            <Slider
-              value={[stress]}
-              onValueChange={(value: number[]) => setStress(value[0])}
-              min={1}
-              max={10}
-              step={1}
-              className="cursor-pointer"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Low</span>
-              <span>High</span>
-            </div>
-          </div>
+          {/* Today's Check-In Form */}
+          <motion.div variants={fadeInUp}>
+            <MoodLogger />
+          </motion.div>
 
-          {/* Energy Slider */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Battery className="w-5 h-5 text-pink-600" />
-                <label className="font-semibold text-foreground">Energy Level</label>
-              </div>
-              <span className="text-lg font-bold text-pink-600">{energy}/10</span>
-            </div>
-            <Slider
-              value={[energy]}
-              onValueChange={(value: number[]) => setEnergy(value[0])}
-              min={1}
-              max={10}
-              step={1}
-              className="cursor-pointer"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Low</span>
-              <span>High</span>
-            </div>
-          </div>
-
-          {/* Sleep Slider */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Moon className="w-5 h-5 text-indigo-600" />
-                <label className="font-semibold text-foreground">Sleep</label>
-              </div>
-              <span className="text-lg font-bold text-indigo-600">{sleep}h</span>
-            </div>
-            <Slider
-              value={[sleep]}
-              onValueChange={(value: number[]) => setSleep(value[0])}
-              min={0}
-              max={12}
-              step={0.5}
-              className="cursor-pointer"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>0h</span>
-              <span>12h</span>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-3">
-            <label className="font-semibold text-foreground flex items-center gap-2">
-              <span>Notes (optional)</span>
-              <span className="text-xs font-normal text-gray-500">{notes.length}/500</span>
-            </label>
-            <Textarea
-              value={notes}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value.slice(0, 500))}
-              placeholder="How are you feeling? Any thoughts or reflections?"
-              className="min-h-[100px] resize-none"
-              maxLength={500}
-            />
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-6 text-lg"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5 mr-2" />
-                Save Check-In
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Tips Card */}
-      <Card className="bg-gradient-to-br from-accent/10 to-accent/20 border-accent/20">
-        <CardContent className="pt-6">
-          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Smile className="w-5 h-5 text-accent" />
-            Why Track Your Mood?
-          </h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="text-accent font-bold">•</span>
-              <span>
-                <strong>Self-awareness:</strong> Recognize patterns in your emotional state
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-accent font-bold">•</span>
-              <span>
-                <strong>Early warning:</strong> Spot declining trends before they become serious
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-accent font-bold">•</span>
-              <span>
-                <strong>Progress tracking:</strong> See how interventions and strategies help over
-                time
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-accent font-bold">•</span>
-              <span>
-                <strong>Communication:</strong> Share accurate data with your coach when you need
-                support
-              </span>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+          {/* Tips Card */}
+          <motion.div variants={fadeInUp}>
+            <Card variant="flat" padding="lg">
+              <h3 className="font-display font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary-600 dark:text-primary-500" />
+                Why Track Your Mood?
+              </h3>
+              <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-400 font-body">
+                <li className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-500 mt-2 flex-shrink-0" />
+                  <span>
+                    <strong className="text-gray-900 dark:text-gray-100">Self-awareness:</strong>{' '}
+                    Recognize patterns in your emotional state
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-500 mt-2 flex-shrink-0" />
+                  <span>
+                    <strong className="text-gray-900 dark:text-gray-100">Early warning:</strong>{' '}
+                    Spot declining trends before they become serious
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-500 mt-2 flex-shrink-0" />
+                  <span>
+                    <strong className="text-gray-900 dark:text-gray-100">Progress tracking:</strong>{' '}
+                    See how interventions and strategies help over time
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary-600 dark:bg-primary-500 mt-2 flex-shrink-0" />
+                  <span>
+                    <strong className="text-gray-900 dark:text-gray-100">Communication:</strong>{' '}
+                    Share accurate data with your coach when you need support
+                  </span>
+                </li>
+              </ul>
+            </Card>
+          </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }
