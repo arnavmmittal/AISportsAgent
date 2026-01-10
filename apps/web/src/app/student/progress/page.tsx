@@ -891,5 +891,6 @@ export default function StudentProgressPage() {
         )}
       </div>
     </div>
+    </div>
   );
 }

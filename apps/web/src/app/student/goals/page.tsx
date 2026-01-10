@@ -809,7 +809,6 @@ export default function StudentGoalsPage() {
             </Card>
           </div>
         )}
-      </div>
-    </motion.div>
+    </div>
   );
 }
