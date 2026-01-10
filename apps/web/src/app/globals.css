@@ -45,16 +45,7 @@
   }
 
   .glass-strong {
-    @apply bg-card/90 backdrop-blur-2xl border border-chrome/20;
-  }
-
-  /* Chrome/metallic effects */
-  .chrome-border {
-    @apply border border-chrome/30;
-  }
-
-  .chrome-glow {
-    box-shadow: 0 0 20px hsl(var(--chrome) / 0.15);
+    @apply bg-card/90 backdrop-blur-2xl border border-border/50;
   }
 
   /* Blue glow effect */
