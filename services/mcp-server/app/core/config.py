@@ -103,16 +103,36 @@ class Settings(BaseSettings):
         return v
 
     # ============================================================================
-    # Voice Integration (Cartesia.ai + Whisper)
+    # Voice Integration (ElevenLabs TTS + Deepgram/Whisper STT)
     # ============================================================================
-    CARTESIA_API_KEY: Optional[str] = None  # Optional - falls back to OpenAI TTS
-    CARTESIA_VOICE_ID: str = "voice-id-supportive"  # Default voice for athlete support
-    WHISPER_MODEL: str = "whisper-1"  # OpenAI Whisper model for STT
+    # ElevenLabs TTS (Primary)
+    ELEVENLABS_API_KEY: Optional[str] = None
+    ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Rachel - supportive, warm voice
+    ELEVENLABS_MODEL_ID: str = "eleven_turbo_v2_5"  # Low latency turbo model
+    ELEVENLABS_STABILITY: float = Field(default=0.5, ge=0.0, le=1.0)
+    ELEVENLABS_SIMILARITY_BOOST: float = Field(default=0.75, ge=0.0, le=1.0)
+    ELEVENLABS_STYLE: float = Field(default=0.0, ge=0.0, le=1.0)
 
-    @field_validator("CARTESIA_API_KEY", mode="before")
+    # Deepgram STT (Alternative to Whisper)
+    DEEPGRAM_API_KEY: Optional[str] = None
+    DEEPGRAM_MODEL: str = "nova-2"  # Most accurate model
+    DEEPGRAM_LANGUAGE: str = "en"
+
+    # OpenAI Whisper (Fallback STT)
+    WHISPER_MODEL: str = "whisper-1"
+
+    # Legacy Cartesia (deprecated, kept for fallback)
+    CARTESIA_API_KEY: Optional[str] = None
+    CARTESIA_VOICE_ID: str = "voice-id-supportive"
+
+    # Voice provider preference
+    TTS_PROVIDER: str = "elevenlabs"  # elevenlabs, openai, cartesia
+    STT_PROVIDER: str = "whisper"  # deepgram, whisper
+
+    @field_validator("ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY", "CARTESIA_API_KEY", mode="before")
     @classmethod
-    def parse_cartesia_key(cls, v: Any) -> Optional[str]:
-        """Parse Cartesia API key (optional)."""
+    def parse_voice_api_keys(cls, v: Any) -> Optional[str]:
+        """Parse voice API keys (optional)."""
         if v == "" or v is None:
             return None
         return v

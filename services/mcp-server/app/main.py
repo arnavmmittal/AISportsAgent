@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api.routes import chat, coach, voice, athlete, analytics, usage
+from app.api.routes import chat, coach, voice, athlete, analytics, usage, predictions, knowledge
 from app.middleware.cost_control import CostControlMiddleware
 
 logger = setup_logging()
@@ -117,6 +117,18 @@ app.include_router(
     usage.router,
     prefix="/api",
     tags=["Usage & Billing"]
+)
+
+app.include_router(
+    predictions.router,
+    prefix="/api",
+    tags=["ML Predictions"]
+)
+
+app.include_router(
+    knowledge.router,
+    prefix="/api",
+    tags=["Knowledge Base"]
 )
 
 

@@ -275,14 +275,96 @@ async def voice_stream(websocket: WebSocket, db: Session = Depends(get_db)):
 
 @router.get("/voice/status")
 async def voice_status():
-    """Get status of voice service"""
+    """Get comprehensive status of voice service"""
+    from app.voice import get_tts_status, get_stt_status
+
+    tts_status = await get_tts_status()
+    stt_status = await get_stt_status()
+
     return {
         "status": "operational",
         "active_connections": len(active_connections),
+        "tts": tts_status,
+        "stt": stt_status,
         "features": {
-            "stt": "OpenAI Whisper",
-            "tts": "Cartesia.ai + OpenAI fallback",
-            "vad": "Client-side",
             "streaming": True,
+            "emotion_detection": True,
+            "context_aware_voice": True,
+            "vad": "client-side",
         },
     }
+
+
+@router.get("/voice/voices")
+async def list_available_voices():
+    """Get list of available TTS voices"""
+    from app.voice import get_available_voices, VOICE_PROFILES
+
+    elevenlabs_voices = await get_available_voices()
+
+    return {
+        "voice_profiles": VOICE_PROFILES,
+        "elevenlabs_voices": elevenlabs_voices[:10] if elevenlabs_voices else [],
+        "openai_voices": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+    }
+
+
+@router.post("/voice/synthesize")
+async def synthesize_text(
+    text: str,
+    context: str = "supportive",
+):
+    """
+    Synthesize speech from text (non-streaming).
+
+    Args:
+        text: Text to convert to speech
+        context: Emotional context (supportive, calm, encouraging, professional)
+
+    Returns:
+        Audio file as MP3
+    """
+    from fastapi.responses import Response
+    from app.voice import synthesize_speech
+
+    try:
+        audio_data = await synthesize_speech(text, context=context)
+        return Response(
+            content=audio_data,
+            media_type="audio/mpeg",
+            headers={"Content-Disposition": "attachment; filename=speech.mp3"},
+        )
+    except Exception as e:
+        logger.error(f"TTS synthesis error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/voice/transcribe")
+async def transcribe_audio_endpoint(
+    audio_file: bytes,
+    detect_emotion: bool = False,
+):
+    """
+    Transcribe audio to text.
+
+    Args:
+        audio_file: Audio data bytes
+        detect_emotion: Include emotion detection
+
+    Returns:
+        Transcription result
+    """
+    from app.voice import transcribe_audio
+
+    try:
+        result = await transcribe_audio(
+            audio_file,
+            detect_emotion=detect_emotion,
+        )
+
+        if isinstance(result, str):
+            return {"transcript": result}
+        return result
+    except Exception as e:
+        logger.error(f"STT transcription error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,120 +1,107 @@
 """
-Text-to-Speech using Cartesia.ai
+Text-to-Speech Pipeline
 
-This module handles AI voice generation with:
-- Ultra-low latency (<300ms)
+Unified TTS interface with intelligent fallback:
+1. ElevenLabs (Primary) - High quality, emotional expressiveness
+2. OpenAI TTS (Fallback) - Reliable, good quality
+3. Cartesia.ai (Legacy) - Ultra-low latency option
+
+Features:
+- Automatic provider failover
+- Context-aware voice selection
 - Streaming support for real-time playback
-- Emotion control (supportive, encouraging, calm)
-- Natural prosody and conversational tone
+- Emotion and style control
 """
 
 import asyncio
 from typing import AsyncGenerator, Optional
 import aiohttp
 from app.core.config import settings
+from app.core.logging import setup_logging
 
-# Cartesia.ai API configuration
+logger = setup_logging()
+
+# Import provider-specific implementations
+from app.voice.elevenlabs_tts import (
+    synthesize_speech_elevenlabs,
+    synthesize_speech_stream_elevenlabs,
+    select_voice_for_content,
+    get_voice_settings,
+)
+
+# Legacy Cartesia configuration (deprecated)
 CARTESIA_API_URL = "https://api.cartesia.ai/v1"
-CARTESIA_API_KEY = getattr(settings, "CARTESIA_API_KEY", None)
-
-# Voice IDs (to be configured based on available voices)
-# These are placeholders - actual IDs from Cartesia dashboard
-VOICE_IDS = {
-    "supportive": "voice-id-supportive",  # Warm, encouraging female voice
-    "calm": "voice-id-calm",  # Soothing, steady male voice
-    "professional": "voice-id-professional",  # Clear, professional neutral voice
-}
-
-# Default voice for sports psychology agent
-DEFAULT_VOICE_ID = VOICE_IDS["supportive"]
 
 
-async def synthesize_speech(
+async def synthesize_speech_stream_openai(
     text: str,
-    voice_id: str = DEFAULT_VOICE_ID,
-    emotion: str = "supportive",
+    voice: str = "alloy",
     speed: float = 1.0,
-) -> bytes:
+) -> AsyncGenerator[bytes, None]:
     """
-    Synthesize speech from text using Cartesia.ai
+    Synthesize speech with streaming using OpenAI TTS API.
 
     Args:
         text: Text to convert to speech
-        voice_id: Cartesia voice ID
-        emotion: Emotion/tone (supportive, calm, encouraging)
-        speed: Speech rate (0.5 to 2.0, default 1.0)
+        voice: OpenAI voice (alloy, echo, fable, onyx, nova, shimmer)
+        speed: Speech rate (0.25 to 4.0)
 
-    Returns:
-        Audio data as bytes (PCM, WAV, or MP3 depending on Cartesia config)
-
-    Raises:
-        Exception: If synthesis fails
+    Yields:
+        Audio chunks as they're generated
     """
-    if not CARTESIA_API_KEY:
-        raise Exception("CARTESIA_API_KEY not configured")
+    from openai import AsyncOpenAI
+
+    logger.info(f"OpenAI TTS: {len(text)} chars, voice={voice}")
 
     try:
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                "Authorization": f"Bearer {CARTESIA_API_KEY}",
-                "Content-Type": "application/json",
-            }
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
-            payload = {
-                "text": text,
-                "voice_id": voice_id,
-                "output_format": "mp3",  # or 'pcm_16000' for raw audio
-                "language": "en",
-                "speed": speed,
-                # Emotion/style parameters (Cartesia-specific)
-                "emotion": emotion,
-            }
+        async with client.audio.speech.with_streaming_response.create(
+            model="tts-1",
+            voice=voice,
+            input=text,
+            response_format="mp3",
+            speed=speed,
+        ) as response:
+            async for chunk in response.iter_bytes(chunk_size=4096):
+                if chunk:
+                    yield chunk
 
-            async with session.post(
-                f"{CARTESIA_API_URL}/synthesize",
-                headers=headers,
-                json=payload,
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"Cartesia API error: {error_text}")
-
-                return await response.read()
+        logger.info("OpenAI TTS streaming complete")
 
     except Exception as e:
-        raise Exception(f"Speech synthesis failed: {str(e)}")
+        logger.error(f"OpenAI TTS error: {e}")
+        raise Exception(f"OpenAI TTS failed: {str(e)}")
 
 
 async def synthesize_speech_stream_cartesia(
     text: str,
-    voice_id: str = DEFAULT_VOICE_ID,
+    voice_id: str = "voice-id-supportive",
     emotion: str = "supportive",
     speed: float = 1.0,
 ) -> AsyncGenerator[bytes, None]:
     """
-    Synthesize speech with streaming using Cartesia.ai
+    Legacy Cartesia.ai TTS streaming (deprecated, kept for fallback).
 
     Args:
         text: Text to convert to speech
         voice_id: Cartesia voice ID
-        emotion: Emotion/tone (supportive, calm, encouraging)
-        speed: Speech rate (0.5 to 2.0)
+        emotion: Emotion/tone
+        speed: Speech rate
 
     Yields:
-        Audio chunks as they're generated
-
-    Raises:
-        Exception: If synthesis fails
+        Audio chunks
     """
-    from app.core.logging import setup_logging
+    cartesia_key = settings.CARTESIA_API_KEY
+    if not cartesia_key:
+        raise Exception("CARTESIA_API_KEY not configured")
 
-    logger = setup_logging()
-    logger.info(f"Synthesizing speech with Cartesia: {len(text)} characters")
+    logger.info(f"Cartesia TTS: {len(text)} chars")
 
     try:
         async with aiohttp.ClientSession() as session:
             headers = {
-                "Authorization": f"Bearer {CARTESIA_API_KEY}",
+                "Authorization": f"Bearer {cartesia_key}",
                 "Content-Type": "application/json",
             }
 
@@ -137,182 +124,210 @@ async def synthesize_speech_stream_cartesia(
                     error_text = await response.text()
                     raise Exception(f"Cartesia API error: {error_text}")
 
-                # Stream audio chunks as they arrive
                 async for chunk in response.content.iter_chunked(4096):
                     if chunk:
                         yield chunk
 
-        logger.info("Cartesia speech synthesis complete")
+        logger.info("Cartesia TTS streaming complete")
 
     except Exception as e:
         logger.error(f"Cartesia TTS error: {e}")
-        raise Exception(f"Cartesia speech synthesis failed: {str(e)}")
-
-
-async def synthesize_speech_stream_openai(
-    text: str,
-    voice: str = "alloy",
-    speed: float = 1.0,
-) -> AsyncGenerator[bytes, None]:
-    """
-    Synthesize speech with streaming using OpenAI TTS API.
-
-    Args:
-        text: Text to convert to speech
-        voice: OpenAI voice (alloy, echo, fable, onyx, nova, shimmer)
-        speed: Speech rate (0.25 to 4.0)
-
-    Yields:
-        Audio chunks as they're generated
-
-    Raises:
-        Exception: If synthesis fails
-    """
-    from openai import AsyncOpenAI
-    from app.core.logging import setup_logging
-
-    logger = setup_logging()
-    logger.info(f"Synthesizing speech with OpenAI: {len(text)} characters")
-
-    try:
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-        # OpenAI TTS API with streaming
-        async with client.audio.speech.with_streaming_response.create(
-            model="tts-1",  # or "tts-1-hd" for higher quality
-            voice=voice,
-            input=text,
-            response_format="mp3",  # MP3 for better browser compatibility
-            speed=speed,
-        ) as response:
-            # Stream audio chunks as they arrive
-            async for chunk in response.iter_bytes(chunk_size=4096):
-                if chunk:
-                    yield chunk
-
-        logger.info("OpenAI speech synthesis complete")
-
-    except Exception as e:
-        logger.error(f"OpenAI TTS error: {e}")
-        raise Exception(f"OpenAI speech synthesis failed: {str(e)}")
+        raise Exception(f"Cartesia TTS failed: {str(e)}")
 
 
 async def synthesize_speech_stream(
     text: str,
     voice: str = "alloy",
     speed: float = 1.0,
-    emotion: str = "supportive",
-    use_cartesia: bool = True,
+    context: str = "supportive",
+    detected_emotion: Optional[str] = None,
 ) -> AsyncGenerator[bytes, None]:
     """
-    Synthesize speech with seamless fallback: Cartesia.ai → OpenAI TTS
+    Unified TTS streaming with intelligent fallback.
 
-    This function tries Cartesia.ai first for ultra-low latency (<300ms) and
-    emotion control. If Cartesia fails or is not configured, it automatically
-    falls back to OpenAI TTS.
+    Provider priority based on configuration:
+    1. ElevenLabs (default) - Best quality, emotional expressiveness
+    2. OpenAI TTS - Reliable fallback
+    3. Cartesia (legacy) - Ultra-low latency option
 
     Args:
         text: Text to convert to speech
-        voice: Voice name (OpenAI voice for fallback)
-        speed: Speech rate (0.25 to 4.0)
-        emotion: Emotion/tone for Cartesia (supportive, calm, encouraging)
-        use_cartesia: Whether to attempt Cartesia first (default True)
+        voice: Voice name (used for OpenAI fallback)
+        speed: Speech rate
+        context: Emotional context (supportive, calm, encouraging, professional)
+        detected_emotion: Optional pre-detected emotion for voice selection
 
     Yields:
         Audio chunks as they're generated
 
     Raises:
-        Exception: If both Cartesia and OpenAI fail
+        Exception: If all providers fail
     """
-    from app.core.logging import setup_logging
+    provider = settings.TTS_PROVIDER.lower()
+    errors = []
 
-    logger = setup_logging()
-
-    # Try Cartesia first if configured and enabled
-    if use_cartesia and CARTESIA_API_KEY:
+    # Try ElevenLabs first (if configured as primary or as fallback)
+    if provider == "elevenlabs" or settings.ELEVENLABS_API_KEY:
         try:
-            logger.info("Attempting TTS with Cartesia.ai...")
+            logger.info("Attempting TTS with ElevenLabs...")
+
+            # Intelligently select voice based on content
+            voice_id = select_voice_for_content(text, detected_emotion)
+
+            async for chunk in synthesize_speech_stream_elevenlabs(
+                text=text,
+                voice_id=voice_id,
+                context=context,
+            ):
+                yield chunk
+
+            logger.info("Successfully used ElevenLabs TTS")
+            return
+
+        except Exception as e:
+            errors.append(f"ElevenLabs: {str(e)}")
+            logger.warning(f"ElevenLabs TTS failed: {e}")
+
+    # Try Cartesia (if configured as primary)
+    if provider == "cartesia" and settings.CARTESIA_API_KEY:
+        try:
+            logger.info("Attempting TTS with Cartesia...")
+
             async for chunk in synthesize_speech_stream_cartesia(
                 text=text,
-                voice_id=DEFAULT_VOICE_ID,
-                emotion=emotion,
+                emotion=context,
                 speed=speed,
             ):
                 yield chunk
-            logger.info("Successfully used Cartesia.ai")
+
+            logger.info("Successfully used Cartesia TTS")
             return
+
         except Exception as e:
-            logger.warning(f"Cartesia TTS failed, falling back to OpenAI: {e}")
-            # Fall through to OpenAI fallback
+            errors.append(f"Cartesia: {str(e)}")
+            logger.warning(f"Cartesia TTS failed: {e}")
 
     # Fallback to OpenAI TTS
     try:
         logger.info("Using OpenAI TTS (fallback)")
+
+        # Map context to OpenAI voice
+        voice_mapping = {
+            "supportive": "nova",
+            "calm": "shimmer",
+            "encouraging": "onyx",
+            "professional": "alloy",
+        }
+        openai_voice = voice_mapping.get(context, voice)
+
         async for chunk in synthesize_speech_stream_openai(
             text=text,
-            voice=voice,
+            voice=openai_voice,
             speed=speed,
         ):
             yield chunk
+
         logger.info("Successfully used OpenAI TTS")
+        return
+
     except Exception as e:
-        logger.error(f"Both Cartesia and OpenAI TTS failed: {e}")
-        raise Exception(f"Speech synthesis failed: {str(e)}")
+        errors.append(f"OpenAI: {str(e)}")
+        logger.error(f"All TTS providers failed: {errors}")
+        raise Exception(f"Speech synthesis failed. Errors: {'; '.join(errors)}")
+
+
+async def synthesize_speech(
+    text: str,
+    voice: str = "alloy",
+    context: str = "supportive",
+) -> bytes:
+    """
+    Non-streaming TTS synthesis.
+
+    Args:
+        text: Text to convert to speech
+        voice: Voice name
+        context: Emotional context
+
+    Returns:
+        Complete audio as bytes
+    """
+    chunks = []
+    async for chunk in synthesize_speech_stream(text, voice=voice, context=context):
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 def get_voice_for_context(context: str = "general") -> str:
     """
-    Select appropriate voice based on conversation context
+    Select appropriate voice based on conversation context.
 
     Args:
         context: Conversation context (anxiety, confidence, recovery, etc.)
 
     Returns:
-        Voice ID to use
+        Voice identifier appropriate for the current TTS provider
     """
-    voice_mapping = {
-        "anxiety": VOICE_IDS["calm"],
-        "stress": VOICE_IDS["calm"],
-        "confidence": VOICE_IDS["supportive"],
-        "motivation": VOICE_IDS["supportive"],
-        "recovery": VOICE_IDS["calm"],
-        "general": VOICE_IDS["supportive"],
+    provider = settings.TTS_PROVIDER.lower()
+
+    context_mapping = {
+        "anxiety": "calm",
+        "stress": "calm",
+        "confidence": "encouraging",
+        "motivation": "encouraging",
+        "recovery": "calm",
+        "pregame": "supportive",
+        "postgame": "supportive",
+        "general": "supportive",
     }
 
-    return voice_mapping.get(context, DEFAULT_VOICE_ID)
+    emotional_context = context_mapping.get(context, "supportive")
+
+    if provider == "elevenlabs":
+        return get_voice_settings(emotional_context)["voice_id"]
+    elif provider == "openai":
+        openai_mapping = {
+            "calm": "shimmer",
+            "encouraging": "onyx",
+            "supportive": "nova",
+        }
+        return openai_mapping.get(emotional_context, "nova")
+    else:
+        return "voice-id-supportive"  # Cartesia default
 
 
-# Fallback: Use OpenAI TTS if Cartesia is not available
-async def synthesize_speech_openai(
-    text: str,
-    voice: str = "alloy",
-    speed: float = 1.0,
-) -> bytes:
+async def get_tts_status() -> dict:
     """
-    Fallback TTS using OpenAI API
-
-    Args:
-        text: Text to synthesize
-        voice: OpenAI voice (alloy, echo, fable, onyx, nova, shimmer)
-        speed: Speech rate (0.25 to 4.0)
+    Get TTS service status and available providers.
 
     Returns:
-        Audio bytes (MP3 format)
+        Dictionary with provider status and configuration
     """
-    from openai import AsyncOpenAI
+    status = {
+        "primary_provider": settings.TTS_PROVIDER,
+        "providers": {},
+    }
 
-    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    # Check ElevenLabs
+    if settings.ELEVENLABS_API_KEY:
+        status["providers"]["elevenlabs"] = {
+            "configured": True,
+            "model": settings.ELEVENLABS_MODEL_ID,
+            "voice_id": settings.ELEVENLABS_VOICE_ID,
+        }
+    else:
+        status["providers"]["elevenlabs"] = {"configured": False}
 
-    try:
-        response = await client.audio.speech.create(
-            model="tts-1",  # or 'tts-1-hd' for higher quality
-            voice=voice,
-            input=text,
-            speed=speed,
-        )
+    # Check OpenAI (always available if OPENAI_API_KEY is set)
+    status["providers"]["openai"] = {
+        "configured": bool(settings.OPENAI_API_KEY),
+        "model": "tts-1",
+    }
 
-        # Return audio bytes
-        return response.content
+    # Check Cartesia (legacy)
+    status["providers"]["cartesia"] = {
+        "configured": bool(settings.CARTESIA_API_KEY),
+        "deprecated": True,
+    }
 
-    except Exception as e:
-        raise Exception(f"OpenAI TTS failed: {str(e)}")
+    return status
