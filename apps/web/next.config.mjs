@@ -10,10 +10,8 @@ const nextConfig = {
   },
   // Transpile Supabase packages
   transpilePackages: ['@supabase/ssr', '@supabase/supabase-js'],
-  // External packages that should not be bundled
-  serverExternalPackages: ['@prisma/client', 'bcryptjs', 'isomorphic-dompurify'],
-  // Optimize build performance
-  outputFileTracingRoot: undefined, // Let Next.js auto-detect in monorepo
+  // External packages that should not be bundled (Next.js 14+ uses serverComponentsExternalPackages)
+  serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs', 'isomorphic-dompurify'],
   // TypeScript configuration for builds
   typescript: {
     // !! WARN !!
