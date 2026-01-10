@@ -19,18 +19,14 @@ export async function GET(request: NextRequest) {
       return response;
     }
 
-    // Get or create user settings
-    let settings = await prisma.userSettings.findUnique({
+    // Get or create user settings (using upsert to avoid race conditions)
+    const settings = await prisma.userSettings.upsert({
       where: { userId: user.id },
+      update: {}, // No updates needed, just return existing
+      create: {
+        userId: user.id,
+      },
     });
-
-    if (!settings) {
-      settings = await prisma.userSettings.create({
-        data: {
-          userId: user.id,
-        },
-      });
-    }
 
     // Return privacy settings
     return NextResponse.json({

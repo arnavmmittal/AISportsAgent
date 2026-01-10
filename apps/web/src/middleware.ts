@@ -3,6 +3,16 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 /**
+ * Environment detection for RLS enforcement
+ * - Production (VERCEL_ENV=production): Strict mode - block access if RLS fails
+ * - Staging/Local: Graceful mode - warn but allow access for testing
+ *
+ * Set DISABLE_RLS_STRICT_MODE=true as emergency escape hatch in production
+ */
+const isProduction = process.env.VERCEL_ENV === 'production';
+const isRlsStrictMode = isProduction && process.env.DISABLE_RLS_STRICT_MODE !== 'true';
+
+/**
  * Role-based route protection middleware using Supabase Auth
  *
  * Features:
@@ -10,6 +20,7 @@ import { createServerClient } from '@supabase/ssr';
  * - Redirects authenticated users away from auth pages to role-specific home
  * - Prevents coaches from accessing athlete routes
  * - Prevents athletes from accessing coach routes
+ * - In production: Blocks access if RLS policies aren't configured (security)
  */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -61,6 +72,7 @@ export async function middleware(request: NextRequest) {
 
   // Get user role from database if user exists
   let role: string | null = null;
+
   if (user?.id) {
     try {
       const { data: userData, error } = await supabase
@@ -70,19 +82,49 @@ export async function middleware(request: NextRequest) {
         .single();
 
       if (error) {
-        // If RLS policies aren't set up, Supabase will return an error
-        // Log it for debugging but don't block the user
-        console.warn('[Middleware] Supabase RLS error (policies may not be configured):', error.message);
-        console.warn('[Middleware] User will be allowed to proceed. Set up RLS policies in Supabase to enable proper role-based access control.');
-        console.warn('[Middleware] See /apps/web/supabase-rls-policies.sql for required policies.');
+        if (isRlsStrictMode) {
+          // PRODUCTION: Block access - RLS policies must be configured
+          console.error('[Middleware] PRODUCTION RLS ERROR - Blocking access:', error.message);
+          console.error('[Middleware] RLS policies must be configured before production deployment.');
+          console.error('[Middleware] See /apps/web/supabase-rls-policies.sql for required policies.');
+          console.error('[Middleware] Emergency: Set DISABLE_RLS_STRICT_MODE=true to bypass (not recommended).');
 
-        // Allow access with null role - pages will handle auth themselves
-        // This prevents login redirect loops when RLS isn't configured yet
+          // Return 503 Service Unavailable - indicates a configuration issue
+          return new NextResponse(
+            JSON.stringify({
+              error: 'Service temporarily unavailable',
+              code: 'RLS_NOT_CONFIGURED',
+              message: 'Authentication service is not properly configured. Please contact support.'
+            }),
+            {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
+        } else {
+          // DEV/STAGING: Warn but allow access for testing
+          console.warn('[Middleware] RLS query failed (dev/staging mode):', error.message);
+          console.warn('[Middleware] User will proceed without role. Set up RLS policies before production.');
+          console.warn('[Middleware] See /apps/web/supabase-rls-policies.sql for required policies.');
+        }
       } else {
         role = userData?.role || null;
       }
     } catch (error: any) {
       console.error('[Middleware] Error fetching user role:', error.message || error);
+
+      if (isRlsStrictMode) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Service temporarily unavailable',
+            code: 'AUTH_ERROR'
+          }),
+          {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
     }
   }
 

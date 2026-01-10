@@ -24,25 +24,47 @@ The project uses a **streamlined 3-file documentation system**:
 
 ## Project Overview
 
-AI Sports Agent is an evidence-based virtual sports psychology assistant for collegiate athletes. The platform provides 24/7 mental performance support through AI-powered conversations, mood tracking, and goal management.
+AI Sports Agent is a **Mental Performance Intelligence Platform** for collegiate athletes. It's NOT a mental health app - it's a predictive analytics and coaching efficiency tool that connects mental state → physical performance → outcomes.
 
-### PRIMARY USE CASE - Critical Context
+**See `docs/VISION_ARCHITECTURE.md` for the full technical vision.**
 
-**The Problem**: Each sports psychology coach is responsible for 150+ student athletes, making it impossible to provide individual Zoom meetings or one-on-one sessions with adequate frequency and quality.
+### PRODUCT POSITIONING - Critical Context
 
-**The Solution**: The AI chat interface **replaces and improves traditional Zoom meetings** by providing:
-- **24/7 Availability**: Athletes get immediate support whenever they need it (pre-game anxiety, performance slumps, academic stress)
-- **Voice + Text**: Natural conversation via voice (like ChatGPT/Claude voice mode) or typing - more convenient than scheduling Zoom calls
-- **Consistent Quality**: Evidence-based sports psychology frameworks (CBT, mindfulness, flow state) applied consistently
-- **Scalability**: One coach can monitor 150+ athletes through aggregated insights, crisis alerts, and trends
-- **Privacy**: Athletes feel more comfortable discussing sensitive topics with AI than in group settings
+| What We ARE | What We're NOT |
+|-------------|----------------|
+| Mental Performance Platform | Mental Health App |
+| Predictive Analytics Tool | Therapy/Counseling |
+| Coach Efficiency Multiplier | Crisis Intervention Tool |
+| Evidence-Based Intelligence | Generic Mood Tracker |
 
-**Chat Interface is the Core**: The chat page (`/chat`) is the primary interface where athletes spend most of their time. This is what replaces the traditional coach-athlete Zoom meeting.
+**Crisis detection is a safety requirement, not a feature** - like a seatbelt in a car.
 
-### Core Purpose
-- **Athletes**: Get immediate access to evidence-based mental performance guidance through voice/text chat (replacing scheduled Zoom meetings)
-- **Coaches**: Monitor team mental health trends through anonymized insights and focus on crisis cases (150+ athletes per coach)
-- **Institutions**: Extend sports psychology resources beyond traditional capacity constraints
+### THE REAL PROBLEM
+
+Sports psychologists are responsible for 150+ athletes each. They can't:
+- See patterns across all their athletes
+- Predict who will underperform before it happens
+- Track which interventions actually work for which athlete
+- Connect mental state to actual game outcomes
+
+### THE SOLUTION
+
+**Predictive Mental Performance Intelligence:**
+
+1. **PREDICT** - "Sarah's pre-competition anxiety pattern is emerging. Last 4 times: shooting % dropped 18%."
+2. **PRESCRIBE** - "4-7-8 breathing improved her focus 23% in similar situations."
+3. **PROVE** - "Your visualization session with Taylor: next game +12% vs baseline."
+
+**Key Differentiators:**
+- **Personalization**: Not "athletes like you" but "what works for YOU specifically"
+- **Prediction**: Converging signals (mental + physical + context) → performance forecast
+- **Evidence Loop**: Every intervention generates outcome data → improves recommendations
+- **Wearable Integration**: WHOOP/Garmin + mental state + game stats = unique insights
+
+### Core Value Proposition
+- **Athletes**: 24/7 AI coaching with personalized mental techniques that are proven to work FOR THEM
+- **Coaches**: "Show me who needs attention, why, and exactly what to do - with evidence"
+- **Institutions**: Scale sports psych from 1:150 to 1:500+ without quality loss
 
 ## Project Structure
 
@@ -457,13 +479,45 @@ Choose which to develop based on requirements. They can coexist or one can be se
 3. Verify FERPA compliance for coach access
 4. Test crisis detection thoroughly
 
+### File Cleanup Guidelines
+
+**NEVER commit these types of files:**
+
+1. **Development SQL scripts** with hardcoded IDs/data:
+   - `create-missing-user.sql`, `fix-user-id-mismatch.sql`
+   - One-off debugging scripts with specific UUIDs
+   - Keep RLS policies in `apps/web/supabase-rls-policies.sql` (tracked)
+
+2. **Session/progress notes** (use proper docs instead):
+   - `*_COMPLETE.md`, `*_PROGRESS.md` files
+   - Move design decisions to `docs/` or relevant README files
+   - Keep `MVP_STATUS.md` for production progress tracking
+
+3. **Untracked scripts** in random locations:
+   - Development utilities should go in `apps/web/prisma/` or be gitignored
+   - If a script is useful, add it to package.json scripts
+
+**Files to keep:**
+- `supabase-rls-policies.sql` - The canonical RLS policy definitions
+- `DEMO_CODE_AUDIT.md` - Production readiness checklist
+- `UI_REVAMP_STRATEGY.md` - Design system documentation
+- Migration SQL files in `prisma/migrations/` - Required by Prisma
+
+**Before committing, check:**
+```bash
+git status  # Review untracked files
+# Delete any *.sql files outside prisma/migrations/
+# Delete any session-note .md files
+```
+
 ## Key Priorities
 
-1. **Safety First**: Crisis detection must work perfectly
-2. **Privacy**: Athlete data is sacred - never expose without consent
-3. **Evidence-Based**: All psychological content must cite research
-4. **User Experience**: Athletes need simple, fast, supportive interface
-5. **Coach Value**: Provide actionable insights without compromising privacy
+1. **Prediction Accuracy**: Can we predict performance deviation before it happens?
+2. **Intervention Evidence**: Track what actually works for each athlete
+3. **Data Integration**: Connect mental state + physical + outcomes
+4. **Coach Efficiency**: Surface the 3 athletes who need attention, with evidence
+5. **Privacy**: Athlete data is sacred - never expose without consent
+6. **Safety (table stakes)**: Crisis detection as safety net, not feature
 
 ## Resources
 
@@ -481,5 +535,5 @@ Choose which to develop based on requirements. They can coexist or one can be se
 
 ---
 
-**Last Updated**: 2025-11-27
-**Version**: 1.0.0
+**Last Updated**: 2026-01-10
+**Version**: 1.0.1
