@@ -1,237 +1,188 @@
-import { requireAuth } from '@/lib/auth-helpers';
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/shared/ui/card';
+'use client';
 
-export default async function CoachAnalyticsPage() {
-  // TODO: Re-implement auth check for Server Component after Supabase auth migration
-  // const session = await auth();
-  // if (!session) redirect('/auth/signin?callbackUrl=/coach/analytics');
-  // if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') redirect('/dashboard');
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Card, Button, Badge, AnimatedCounter } from '@/design-system/components';
+import { ChevronLeft, TrendingUp, Users, Brain, MessageSquare, Target, AlertTriangle, BarChart3, Zap, LineChart } from 'lucide-react';
+import { fadeInUp, staggerContainer } from '@/design-system/motion';
+import { PageHeader } from '@/components/shared/page-components';
+
+export default function CoachAnalyticsPage() {
+  const metrics = [
+    {
+      title: 'Performance Trends',
+      icon: TrendingUp,
+      description: 'Track athlete performance over time with detailed metrics and visualizations.',
+      stats: [
+        { label: 'Weekly Average', value: '+12%', variant: 'success' as const },
+        { label: 'Monthly Trend', value: '↑ Improving', variant: 'success' as const },
+      ],
+    },
+    {
+      title: 'Sport Breakdown',
+      icon: Users,
+      description: 'Analytics segmented by sport category.',
+      stats: [
+        { label: 'Basketball', value: '12 athletes', variant: 'primary' as const },
+        { label: 'Soccer', value: '8 athletes', variant: 'secondary' as const },
+      ],
+    },
+    {
+      title: 'Mental Health',
+      icon: Brain,
+      description: 'Team-wide mental wellness indicators.',
+      stats: [
+        { label: 'Avg Mood Score', value: '7.2/10', variant: 'success' as const },
+        { label: 'Avg Confidence', value: '7.8/10', variant: 'success' as const },
+        { label: 'Avg Stress', value: '4.3/10', variant: 'warning' as const },
+      ],
+    },
+    {
+      title: 'Engagement',
+      icon: MessageSquare,
+      description: 'Chat and interaction statistics.',
+      stats: [
+        { label: 'Active Today', value: '18 athletes', variant: 'primary' as const },
+        { label: 'This Week', value: '24 athletes', variant: 'primary' as const },
+        { label: 'Engagement Rate', value: '92%', variant: 'success' as const },
+      ],
+    },
+    {
+      title: 'Goal Progress',
+      icon: Target,
+      description: 'Team goal completion metrics.',
+      stats: [
+        { label: 'Active Goals', value: '45', variant: 'primary' as const },
+        { label: 'Completed', value: '37', variant: 'success' as const },
+        { label: 'Success Rate', value: '82%', variant: 'success' as const },
+      ],
+    },
+    {
+      title: 'Risk Patterns',
+      icon: AlertTriangle,
+      description: 'Identified patterns requiring attention.',
+      stats: [
+        { label: 'At-Risk Athletes', value: '3', variant: 'danger' as const },
+        { label: 'Crisis Alerts', value: '2', variant: 'danger' as const },
+        { label: 'Resolved This Week', value: '5', variant: 'success' as const },
+      ],
+    },
+  ];
+
+  const comingSoon = [
+    {
+      title: 'Custom Reports',
+      icon: BarChart3,
+      description: 'Generate custom analytics reports for specific time periods and metrics.',
+      gradient: 'from-primary-500 to-primary-600',
+    },
+    {
+      title: 'AI Predictions',
+      icon: Zap,
+      description: 'ML-powered predictions for athlete performance and risk levels.',
+      gradient: 'from-secondary-500 to-secondary-600',
+    },
+    {
+      title: 'Comparative Analysis',
+      icon: LineChart,
+      description: 'Compare individual athletes or teams against benchmarks.',
+      gradient: 'from-success-500 to-success-600',
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Team Analytics
-              </h1>
-              <p className="mt-2 text-muted-foreground">
-                Deep dive into performance metrics and trends
-              </p>
-            </div>
-            <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-background">
-                ← Back to Dashboard
-              </button>
-            </Link>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8">
+          <PageHeader
+            title="Team Analytics"
+            description="Deep dive into performance metrics and trends"
+            backButton={
+              <Link href="/coach/dashboard">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <ChevronLeft className="w-4 h-4" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+            }
+          />
+
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {metrics.map((metric, index) => {
+              const Icon = metric.icon;
+              return (
+                <motion.div key={metric.title} variants={fadeInUp}>
+                  <Card variant="elevated" padding="lg" className="h-full">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-1">
+                          {metric.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-body">
+                          {metric.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mt-4">
+                      {metric.stats.map((stat) => (
+                        <div key={stat.label} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                          <span className="text-sm text-gray-600 dark:text-gray-400 font-body">
+                            {stat.label}:
+                          </span>
+                          <Badge variant={stat.variant} size="sm">
+                            {stat.value}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Performance Trends */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                📈 Performance Trends
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Track athlete performance over time with detailed metrics and visualizations.
-              </p>
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Weekly Average:</span>
-                  <span className="font-semibold text-secondary">+12%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Monthly Trend:</span>
-                  <span className="font-semibold text-secondary">↑ Improving</span>
-                </div>
+          {/* Coming Soon Section */}
+          <motion.div variants={fadeInUp}>
+            <Card variant="elevated" padding="lg">
+              <div className="mb-6">
+                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Zap className="w-6 h-6 text-warning-600 dark:text-warning-400" />
+                  Coming Soon
+                </h2>
+                <p className="text-base text-gray-600 dark:text-gray-400 font-body">
+                  Advanced analytics features in development
+                </p>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Sport-Specific Analytics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🏀 Sport Breakdown
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm mb-4">
-                Analytics segmented by sport category.
-              </p>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Basketball</span>
-                    <span className="font-semibold">12 athletes</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-primary h-2 rounded-full" style={{ width: '60%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Soccer</span>
-                    <span className="font-semibold">8 athletes</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-secondary h-2 rounded-full" style={{ width: '40%' }}></div>
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {comingSoon.map((feature) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div
+                      key={feature.title}
+                      className="p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl border border-gray-200 dark:border-gray-600"
+                    >
+                      <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${feature.gradient} mb-3`}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="font-display font-bold text-gray-900 dark:text-white mb-2">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-body">
+                        {feature.description}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Mental Health Metrics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🧠 Mental Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm mb-4">
-                Team-wide mental wellness indicators.
-              </p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Avg Mood Score:</span>
-                  <span className="font-semibold">7.2/10</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Avg Confidence:</span>
-                  <span className="font-semibold">7.8/10</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Avg Stress:</span>
-                  <span className="font-semibold text-muted-foreground">4.3/10</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Engagement Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                💬 Engagement
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm mb-4">
-                Chat and interaction statistics.
-              </p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Active Today:</span>
-                  <span className="font-semibold">18 athletes</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">This Week:</span>
-                  <span className="font-semibold">24 athletes</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Engagement Rate:</span>
-                  <span className="font-semibold text-secondary">92%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Goal Completion */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🎯 Goal Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm mb-4">
-                Team goal completion metrics.
-              </p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Active Goals:</span>
-                  <span className="font-semibold">45</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Completed:</span>
-                  <span className="font-semibold text-secondary">37</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Success Rate:</span>
-                  <span className="font-semibold text-secondary">82%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Crisis Patterns */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🚨 Risk Patterns
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm mb-4">
-                Identified patterns requiring attention.
-              </p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">At-Risk Athletes:</span>
-                  <span className="font-semibold text-muted-foreground">3</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Crisis Alerts:</span>
-                  <span className="font-semibold text-muted-foreground">2</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Resolved This Week:</span>
-                  <span className="font-semibold text-secondary">5</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Coming Soon Section */}
-        <div className="mt-10">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🚀 Coming Soon
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">📊 Custom Reports</h3>
-                  <p className="text-sm text-blue-700">Generate custom analytics reports for specific time periods and metrics.</p>
-                </div>
-                <div className="p-4 bg-accent/10 rounded-lg">
-                  <h3 className="font-semibold text-secondary mb-2">🤖 AI Predictions</h3>
-                  <p className="text-sm text-accent">ML-powered predictions for athlete performance and risk levels.</p>
-                </div>
-                <div className="p-4 bg-secondary/10 rounded-lg">
-                  <h3 className="font-semibold text-secondary mb-2">📈 Comparative Analysis</h3>
-                  <p className="text-sm text-secondary">Compare individual athletes or teams against benchmarks.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </Card>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

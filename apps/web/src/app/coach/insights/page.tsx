@@ -1,25 +1,14 @@
-// TODO: Re-implement auth after Supabase migration
-// import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
-import { Badge } from '@/components/shared/ui/badge';
-import { AlertTriangle, MessageCircle, TrendingUp, Users } from 'lucide-react';
+import { Card, Badge, Button, MetricCard, AnimatedCounter } from '@/design-system/components';
+import { AlertTriangle, MessageCircle, TrendingUp, Users, ChevronLeft, Brain, Activity } from 'lucide-react';
+import { EmptyState } from '@/components/shared/page-components';
 
 // Force dynamic rendering to avoid database connection issues during build
 export const dynamic = 'force-dynamic';
 
 export default async function CoachInsightsPage() {
-  // TODO: Re-implement auth check after Supabase migration
-  // const session = await auth();
-  // if (!session) {
-  //   redirect('/auth/signin?callbackUrl=/coach/insights');
-  // }
-  // if (session.user?.role !== 'COACH' && session.user?.role !== 'ADMIN') {
-  //   redirect('/dashboard');
-  // }
-
   // Get first coach (temporary until auth implemented)
   const coach = await prisma.user.findFirst({
     where: { role: 'COACH' },
@@ -29,7 +18,7 @@ export default async function CoachInsightsPage() {
     return <div>Coach not found</div>;
   }
 
-  // Get crisis alerts from the last 30 days (for athletes in same school)
+  // Get crisis alerts from the last 30 days
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -109,318 +98,292 @@ export default async function CoachInsightsPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Team Insights
-              </h1>
-              <p className="mt-2 text-muted-foreground">
-                Mental performance trends and crisis alerts
-              </p>
-            </div>
-            <Link href="/coach/dashboard">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground bg-card border border-border rounded-lg hover:bg-background">
-                ← Back to Dashboard
-              </button>
-            </Link>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <Link href="/coach/dashboard">
+            <Button variant="ghost" size="sm" className="flex items-center gap-2 mb-4">
+              <ChevronLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <h1 className="text-4xl lg:text-6xl font-display font-bold text-gray-900 dark:text-white mb-2">
+            Team Insights
+          </h1>
+          <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-400 font-body">
+            Mental performance trends and crisis alerts
+          </p>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Team Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Athletes</p>
-                  <p className="text-2xl font-bold text-foreground">{activeAthletes}/{totalAthletes}</p>
-                </div>
-                <Users className="size-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <MetricCard
+            label="Active Athletes"
+            value={activeAthletes}
+            suffix={`/${totalAthletes}`}
+            gradient="primary"
+            icon={<Users className="w-5 h-5" />}
+          />
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Team Avg Mood</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {teamAvgMood > 0 ? teamAvgMood.toFixed(1) : '--'}/10
-                  </p>
-                </div>
-                <TrendingUp className="size-8 text-secondary" />
-              </div>
-            </CardContent>
-          </Card>
+          <MetricCard
+            label="Team Avg Mood"
+            value={teamAvgMood}
+            decimals={1}
+            suffix="/10"
+            gradient="success"
+            icon={<TrendingUp className="w-5 h-5" />}
+          />
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Chat Sessions</p>
-                  <p className="text-2xl font-bold text-foreground">{avgChatSessions.toFixed(1)}</p>
-                </div>
-                <MessageCircle className="size-8 text-accent" />
-              </div>
-            </CardContent>
-          </Card>
+          <MetricCard
+            label="Avg Chat Sessions"
+            value={avgChatSessions}
+            decimals={1}
+            gradient="secondary"
+            icon={<MessageCircle className="w-5 h-5" />}
+          />
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Crisis Alerts (30d)</p>
-                  <p className="text-2xl font-bold text-foreground">{crisisAlerts.length}</p>
-                </div>
-                <AlertTriangle className="size-8 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
+          <MetricCard
+            label="Crisis Alerts (30d)"
+            value={crisisAlerts.length}
+            gradient="danger"
+            icon={<AlertTriangle className="w-5 h-5" />}
+          />
         </div>
 
         {/* Crisis Alerts */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Crisis Alerts</CardTitle>
-            <CardDescription>
+        <Card variant="elevated" padding="lg" className="mb-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+              Recent Crisis Alerts
+            </h2>
+            <p className="text-base text-gray-600 dark:text-gray-400 font-body">
               Automatic detection of concerning language in athlete conversations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {crisisAlerts.length > 0 ? (
-              <div className="space-y-4">
-                {crisisAlerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className={`p-4 rounded-lg border-2 ${
-                      alert.severity === 'CRITICAL'
-                        ? 'bg-muted-foreground/10 border-muted-foreground'
-                        : alert.severity === 'HIGH'
-                        ? 'bg-muted/10 border-muted'
-                        : alert.severity === 'MEDIUM'
-                        ? 'bg-muted/10 border-muted'
-                        : 'bg-blue-50 border-blue-200'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Badge
-                            variant="destructive"
-                            className={
-                              alert.severity === 'CRITICAL'
-                                ? 'bg-muted-foreground/30'
-                                : alert.severity === 'HIGH'
-                                ? 'bg-muted/100'
-                                : alert.severity === 'MEDIUM'
-                                ? 'bg-muted/100'
-                                : 'bg-blue-500'
-                            }
-                          >
-                            {alert.severity}
-                          </Badge>
-                          <span className="font-semibold text-foreground">
-                            {alert.Athlete.User.name}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(alert.detectedAt).toLocaleDateString()} at{' '}
-                            {new Date(alert.detectedAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground italic mb-2">
-                          "{alert.Message.content.substring(0, 150)}
-                          {alert.Message.content.length > 150 ? '...' : ''}"
-                        </p>
-                        {alert.reviewed ? (
-                          <div className="text-xs text-secondary font-medium">
-                            ✓ Reviewed
-                            {alert.reviewedAt &&
-                              ` on ${new Date(alert.reviewedAt).toLocaleDateString()}`}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-muted-foreground font-medium">
-                            ⚠️ Needs Review
-                          </div>
-                        )}
+            </p>
+          </div>
+
+          {crisisAlerts.length > 0 ? (
+            <div className="space-y-4">
+              {crisisAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`p-5 rounded-xl border-2 ${
+                    alert.severity === 'CRITICAL'
+                      ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-600'
+                      : alert.severity === 'HIGH'
+                      ? 'bg-warning-50 dark:bg-warning-900/20 border-warning-600'
+                      : 'bg-info-50 dark:bg-info-900/20 border-info-600'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Badge
+                          variant={
+                            alert.severity === 'CRITICAL'
+                              ? 'danger'
+                              : alert.severity === 'HIGH'
+                              ? 'warning'
+                              : 'secondary'
+                          }
+                          size="sm"
+                        >
+                          {alert.severity}
+                        </Badge>
+                        <span className="font-semibold text-gray-900 dark:text-white font-body">
+                          {alert.Athlete.User.name}
+                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 font-body">
+                          {new Date(alert.detectedAt).toLocaleDateString()} at{' '}
+                          {new Date(alert.detectedAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
                       </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-3 font-body">
+                        "{alert.Message.content.substring(0, 150)}
+                        {alert.Message.content.length > 150 ? '...' : ''}"
+                      </p>
+                      {alert.reviewed ? (
+                        <Badge variant="success" size="sm">
+                          ✓ Reviewed
+                          {alert.reviewedAt &&
+                            ` on ${new Date(alert.reviewedAt).toLocaleDateString()}`}
+                        </Badge>
+                      ) : (
+                        <Badge variant="warning" size="sm">
+                          ⚠️ Needs Review
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <AlertTriangle className="size-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No crisis alerts in the last 30 days</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  The system automatically flags concerning language for review
-                </p>
-              </div>
-            )}
-          </CardContent>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={AlertTriangle}
+              title="All Clear"
+              description="No crisis alerts in the last 30 days. The system automatically flags concerning language for review."
+              iconColor="success"
+            />
+          )}
         </Card>
 
         {/* Engagement Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Platform Engagement (Last 30 Days)</CardTitle>
-            <CardDescription>
+        <Card variant="elevated" padding="lg" className="mb-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+              Platform Engagement (Last 30 Days)
+            </h2>
+            <p className="text-base text-gray-600 dark:text-gray-400 font-body">
               Athletes using mood logging and AI chat features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
-                <span className="text-sm font-medium text-muted-foreground">
-                  Athletes logging moods regularly
-                </span>
-                <span className="text-lg font-bold text-foreground">
-                  {athletes.filter((a) => a.MoodLog && a.MoodLog.length >= 7).length}/{totalAthletes}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
-                <span className="text-sm font-medium text-muted-foreground">
-                  Athletes using AI chat
-                </span>
-                <span className="text-lg font-bold text-foreground">
-                  {athletes.filter((a) => a.ChatSession && a.ChatSession.length > 0).length}/{totalAthletes}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
-                <span className="text-sm font-medium text-muted-foreground">
-                  Total mood logs
-                </span>
-                <span className="text-lg font-bold text-foreground">
-                  {allMoodLogs.length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
-                <span className="text-sm font-medium text-muted-foreground">
-                  Total chat messages
-                </span>
-                <span className="text-lg font-bold text-foreground">
-                  {athletes.reduce((sum, a) => sum + (a.ChatSession?.reduce((s, sess) => s + (sess.Message?.length || 0), 0) || 0), 0)}
-                </span>
-              </div>
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-body">
+                Athletes logging moods regularly
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white font-display">
+                {athletes.filter((a) => a.MoodLog && a.MoodLog.length >= 7).length}/{totalAthletes}
+              </span>
             </div>
-          </CardContent>
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-body">
+                Athletes using AI chat
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white font-display">
+                {athletes.filter((a) => a.ChatSession && a.ChatSession.length > 0).length}/{totalAthletes}
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-body">
+                Total mood logs
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white font-display">
+                {allMoodLogs.length}
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-body">
+                Total chat messages
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white font-display">
+                {athletes.reduce((sum, a) => sum + (a.ChatSession?.reduce((s, sess) => s + (sess.Message?.length || 0), 0) || 0), 0)}
+              </span>
+            </div>
+          </div>
         </Card>
 
         {/* Stress Distribution */}
         {allMoodLogs.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Mental State Distribution (Last 30 Days)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Mood Levels</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">High (7-10)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-secondary/100 rounded-full h-2"
-                          style={{
-                            width: `${(allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-foreground">
-                        {Math.round((allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Medium (4-6)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-muted/100 rounded-full h-2"
-                          style={{
-                            width: `${(allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-foreground">
-                        {Math.round((allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Low (1-3)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-muted-foreground/100 rounded-full h-2"
-                          style={{
-                            width: `${(allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-foreground">
-                        {Math.round((allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
+          <Card variant="elevated" padding="lg">
+            <div className="mb-6">
+              <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+                Team Mental State Distribution (Last 30 Days)
+              </h2>
+            </div>
 
-                <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground mb-3">Stress Levels</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Low (1-4)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-secondary/100 rounded-full h-2"
-                          style={{
-                            width: `${(allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-foreground">
-                        {Math.round((allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100)}%
-                      </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wider font-body">Mood Levels</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body w-24">High (7-10)</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-success-500 to-success-600 rounded-full h-3 transition-all"
+                        style={{
+                          width: `${(allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100}%`,
+                        }}
+                      />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Medium (5-7)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-muted/100 rounded-full h-2"
-                          style={{
-                            width: `${(allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-foreground">
-                        {Math.round((allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100)}%
-                      </span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white font-display w-12 text-right">
+                      {Math.round((allMoodLogs.filter((l) => l.mood >= 7).length / allMoodLogs.length) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body w-24">Medium (4-6)</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-warning-500 to-warning-600 rounded-full h-3 transition-all"
+                        style={{
+                          width: `${(allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100}%`,
+                        }}
+                      />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">High (8-10)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-muted-foreground/100 rounded-full h-2"
-                          style={{
-                            width: `${(allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-foreground">
-                        {Math.round((allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100)}%
-                      </span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white font-display w-12 text-right">
+                      {Math.round((allMoodLogs.filter((l) => l.mood >= 4 && l.mood < 7).length / allMoodLogs.length) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body w-24">Low (1-3)</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-danger-500 to-danger-600 rounded-full h-3 transition-all"
+                        style={{
+                          width: `${(allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100}%`,
+                        }}
+                      />
                     </div>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white font-display w-12 text-right">
+                      {Math.round((allMoodLogs.filter((l) => l.mood < 4).length / allMoodLogs.length) * 100)}%
+                    </span>
                   </div>
                 </div>
               </div>
-            </CardContent>
+
+              <div>
+                <h4 className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-wider font-body">Stress Levels</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body w-24">Low (1-4)</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-success-500 to-success-600 rounded-full h-3 transition-all"
+                        style={{
+                          width: `${(allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white font-display w-12 text-right">
+                      {Math.round((allMoodLogs.filter((l) => l.stress <= 4).length / allMoodLogs.length) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body w-24">Medium (5-7)</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-warning-500 to-warning-600 rounded-full h-3 transition-all"
+                        style={{
+                          width: `${(allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white font-display w-12 text-right">
+                      {Math.round((allMoodLogs.filter((l) => l.stress > 4 && l.stress <= 7).length / allMoodLogs.length) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-body w-24">High (8-10)</span>
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-danger-500 to-danger-600 rounded-full h-3 transition-all"
+                        style={{
+                          width: `${(allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white font-display w-12 text-right">
+                      {Math.round((allMoodLogs.filter((l) => l.stress > 7).length / allMoodLogs.length) * 100)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </Card>
         )}
       </div>
