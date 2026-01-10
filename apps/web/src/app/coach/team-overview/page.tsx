@@ -1,21 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Target, AlertTriangle, Activity, Loader2, Users, FileText } from 'lucide-react';
-import Link from 'next/link';
-import { Card } from '@/design-system/components';
-import { Button } from '@/design-system/components/Button';
-import { AnimatedCounter } from '@/design-system/components';
-
-interface AthleteReadiness {
-  id: string;
-  name: string;
-  sport: string;
-  scores: number[]; // Last 14 days readiness (0-100)
-  trend: 'improving' | 'declining' | 'stable';
-  forecast: number[]; // Next 7 days
-  currentScore: number;
-}
+import { motion } from 'framer-motion';
+import {
+  Users,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Activity,
+  ArrowUp,
+  ArrowDown,
+  Loader2,
+  Zap,
+  Target,
+  Clock,
+} from 'lucide-react';
+import { Card, AnimatedCounter, RadialProgress, Sparkline, Badge } from '@/design-system/components';
+import { fadeInUp, staggerContainer } from '@/design-system/motion';
 
 interface TeamStats {
   totalAthletes: number;
@@ -26,316 +27,412 @@ interface TeamStats {
   decliningTrends: number;
 }
 
+interface AthleteReadiness {
+  id: string;
+  name: string;
+  sport: string;
+  currentReadiness: number;
+  scores14d: number[];
+  trend: 'up' | 'down' | 'stable';
+  trendValue: number;
+  forecast7d: number[];
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
 interface Intervention {
   id: string;
   name: string;
-  priority: number;
+  sport: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
   readiness: number;
   reason: string;
-  action: string;
+  lastContact: string | null;
 }
 
-export default function TeamOverviewPage() {
+export default function CoachTeamOverviewPage() {
   const [stats, setStats] = useState<TeamStats | null>(null);
-  const [athletesReadiness, setAthletesReadiness] = useState<AthleteReadiness[]>([]);
+  const [athletes, setAthletes] = useState<AthleteReadiness[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTeamOverview = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/coach/team-overview');
-        if (!response.ok) throw new Error('Failed to fetch team overview');
-
-        const data = await response.json();
-        setStats(data.stats);
-        setAthletesReadiness(data.athletes || []);
-        setInterventions(data.interventions || []);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching team overview:', err);
-        setError('Failed to load team overview');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTeamOverview();
+    loadTeamOverview();
   }, []);
 
-  const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'bg-success-600 dark:bg-success-500';
-    if (score >= 70) return 'bg-warning-600 dark:bg-warning-500';
-    if (score >= 50) return 'bg-warning-700 dark:bg-warning-600';
-    return 'bg-danger-600 dark:bg-danger-500';
-  };
+  const loadTeamOverview = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-  const getReadinessTextColor = (score: number) => {
-    if (score >= 85) return 'text-success-700 dark:text-success-300';
-    if (score >= 70) return 'text-warning-700 dark:text-warning-300';
-    if (score >= 50) return 'text-warning-800 dark:text-warning-400';
-    return 'text-danger-700 dark:text-danger-300';
+      const response = await fetch('/api/coach/team-overview');
+      if (!response.ok) throw new Error('Failed to fetch team overview');
+
+      const data = await response.json();
+      setStats(data.stats);
+      setAthletes(data.athletes || []);
+      setInterventions(data.interventions || []);
+    } catch (err) {
+      console.error('Error loading team overview:', err);
+      setError('Failed to load team overview');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 font-body">Loading team overview...</p>
+          <Loader2 className="w-16 h-16 animate-spin text-primary-600 dark:text-primary-400 mx-auto mb-4" />
+          <p className="text-xl text-gray-600 dark:text-gray-400 font-body">Loading team data...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !stats) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-        <Card variant="elevated" padding="lg" className="max-w-md text-center border-danger-200 dark:border-danger-800">
-          <AlertTriangle className="w-16 h-16 text-danger-600 dark:text-danger-400 mx-auto mb-4" />
-          <h2 className="text-xl font-display font-bold text-danger-700 dark:text-danger-300 mb-2">{error}</h2>
-          <p className="text-gray-600 dark:text-gray-400 font-body mb-6">Please try again later</p>
-          <Button variant="primary" onClick={() => window.location.reload()}>
-            Retry
-          </Button>
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card variant="elevated" padding="xl" className="text-center max-w-md">
+          <AlertTriangle className="w-20 h-20 text-danger-600 dark:text-danger-400 mx-auto mb-6" />
+          <h3 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">Error Loading Data</h3>
+          <p className="text-lg text-gray-600 dark:text-gray-400 font-body mb-8">{error}</p>
+          <button
+            onClick={loadTeamOverview}
+            className="px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-body font-bold rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
         </Card>
       </div>
     );
   }
 
-  if (!stats) return null;
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            Team Overview
-          </h1>
-          <p className="mt-3 text-gray-600 dark:text-gray-400 text-lg font-body">Mental readiness analytics & performance forecasting</p>
-        </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* DESKTOP: Split-Screen Layout */}
+      <div className="hidden lg:flex h-screen">
+        {/* LEFT: Live Readiness Heatmap */}
+        <div className="w-2/3 border-r border-gray-200 dark:border-gray-800 overflow-y-auto">
+          <div className="p-8 space-y-8">
+            {/* Header */}
+            <motion.div initial="hidden" animate="show" variants={staggerContainer}>
+              <motion.div variants={fadeInUp}>
+                <h1 className="text-6xl font-display font-bold text-gray-900 dark:text-white mb-2">Team Overview</h1>
+                <p className="text-xl text-gray-600 dark:text-gray-400 font-body">Real-time mental readiness monitoring</p>
+              </motion.div>
 
-        {/* Critical Alert */}
-        {stats.criticalAlerts > 0 && (
-          <Card variant="elevated" padding="lg" className="mb-8 border-danger-200 dark:border-danger-800">
-            <div className="flex items-start gap-4">
-              <AlertTriangle className="w-12 h-12 text-danger-600 dark:text-danger-400 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="text-2xl font-display font-bold text-danger-700 dark:text-danger-300 mb-2">
-                  {stats.criticalAlerts} athlete{stats.criticalAlerts > 1 ? 's' : ''} need immediate attention
-                </h3>
-                <p className="text-danger-600 dark:text-danger-400 text-lg font-semibold font-body">Crisis keywords detected or severe readiness decline</p>
-              </div>
-              <Link href="/coach/alerts">
-                <Button variant="danger" size="lg">
-                  Review Now
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        )}
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <Card variant="elevated" padding="lg" hover>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-primary-600 dark:text-primary-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Team Readiness</div>
-                <div className="text-5xl font-display font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  <AnimatedCounter value={stats.teamAvgReadiness} decimals={0} />
-                  <span className="text-2xl text-gray-600 dark:text-gray-400">/100</span>
-                </div>
-                <div className="text-sm text-primary-600 dark:text-primary-400 font-medium font-body">Mental performance score</div>
-              </div>
-              <Target className="w-16 h-16 text-primary-600 dark:text-primary-400 opacity-80" />
-            </div>
-          </Card>
-
-          <Card variant="elevated" padding="lg" hover className="border-danger-200 dark:border-danger-800/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-danger-600 dark:text-danger-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">High Risk</div>
-                <div className="text-5xl font-display font-bold text-danger-700 dark:text-danger-300 mb-2">
-                  <AnimatedCounter value={stats.highRisk} decimals={0} />
-                </div>
-                <div className="text-sm text-danger-600 dark:text-danger-400 font-medium font-body">Need intervention</div>
-              </div>
-              <AlertTriangle className="w-16 h-16 text-danger-600 dark:text-danger-400 opacity-80" />
-            </div>
-          </Card>
-
-          <Card variant="elevated" padding="lg" hover className="border-warning-200 dark:border-warning-800/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-warning-600 dark:text-warning-400 text-xs font-semibold uppercase tracking-wider mb-2 font-body">Declining Trends</div>
-                <div className="text-5xl font-display font-bold text-warning-700 dark:text-warning-300 mb-2">
-                  <AnimatedCounter value={stats.decliningTrends} decimals={0} />
-                </div>
-                <div className="text-sm text-warning-600 dark:text-warning-400 font-medium font-body">Watch closely</div>
-              </div>
-              <Activity className="w-16 h-16 text-warning-600 dark:text-warning-400 opacity-80" />
-            </div>
-          </Card>
-
-          <Card variant="elevated" padding="lg" hover className="border-primary-200 dark:border-primary-800/50">
-            <div className="text-sm font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400 mb-4 font-body">Quick Actions</div>
-            <div className="space-y-3">
-              <Link href="/coach/assignments?action=create">
-                <Button variant="outline" size="sm" fullWidth leftIcon={<FileText className="w-4 h-4" />}>
-                  Create Assignment
-                </Button>
-              </Link>
-              <Link href="/coach/reports">
-                <Button variant="outline" size="sm" fullWidth leftIcon={<FileText className="w-4 h-4" />}>
-                  View Reports
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        </div>
-
-        {/* Intervention Queue */}
-        {interventions.length > 0 && (
-          <Card variant="elevated" padding="none" className="mb-8">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-danger-600 dark:bg-danger-500 rounded-xl flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-gray-100">Intervention Queue</h2>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 font-body ml-15">AI-prioritized recommendations based on readiness forecasts</p>
-            </div>
-            <div className="divide-y divide-gray-200 dark:divide-gray-800">
-              {interventions.map((int) => (
-                <div key={int.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-danger-600 dark:bg-danger-500 rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-display font-bold flex-shrink-0">
-                      P{int.priority}
+              {/* Quick Stats Bar */}
+              <motion.div variants={fadeInUp} className="mt-8 grid grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                    <div className="text-right">
+                      <div className="text-4xl font-display font-bold text-gray-900 dark:text-white">
+                        <AnimatedCounter value={stats.totalAthletes} decimals={0} />
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider">Athletes</div>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-display font-bold text-gray-900 dark:text-gray-100">{int.name}</h3>
-                        <span className={`text-2xl font-display font-bold ${getReadinessTextColor(int.readiness)}`}>
-                          {int.readiness}/100
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <Activity className="w-8 h-8 text-success-600 dark:text-success-400" />
+                    <div className="text-right">
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="text-4xl font-display font-bold text-gray-900 dark:text-white">
+                          <AnimatedCounter value={stats.teamAvgReadiness} decimals={0} />
                         </span>
+                        <div className={`flex items-center text-sm font-bold ${stats.readinessChange >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
+                          {stats.readinessChange >= 0 ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                          {Math.abs(stats.readinessChange)}
+                        </div>
                       </div>
-                      <div className="bg-danger-50 dark:bg-danger-900/20 border-l-4 border-danger-600 dark:border-danger-500 p-4 rounded-lg mb-3">
-                        <p className="text-danger-700 dark:text-danger-300 font-semibold text-sm font-body">{int.reason}</p>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider">Avg Readiness</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <AlertTriangle className="w-8 h-8 text-danger-600 dark:text-danger-400" />
+                    <div className="text-right">
+                      <div className="text-4xl font-display font-bold text-danger-700 dark:text-danger-300">
+                        <AnimatedCounter value={stats.criticalAlerts} decimals={0} />
                       </div>
-                      <div className="bg-info-50 dark:bg-info-900/20 border-l-4 border-info-600 dark:border-info-500 p-4 rounded-lg">
-                        <p className="text-info-700 dark:text-info-300 font-semibold text-sm font-body">{int.action}</p>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider">Critical Alerts</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Readiness Heatmap Grid */}
+            <motion.div variants={fadeInUp} className="space-y-4">
+              <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">Team Readiness Heatmap</h2>
+              <div className="grid grid-cols-4 gap-4">
+                {athletes.map((athlete) => (
+                  <motion.div
+                    key={athlete.id}
+                    whileHover={{ scale: 1.05, y: -4 }}
+                    className="group relative"
+                  >
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600 transition-all cursor-pointer">
+                      {/* Readiness Indicator */}
+                      <div className="absolute -top-2 -right-2">
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg ${
+                            athlete.currentReadiness >= 80
+                              ? 'bg-success-600'
+                              : athlete.currentReadiness >= 60
+                                ? 'bg-warning-600'
+                                : 'bg-danger-600'
+                          }`}
+                        >
+                          {athlete.currentReadiness}
+                        </div>
+                      </div>
+
+                      {/* Name */}
+                      <h3 className="text-lg font-display font-bold text-gray-900 dark:text-white mb-1 pr-8 truncate">
+                        {athlete.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-body mb-4">{athlete.sport}</p>
+
+                      {/* Trend Sparkline */}
+                      <div className="mb-3">
+                        <Sparkline data={athlete.scores14d} height={40} width="100%" color={athlete.currentReadiness >= 80 ? 'success' : athlete.currentReadiness >= 60 ? 'warning' : 'danger'} showDots={false} />
+                      </div>
+
+                      {/* Trend Badge */}
+                      <div className="flex items-center gap-2">
+                        {athlete.trend === 'up' ? (
+                          <Badge variant="success" className="gap-1">
+                            <TrendingUp className="w-3 h-3" />
+                            +{athlete.trendValue}
+                          </Badge>
+                        ) : athlete.trend === 'down' ? (
+                          <Badge variant="danger" className="gap-1">
+                            <TrendingDown className="w-3 h-3" />
+                            -{athlete.trendValue}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Stable</Badge>
+                        )}
+
+                        {athlete.riskLevel !== 'LOW' && (
+                          <Badge variant={athlete.riskLevel === 'CRITICAL' ? 'danger' : athlete.riskLevel === 'HIGH' ? 'warning' : 'secondary'}>
+                            {athlete.riskLevel}
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                    <Link href={`/coach/athletes/${int.id}`}>
-                      <Button variant="primary">
-                        View Profile
-                      </Button>
-                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* RIGHT: Priority Intervention Queue */}
+        <div className="w-1/3 bg-gradient-to-b from-gray-100 to-white dark:from-gray-800 dark:to-gray-900 overflow-y-auto">
+          <div className="p-8 space-y-6 sticky top-0">
+            <div>
+              <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">Priority Queue</h2>
+              <p className="text-base text-gray-600 dark:text-gray-400 font-body">Athletes requiring immediate attention</p>
+            </div>
+
+            {interventions.length === 0 ? (
+              <div className="text-center py-12">
+                <Zap className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-lg text-gray-600 dark:text-gray-400 font-body">No urgent interventions</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 font-body mt-2">All athletes are doing well!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {interventions.map((intervention, index) => (
+                  <motion.div
+                    key={intervention.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`rounded-xl p-6 border-l-4 cursor-pointer transition-all hover:scale-[1.02] ${
+                      intervention.priority === 'critical'
+                        ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-600 dark:border-danger-400'
+                        : intervention.priority === 'high'
+                          ? 'bg-warning-50 dark:bg-warning-900/20 border-warning-600 dark:border-warning-400'
+                          : 'bg-gray-100 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
+                    }`}
+                  >
+                    {/* Priority Badge */}
+                    <div className="flex items-start justify-between mb-3">
+                      <Badge
+                        variant={
+                          intervention.priority === 'critical'
+                            ? 'danger'
+                            : intervention.priority === 'high'
+                              ? 'warning'
+                              : 'secondary'
+                        }
+                        className="uppercase text-xs"
+                      >
+                        {intervention.priority}
+                      </Badge>
+                      <div className="text-right">
+                        <div className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+                          {intervention.readiness}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 font-body">Readiness</div>
+                      </div>
+                    </div>
+
+                    {/* Athlete Info */}
+                    <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-1">
+                      {intervention.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-body mb-3">{intervention.sport}</p>
+
+                    {/* Reason */}
+                    <div className="flex items-start gap-2 mb-3">
+                      <Target className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm font-body text-gray-700 dark:text-gray-300">{intervention.reason}</p>
+                    </div>
+
+                    {/* Last Contact */}
+                    {intervention.lastContact && (
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 font-body">
+                        <Clock className="w-3 h-3" />
+                        Last contact: {new Date(intervention.lastContact).toLocaleDateString()}
+                      </div>
+                    )}
+
+                    {/* Action Button */}
+                    <button className="mt-4 w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-body font-bold rounded-lg transition-colors text-sm">
+                      Contact Athlete
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE: Stacked Layout */}
+      <div className="lg:hidden">
+        <div className="p-6 space-y-6">
+          {/* Mobile Header */}
+          <div>
+            <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">Team Overview</h1>
+            <p className="text-base text-gray-600 dark:text-gray-400 font-body">Mental readiness monitoring</p>
+          </div>
+
+          {/* Mobile Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+              <div className="text-3xl font-display font-bold text-gray-900 dark:text-white">
+                <AnimatedCounter value={stats.totalAthletes} decimals={0} />
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider">Athletes</div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-1">
+                <span className="text-3xl font-display font-bold text-gray-900 dark:text-white">
+                  <AnimatedCounter value={stats.teamAvgReadiness} decimals={0} />
+                </span>
+                <div className={`text-xs font-bold ${stats.readinessChange >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                  {stats.readinessChange >= 0 ? '↑' : '↓'}{Math.abs(stats.readinessChange)}
+                </div>
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider">Readiness</div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+              <div className="text-3xl font-display font-bold text-danger-700 dark:text-danger-300">
+                <AnimatedCounter value={stats.highRisk} decimals={0} />
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider">High Risk</div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+              <div className="text-3xl font-display font-bold text-warning-700 dark:text-warning-300">
+                <AnimatedCounter value={stats.decliningTrends} decimals={0} />
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 font-body uppercase tracking-wider">Declining</div>
+            </div>
+          </div>
+
+          {/* Priority Queue First on Mobile */}
+          <div>
+            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-4">Priority Queue</h2>
+            <div className="space-y-3">
+              {interventions.slice(0, 3).map((intervention) => (
+                <div
+                  key={intervention.id}
+                  className={`rounded-xl p-5 border-l-4 ${
+                    intervention.priority === 'critical'
+                      ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-600'
+                      : intervention.priority === 'high'
+                        ? 'bg-warning-50 dark:bg-warning-900/20 border-warning-600'
+                        : 'bg-gray-100 dark:bg-gray-800 border-gray-400'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <Badge variant={intervention.priority === 'critical' ? 'danger' : intervention.priority === 'high' ? 'warning' : 'secondary'} className="text-xs">
+                      {intervention.priority}
+                    </Badge>
+                    <div className="text-2xl font-display font-bold text-gray-900 dark:text-white">{intervention.readiness}</div>
+                  </div>
+                  <h3 className="text-lg font-display font-bold text-gray-900 dark:text-white">{intervention.name}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-body mb-2">{intervention.reason}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Athlete List */}
+          <div>
+            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-4">All Athletes</h2>
+            <div className="space-y-3">
+              {athletes.map((athlete) => (
+                <div key={athlete.id} className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-display font-bold text-gray-900 dark:text-white">{athlete.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-body">{athlete.sport}</p>
+                    </div>
+                    <div
+                      className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold shadow-lg ${
+                        athlete.currentReadiness >= 80 ? 'bg-success-600' : athlete.currentReadiness >= 60 ? 'bg-warning-600' : 'bg-danger-600'
+                      }`}
+                    >
+                      {athlete.currentReadiness}
+                    </div>
+                  </div>
+                  <Sparkline data={athlete.scores14d} height={30} width="100%" color={athlete.currentReadiness >= 80 ? 'success' : 'warning'} showDots={false} />
+                  <div className="flex items-center gap-2 mt-3">
+                    {athlete.trend === 'up' ? (
+                      <Badge variant="success" className="gap-1 text-xs">
+                        <TrendingUp className="w-3 h-3" />
+                        +{athlete.trendValue}
+                      </Badge>
+                    ) : athlete.trend === 'down' ? (
+                      <Badge variant="danger" className="gap-1 text-xs">
+                        <TrendingDown className="w-3 h-3" />
+                        -{athlete.trendValue}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">Stable</Badge>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
-        )}
-
-        {/* 14-Day Readiness Heatmap */}
-        <Card variant="elevated" padding="none">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-warning-600 dark:bg-warning-500 rounded-xl flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-gray-100">14-Day Readiness Heatmap</h2>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 font-body ml-15">Mental performance trends + 7-day forecast</p>
-            </div>
-            <Link href="/coach/athletes">
-              <Button variant="primary">
-                View All Athletes
-              </Button>
-            </Link>
           </div>
-          <div className="p-6 overflow-x-auto">
-            {athletesReadiness.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 font-body">No readiness data available</p>
-              </div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200 dark:border-gray-800">
-                    <th className="text-left pb-4 pr-6 font-display font-bold text-gray-900 dark:text-gray-100">Athlete</th>
-                    {[...Array(14)].map((_, i) => (
-                      <th key={i} className="text-center pb-4 px-1 text-xs font-semibold text-gray-600 dark:text-gray-400 font-body">
-                        D{i - 13}
-                      </th>
-                    ))}
-                    <th className="text-center pb-4 pl-6 font-display font-bold text-gray-900 dark:text-gray-100">Trend</th>
-                    <th className="text-center pb-4 pl-6 font-display font-bold text-gray-900 dark:text-gray-100">7-Day Forecast</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {athletesReadiness.map((athlete) => (
-                    <tr key={athlete.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                      <td className="py-4 pr-6">
-                        <div className="font-display font-bold text-gray-900 dark:text-gray-100">{athlete.name}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 font-body">{athlete.sport}</div>
-                      </td>
-                      {athlete.scores.map((score, index) => (
-                        <td key={index} className="py-4 px-1">
-                          <div
-                            className={`w-12 h-12 rounded-lg ${getReadinessColor(score)} text-white font-bold text-sm flex items-center justify-center font-mono`}
-                            title={`Readiness: ${score}/100`}
-                          >
-                            {score}
-                          </div>
-                        </td>
-                      ))}
-                      <td className="py-4 pl-6 text-center">
-                        {athlete.trend === 'improving' && (
-                          <div className="flex items-center justify-center gap-2 text-success-600 dark:text-success-400 font-semibold font-body">
-                            <TrendingUp className="w-5 h-5" />
-                            Up
-                          </div>
-                        )}
-                        {athlete.trend === 'declining' && (
-                          <div className="flex items-center justify-center gap-2 text-danger-600 dark:text-danger-400 font-semibold font-body">
-                            <TrendingDown className="w-5 h-5" />
-                            Down
-                          </div>
-                        )}
-                        {athlete.trend === 'stable' && (
-                          <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 font-semibold font-body">
-                            Stable
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-4 pl-6">
-                        <div className="flex gap-1">
-                          {athlete.forecast.map((score, index) => (
-                            <div
-                              key={index}
-                              className={`w-8 h-8 rounded ${getReadinessColor(score)} text-white font-bold text-xs flex items-center justify-center opacity-75 font-mono`}
-                              title={`Day +${index + 1}: ${score}/100`}
-                            >
-                              {score}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
