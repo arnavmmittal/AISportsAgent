@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
@@ -96,7 +96,7 @@ const PROVIDERS = [
   },
 ];
 
-export default function WearablesPage() {
+function WearablesContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<WearableStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -590,5 +590,20 @@ export default function WearablesPage() {
         </Card>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function WearablesPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    }>
+      <WearablesContent />
+    </Suspense>
   );
 }
