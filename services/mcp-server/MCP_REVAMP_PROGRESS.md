@@ -125,13 +125,18 @@ Completed endpoints:
 
 ### Phase 6: Next.js Integration
 
-**Status**: NOT STARTED
+**Status**: COMPLETED
 
-Tasks:
-- [ ] Update MCP client with new endpoints
-- [ ] Add voice streaming support
-- [ ] Add prediction API calls
-- [ ] Test integration
+Files modified:
+- `apps/web/src/lib/mcp-client.ts` - Full MCP client with all new endpoints
+- `apps/web/src/lib/api-client.ts` - API client class with new methods
+
+Features:
+- [x] Orchestrator API (chat, classify, context, status)
+- [x] Knowledge API (query, frameworks, status)
+- [x] Predictions API (risk, slump, correlations, interventions)
+- [x] Voice API (synthesize, transcribe, voices, status)
+- [x] TypeScript types for all responses
 
 ---
 
@@ -268,12 +273,28 @@ NEXTAUTH_SECRET=xxx
 
 ## Next Steps
 
-1. **Next.js Integration** - Update MCP client to use new endpoints
-2. **Testing** - Write integration tests for all new modules
-3. **Deployment** - Test on Railway staging
+1. **Testing** - Write integration tests for all new modules
+2. **Deployment** - Deploy to Railway staging and test
+3. **Documentation** - Update API documentation
+
+---
+
+## Implementation Complete
+
+All six phases of the MCP server revamp have been completed:
+
+1. **Voice Pipeline** - ElevenLabs TTS, Deepgram STT, provider fallback
+2. **ML Prediction Engine** - XGBoost, SHAP, slump detection, correlations
+3. **Knowledge Base RAG** - ChromaDB, query rewriting, LLM reranking
+4. **Agent Orchestrator** - Intent classification, context management, routing
+5. **API Endpoints** - All endpoints created and registered
+6. **Next.js Integration** - Client libraries updated with TypeScript types
+
+**Branch**: `feature/mcp-server-revamp`
+**Commits**: 4 commits with full implementation
 
 ---
 
 ## Last Updated
 
-2026-01-10 - Agent Orchestrator completed. All core MCP modules now complete.
+2026-01-10 - All implementation phases completed. Ready for testing and deployment.
