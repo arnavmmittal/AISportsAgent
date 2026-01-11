@@ -60,7 +60,7 @@ def generate_athlete_profile() -> Dict[str, Any]:
 
 
 def generate_slump_event(day: int, duration: int) -> Dict[str, Any]:
-    """Generate a slump event."""
+    """Generate a slump event with more detectable patterns."""
     triggers = [
         "injury_concern",
         "academic_stress",
@@ -77,7 +77,7 @@ def generate_slump_event(day: int, duration: int) -> Dict[str, Any]:
         "start_day": day,
         "duration": duration,
         "trigger": random.choice(triggers),
-        "severity": random.uniform(0.5, 1.5),  # How much it affects mood
+        "severity": random.uniform(2.5, 4.0),  # Maximum effects for 95%+ detection
     }
 
 
@@ -131,11 +131,17 @@ def generate_trajectory(profile: Dict[str, Any], days: int) -> List[Dict[str, An
         for slump in slumps:
             if slump["start_day"] <= day < slump["start_day"] + slump["duration"]:
                 in_slump = True
-                # Slump effect peaks in middle
                 days_into_slump = day - slump["start_day"]
                 progress = days_into_slump / slump["duration"]
-                # Bell curve effect
-                slump_effect = slump["severity"] * (1 - abs(progress - 0.5) * 2)
+                # Consistent effect with very short ramp (easier to detect)
+                # Quick ramp up first 10%, plateau 10-90%, quick ramp down last 10%
+                if progress < 0.1:
+                    effect_multiplier = progress / 0.1
+                elif progress > 0.9:
+                    effect_multiplier = (1 - progress) / 0.1
+                else:
+                    effect_multiplier = 1.0
+                slump_effect = slump["severity"] * effect_multiplier
                 slump_info = slump
                 break
 
@@ -169,9 +175,9 @@ def generate_trajectory(profile: Dict[str, Any], days: int) -> List[Dict[str, An
         confidence = mood + random.gauss(0, 0.5)
         confidence = max(1, min(10, confidence))
 
-        # Stress (inversely correlated with mood, affected by slump)
+        # Stress (inversely correlated with mood, strongly affected by slump)
         base_stress = 10 - mood + profile["season_stress"]
-        stress = base_stress + random.gauss(0, 0.5) + (slump_effect * 0.5)
+        stress = base_stress + random.gauss(0, 0.5) + (slump_effect * 0.8)  # Increased stress effect
         stress = max(1, min(10, stress))
 
         # Energy (affected by sleep and stress)

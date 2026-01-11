@@ -57,12 +57,22 @@ class SlumpDetector:
         },
     }
 
+    # Absolute thresholds for concerning values
+    CONCERN_THRESHOLDS = {
+        "mood": {"low": 4.0, "critical": 3.0},
+        "confidence": {"low": 4.0, "critical": 3.0},
+        "stress": {"high": 7.0, "critical": 8.0},
+        "energy": {"low": 4.0, "critical": 3.0},
+        "sleep": {"low": 5.5, "critical": 4.5},
+    }
+
     def __init__(
         self,
         short_window: int = 3,
         long_window: int = 14,
-        decline_threshold: float = 0.5,
-        volatility_threshold: float = 2.0,
+        decline_threshold: float = 0.3,  # Tuned from 0.5 (more sensitive)
+        volatility_threshold: float = 1.5,  # Tuned from 2.0 (more sensitive)
+        detection_threshold: float = 30.0,  # Tuned from 40 (lower threshold for higher recall)
     ):
         """
         Initialize slump detector.
@@ -70,13 +80,15 @@ class SlumpDetector:
         Args:
             short_window: Days for short-term average
             long_window: Days for long-term average
-            decline_threshold: Points drop to flag decline
-            volatility_threshold: Std devs for volatility spike
+            decline_threshold: Points drop to flag decline (tuned: 0.3)
+            volatility_threshold: Std devs for volatility spike (tuned: 1.5)
+            detection_threshold: Probability threshold for slump detection (tuned: 30)
         """
         self.short_window = short_window
         self.long_window = long_window
         self.decline_threshold = decline_threshold
         self.volatility_threshold = volatility_threshold
+        self.detection_threshold = detection_threshold
 
     def detect(
         self,
@@ -145,29 +157,66 @@ class SlumpDetector:
         pattern_signals = self._detect_pattern_matches(metrics, trend_scores)
         indicators.extend(pattern_signals)
 
-        # 5. Performance correlation (if available)
+        # 5. Absolute value concerns (NEW)
+        absolute_signals = self._detect_absolute_concerns(metrics)
+        indicators.extend(absolute_signals)
+
+        # 6. Compound decline (NEW) - multiple small declines = bigger concern
+        compound_signals = self._detect_compound_decline(trend_scores)
+        indicators.extend(compound_signals)
+
+        # 7. Performance correlation (if available)
         if performance_data:
             perf_signals = self._detect_performance_divergence(metrics, performance_data)
             indicators.extend(perf_signals)
 
-        # 6. Biometric signals (if available)
+        # 8. Biometric signals (if available)
         if biometrics:
             bio_signals = self._detect_biometric_signals(biometrics)
             indicators.extend(bio_signals)
 
         result["indicators"] = indicators
 
-        # Calculate overall slump probability
+        # Calculate overall slump probability with balanced weighting
         if indicators:
-            severity_weights = {"low": 0.2, "moderate": 0.4, "high": 0.6, "critical": 0.8}
+            severity_weights = {"low": 0.20, "moderate": 0.40, "high": 0.60, "critical": 0.85}
             total_weight = sum(
-                severity_weights.get(ind.get("severity", "low"), 0.2)
+                severity_weights.get(ind.get("severity", "low"), 0.20)
                 for ind in indicators
             )
-            result["slump_probability"] = min(100, total_weight * 30)
+            # Balanced probability calculation
+            result["slump_probability"] = min(100, total_weight * 32)
 
-            # Determine if slump detected
-            result["slump_detected"] = result["slump_probability"] > 40
+            # Multi-signal confirmation: count unique metrics showing concerns
+            affected_metrics = set()
+            for ind in indicators:
+                if "metric" in ind:
+                    affected_metrics.add(ind["metric"])
+                # Pattern-based indicators affect multiple metrics
+                pattern = ind.get("pattern", "")
+                if "mood" in pattern:
+                    affected_metrics.add("mood")
+                if "confidence" in pattern:
+                    affected_metrics.add("confidence")
+                if "stress" in pattern:
+                    affected_metrics.add("stress")
+                if "energy" in pattern:
+                    affected_metrics.add("energy")
+                if "sleep" in pattern:
+                    affected_metrics.add("sleep")
+                if "compound" in pattern or "wellbeing" in pattern:
+                    affected_metrics.update(["mood", "confidence", "energy"])
+
+            # Require at least 2 metrics showing concern for detection
+            # OR a single critical indicator
+            has_critical = any(ind.get("severity") == "critical" for ind in indicators)
+            multi_metric_concern = len(affected_metrics) >= 2
+
+            # Use configurable detection threshold with multi-signal confirmation
+            result["slump_detected"] = (
+                result["slump_probability"] > self.detection_threshold
+                and (multi_metric_concern or has_critical)
+            )
 
             # Identify primary slump type
             if indicators:
@@ -201,17 +250,24 @@ class SlumpDetector:
             key=lambda x: x.get("date") or x.get("createdAt", ""),
         )
 
-        metrics = {
-            "mood": [],
-            "confidence": [],
-            "stress": [],
-            "energy": [],
-            "sleep": [],
+        # Field name mappings (handle different naming conventions)
+        field_mappings = {
+            "mood": ["mood"],
+            "confidence": ["confidence"],
+            "stress": ["stress"],
+            "energy": ["energy"],
+            "sleep": ["sleep", "sleep_hours", "sleepHours"],  # Handle multiple field names
         }
 
+        metrics = {key: [] for key in field_mappings.keys()}
+
         for log in sorted_logs:
-            for metric in metrics.keys():
-                value = log.get(metric)
+            for metric, possible_fields in field_mappings.items():
+                value = None
+                for field in possible_fields:
+                    value = log.get(field)
+                    if value is not None:
+                        break
                 if value is not None:
                     metrics[metric].append(float(value))
 
@@ -279,7 +335,7 @@ class SlumpDetector:
     def _detect_consecutive_decline(
         self,
         metrics: Dict[str, List[float]],
-        min_consecutive: int = 3,
+        min_consecutive: int = 2,  # Lowered from 3
     ) -> List[Dict[str, Any]]:
         """Detect consecutive days of decline."""
         signals = []
@@ -288,31 +344,42 @@ class SlumpDetector:
             if len(values) < min_consecutive + 1:
                 continue
 
-            # Count consecutive declines
+            # Count consecutive declines (look at recent window)
+            recent = values[-self.short_window * 2:] if len(values) > self.short_window * 2 else values
             consecutive = 0
             max_consecutive = 0
 
-            for i in range(1, len(values)):
+            for i in range(1, len(recent)):
                 # For stress, increasing is bad
                 if metric == "stress":
-                    if values[i] > values[i - 1]:
+                    if recent[i] > recent[i - 1]:
                         consecutive += 1
                         max_consecutive = max(max_consecutive, consecutive)
                     else:
                         consecutive = 0
                 else:
-                    if values[i] < values[i - 1]:
+                    if recent[i] < recent[i - 1]:
                         consecutive += 1
                         max_consecutive = max(max_consecutive, consecutive)
                     else:
                         consecutive = 0
 
             if max_consecutive >= min_consecutive:
+                # Severity based on consecutive count and which metric
+                if max_consecutive >= 5:
+                    severity = "high"
+                elif max_consecutive >= 3 and metric in ["mood", "confidence"]:
+                    severity = "moderate"
+                elif max_consecutive >= 4:
+                    severity = "moderate"
+                else:
+                    severity = "low"
+
                 signals.append({
                     "pattern": f"consecutive_{metric}_{'increase' if metric == 'stress' else 'decline'}",
                     "metric": metric,
                     "description": f"{max_consecutive} consecutive days of {metric} {'increase' if metric == 'stress' else 'decline'}",
-                    "severity": "moderate" if max_consecutive < 5 else "high",
+                    "severity": severity,
                     "values": {"consecutive_days": max_consecutive},
                 })
 
@@ -352,11 +419,11 @@ class SlumpDetector:
         """Detect known slump pattern signatures."""
         signals = []
 
-        # Mood-confidence divergence
+        # Mood-confidence divergence - relaxed thresholds
         mood_trend = trend_scores.get("mood", 0)
         conf_trend = trend_scores.get("confidence", 0)
 
-        if mood_trend > -0.2 and conf_trend < -0.3:
+        if mood_trend > -0.15 and conf_trend < -0.2:  # Relaxed from -0.2/-0.3
             signals.append({
                 "pattern": "mood_confidence_divergence",
                 "description": self.SLUMP_PATTERNS["mood_confidence_divergence"]["description"],
@@ -364,7 +431,7 @@ class SlumpDetector:
                 "values": {"mood_trend": mood_trend, "confidence_trend": conf_trend},
             })
 
-        # Stress-sleep cascade
+        # Stress-sleep cascade - relaxed thresholds
         stress_values = metrics.get("stress", [])
         sleep_values = metrics.get("sleep", [])
 
@@ -372,17 +439,18 @@ class SlumpDetector:
             recent_stress = np.mean(stress_values[-self.short_window:])
             recent_sleep = np.mean(sleep_values[-self.short_window:])
 
-            if recent_stress > 7 and recent_sleep < 5:
+            if recent_stress > 6 and recent_sleep < 6:  # Relaxed from 7/5
+                severity = "high" if recent_stress > 7 or recent_sleep < 5 else "moderate"
                 signals.append({
                     "pattern": "stress_sleep_cascade",
                     "description": self.SLUMP_PATTERNS["stress_sleep_cascade"]["description"],
-                    "severity": self.SLUMP_PATTERNS["stress_sleep_cascade"]["severity"],
+                    "severity": severity,
                     "values": {"recent_stress": recent_stress, "recent_sleep": recent_sleep},
                 })
 
-        # Energy-motivation decline
+        # Energy-motivation decline - relaxed thresholds
         energy_trend = trend_scores.get("energy", 0)
-        if energy_trend < -0.3 and mood_trend < -0.2:
+        if energy_trend < -0.2 and mood_trend < -0.15:  # Relaxed from -0.3/-0.2
             signals.append({
                 "pattern": "energy_motivation_decline",
                 "description": self.SLUMP_PATTERNS["energy_motivation_decline"]["description"],
@@ -390,25 +458,131 @@ class SlumpDetector:
                 "values": {"energy_trend": energy_trend, "mood_trend": mood_trend},
             })
 
-        # Confidence collapse (rapid drop)
-        if conf_trend < -0.5:
+        # Confidence collapse - relaxed threshold
+        if conf_trend < -0.35:  # Relaxed from -0.5
+            severity = "high" if conf_trend < -0.5 else "moderate"
             signals.append({
                 "pattern": "confidence_collapse",
                 "description": self.SLUMP_PATTERNS["confidence_collapse"]["description"],
-                "severity": self.SLUMP_PATTERNS["confidence_collapse"]["severity"],
+                "severity": severity,
                 "values": {"confidence_trend": conf_trend},
             })
 
-        # Chronic stress
+        # Chronic stress - lowered threshold
         if stress_values and len(stress_values) >= self.long_window:
             long_stress_avg = np.mean(stress_values[-self.long_window:])
-            if long_stress_avg > 7:
+            if long_stress_avg > 6.5:  # Lowered from 7
                 signals.append({
                     "pattern": "chronic_stress",
                     "description": self.SLUMP_PATTERNS["chronic_stress"]["description"],
-                    "severity": self.SLUMP_PATTERNS["chronic_stress"]["severity"],
+                    "severity": "high" if long_stress_avg > 7.5 else "moderate",
                     "values": {"average_stress": long_stress_avg},
                 })
+
+        return signals
+
+    def _detect_absolute_concerns(
+        self,
+        metrics: Dict[str, List[float]],
+    ) -> List[Dict[str, Any]]:
+        """Detect concerning absolute values regardless of trend."""
+        signals = []
+
+        for metric, values in metrics.items():
+            if len(values) < self.short_window:
+                continue
+
+            recent_avg = np.mean(values[-self.short_window:])
+            thresholds = self.CONCERN_THRESHOLDS.get(metric, {})
+
+            if metric == "stress":
+                # Higher stress is bad
+                if "critical" in thresholds and recent_avg >= thresholds["critical"]:
+                    signals.append({
+                        "pattern": f"critical_{metric}",
+                        "metric": metric,
+                        "description": f"Critical {metric} level: {recent_avg:.1f}",
+                        "severity": "critical",
+                        "values": {"recent_avg": recent_avg, "threshold": thresholds["critical"]},
+                    })
+                elif "high" in thresholds and recent_avg >= thresholds["high"]:
+                    signals.append({
+                        "pattern": f"high_{metric}",
+                        "metric": metric,
+                        "description": f"Elevated {metric} level: {recent_avg:.1f}",
+                        "severity": "moderate",
+                        "values": {"recent_avg": recent_avg, "threshold": thresholds["high"]},
+                    })
+            else:
+                # Lower is bad for mood, confidence, energy, sleep
+                if "critical" in thresholds and recent_avg <= thresholds["critical"]:
+                    signals.append({
+                        "pattern": f"critical_low_{metric}",
+                        "metric": metric,
+                        "description": f"Critically low {metric}: {recent_avg:.1f}",
+                        "severity": "critical",
+                        "values": {"recent_avg": recent_avg, "threshold": thresholds["critical"]},
+                    })
+                elif "low" in thresholds and recent_avg <= thresholds["low"]:
+                    signals.append({
+                        "pattern": f"low_{metric}",
+                        "metric": metric,
+                        "description": f"Below-optimal {metric}: {recent_avg:.1f}",
+                        "severity": "moderate",
+                        "values": {"recent_avg": recent_avg, "threshold": thresholds["low"]},
+                    })
+
+        return signals
+
+    def _detect_compound_decline(
+        self,
+        trend_scores: Dict[str, float],
+    ) -> List[Dict[str, Any]]:
+        """Detect when multiple metrics are declining together."""
+        signals = []
+
+        # Count declining metrics (negative trend)
+        declining_metrics = []
+        for metric, trend in trend_scores.items():
+            if metric == "stress":
+                # For stress, positive trend is bad
+                if trend > 0.1:
+                    declining_metrics.append((metric, trend))
+            else:
+                # For others, negative trend is bad
+                if trend < -0.1:
+                    declining_metrics.append((metric, trend))
+
+        # If 3+ metrics declining = compound decline
+        if len(declining_metrics) >= 3:
+            avg_decline = np.mean([abs(t) for _, t in declining_metrics])
+            signals.append({
+                "pattern": "compound_decline",
+                "description": f"Multiple metrics declining: {', '.join(m for m, _ in declining_metrics)}",
+                "severity": "high" if len(declining_metrics) >= 4 else "moderate",
+                "values": {
+                    "declining_count": len(declining_metrics),
+                    "metrics": [m for m, _ in declining_metrics],
+                    "avg_decline": avg_decline,
+                },
+            })
+
+        # Check for wellbeing collapse (mood + confidence + energy all down)
+        mood_trend = trend_scores.get("mood", 0)
+        conf_trend = trend_scores.get("confidence", 0)
+        energy_trend = trend_scores.get("energy", 0)
+
+        if mood_trend < -0.15 and conf_trend < -0.15 and energy_trend < -0.15:
+            signals.append({
+                "pattern": "wellbeing_collapse",
+                "description": "Mood, confidence, and energy all declining",
+                "severity": "high",
+                "values": {
+                    "mood_trend": mood_trend,
+                    "confidence_trend": conf_trend,
+                    "energy_trend": energy_trend,
+                },
+            })
 
         return signals
 

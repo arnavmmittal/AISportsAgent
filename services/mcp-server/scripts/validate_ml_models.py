@@ -106,7 +106,7 @@ def test_slump_detector(athlete_logs: Dict[str, List[Dict]], verbose: bool = Fal
             detected_slump = detection.get("slump_detected", False)
             probability = detection.get("slump_probability", 0)
 
-            # Check if recent window contains slump
+            # Check if recent window contains slump (last 30 days)
             recent_has_slump = any(log.get("in_slump", False) for log in recent_logs)
 
             if detected_slump and recent_has_slump:
