@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Calendar,
   Clock,
@@ -14,49 +14,96 @@ import {
   Sparkles,
   Moon,
   Activity,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
 import { ReadinessGauge, type ReadinessLevel } from '@/components/shared/athlete/ReadinessGauge';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Athlete Home Page - Daily landing dashboard
  *
- * Key sections:
- * 1. Personalized greeting with context (game day, time of day)
- * 2. Readiness gauge - primary metric
- * 3. Continue chat CTA - direct access to AI coach
- * 4. Morning check-in prompt
- * 5. Today's focus items
- * 6. Personalized insight from ML
+ * Data fetched from /api/athlete/dashboard:
+ * - Readiness score (calculated from mood logs)
+ * - Stats (streak, goals progress, last chat topic)
+ * - Today's focus items
+ * - Personalized insight
+ * - Upcoming assignments
  */
 
-interface Assignment {
-  id: string;
-  title: string;
-  dueDate: Date;
-  status: 'pending' | 'submitted' | 'overdue';
-  estimatedTime: string;
-}
-
-interface ReadinessData {
-  score: number;
-  dimensions: {
-    mood: number;
-    sleep: number;
-    stress: number;
-    engagement: number;
+interface DashboardData {
+  user: {
+    name: string;
+    sport: string | null;
+    year: string | null;
   };
-  trend: 'up' | 'down' | 'stable';
-  change: number;
+  readiness: {
+    score: number;
+    dimensions: { mood: number; sleep: number; stress: number; engagement: number };
+    trend: 'up' | 'down' | 'stable';
+    change: number;
+  };
+  stats: {
+    checkInStreak: number;
+    goalsCompleted: number;
+    goalsTotal: number;
+    lastChatTopic: string | null;
+    hasCompletedCheckIn: boolean;
+  };
+  insight: {
+    text: string;
+    type: 'pattern' | 'recommendation' | 'celebration';
+    actionUrl: string;
+    actionLabel: string;
+  };
+  focusItems: {
+    id: string;
+    title: string;
+    completed: boolean;
+    type: 'routine' | 'assignment';
+  }[];
+  hasGameTomorrow: boolean;
+  upcomingAssignments: {
+    id: string;
+    title: string;
+    dueDate: string;
+    estimatedTime: string | null;
+  }[];
 }
 
-interface InsightData {
-  text: string;
-  type: 'pattern' | 'recommendation' | 'celebration';
-  actionUrl?: string;
-  actionLabel?: string;
+// Local storage keys for routine completion tracking (resets daily)
+const ROUTINE_COMPLETION_KEY = 'athlete_routine_completion';
+const ROUTINE_DATE_KEY = 'athlete_routine_date';
+
+function getTodayDateString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function loadRoutineCompletions(): Record<string, boolean> {
+  if (typeof window === 'undefined') return {};
+
+  const savedDate = localStorage.getItem(ROUTINE_DATE_KEY);
+  const today = getTodayDateString();
+
+  // Reset if new day
+  if (savedDate !== today) {
+    localStorage.setItem(ROUTINE_DATE_KEY, today);
+    localStorage.removeItem(ROUTINE_COMPLETION_KEY);
+    return {};
+  }
+
+  const saved = localStorage.getItem(ROUTINE_COMPLETION_KEY);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return {};
+    }
+  }
+  return {};
 }
 
 function getGreeting(): string {
@@ -72,80 +119,136 @@ function getContextMessage(hasGameTomorrow: boolean, streak: number): string {
   return "Here's your wellness overview";
 }
 
+function getReadinessLevel(score: number): ReadinessLevel {
+  if (score >= 75) return 'green';
+  if (score >= 55) return 'yellow';
+  return 'red';
+}
+
+function getReadinessMessage(level: ReadinessLevel): string {
+  switch (level) {
+    case 'green':
+      return "You're in a good place";
+    case 'yellow':
+      return 'Some areas need attention';
+    case 'red':
+      return "Let's work on your wellbeing";
+  }
+}
+
+function getTimeUntilDue(dueDate: string): string {
+  const seconds = Math.floor((new Date(dueDate).getTime() - Date.now()) / 1000);
+  if (seconds < 0) return 'Overdue';
+  if (seconds < 86400) return 'Due today';
+  if (seconds < 172800) return 'Due tomorrow';
+  return `Due in ${Math.floor(seconds / 86400)} days`;
+}
+
 export default function StudentHomePage() {
-  const [userName] = useState('Sarah'); // Will come from auth context
-  const [hasGameTomorrow] = useState(true); // Will come from schedule API
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [routineCompletions, setRoutineCompletions] = useState<Record<string, boolean>>({});
 
-  // Mock data - will be replaced with API calls
-  const [readiness] = useState<ReadinessData>({
-    score: 78,
-    dimensions: {
-      mood: 68,
-      sleep: 76,
-      stress: 45,
-      engagement: 62,
-    },
-    trend: 'up',
-    change: 5,
-  });
+  // Load routine completions from localStorage
+  useEffect(() => {
+    setRoutineCompletions(loadRoutineCompletions());
+  }, []);
 
-  const [stats] = useState({
-    checkInStreak: 5,
-    goalsCompleted: 3,
-    goalsTotal: 7,
-    lastChatTopic: 'pre-game anxiety',
-    hasCompletedCheckIn: false,
-  });
+  // Fetch dashboard data
+  const fetchDashboard = useCallback(async () => {
+    if (!authUser) return;
 
-  const [insight] = useState<InsightData>({
-    text: "Your mood tends to dip 2 days before big games. Today's chat can help you prepare mentally.",
-    type: 'pattern',
-    actionUrl: '/student/ai-coach',
-    actionLabel: 'Start session',
-  });
+    try {
+      setIsLoading(true);
+      setError(null);
 
-  const [todaysFocus] = useState<{ id: string; title: string; completed: boolean }[]>([
-    { id: '1', title: 'Morning mood check-in', completed: stats.hasCompletedCheckIn },
-    { id: '2', title: 'Practice breathing routine', completed: false },
-    { id: '3', title: 'Review visualization script', completed: false },
-  ]);
+      const response = await fetch('/api/athlete/dashboard');
 
-  const [upcomingAssignments] = useState<Assignment[]>([
-    {
-      id: '1',
-      title: 'Pre-Game Mental Preparation',
-      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      status: 'pending',
-      estimatedTime: '10 min',
-    },
-  ]);
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Please sign in to view your dashboard');
+          return;
+        }
+        throw new Error('Failed to fetch dashboard data');
+      }
 
-  const getTimeUntilDue = (dueDate: Date): string => {
-    const seconds = Math.floor((dueDate.getTime() - Date.now()) / 1000);
-    if (seconds < 0) return 'Overdue';
-    if (seconds < 86400) return 'Due today';
-    if (seconds < 172800) return 'Due tomorrow';
-    return `Due in ${Math.floor(seconds / 86400)} days`;
-  };
+      const result = await response.json();
 
-  const getReadinessLevel = (score: number): ReadinessLevel => {
-    if (score >= 75) return 'green';
-    if (score >= 55) return 'yellow';
-    return 'red';
-  };
-
-  const getReadinessMessage = (level: ReadinessLevel): string => {
-    switch (level) {
-      case 'green':
-        return "You're in a good place";
-      case 'yellow':
-        return 'Some areas need attention';
-      case 'red':
-        return "Let's work on your wellbeing";
+      if (result.success) {
+        setData(result.data);
+      } else {
+        throw new Error(result.error || 'Unknown error');
+      }
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } finally {
+      setIsLoading(false);
     }
+  }, [authUser]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  // Toggle routine item completion (local only, persisted to localStorage)
+  const toggleRoutineCompletion = (itemId: string) => {
+    setRoutineCompletions((prev) => {
+      const updated = { ...prev, [itemId]: !prev[itemId] };
+      localStorage.setItem(ROUTINE_COMPLETION_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
+  // Loading state
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Unable to load dashboard</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => fetchDashboard()}>Try again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">No dashboard data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { readiness, stats, insight, focusItems, hasGameTomorrow, upcomingAssignments, user } = data;
   const level = getReadinessLevel(readiness.score);
+
+  // Merge focus items with local routine completions
+  const mergedFocusItems = focusItems.map((item) => ({
+    ...item,
+    completed: item.type === 'routine' ? (routineCompletions[item.id] ?? item.completed) : item.completed,
+  }));
+
+  const completedCount = mergedFocusItems.filter((t) => t.completed).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,7 +258,7 @@ export default function StudentHomePage() {
         ───────────────────────────────────────────────────────────────── */}
         <header className="animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
-            {getGreeting()}, {userName}
+            {getGreeting()}, {user.name.split(' ')[0]}
           </h1>
           <p className="text-muted-foreground mt-1">
             {getContextMessage(hasGameTomorrow, stats.checkInStreak)}
@@ -201,7 +304,7 @@ export default function StudentHomePage() {
                 {[
                   { label: 'Mood', value: readiness.dimensions.mood, icon: Sparkles },
                   { label: 'Sleep', value: readiness.dimensions.sleep, icon: Moon },
-                  { label: 'Stress', value: 100 - readiness.dimensions.stress, icon: Activity },
+                  { label: 'Stress', value: readiness.dimensions.stress, icon: Activity },
                 ].map((dim) => (
                   <div key={dim.label} className="flex items-center gap-3">
                     <dim.icon size={14} className="text-muted-foreground flex-shrink-0" />
@@ -253,7 +356,7 @@ export default function StudentHomePage() {
             <div className="flex-1 min-w-0">
               <div className="font-medium text-foreground">Continue Chat</div>
               <p className="text-sm text-muted-foreground truncate">
-                Last topic: {stats.lastChatTopic}...
+                {stats.lastChatTopic ? `Last topic: ${stats.lastChatTopic}...` : 'Start a new conversation'}
               </p>
             </div>
             <ChevronRight size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
@@ -290,35 +393,51 @@ export default function StudentHomePage() {
               Today's Focus
             </h2>
             <span className="text-xs text-muted-foreground">
-              {todaysFocus.filter((t) => t.completed).length}/{todaysFocus.length} done
+              {completedCount}/{mergedFocusItems.length} done
             </span>
           </div>
 
           <ul className="space-y-3">
-            {todaysFocus.map((task) => (
+            {mergedFocusItems.map((task) => (
               <li key={task.id} className="flex items-center gap-3">
-                <div
+                <button
+                  onClick={() => task.type === 'routine' && toggleRoutineCompletion(task.id)}
+                  disabled={task.type === 'assignment'}
                   className={cn(
-                    'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                    'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                    task.type === 'routine' && 'hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                     task.completed
                       ? 'bg-success border-success'
-                      : 'border-border'
+                      : task.type === 'routine'
+                        ? 'border-border hover:border-primary cursor-pointer'
+                        : 'border-border cursor-default'
                   )}
+                  aria-label={task.completed ? `Mark "${task.title}" as incomplete` : `Mark "${task.title}" as complete`}
                 >
                   {task.completed && (
                     <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 12 12">
                       <path d="M3.707 5.293a1 1 0 00-1.414 1.414l2.5 2.5a1 1 0 001.414 0l4.5-4.5a1 1 0 00-1.414-1.414L5.5 7.086 3.707 5.293z" />
                     </svg>
                   )}
-                </div>
-                <span
-                  className={cn(
-                    'text-sm',
-                    task.completed ? 'text-muted-foreground line-through' : 'text-foreground'
-                  )}
-                >
-                  {task.title}
-                </span>
+                </button>
+                {task.type === 'assignment' ? (
+                  <Link
+                    href={`/student/assignments/${task.id}`}
+                    className="text-sm text-foreground hover:text-primary transition-colors flex-1"
+                  >
+                    {task.title}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => toggleRoutineCompletion(task.id)}
+                    className={cn(
+                      'text-sm text-left flex-1 hover:text-primary transition-colors',
+                      task.completed ? 'text-muted-foreground line-through' : 'text-foreground'
+                    )}
+                  >
+                    {task.title}
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -327,18 +446,39 @@ export default function StudentHomePage() {
         {/* ─────────────────────────────────────────────────────────────────
             INSIGHT CARD - ML-generated
         ───────────────────────────────────────────────────────────────── */}
-        <section className="p-5 rounded-lg bg-info-muted border border-info/20 animate-slide-up">
+        <section className={cn(
+          'p-5 rounded-lg border animate-slide-up',
+          insight.type === 'celebration' && 'bg-warning-muted border-warning/20',
+          insight.type === 'pattern' && 'bg-info-muted border-info/20',
+          insight.type === 'recommendation' && 'bg-primary-muted border-primary/20'
+        )}>
           <div className="flex gap-4">
-            <div className="w-10 h-10 rounded-full bg-info/20 flex items-center justify-center flex-shrink-0">
-              <Lightbulb size={20} className="text-info" />
+            <div className={cn(
+              'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+              insight.type === 'celebration' && 'bg-warning/20',
+              insight.type === 'pattern' && 'bg-info/20',
+              insight.type === 'recommendation' && 'bg-primary/20'
+            )}>
+              <Lightbulb size={20} className={cn(
+                insight.type === 'celebration' && 'text-warning',
+                insight.type === 'pattern' && 'text-info',
+                insight.type === 'recommendation' && 'text-primary'
+              )} />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-foreground mb-1">Insight</div>
+              <div className="text-sm font-medium text-foreground mb-1">
+                {insight.type === 'celebration' ? 'Congratulations!' : 'Insight'}
+              </div>
               <p className="text-sm text-muted-foreground">{insight.text}</p>
               {insight.actionUrl && (
                 <Link
                   href={insight.actionUrl}
-                  className="inline-flex items-center gap-1 text-sm text-info font-medium mt-2 hover:underline"
+                  className={cn(
+                    'inline-flex items-center gap-1 text-sm font-medium mt-2 hover:underline',
+                    insight.type === 'celebration' && 'text-warning',
+                    insight.type === 'pattern' && 'text-info',
+                    insight.type === 'recommendation' && 'text-primary'
+                  )}
                 >
                   {insight.actionLabel}
                   <ChevronRight size={14} />
@@ -399,10 +539,12 @@ export default function StudentHomePage() {
                         <Calendar size={12} />
                         {getTimeUntilDue(assignment.dueDate)}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} />
-                        {assignment.estimatedTime}
-                      </span>
+                      {assignment.estimatedTime && (
+                        <span className="flex items-center gap-1">
+                          <Clock size={12} />
+                          {assignment.estimatedTime}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Button size="sm">Start</Button>
