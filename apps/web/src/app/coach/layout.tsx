@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
  */
 
 const navItems = [
-  { href: '/coach/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/coach/team-overview', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/coach/team', label: 'Team', icon: Users },
   { href: '/coach/readiness', label: 'Readiness', icon: Activity, badge: true },
   { href: '/coach/assignments', label: 'Assignments', icon: ClipboardList },
@@ -120,9 +120,9 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
             <ul className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                // Special handling for Dashboard: also highlight when at /coach (which redirects to /coach/dashboard)
-                const isActive = item.href === '/coach/dashboard'
-                  ? pathname === '/coach' || pathname === '/coach/dashboard' || pathname?.startsWith('/coach/dashboard/')
+                // Special handling for Dashboard: highlight when at /coach, /coach/dashboard, or /coach/team-overview
+                const isActive = item.href === '/coach/team-overview'
+                  ? pathname === '/coach' || pathname === '/coach/dashboard' || pathname === '/coach/team-overview' || pathname?.startsWith('/coach/team-overview/')
                   : pathname === item.href || pathname?.startsWith(item.href + '/');
 
                 return (
