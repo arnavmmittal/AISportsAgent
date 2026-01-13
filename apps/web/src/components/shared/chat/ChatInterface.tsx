@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { createClient } from '@/lib/supabase-client';
+import type { User } from '@supabase/supabase-js';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { VoiceButton, AudioVisualizer } from '@/components/shared/voice/VoiceButton';
 import { ActionPlanWidget } from '@/components/shared/chat/ActionPlanWidget';
@@ -94,7 +95,10 @@ interface StructuredMetadata {
 }
 
 export function ChatInterface() {
-  const { data: session } = useSession();
+  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +107,24 @@ export function ChatInterface() {
   const [voiceMode, setVoiceMode] = useState(false);
   const [currentMetadata, setCurrentMetadata] = useState<StructuredMetadata | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Get user on mount and subscribe to auth changes
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthLoading(false);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   // Voice integration
   const {
@@ -114,7 +136,7 @@ export function ChatInterface() {
     toggleVoice,
   } = useVoiceChat({
     sessionId,
-    athleteId: session?.user?.id || '',
+    athleteId: user?.id || '',
     onTranscript: (text, isFinal) => {
       if (isFinal) {
         // Voice transcript is final - add as user message
@@ -144,16 +166,16 @@ export function ChatInterface() {
 
   // Initialize session ID (persistent per user)
   useEffect(() => {
-    if (session?.user?.id) {
+    if (user?.id) {
       // Use persistent session ID based on user ID only (no timestamp)
       // This allows session history to persist across page refreshes
-      setSessionId(`session_${session.user.id}`);
+      setSessionId(`session_${user.id}`);
     }
-  }, [session]);
+  }, [user]);
 
   // Load message history when session ID is set
   useEffect(() => {
-    if (!sessionId || !session?.user?.id) return;
+    if (!sessionId || !user?.id) return;
 
     const loadHistory = async () => {
       try {
@@ -180,7 +202,7 @@ export function ChatInterface() {
     };
 
     loadHistory();
-  }, [sessionId, session?.user?.id]);
+  }, [sessionId, user?.id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -188,7 +210,7 @@ export function ChatInterface() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputValue.trim() || !session?.user?.id || isLoading) return;
+    if (!inputValue.trim() || !user?.id || isLoading) return;
 
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
@@ -225,7 +247,7 @@ export function ChatInterface() {
         body: JSON.stringify({
           session_id: sessionId,
           message: userInput,
-          athlete_id: session.user.id,
+          athlete_id: user.id,
         }),
       });
 
@@ -336,7 +358,15 @@ export function ChatInterface() {
     }
   };
 
-  if (!session?.user) {
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-gray-500">Please sign in to start chatting</p>
@@ -554,7 +584,7 @@ export function ChatInterface() {
                 setVoiceMode(!voiceMode);
                 toggleVoice();
               }}
-              disabled={isLoading || !sessionId || !session?.user?.id}
+              disabled={isLoading || !sessionId || !user?.id}
             />
 
             <button

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { createClient } from '@/lib/supabase-client';
 import { useRouter, useSearchParams } from 'next/navigation';
+import type { User } from '@supabase/supabase-js';
 import {
   Send,
   MessageSquare,
@@ -84,9 +85,14 @@ const quickPrompts = [
 ];
 
 export default function AICoachPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = createClient();
+
+  // Auth state using Supabase
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +109,24 @@ export default function AICoachPage() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
 
+  // Get user on mount and subscribe to auth changes
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthLoading(false);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
   // Voice integration
   const {
     voiceState,
@@ -113,7 +137,7 @@ export default function AICoachPage() {
     toggleVoice,
   } = useVoiceChat({
     sessionId,
-    athleteId: session?.user?.id || '',
+    athleteId: user?.id || '',
     onTranscript: (text, isFinal) => {
       if (isFinal && text.trim()) {
         const userMessage: Message = {
@@ -144,14 +168,14 @@ export default function AICoachPage() {
 
   // Initialize persistent session ID
   useEffect(() => {
-    if (session?.user?.id) {
-      setSessionId(`session_${session.user.id}`);
+    if (user?.id) {
+      setSessionId(`session_${user.id}`);
     }
-  }, [session]);
+  }, [user]);
 
   // Load message history
   useEffect(() => {
-    if (!sessionId || !session?.user?.id) return;
+    if (!sessionId || !user?.id) return;
 
     const loadHistory = async () => {
       try {
@@ -177,7 +201,7 @@ export default function AICoachPage() {
     };
 
     loadHistory();
-  }, [sessionId, session?.user?.id]);
+  }, [sessionId, user?.id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -186,7 +210,7 @@ export default function AICoachPage() {
 
   // Load chat sessions for history drawer
   const loadChatSessions = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       setIsLoadingSessions(true);
@@ -219,7 +243,7 @@ export default function AICoachPage() {
     } finally {
       setIsLoadingSessions(false);
     }
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   // Load sessions when history drawer opens
   useEffect(() => {
@@ -239,21 +263,21 @@ export default function AICoachPage() {
   // Check for sessionId in URL params
   useEffect(() => {
     const urlSessionId = searchParams.get('sessionId');
-    if (urlSessionId && session?.user?.id) {
+    if (urlSessionId && user?.id) {
       setSessionId(urlSessionId);
     }
-  }, [searchParams, session?.user?.id]);
+  }, [searchParams, user?.id]);
 
   // Start a new chat session
   const startNewSession = useCallback(() => {
-    if (session?.user?.id) {
-      const newId = `session_${session.user.id}_${Date.now()}`;
+    if (user?.id) {
+      const newId = `session_${user.id}_${Date.now()}`;
       setSessionId(newId);
       setMessages([]);
       setHistoryOpen(false);
       router.push('/student/ai-coach', { scroll: false });
     }
-  }, [session?.user?.id, router]);
+  }, [user?.id, router]);
 
   // Format date for history items
   const formatSessionDate = (date: Date) => {
@@ -280,7 +304,7 @@ export default function AICoachPage() {
 
   const sendMessage = useCallback(async (messageText?: string) => {
     const text = messageText || inputValue;
-    if (!text.trim() || !session?.user?.id || isLoading) return;
+    if (!text.trim() || !user?.id || isLoading) return;
 
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
@@ -316,7 +340,7 @@ export default function AICoachPage() {
         body: JSON.stringify({
           session_id: sessionId,
           message: text,
-          athlete_id: session.user.id,
+          athlete_id: user.id,
         }),
       });
 
@@ -397,7 +421,7 @@ export default function AICoachPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, session?.user?.id, sessionId, isLoading]);
+  }, [inputValue, user?.id, sessionId, isLoading]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -412,7 +436,7 @@ export default function AICoachPage() {
   };
 
   // Not authenticated
-  if (status === 'loading') {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -420,7 +444,7 @@ export default function AICoachPage() {
     );
   }
 
-  if (!session?.user) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
