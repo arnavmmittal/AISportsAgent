@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/shared/ui/button';
 import { Input } from '@/components/shared/ui/input';
 import { Label } from '@/components/shared/ui/label';
@@ -27,7 +27,7 @@ import { useTheme } from '@/contexts/ThemeContext';
  * Student Settings Page - Updated with Design System v2.0
  *
  * Features:
- * - Profile information editing
+ * - Profile information editing (fetched from API)
  * - Notification preferences
  * - Privacy settings
  * - Theme toggle
@@ -37,18 +37,32 @@ import { useTheme } from '@/contexts/ThemeContext';
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 
+interface ProfileData {
+  name: string;
+  email: string;
+  phone: string;
+  sport: string;
+  team: string;
+  year: string;
+  position: string;
+}
+
 export default function StudentSettingsPage() {
   const { toggleTheme, isDarkMode } = useTheme();
 
-  // Profile settings
-  const [profile, setProfile] = useState({
-    name: 'Alex Johnson',
-    email: 'alex.johnson@university.edu',
-    phone: '(555) 123-4567',
-    sport: 'Basketball',
-    team: 'Varsity',
-    year: 'Junior',
-    position: 'Point Guard',
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Profile settings (fetched from API)
+  const [profile, setProfile] = useState<ProfileData>({
+    name: '',
+    email: '',
+    phone: '',
+    sport: '',
+    team: '',
+    year: '',
+    position: '',
   });
 
   // Notification preferences
@@ -66,13 +80,73 @@ export default function StudentSettingsPage() {
     anonymousData: false,
   });
 
-  const [isSaving, setIsSaving] = useState(false);
+  // Fetch profile on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch athlete profile
+        const profileRes = await fetch('/api/athlete/profile');
+        if (profileRes.ok) {
+          const profileJson = await profileRes.json();
+          if (profileJson.profile) {
+            setProfile({
+              name: profileJson.profile.name || '',
+              email: profileJson.profile.email || '',
+              phone: profileJson.profile.phone || '',
+              sport: profileJson.profile.sport || '',
+              team: profileJson.profile.team || '',
+              year: profileJson.profile.year || '',
+              position: profileJson.profile.position || '',
+            });
+          }
+        }
+
+        // Fetch notification preferences
+        const notifRes = await fetch('/api/athlete/notifications');
+        if (notifRes.ok) {
+          const notifJson = await notifRes.json();
+          if (notifJson.preferences) {
+            setNotifications(notifJson.preferences);
+          }
+        }
+
+        // Fetch consent/privacy settings
+        const consentRes = await fetch('/api/athlete/consent');
+        if (consentRes.ok) {
+          const consentJson = await consentRes.json();
+          if (consentJson.consent) {
+            setPrivacy({
+              shareWithCoach: consentJson.consent.shareWithCoach ?? true,
+              anonymousData: consentJson.consent.anonymousResearch ?? false,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('Profile updated successfully!');
+      const response = await fetch('/api/athlete/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+
+      if (response.ok) {
+        toast.success('Profile updated successfully!');
+      } else {
+        throw new Error('Failed to update profile');
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
       toast.error('Failed to update profile. Please try again.');
@@ -83,7 +157,17 @@ export default function StudentSettingsPage() {
 
   const handleSaveNotifications = async () => {
     try {
-      toast.success('Notification preferences saved!');
+      const response = await fetch('/api/athlete/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notifications),
+      });
+
+      if (response.ok) {
+        toast.success('Notification preferences saved!');
+      } else {
+        throw new Error('Failed to save preferences');
+      }
     } catch (error) {
       console.error('Error saving notifications:', error);
       toast.error('Failed to save preferences. Please try again.');
@@ -92,16 +176,46 @@ export default function StudentSettingsPage() {
 
   const handleSavePrivacy = async () => {
     try {
-      toast.success('Privacy settings saved!');
+      const response = await fetch('/api/athlete/consent', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shareWithCoach: privacy.shareWithCoach,
+          anonymousResearch: privacy.anonymousData,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Privacy settings saved!');
+      } else {
+        throw new Error('Failed to save settings');
+      }
     } catch (error) {
       console.error('Error saving privacy settings:', error);
       toast.error('Failed to save settings. Please try again.');
     }
   };
 
-  const handleLogout = () => {
-    toast.success('Logged out successfully');
+  const handleLogout = async () => {
+    try {
+      // TODO: Implement proper logout via Supabase auth
+      toast.success('Logged out successfully');
+      window.location.href = '/auth/signin';
+    } catch (error) {
+      toast.error('Failed to log out');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,6 +248,7 @@ export default function StudentSettingsPage() {
                   id="name"
                   value={profile.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, name: e.target.value })}
+                  placeholder="Your name"
                 />
               </div>
 
@@ -147,6 +262,7 @@ export default function StudentSettingsPage() {
                     value={profile.email}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, email: e.target.value })}
                     className="pl-10"
+                    placeholder="your.email@university.edu"
                   />
                 </div>
               </div>
@@ -161,39 +277,64 @@ export default function StudentSettingsPage() {
                     value={profile.phone}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, phone: e.target.value })}
                     className="pl-10"
+                    placeholder="(555) 123-4567"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="year">Academic Year</Label>
-                <Input
+                <select
                   id="year"
                   value={profile.year}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, year: e.target.value })}
-                />
+                  onChange={(e) => setProfile({ ...profile, year: e.target.value })}
+                  className="w-full h-10 px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
+                >
+                  <option value="">Select year</option>
+                  <option value="Freshman">Freshman</option>
+                  <option value="Sophomore">Sophomore</option>
+                  <option value="Junior">Junior</option>
+                  <option value="Senior">Senior</option>
+                  <option value="Graduate">Graduate</option>
+                </select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="sport">Sport</Label>
                 <div className="relative">
                   <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
+                  <select
                     id="sport"
                     value={profile.sport}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, sport: e.target.value })}
-                    className="pl-10"
-                  />
+                    onChange={(e) => setProfile({ ...profile, sport: e.target.value })}
+                    className="w-full h-10 pl-10 pr-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
+                  >
+                    <option value="">Select sport</option>
+                    <option value="Basketball">Basketball</option>
+                    <option value="Football">Football</option>
+                    <option value="Soccer">Soccer</option>
+                    <option value="Baseball">Baseball</option>
+                    <option value="Volleyball">Volleyball</option>
+                    <option value="Track & Field">Track & Field</option>
+                    <option value="Swimming">Swimming</option>
+                    <option value="Tennis">Tennis</option>
+                  </select>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="team">Team</Label>
-                <Input
+                <select
                   id="team"
                   value={profile.team}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, team: e.target.value })}
-                />
+                  onChange={(e) => setProfile({ ...profile, team: e.target.value })}
+                  className="w-full h-10 px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
+                >
+                  <option value="">Select team</option>
+                  <option value="Varsity">Varsity</option>
+                  <option value="JV">JV</option>
+                  <option value="Club">Club</option>
+                </select>
               </div>
 
               <div className="space-y-2 sm:col-span-2">
@@ -202,6 +343,7 @@ export default function StudentSettingsPage() {
                   id="position"
                   value={profile.position}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, position: e.target.value })}
+                  placeholder="e.g., Point Guard, Midfielder, etc."
                 />
               </div>
             </div>
@@ -276,10 +418,10 @@ export default function StudentSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="coach-messages" className="text-sm font-medium">
-                    Coach Messages
+                    Sports Psychologist Messages
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Receive notifications for messages from your coach
+                    Receive notifications for messages from your sports psychologist
                   </p>
                 </div>
                 <Switch
@@ -353,10 +495,10 @@ export default function StudentSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="share-coach" className="text-sm font-medium">
-                    Share Data with Coach
+                    Share Data with Sports Psychologist
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Allow your coach to view your mood logs, goals, and progress
+                    Allow your sports psychologist to view your mood logs, goals, and progress
                   </p>
                 </div>
                 <Switch
@@ -393,7 +535,7 @@ export default function StudentSettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Your Data is Protected</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    All data is encrypted and stored securely. Your coach only sees aggregated trends
+                    All data is encrypted and stored securely. Your sports psychologist only sees aggregated trends
                     unless you explicitly share specific information. You can revoke access at any time.
                   </p>
                 </div>

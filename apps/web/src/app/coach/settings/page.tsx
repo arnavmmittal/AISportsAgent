@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, Moon, Sun, Settings, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -14,25 +14,48 @@ import { cn } from '@/lib/utils';
  * Coach Settings Page - Updated with Design System v2.0
  *
  * Features:
- * - Profile information editing
+ * - Profile information editing (fetched from API)
  * - Notification preferences
  * - Privacy & data settings
  * - Team invite code management
  * - Theme toggle
+ *
+ * Note: "Coach" refers to Sports Psychologist, not sport team coach.
+ * See README for terminology clarification.
  */
 
 export const dynamic = 'force-dynamic';
 
+interface ProfileData {
+  name: string;
+  email: string;
+  sport: string;
+  teamName: string;
+}
+
+interface InviteCodeData {
+  inviteCode: string;
+  coachName: string;
+  sport: string;
+  athleteCount: number;
+}
+
 export default function CoachSettingsPage() {
   const { toggleTheme, isDarkMode } = useTheme();
 
-  const [profile, setProfile] = useState({
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Profile data (fetched from API)
+  const [profile, setProfile] = useState<ProfileData>({
     name: '',
     email: '',
-    sport: 'Basketball',
-    teamName: 'Demo University Basketball',
+    sport: '',
+    teamName: '',
   });
 
+  // Notification preferences
   const [notifications, setNotifications] = useState({
     crisisAlerts: true,
     dailySummary: true,
@@ -40,6 +63,7 @@ export default function CoachSettingsPage() {
     weeklyReports: true,
   });
 
+  // Privacy settings
   const [privacy, setPrivacy] = useState({
     dataRetention: '90 days',
     shareMoodLogs: true,
@@ -47,13 +71,59 @@ export default function CoachSettingsPage() {
     shareChatSummaries: false,
   });
 
-  const [inviteCode] = useState('DEMO-COACH-2024');
-  const [isSaving, setIsSaving] = useState(false);
+  // Invite code data
+  const [inviteCodeData, setInviteCodeData] = useState<InviteCodeData | null>(null);
+  const [showInviteCode, setShowInviteCode] = useState(false);
+
+  // Fetch profile and settings on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch invite code (which includes coach info)
+        const inviteRes = await fetch('/api/coach/invite-code');
+        if (inviteRes.ok) {
+          const inviteJson = await inviteRes.json();
+          if (inviteJson.data) {
+            setInviteCodeData(inviteJson.data);
+            // Pre-populate profile from invite code data
+            setProfile(prev => ({
+              ...prev,
+              name: inviteJson.data.coachName || '',
+              sport: inviteJson.data.sport || '',
+            }));
+          }
+        }
+
+        // Fetch notification preferences if API exists
+        const notifRes = await fetch('/api/coach/notifications');
+        if (notifRes.ok) {
+          const notifJson = await notifRes.json();
+          if (notifJson.preferences) {
+            setNotifications(notifJson.preferences);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // TODO: Implement profile update API
+      // const response = await fetch('/api/coach/profile', {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(profile),
+      // });
+      await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -65,6 +135,7 @@ export default function CoachSettingsPage() {
 
   const handleSaveNotifications = async () => {
     try {
+      // TODO: Implement notifications preferences update API
       toast.success('Notification preferences saved!');
     } catch (error) {
       console.error('Error saving notifications:', error);
@@ -74,6 +145,7 @@ export default function CoachSettingsPage() {
 
   const handleSavePrivacy = async () => {
     try {
+      // TODO: Implement privacy settings update API
       toast.success('Privacy settings saved!');
     } catch (error) {
       console.error('Error saving privacy settings:', error);
@@ -82,13 +154,31 @@ export default function CoachSettingsPage() {
   };
 
   const handleCopyInviteCode = () => {
-    navigator.clipboard.writeText(inviteCode);
-    toast.success('Invite code copied to clipboard!');
+    if (inviteCodeData?.inviteCode) {
+      navigator.clipboard.writeText(inviteCodeData.inviteCode);
+      toast.success('Invite code copied to clipboard!');
+    }
   };
 
-  const handleGenerateNewCode = () => {
-    toast.success('New invite code generated!');
+  const handleGenerateNewCode = async () => {
+    try {
+      // TODO: Implement new code generation API
+      toast.success('New invite code generated!');
+    } catch (error) {
+      toast.error('Failed to generate new code.');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,7 +189,7 @@ export default function CoachSettingsPage() {
             <Settings className="w-7 h-7 text-primary" />
             Settings
           </h1>
-          <p className="text-muted-foreground mt-1">Manage your coach profile and preferences</p>
+          <p className="text-muted-foreground mt-1">Manage your profile and preferences</p>
         </header>
 
         {/* Profile Information */}
@@ -137,30 +227,33 @@ export default function CoachSettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sport">Sport</Label>
+                <Label htmlFor="sport">Primary Sport</Label>
                 <select
                   id="sport"
                   value={profile.sport}
                   onChange={(e) => setProfile({ ...profile, sport: e.target.value })}
                   className="w-full h-10 px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
                 >
-                  <option>Basketball</option>
-                  <option>Football</option>
-                  <option>Soccer</option>
-                  <option>Baseball</option>
-                  <option>Volleyball</option>
-                  <option>Track & Field</option>
-                  <option>Swimming</option>
-                  <option>Tennis</option>
+                  <option value="">Select a sport</option>
+                  <option value="Basketball">Basketball</option>
+                  <option value="Football">Football</option>
+                  <option value="Soccer">Soccer</option>
+                  <option value="Baseball">Baseball</option>
+                  <option value="Volleyball">Volleyball</option>
+                  <option value="Track & Field">Track & Field</option>
+                  <option value="Swimming">Swimming</option>
+                  <option value="Tennis">Tennis</option>
+                  <option value="All Sports">All Sports</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="teamName">Team Name</Label>
+                <Label htmlFor="teamName">Organization</Label>
                 <Input
                   id="teamName"
                   value={profile.teamName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, teamName: e.target.value })}
+                  placeholder="University Name"
                 />
               </div>
             </div>
@@ -339,21 +432,34 @@ export default function CoachSettingsPage() {
             </div>
           </div>
           <div className="p-4 space-y-4">
-            <div className="p-4 rounded-lg bg-warning/5 border border-warning/10">
-              <div className="flex items-center gap-3">
-                <code className="flex-1 px-4 py-3 rounded-lg bg-background border border-border font-mono text-lg font-bold text-foreground">
-                  {inviteCode}
-                </code>
-                <Button variant="outline" onClick={handleCopyInviteCode}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy
+            {inviteCodeData ? (
+              <>
+                <div className="p-4 rounded-lg bg-warning/5 border border-warning/10">
+                  <div className="flex items-center gap-3">
+                    <code className="flex-1 px-4 py-3 rounded-lg bg-background border border-border font-mono text-lg font-bold text-foreground">
+                      {inviteCodeData.inviteCode}
+                    </code>
+                    <Button variant="outline" onClick={handleCopyInviteCode}>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
+                    <span>Sport: <strong className="text-foreground">{inviteCodeData.sport || 'All Sports'}</strong></span>
+                    <span>Connected: <strong className="text-foreground">{inviteCodeData.athleteCount} athletes</strong></span>
+                  </div>
+                </div>
+                <Button variant="outline" onClick={handleGenerateNewCode} className="w-full sm:w-auto">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Generate New Code
                 </Button>
+              </>
+            ) : (
+              <div className="p-6 text-center text-muted-foreground">
+                <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No invite code available. Contact support to get your team code.</p>
               </div>
-            </div>
-            <Button variant="outline" onClick={handleGenerateNewCode} className="w-full sm:w-auto">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Generate New Code
-            </Button>
+            )}
           </div>
         </section>
 
