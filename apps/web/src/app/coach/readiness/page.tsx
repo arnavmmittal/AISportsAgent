@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   TrendingUp,
   TrendingDown,
   Activity,
   AlertTriangle,
-  Users,
   Target,
   ChevronRight,
   Clock,
@@ -16,6 +15,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Shield,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/shared/ui/button';
@@ -28,25 +29,27 @@ import { cn } from '@/lib/utils';
  * - Readiness tab: Team metrics, intervention queue, heatmap
  * - Alerts tab: Critical wellness alerts with severity levels
  *
- * This consolidation reduces coach portal from 8→6 primary tabs.
+ * Data is fetched from APIs - no mock data.
  */
 
-interface ReadinessScore {
+interface HeatmapAthlete {
   athleteId: string;
   athleteName: string;
   sport: string;
-  scores: number[];
+  readinessHistory: number[];
   trend: 'improving' | 'declining' | 'stable';
   forecast: number[];
 }
 
 interface Intervention {
+  id: string;
   athleteId: string;
   athleteName: string;
-  priority: 1 | 2 | 3;
+  priority: number;
   readiness: number;
   reason: string;
   recommendation: string;
+  status: string;
 }
 
 type AlertSeverity = 'critical' | 'high' | 'medium';
@@ -60,7 +63,6 @@ interface Alert {
   reason: string;
   timestamp: Date;
   status: 'active' | 'resolved' | 'monitoring';
-  assignedTo?: string;
 }
 
 export default function ReadinessPage() {
@@ -69,6 +71,67 @@ export default function ReadinessPage() {
   const [activeTab, setActiveTab] = useState<'readiness' | 'alerts'>(
     (searchParams.get('tab') as 'readiness' | 'alerts') || 'readiness'
   );
+
+  // Data states
+  const [heatmapData, setHeatmapData] = useState<HeatmapAthlete[]>([]);
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch heatmap data
+        const heatmapRes = await fetch('/api/coach/analytics/team-heatmap');
+        if (heatmapRes.ok) {
+          const heatmapJson = await heatmapRes.json();
+          if (heatmapJson.athletes) {
+            setHeatmapData(heatmapJson.athletes);
+          }
+        }
+
+        // Fetch interventions
+        const interventionsRes = await fetch('/api/coach/interventions');
+        if (interventionsRes.ok) {
+          const interventionsJson = await interventionsRes.json();
+          if (interventionsJson.interventions) {
+            setInterventions(interventionsJson.interventions.filter((i: Intervention) => i.status === 'pending'));
+          }
+        }
+
+        // Fetch alerts from dashboard (crisis alerts)
+        const dashboardRes = await fetch('/api/coach/dashboard');
+        if (dashboardRes.ok) {
+          const dashboardJson = await dashboardRes.json();
+          if (dashboardJson.data?.crisisAlerts) {
+            const transformedAlerts = dashboardJson.data.crisisAlerts.map((a: any) => ({
+              id: a.id,
+              athleteId: a.athleteId,
+              athleteName: a.athleteName || 'Unknown',
+              severity: a.severity || 'medium',
+              type: a.type || 'Alert',
+              reason: a.reason || a.message || 'Requires attention',
+              timestamp: new Date(a.createdAt || Date.now()),
+              status: a.resolved ? 'resolved' : 'active',
+            }));
+            setAlerts(transformedAlerts);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching readiness data:', err);
+        setError('Failed to load readiness data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Handle tab changes with URL sync
   const handleTabChange = (tab: 'readiness' | 'alerts') => {
@@ -82,61 +145,18 @@ export default function ReadinessPage() {
     router.replace(`/coach/readiness${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
-  // Alert count for badge
-  const [alerts] = useState<Alert[]>([
-    {
-      id: '1',
-      athleteId: 'alex-martinez',
-      athleteName: 'Alex Martinez',
-      severity: 'critical',
-      type: 'Crisis Keywords',
-      reason: 'Chat message contained self-harm language',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      status: 'active',
-    },
-    {
-      id: '2',
-      athleteId: 'jordan-lee',
-      athleteName: 'Jordan Lee',
-      severity: 'high',
-      type: 'Wellness Decline',
-      reason: 'Mood score dropped 3+ points in last 3 days (8.5 → 5.0)',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      status: 'monitoring',
-    },
-    {
-      id: '3',
-      athleteId: 'morgan-davis',
-      athleteName: 'Morgan Davis',
-      severity: 'high',
-      type: 'Stress Level',
-      reason: 'Reported stress 9/10 for 4 consecutive days',
-      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      status: 'active',
-    },
-    {
-      id: '4',
-      athleteId: 'taylor-brown',
-      athleteName: 'Taylor Brown',
-      severity: 'medium',
-      type: 'Sleep Deprivation',
-      reason: 'Average 4.2 hours sleep over last week (recommended: 7-9)',
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      status: 'active',
-    },
-    {
-      id: '5',
-      athleteId: 'casey-wilson',
-      athleteName: 'Casey Wilson',
-      severity: 'medium',
-      type: 'Check-in Missed',
-      reason: 'No check-ins for 7 days (previously consistent)',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      status: 'active',
-    },
-  ]);
-
   const activeAlertCount = alerts.filter(a => a.status !== 'resolved').length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading readiness data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -183,63 +203,39 @@ export default function ReadinessPage() {
           </button>
         </div>
 
+        {/* Error State */}
+        {error && (
+          <div className="card-elevated p-6 border-risk-red/30 bg-risk-red-bg text-center">
+            <AlertCircle className="w-8 h-8 text-risk-red mx-auto mb-2" />
+            <p className="text-foreground font-medium">{error}</p>
+            <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        )}
+
         {/* Tab Content */}
-        {activeTab === 'readiness' ? <ReadinessTab /> : <AlertsTab alerts={alerts} />}
+        {!error && (
+          activeTab === 'readiness'
+            ? <ReadinessTab athletes={heatmapData} interventions={interventions} />
+            : <AlertsTab alerts={alerts} setAlerts={setAlerts} />
+        )}
       </div>
     </div>
   );
 }
 
 // ============================================
-// READINESS TAB (original Readiness page content)
+// READINESS TAB
 // ============================================
-function ReadinessTab() {
-  const [athletes] = useState<ReadinessScore[]>([
-    {
-      athleteId: '1',
-      athleteName: 'Sarah Johnson',
-      sport: 'Basketball',
-      scores: [85, 87, 82, 88, 90, 89, 91, 88, 85, 82, 78, 75, 72, 70],
-      trend: 'declining',
-      forecast: [68, 65, 63, 62, 60, 58, 56],
-    },
-    {
-      athleteId: '2',
-      athleteName: 'Marcus Davis',
-      sport: 'Football',
-      scores: [72, 75, 78, 80, 82, 83, 85, 86, 87, 88, 89, 90, 91, 92],
-      trend: 'improving',
-      forecast: [93, 94, 95, 95, 96, 96, 97],
-    },
-    {
-      athleteId: '3',
-      athleteName: 'Alex Martinez',
-      sport: 'Soccer',
-      scores: [65, 64, 62, 60, 58, 55, 53, 50, 48, 45, 42, 40, 38, 35],
-      trend: 'declining',
-      forecast: [32, 30, 28, 25, 23, 20, 18],
-    },
-  ]);
-
-  const [interventions] = useState<Intervention[]>([
-    {
-      athleteId: '3',
-      athleteName: 'Alex Martinez',
-      priority: 1,
-      readiness: 35,
-      reason: 'Readiness dropped 46% over 14 days (65→35). Forecast shows continued decline to 18.',
-      recommendation: 'Immediate 1:1 check-in. Sleep avg 4.2hrs. Stress 9/10 for 7 days.',
-    },
-    {
-      athleteId: '1',
-      athleteName: 'Sarah Johnson',
-      priority: 1,
-      readiness: 70,
-      reason: 'Star performer declining (-23% in 7 days). Historic r=0.82 correlation with PPG.',
-      recommendation: 'Proactive intervention before performance drops. Check workload & finals stress.',
-    },
-  ]);
-
+function ReadinessTab({
+  athletes,
+  interventions
+}: {
+  athletes: HeatmapAthlete[];
+  interventions: Intervention[];
+}) {
   const getReadinessColor = (score: number) => {
     if (score >= 85) return { bg: 'bg-risk-green', text: 'text-risk-green', border: 'border-risk-green' };
     if (score >= 70) return { bg: 'bg-risk-yellow', text: 'text-risk-yellow', border: 'border-risk-yellow' };
@@ -247,9 +243,30 @@ function ReadinessTab() {
     return { bg: 'bg-risk-red', text: 'text-risk-red', border: 'border-risk-red' };
   };
 
-  const teamAvg = Math.round(athletes.reduce((sum, a) => sum + a.scores[13], 0) / athletes.length);
-  const highRisk = athletes.filter(a => a.scores[13] < 70).length;
+  // Calculate metrics from actual data
+  const latestScores = athletes.map(a => {
+    const history = a.readinessHistory || [];
+    return history[history.length - 1] || 0;
+  });
+  const teamAvg = latestScores.length > 0
+    ? Math.round(latestScores.reduce((sum, s) => sum + s, 0) / latestScores.length)
+    : 0;
+  const highRisk = latestScores.filter(s => s < 70).length;
   const declining = athletes.filter(a => a.trend === 'declining').length;
+
+  // Empty state
+  if (athletes.length === 0) {
+    return (
+      <div className="card-elevated p-12 text-center animate-slide-up">
+        <Activity className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+        <h3 className="font-medium text-foreground mb-2">No Readiness Data Yet</h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          Readiness data will appear here once athletes complete their wellness check-ins.
+          Encourage your athletes to log their daily mood and wellness metrics.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -262,7 +279,7 @@ function ReadinessTab() {
               <p className="text-3xl font-bold text-foreground mt-1">
                 {teamAvg}<span className="text-lg text-muted-foreground">/100</span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1">WHOOP for mental</p>
+              <p className="text-xs text-muted-foreground mt-1">Mental readiness score</p>
             </div>
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <Target className="w-5 h-5 text-primary" />
@@ -320,54 +337,56 @@ function ReadinessTab() {
       </div>
 
       {/* Intervention Queue */}
-      <div className="card-elevated overflow-hidden animate-slide-up">
-        <div className="p-4 border-b border-border flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-risk-red" />
+      {interventions.length > 0 && (
+        <div className="card-elevated overflow-hidden animate-slide-up">
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-risk-red" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Intervention Queue</h2>
+              <p className="text-sm text-muted-foreground">AI-prioritized based on forecasts</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-foreground">Intervention Queue</h2>
-            <p className="text-sm text-muted-foreground">AI-prioritized based on forecasts</p>
-          </div>
-        </div>
-        <div className="divide-y divide-border">
-          {interventions.map((int, i) => {
-            const colors = getReadinessColor(int.readiness);
-            return (
-              <div key={i} className="p-4 hover:bg-muted/50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className={cn(
-                    "w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold",
-                    int.priority === 1 ? "bg-risk-red" : "bg-risk-yellow"
-                  )}>
-                    P{int.priority}
+          <div className="divide-y divide-border">
+            {interventions.slice(0, 5).map((int) => {
+              const colors = getReadinessColor(int.readiness);
+              return (
+                <div key={int.id} className="p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold",
+                      int.priority === 1 ? "bg-risk-red" : int.priority === 2 ? "bg-warning" : "bg-risk-yellow"
+                    )}>
+                      P{int.priority}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-foreground">{int.athleteName}</h3>
+                        <span className={cn("font-bold", colors.text)}>
+                          {int.readiness}/100
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-risk-red/5 border-l-4 border-risk-red mb-2">
+                        <p className="text-sm text-risk-red font-medium">{int.reason}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-info/5 border-l-4 border-info">
+                        <p className="text-sm text-info font-medium">{int.recommendation}</p>
+                      </div>
+                    </div>
+                    <Link href={`/coach/athletes/${int.athleteId}`}>
+                      <Button size="sm">
+                        View
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </Link>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-foreground">{int.athleteName}</h3>
-                      <span className={cn("font-bold", colors.text)}>
-                        {int.readiness}/100
-                      </span>
-                    </div>
-                    <div className="p-3 rounded-lg bg-risk-red/5 border-l-4 border-risk-red mb-2">
-                      <p className="text-sm text-risk-red font-medium">{int.reason}</p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-info/5 border-l-4 border-info">
-                      <p className="text-sm text-info font-medium">{int.recommendation}</p>
-                    </div>
-                  </div>
-                  <Link href={`/coach/athletes/${int.athleteId}`}>
-                    <Button size="sm">
-                      View
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </Link>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Heatmap */}
       <div className="card-elevated overflow-hidden animate-slide-up">
@@ -394,20 +413,27 @@ function ReadinessTab() {
             </thead>
             <tbody className="divide-y divide-border">
               {athletes.map((athlete) => {
-                const getReadinessColor = (score: number) => {
-                  if (score >= 85) return { bg: 'bg-risk-green', text: 'text-risk-green' };
-                  if (score >= 70) return { bg: 'bg-risk-yellow', text: 'text-risk-yellow' };
-                  if (score >= 50) return { bg: 'bg-warning', text: 'text-warning' };
-                  return { bg: 'bg-risk-red', text: 'text-risk-red' };
-                };
+                const history = athlete.readinessHistory || [];
+                const paddedHistory = [...Array(Math.max(0, 14 - history.length)).fill(null), ...history.slice(-14)];
 
                 return (
                   <tr key={athlete.athleteId} className="hover:bg-muted/50 transition-colors">
                     <td className="py-3 pr-4">
-                      <div className="font-medium text-foreground">{athlete.athleteName}</div>
-                      <div className="text-xs text-muted-foreground">{athlete.sport}</div>
+                      <Link href={`/coach/athletes/${athlete.athleteId}`} className="hover:text-primary transition-colors">
+                        <div className="font-medium text-foreground">{athlete.athleteName}</div>
+                        <div className="text-xs text-muted-foreground">{athlete.sport}</div>
+                      </Link>
                     </td>
-                    {athlete.scores.map((score, idx) => {
+                    {paddedHistory.map((score, idx) => {
+                      if (score === null) {
+                        return (
+                          <td key={idx} className="py-3 px-1">
+                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                              -
+                            </div>
+                          </td>
+                        );
+                      }
                       const colors = getReadinessColor(score);
                       return (
                         <td key={idx} className="py-3 px-1">
@@ -431,10 +457,13 @@ function ReadinessTab() {
                           <TrendingDown className="w-4 h-4" />Down
                         </div>
                       )}
+                      {athlete.trend === 'stable' && (
+                        <div className="text-muted-foreground font-medium text-sm">Stable</div>
+                      )}
                     </td>
                     <td className="py-3 pl-4">
                       <div className="flex gap-1 justify-center">
-                        {athlete.forecast.map((score, idx) => {
+                        {(athlete.forecast || []).slice(0, 7).map((score, idx) => {
                           const colors = getReadinessColor(score);
                           return (
                             <div
@@ -462,11 +491,16 @@ function ReadinessTab() {
 }
 
 // ============================================
-// ALERTS TAB (from Alerts page)
+// ALERTS TAB
 // ============================================
-function AlertsTab({ alerts: initialAlerts }: { alerts: Alert[] }) {
+function AlertsTab({
+  alerts,
+  setAlerts
+}: {
+  alerts: Alert[];
+  setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
+}) {
   const [filter, setFilter] = useState<'all' | AlertSeverity | 'resolved'>('all');
-  const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
 
   const getSeverityStyles = (severity: AlertSeverity) => {
     switch (severity) {
@@ -517,10 +551,11 @@ function AlertsTab({ alerts: initialAlerts }: { alerts: Alert[] }) {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  const handleMarkResolved = (alertId: string) => {
+  const handleMarkResolved = async (alertId: string) => {
     setAlerts(alerts.map(alert =>
       alert.id === alertId ? { ...alert, status: 'resolved' as const } : alert
     ));
+    // TODO: Call API to mark as resolved
   };
 
   const filteredAlerts = alerts.filter(alert => {
@@ -653,11 +688,15 @@ function AlertsTab({ alerts: initialAlerts }: { alerts: Alert[] }) {
           {filteredAlerts.length === 0 ? (
             <div className="p-12 text-center">
               <Shield className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-              <h3 className="font-medium text-foreground mb-1">No alerts found</h3>
+              <h3 className="font-medium text-foreground mb-1">
+                {alerts.length === 0 ? 'No Alerts' : 'No alerts found'}
+              </h3>
               <p className="text-sm text-muted-foreground">
-                {filter === 'resolved'
-                  ? 'No resolved alerts to display'
-                  : 'All athletes are doing well!'
+                {alerts.length === 0
+                  ? 'Alerts will appear here when athletes need attention'
+                  : filter === 'resolved'
+                    ? 'No resolved alerts to display'
+                    : 'All athletes are doing well!'
                 }
               </p>
             </div>

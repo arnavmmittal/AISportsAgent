@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Coach Insights Page (v2.1 - Consolidated Analytics + Reports)
+ * Coach Insights Page (v2.2 - API-driven Analytics + Reports)
  *
  * Combines three previously separate pages:
  * - Analytics: Performance trends, sport breakdown, mental health metrics
@@ -9,6 +9,7 @@
  * - Team Insights: Crisis alerts, engagement trends
  *
  * Uses tab navigation to preserve all features in one location.
+ * All data is fetched from APIs - no mock data.
  */
 
 import { useState, useEffect } from 'react';
@@ -29,6 +30,7 @@ import {
   Calendar,
   CheckSquare,
   Activity,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/shared/ui/card';
 import { Button } from '@/components/shared/ui/button';
@@ -47,12 +49,48 @@ interface Report {
   performanceCorrelation?: string;
 }
 
+interface DashboardStats {
+  totalAthletes: number;
+  activeToday: number;
+  atRiskCount: number;
+  avgReadiness: number;
+  crisisAlerts: number;
+}
+
+interface AnalyticsData {
+  performanceTrend: string;
+  monthlyTrend: string;
+  sportBreakdown: { sport: string; count: number }[];
+  moodAvg: number;
+  confidenceAvg: number;
+  stressAvg: number;
+  engagementRate: number;
+  activeGoals: number;
+  completedGoals: number;
+  resolvedThisWeek: number;
+}
+
+interface CorrelationData {
+  correlationStrength: number;
+  pValue: number;
+  highReadinessPerformance: number;
+  lowReadinessPerformance: number;
+}
+
 export default function InsightsPage() {
   const [activeTab, setActiveTab] = useState<InsightsTab>('analytics');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showCustomReportModal, setShowCustomReportModal] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Data state
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [correlationData, setCorrelationData] = useState<CorrelationData | null>(null);
+  const [reports, setReports] = useState<Report[]>([]);
 
   // Custom report form state
   const [customReportForm, setCustomReportForm] = useState({
@@ -69,44 +107,95 @@ export default function InsightsPage() {
     athleteFilter: 'all' as 'all' | 'specific',
   });
 
-  const [reports] = useState<Report[]>([
-    {
-      id: '1',
-      title: 'Weekly Readiness Summary',
-      type: 'weekly',
-      dateRange: 'Jan 6-12, 2026',
-      generatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      keyInsights: [
-        'Team avg readiness: 72/100 (↓6 points from last week)',
-        '3 athletes in high-risk category (readiness <50)',
-        'Finals week pattern detected - stress up 45%, sleep down 2.1hrs',
-        'Sarah Johnson forecast: decline to 56/100 by game day (7 days)',
-      ],
-      readinessAvg: 72,
-      performanceCorrelation: 'r=0.78 between readiness & points scored',
-    },
-    {
-      id: '2',
-      title: 'Monthly Performance Correlation',
-      type: 'monthly',
-      dateRange: 'December 2025',
-      generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      keyInsights: [
-        'When readiness >85: Team scores avg 78 PPG',
-        'When readiness <70: Team scores avg 62 PPG (-16 PPG)',
-        'Sarah Johnson: r=0.82 correlation between readiness & individual PPG',
-        'Sleep quality strongest predictor of next-day performance (r=0.71)',
-      ],
-      readinessAvg: 75,
-      performanceCorrelation: 'Strong correlation found (r=0.78, p<0.01)',
-    },
-  ]);
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch dashboard stats
+        const dashboardRes = await fetch('/api/coach/dashboard');
+        if (dashboardRes.ok) {
+          const dashboardJson = await dashboardRes.json();
+          setDashboardStats({
+            totalAthletes: dashboardJson.totalAthletes || 0,
+            activeToday: dashboardJson.activeToday || 0,
+            atRiskCount: dashboardJson.atRiskCount || 0,
+            avgReadiness: dashboardJson.avgReadiness || 0,
+            crisisAlerts: dashboardJson.crisisAlerts?.length || 0,
+          });
+        }
+
+        // Fetch performance correlation data
+        const correlationRes = await fetch('/api/coach/analytics/performance-correlation');
+        if (correlationRes.ok) {
+          const correlationJson = await correlationRes.json();
+          if (correlationJson.correlations && correlationJson.correlations.length > 0) {
+            const firstCorrelation = correlationJson.correlations[0];
+            setCorrelationData({
+              correlationStrength: firstCorrelation.correlationStrength || 0,
+              pValue: firstCorrelation.pValue || 1,
+              highReadinessPerformance: 0,
+              lowReadinessPerformance: 0,
+            });
+          }
+        }
+
+        // Fetch reports if there's an API for it
+        const reportsRes = await fetch('/api/coach/reports');
+        if (reportsRes.ok) {
+          const reportsJson = await reportsRes.json();
+          if (reportsJson.reports) {
+            setReports(reportsJson.reports);
+          }
+        }
+
+        // Try to get more analytics from different endpoints
+        const analyticsRes = await fetch('/api/coach/analytics/team-summary');
+        if (analyticsRes.ok) {
+          const analyticsJson = await analyticsRes.json();
+          setAnalyticsData({
+            performanceTrend: analyticsJson.performanceTrend || '-',
+            monthlyTrend: analyticsJson.monthlyTrend || '-',
+            sportBreakdown: analyticsJson.sportBreakdown || [],
+            moodAvg: analyticsJson.moodAvg || 0,
+            confidenceAvg: analyticsJson.confidenceAvg || 0,
+            stressAvg: analyticsJson.stressAvg || 0,
+            engagementRate: analyticsJson.engagementRate || 0,
+            activeGoals: analyticsJson.activeGoals || 0,
+            completedGoals: analyticsJson.completedGoals || 0,
+            resolvedThisWeek: analyticsJson.resolvedThisWeek || 0,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch insights data:', err);
+        setError('Failed to load insights data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleExportPDF = async (reportId: string) => {
     setIsExporting(reportId);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      alert('PDF exported successfully!');
+      const res = await fetch(`/api/coach/reports/${reportId}/export`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `report-${reportId}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert('Failed to export PDF');
+      }
     } catch (error) {
       alert('Failed to export PDF');
     } finally {
@@ -117,15 +206,47 @@ export default function InsightsPage() {
   const handleSubmitCustomReport = async () => {
     setIsGeneratingReport(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setShowCustomReportModal(false);
-      alert('Custom report generated!');
+      const res = await fetch('/api/coach/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customReportForm),
+      });
+      if (res.ok) {
+        const newReport = await res.json();
+        setReports((prev) => [newReport, ...prev]);
+        setShowCustomReportModal(false);
+      } else {
+        alert('Failed to generate report');
+      }
     } catch (error) {
       alert('Failed to generate report');
     } finally {
       setIsGeneratingReport(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading insights...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-risk-yellow mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">Failed to Load</h2>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -201,11 +322,15 @@ export default function InsightsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Weekly Average:</span>
-                      <span className="font-semibold text-risk-green">+12%</span>
+                      <span className="font-semibold text-foreground">
+                        {analyticsData?.performanceTrend || 'No data'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Monthly Trend:</span>
-                      <span className="font-semibold text-risk-green">Improving</span>
+                      <span className="font-semibold text-foreground">
+                        {analyticsData?.monthlyTrend || 'No data'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -223,26 +348,31 @@ export default function InsightsPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Analytics segmented by sport category.
                   </p>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Basketball</span>
-                        <span className="font-semibold">12 athletes</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '60%' }} />
-                      </div>
+                  {analyticsData?.sportBreakdown && analyticsData.sportBreakdown.length > 0 ? (
+                    <div className="space-y-3">
+                      {analyticsData.sportBreakdown.slice(0, 3).map((sport, idx) => (
+                        <div key={sport.sport}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>{sport.sport}</span>
+                            <span className="font-semibold">{sport.count} athletes</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div
+                              className={cn(
+                                'h-2 rounded-full',
+                                idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-risk-green' : 'bg-info'
+                              )}
+                              style={{
+                                width: `${Math.min((sport.count / (dashboardStats?.totalAthletes || 1)) * 100, 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Soccer</span>
-                        <span className="font-semibold">8 athletes</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div className="bg-risk-green h-2 rounded-full" style={{ width: '40%' }} />
-                      </div>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No sport data available</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -261,15 +391,28 @@ export default function InsightsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Avg Mood Score:</span>
-                      <span className="font-semibold">7.2/10</span>
+                      <span className="font-semibold">
+                        {analyticsData?.moodAvg ? `${analyticsData.moodAvg.toFixed(1)}/10` : 'No data'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Avg Confidence:</span>
-                      <span className="font-semibold">7.8/10</span>
+                      <span className="font-semibold">
+                        {analyticsData?.confidenceAvg ? `${analyticsData.confidenceAvg.toFixed(1)}/10` : 'No data'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Avg Stress:</span>
-                      <span className="font-semibold text-risk-yellow">4.3/10</span>
+                      <span
+                        className={cn(
+                          'font-semibold',
+                          analyticsData?.stressAvg && analyticsData.stressAvg > 5
+                            ? 'text-risk-yellow'
+                            : 'text-foreground'
+                        )}
+                      >
+                        {analyticsData?.stressAvg ? `${analyticsData.stressAvg.toFixed(1)}/10` : 'No data'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -290,15 +433,28 @@ export default function InsightsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Active Today:</span>
-                      <span className="font-semibold">18 athletes</span>
+                      <span className="font-semibold">
+                        {dashboardStats?.activeToday ?? 'No data'} athletes
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">This Week:</span>
-                      <span className="font-semibold">24 athletes</span>
+                      <span className="text-muted-foreground">Total Athletes:</span>
+                      <span className="font-semibold">
+                        {dashboardStats?.totalAthletes ?? 'No data'} athletes
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Engagement Rate:</span>
-                      <span className="font-semibold text-risk-green">92%</span>
+                      <span
+                        className={cn(
+                          'font-semibold',
+                          analyticsData?.engagementRate && analyticsData.engagementRate > 80
+                            ? 'text-risk-green'
+                            : 'text-foreground'
+                        )}
+                      >
+                        {analyticsData?.engagementRate ? `${analyticsData.engagementRate}%` : 'No data'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -319,15 +475,23 @@ export default function InsightsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Active Goals:</span>
-                      <span className="font-semibold">45</span>
+                      <span className="font-semibold">
+                        {analyticsData?.activeGoals ?? 'No data'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Completed:</span>
-                      <span className="font-semibold text-risk-green">37</span>
+                      <span className="font-semibold text-risk-green">
+                        {analyticsData?.completedGoals ?? 'No data'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Success Rate:</span>
-                      <span className="font-semibold text-risk-green">82%</span>
+                      <span className="font-semibold">
+                        {analyticsData?.activeGoals && analyticsData.completedGoals
+                          ? `${Math.round((analyticsData.completedGoals / (analyticsData.activeGoals + analyticsData.completedGoals)) * 100)}%`
+                          : 'No data'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -348,15 +512,31 @@ export default function InsightsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">At-Risk Athletes:</span>
-                      <span className="font-semibold text-risk-yellow">3</span>
+                      <span
+                        className={cn(
+                          'font-semibold',
+                          (dashboardStats?.atRiskCount ?? 0) > 0 ? 'text-risk-yellow' : 'text-foreground'
+                        )}
+                      >
+                        {dashboardStats?.atRiskCount ?? 'No data'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Crisis Alerts:</span>
-                      <span className="font-semibold text-risk-red">2</span>
+                      <span
+                        className={cn(
+                          'font-semibold',
+                          (dashboardStats?.crisisAlerts ?? 0) > 0 ? 'text-risk-red' : 'text-foreground'
+                        )}
+                      >
+                        {dashboardStats?.crisisAlerts ?? 'No data'}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Resolved This Week:</span>
-                      <span className="font-semibold text-risk-green">5</span>
+                      <span className="font-semibold text-risk-green">
+                        {analyticsData?.resolvedThisWeek ?? 'No data'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -409,7 +589,7 @@ export default function InsightsPage() {
                       Total Reports
                     </p>
                     <p className="text-4xl font-bold text-foreground">{reports.length}</p>
-                    <p className="text-sm text-muted-foreground mt-1">Last 30 days</p>
+                    <p className="text-sm text-muted-foreground mt-1">Generated</p>
                   </div>
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                     <FileText className="w-6 h-6 text-primary" />
@@ -424,7 +604,8 @@ export default function InsightsPage() {
                       Avg Readiness
                     </p>
                     <p className="text-4xl font-bold text-foreground">
-                      75<span className="text-xl text-muted-foreground">/100</span>
+                      {dashboardStats?.avgReadiness ?? '-'}
+                      <span className="text-xl text-muted-foreground">/100</span>
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">This month</p>
                   </div>
@@ -440,7 +621,11 @@ export default function InsightsPage() {
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                       Correlation
                     </p>
-                    <p className="text-4xl font-bold text-foreground">r=0.78</p>
+                    <p className="text-4xl font-bold text-foreground">
+                      {correlationData?.correlationStrength
+                        ? `r=${correlationData.correlationStrength.toFixed(2)}`
+                        : '-'}
+                    </p>
                     <p className="text-sm text-muted-foreground mt-1">Readiness ↔ Performance</p>
                   </div>
                   <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center">
@@ -459,93 +644,118 @@ export default function InsightsPage() {
             </div>
 
             {/* Reports List */}
-            <div className="space-y-4">
-              {reports.map((report) => (
-                <div key={report.id} className="card-elevated overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-semibold text-foreground">{report.title}</h3>
-                          <span className="px-2.5 py-1 rounded-lg text-xs font-medium uppercase bg-muted text-muted-foreground">
-                            {report.type}
-                          </span>
+            {reports.length > 0 ? (
+              <div className="space-y-4">
+                {reports.map((report) => (
+                  <div key={report.id} className="card-elevated overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-semibold text-foreground">{report.title}</h3>
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-medium uppercase bg-muted text-muted-foreground">
+                              {report.type}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span>{report.dateRange}</span>
+                            <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+                            <span>Generated {new Date(report.generatedAt).toLocaleDateString()}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span>{report.dateRange}</span>
-                          <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
-                          <span>Generated {new Date(report.generatedAt).toLocaleDateString()}</span>
+                        <div className="text-4xl font-bold text-foreground">
+                          {report.readinessAvg}
+                          <span className="text-lg text-muted-foreground">/100</span>
                         </div>
                       </div>
-                      <div className="text-4xl font-bold text-foreground">
-                        {report.readinessAvg}
-                        <span className="text-lg text-muted-foreground">/100</span>
+
+                      <div className="bg-muted/50 border-l-4 border-primary p-4 rounded-lg mb-4">
+                        <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-primary" />
+                          Key Insights
+                        </h4>
+                        <ul className="space-y-1.5">
+                          {report.keyInsights.map((insight, idx) => (
+                            <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-primary mt-0.5">•</span>
+                              <span>{insight}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </div>
 
-                    <div className="bg-muted/50 border-l-4 border-primary p-4 rounded-lg mb-4">
-                      <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-primary" />
-                        Key Insights
-                      </h4>
-                      <ul className="space-y-1.5">
-                        {report.keyInsights.map((insight, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <span className="text-primary mt-0.5">•</span>
-                            <span>{insight}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button onClick={() => setSelectedReport(report)}>
-                        <FileText className="w-4 h-4 mr-2" />
-                        View Full Report
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleExportPDF(report.id)}
-                        disabled={isExporting === report.id}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        {isExporting === report.id ? 'Exporting...' : 'Export PDF'}
-                      </Button>
+                      <div className="flex gap-3">
+                        <Button onClick={() => setSelectedReport(report)}>
+                          <FileText className="w-4 h-4 mr-2" />
+                          View Full Report
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleExportPDF(report.id)}
+                          disabled={isExporting === report.id}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          {isExporting === report.id ? 'Exporting...' : 'Export PDF'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No Reports Yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Generate your first custom report to see insights here.
+                    </p>
+                    <Button onClick={() => setShowCustomReportModal(true)}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Generate Report
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Correlation Card */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0">
-                    <Brain className="w-6 h-6 text-info" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Performance Correlation Insights
-                    </h3>
-                    <p className="text-muted-foreground mb-4">
-                      Strong correlation (r=0.78, p&lt;0.01) found between mental readiness scores and
-                      game performance.
-                    </p>
-                    <div className="bg-muted/50 rounded-lg p-4">
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-risk-green">●</span> When readiness &gt;85: Avg 78 PPG
+            {correlationData && correlationData.correlationStrength > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0">
+                      <Brain className="w-6 h-6 text-info" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Performance Correlation Insights
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        {correlationData.pValue < 0.05
+                          ? `Strong correlation (r=${correlationData.correlationStrength.toFixed(2)}, p<0.05) found between mental readiness scores and game performance.`
+                          : `Correlation (r=${correlationData.correlationStrength.toFixed(2)}) found between mental readiness and performance.`}
+                      </p>
+                      {correlationData.highReadinessPerformance > 0 && (
+                        <div className="bg-muted/50 rounded-lg p-4">
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-risk-green">●</span> When readiness &gt;85: Avg{' '}
+                              {correlationData.highReadinessPerformance} PPG
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-risk-yellow">●</span> When readiness &lt;70: Avg{' '}
+                              {correlationData.lowReadinessPerformance} PPG
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-risk-yellow">●</span> When readiness &lt;70: Avg 62 PPG
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </div>
