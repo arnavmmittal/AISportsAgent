@@ -16,8 +16,20 @@ import {
   ChevronRight,
   Info,
   CheckCircle2,
-  XCircle,
+  X,
 } from 'lucide-react';
+import { Button } from '@/components/shared/ui/button';
+import { cn } from '@/lib/utils';
+
+/**
+ * Predictions Dashboard - Updated with Design System v2.0
+ *
+ * Features:
+ * - AI-powered performance predictions
+ * - Risk level filtering
+ * - Contributing factors analysis
+ * - Recommended actions
+ */
 
 interface ContributingFactor {
   factor: string;
@@ -92,33 +104,18 @@ export default function PredictionsDashboard() {
     return p.riskLevel === filter;
   });
 
-  const getRiskColor = (risk: string) => {
+  const getRiskStyles = (risk: string) => {
     switch (risk) {
       case 'CRITICAL':
-        return 'from-red-500 to-red-600';
+        return { bg: 'bg-risk-red', text: 'text-risk-red', badge: 'bg-risk-red/10 text-risk-red' };
       case 'HIGH':
-        return 'from-orange-500 to-orange-600';
+        return { bg: 'bg-warning', text: 'text-warning', badge: 'bg-warning/10 text-warning' };
       case 'MEDIUM':
-        return 'from-yellow-500 to-yellow-600';
+        return { bg: 'bg-risk-yellow', text: 'text-risk-yellow', badge: 'bg-risk-yellow/10 text-risk-yellow' };
       case 'LOW':
-        return 'from-green-500 to-green-600';
+        return { bg: 'bg-risk-green', text: 'text-risk-green', badge: 'bg-risk-green/10 text-risk-green' };
       default:
-        return 'from-gray-500 to-gray-600';
-    }
-  };
-
-  const getRiskBadgeColor = (risk: string) => {
-    switch (risk) {
-      case 'CRITICAL':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'HIGH':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'LOW':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      default:
-        return 'bg-gray-100 text-gray-800';
+        return { bg: 'bg-muted', text: 'text-muted-foreground', badge: 'bg-muted text-muted-foreground' };
     }
   };
 
@@ -137,249 +134,239 @@ export default function PredictionsDashboard() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Performance Predictions
-            </h1>
-            <p className="mt-3 text-muted-foreground text-lg">
-              AI-powered forecasts to help you prepare athletes for peak performance
-            </p>
+      <div className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+                <Target className="w-7 h-7 text-primary" />
+                Performance Predictions
+              </h1>
+              <p className="mt-1 text-muted-foreground">
+                AI-powered forecasts to help you prepare athletes for peak performance
+              </p>
+            </div>
+            <Button onClick={loadPredictions} disabled={isLoading} variant="outline">
+              <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
+              Refresh
+            </Button>
           </div>
-          <button
-            onClick={loadPredictions}
-            disabled={isLoading}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh Predictions
-          </button>
         </div>
       </div>
 
-      {/* Summary Stats */}
-      {summary && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div
-              onClick={() => setFilter('all')}
-              className={`bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white cursor-pointer hover:shadow-2xl transition-all ${filter === 'all' ? 'ring-4 ring-blue-300' : ''}`}
-            >
-              <p className="text-sm font-bold text-blue-100 uppercase tracking-wider">Total</p>
-              <p className="text-3xl font-black mt-1">{summary.total}</p>
-            </div>
-
-            <div
-              onClick={() => setFilter('CRITICAL')}
-              className={`bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-xl p-6 text-white cursor-pointer hover:shadow-2xl transition-all ${filter === 'CRITICAL' ? 'ring-4 ring-red-300' : ''}`}
-            >
-              <p className="text-sm font-bold text-red-100 uppercase tracking-wider">Critical</p>
-              <p className="text-3xl font-black mt-1">{summary.critical}</p>
-            </div>
-
-            <div
-              onClick={() => setFilter('HIGH')}
-              className={`bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-6 text-white cursor-pointer hover:shadow-2xl transition-all ${filter === 'HIGH' ? 'ring-4 ring-orange-300' : ''}`}
-            >
-              <p className="text-sm font-bold text-orange-100 uppercase tracking-wider">High</p>
-              <p className="text-3xl font-black mt-1">{summary.high}</p>
-            </div>
-
-            <div
-              onClick={() => setFilter('MEDIUM')}
-              className={`bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl shadow-xl p-6 text-white cursor-pointer hover:shadow-2xl transition-all ${filter === 'MEDIUM' ? 'ring-4 ring-yellow-300' : ''}`}
-            >
-              <p className="text-sm font-bold text-yellow-100 uppercase tracking-wider">Medium</p>
-              <p className="text-3xl font-black mt-1">{summary.medium}</p>
-            </div>
-
-            <div
-              onClick={() => setFilter('LOW')}
-              className={`bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white cursor-pointer hover:shadow-2xl transition-all ${filter === 'LOW' ? 'ring-4 ring-green-300' : ''}`}
-            >
-              <p className="text-sm font-bold text-green-100 uppercase tracking-wider">Low</p>
-              <p className="text-3xl font-black mt-1">{summary.low}</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-              <p className="text-sm font-bold text-purple-100 uppercase tracking-wider">Avg Confidence</p>
-              <p className="text-3xl font-black mt-1">{(summary.avgConfidence * 100).toFixed(0)}%</p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Summary Stats */}
+        {summary && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 animate-slide-up">
+            {[
+              { label: 'Total', value: summary.total, filter: 'all', color: 'primary' },
+              { label: 'Critical', value: summary.critical, filter: 'CRITICAL', color: 'risk-red' },
+              { label: 'High', value: summary.high, filter: 'HIGH', color: 'warning' },
+              { label: 'Medium', value: summary.medium, filter: 'MEDIUM', color: 'risk-yellow' },
+              { label: 'Low', value: summary.low, filter: 'LOW', color: 'risk-green' },
+              { label: 'Confidence', value: `${(summary.avgConfidence * 100).toFixed(0)}%`, filter: null, color: 'info' },
+            ].map((stat, i) => (
+              <button
+                key={i}
+                onClick={() => stat.filter && setFilter(stat.filter)}
+                disabled={!stat.filter}
+                className={cn(
+                  "card-elevated p-4 text-left transition-all",
+                  stat.filter && filter === stat.filter && "ring-2 ring-primary",
+                  stat.filter && "cursor-pointer hover:shadow-md"
+                )}
+              >
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+                <p className={cn("text-2xl font-bold mt-1", `text-${stat.color}`)}>{stat.value}</p>
+              </button>
+            ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Predictions List */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+        {/* Predictions List */}
         {isLoading ? (
-          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-500" />
+          <div className="card-elevated p-12 text-center animate-slide-up">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary" />
             <p className="mt-4 text-muted-foreground">Generating predictions...</p>
           </div>
         ) : filteredPredictions.length === 0 ? (
-          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
-            <Brain className="w-16 h-16 mx-auto text-muted-foreground opacity-50" />
-            <h3 className="mt-4 text-lg font-semibold">No predictions available</h3>
-            <p className="mt-2 text-muted-foreground">
+          <div className="card-elevated p-12 text-center animate-slide-up">
+            <Brain className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No predictions available</h3>
+            <p className="text-muted-foreground">
               Athletes need mood logs and activity data to generate predictions
             </p>
           </div>
         ) : (
-          <div className="grid gap-6">
-            {filteredPredictions.map((prediction) => (
-              <div
-                key={prediction.athleteId}
-                className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all"
-              >
-                <div className="flex flex-col lg:flex-row">
-                  {/* Main Info */}
-                  <div className="flex-1 p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold">{prediction.athleteName}</h3>
-                        <p className="text-sm text-muted-foreground">{prediction.sport}</p>
+          <div className="space-y-4 animate-slide-up">
+            {filteredPredictions.map((prediction) => {
+              const styles = getRiskStyles(prediction.riskLevel);
+              return (
+                <div
+                  key={prediction.athleteId}
+                  className="card-elevated overflow-hidden"
+                >
+                  <div className="flex flex-col lg:flex-row">
+                    {/* Main Info */}
+                    <div className="flex-1 p-5">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-foreground">{prediction.athleteName}</h3>
+                          <p className="text-sm text-muted-foreground">{prediction.sport}</p>
+                        </div>
+                        <span className={cn("px-3 py-1 rounded-lg text-xs font-semibold", styles.badge)}>
+                          {prediction.riskLevel} RISK
+                        </span>
                       </div>
-                      <span className={`px-4 py-2 rounded-xl text-sm font-bold ${getRiskBadgeColor(prediction.riskLevel)}`}>
-                        {prediction.riskLevel} RISK
-                      </span>
+
+                      {/* Prediction Metrics */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Predicted Change</p>
+                          <p className={cn(
+                            "text-xl font-bold",
+                            prediction.predictedDeviation >= 0 ? 'text-risk-green' : 'text-risk-red'
+                          )}>
+                            {prediction.predictedDeviation >= 0 ? '+' : ''}
+                            {(prediction.predictedDeviation * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Confidence</p>
+                          <p className="text-xl font-bold text-info">
+                            {(prediction.confidence * 100).toFixed(0)}%
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Data Quality</p>
+                          <p className="text-xl font-bold text-primary">
+                            {(prediction.features.dataQuality * 100).toFixed(0)}%
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Recent Mood</p>
+                          <p className="text-xl font-bold text-foreground">
+                            {prediction.features.moodAvg?.toFixed(1) || '-'}/10
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Contributing Factors */}
+                      {prediction.contributingFactors.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contributing Factors</p>
+                          <div className="flex flex-wrap gap-2">
+                            {prediction.contributingFactors.slice(0, 4).map((factor, i) => (
+                              <div
+                                key={i}
+                                className={cn(
+                                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm",
+                                  factor.impact < 0 ? 'bg-risk-red/10 text-risk-red' : 'bg-risk-green/10 text-risk-green'
+                                )}
+                              >
+                                {getFactorIcon(factor.factor)}
+                                <span>{formatFactor(factor.factor)}</span>
+                                <span className="font-semibold">
+                                  {factor.impact >= 0 ? '+' : ''}
+                                  {(factor.impact * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actions Row */}
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => setSelectedPrediction(prediction)}
+                          className="text-primary hover:underline font-medium text-sm flex items-center gap-1"
+                        >
+                          View Details
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => router.push(`/coach/athletes/${prediction.athleteId}`)}
+                          className="text-muted-foreground hover:text-foreground font-medium text-sm flex items-center gap-1"
+                        >
+                          View Profile
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Prediction Metrics */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Predicted Change</p>
-                        <p className={`text-2xl font-black ${prediction.predictedDeviation >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {prediction.predictedDeviation >= 0 ? '+' : ''}
-                          {(prediction.predictedDeviation * 100).toFixed(1)}%
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Confidence</p>
-                        <p className="text-2xl font-black text-blue-500">
-                          {(prediction.confidence * 100).toFixed(0)}%
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Data Quality</p>
-                        <p className="text-2xl font-black text-purple-500">
-                          {(prediction.features.dataQuality * 100).toFixed(0)}%
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Recent Mood</p>
-                        <p className="text-2xl font-black">
-                          {prediction.features.moodAvg?.toFixed(1) || '-'}/10
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Contributing Factors */}
-                    {prediction.contributingFactors.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm font-bold text-muted-foreground mb-2">Contributing Factors</p>
-                        <div className="flex flex-wrap gap-2">
-                          {prediction.contributingFactors.slice(0, 4).map((factor, i) => (
-                            <div
-                              key={i}
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${factor.impact < 0 ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}
-                            >
-                              {getFactorIcon(factor.factor)}
-                              <span>{formatFactor(factor.factor)}</span>
-                              <span className="font-bold">
-                                {factor.impact >= 0 ? '+' : ''}
-                                {(factor.impact * 100).toFixed(1)}%
-                              </span>
+                    {/* Recommendations Sidebar */}
+                    {prediction.recommendedActions.length > 0 && (
+                      <div className={cn("lg:w-72 p-5 text-white", styles.bg)}>
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <Target className="w-5 h-5" />
+                          Recommended Actions
+                        </h4>
+                        <div className="space-y-2">
+                          {prediction.recommendedActions.map((action, i) => (
+                            <div key={i} className="bg-white/20 rounded-lg p-3">
+                              <p className="text-sm">{action.action}</p>
+                              <p className="text-xs mt-1 opacity-80">
+                                Expected impact: +{(action.expectedImpact * 100).toFixed(1)}%
+                              </p>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-
-                    {/* Actions Row */}
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => setSelectedPrediction(prediction)}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 font-semibold text-sm flex items-center gap-1"
-                      >
-                        View Details
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => router.push(`/coach/athletes/${prediction.athleteId}`)}
-                        className="text-muted-foreground hover:text-foreground font-semibold text-sm flex items-center gap-1"
-                      >
-                        View Profile
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
                   </div>
-
-                  {/* Recommendations Sidebar */}
-                  {prediction.recommendedActions.length > 0 && (
-                    <div className={`lg:w-80 p-6 bg-gradient-to-br ${getRiskColor(prediction.riskLevel)} text-white`}>
-                      <h4 className="font-bold mb-3 flex items-center gap-2">
-                        <Target className="w-5 h-5" />
-                        Recommended Actions
-                      </h4>
-                      <div className="space-y-3">
-                        {prediction.recommendedActions.map((action, i) => (
-                          <div key={i} className="bg-white/20 rounded-lg p-3">
-                            <p className="text-sm">{action.action}</p>
-                            <p className="text-xs mt-1 opacity-80">
-                              Expected impact: +{(action.expectedImpact * 100).toFixed(1)}%
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Detail Modal */}
       {selectedPrediction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className={`p-6 bg-gradient-to-br ${getRiskColor(selectedPrediction.riskLevel)} text-white`}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-border">
+            <div className={cn("p-5 text-white", getRiskStyles(selectedPrediction.riskLevel).bg)}>
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-2xl font-black">{selectedPrediction.athleteName}</h2>
+                  <h2 className="text-xl font-bold">{selectedPrediction.athleteName}</h2>
                   <p className="opacity-80">{selectedPrediction.sport}</p>
                 </div>
-                <span className="px-4 py-2 rounded-xl text-sm font-bold bg-white/20">
-                  {selectedPrediction.riskLevel} RISK
-                </span>
+                <button
+                  onClick={() => setSelectedPrediction(null)}
+                  className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-5 space-y-6">
               {/* Prediction Summary */}
               <div>
-                <h3 className="font-bold mb-3">Prediction Summary</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center">
+                <h3 className="font-semibold text-foreground mb-3">Prediction Summary</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg bg-muted/50 text-center">
                     <p className="text-xs text-muted-foreground mb-1">Predicted Change</p>
-                    <p className={`text-2xl font-black ${selectedPrediction.predictedDeviation >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    <p className={cn(
+                      "text-xl font-bold",
+                      selectedPrediction.predictedDeviation >= 0 ? 'text-risk-green' : 'text-risk-red'
+                    )}>
                       {selectedPrediction.predictedDeviation >= 0 ? '+' : ''}
                       {(selectedPrediction.predictedDeviation * 100).toFixed(1)}%
                     </p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center">
+                  <div className="p-3 rounded-lg bg-muted/50 text-center">
                     <p className="text-xs text-muted-foreground mb-1">Confidence</p>
-                    <p className="text-2xl font-black text-blue-500">
+                    <p className="text-xl font-bold text-info">
                       {(selectedPrediction.confidence * 100).toFixed(0)}%
                     </p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-center">
+                  <div className="p-3 rounded-lg bg-muted/50 text-center">
                     <p className="text-xs text-muted-foreground mb-1">Data Quality</p>
-                    <p className="text-2xl font-black text-purple-500">
+                    <p className="text-xl font-bold text-primary">
                       {(selectedPrediction.features.dataQuality * 100).toFixed(0)}%
                     </p>
                   </div>
@@ -388,72 +375,52 @@ export default function PredictionsDashboard() {
 
               {/* Current State */}
               <div>
-                <h3 className="font-bold mb-3">Current State</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                    <Activity className="w-8 h-8 text-blue-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Mood</p>
-                      <p className="font-bold">{selectedPrediction.features.moodAvg?.toFixed(1) || '-'}/10</p>
+                <h3 className="font-semibold text-foreground mb-3">Current State</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { icon: Activity, label: 'Mood', value: selectedPrediction.features.moodAvg?.toFixed(1) || '-', suffix: '/10', color: 'text-primary' },
+                    { icon: Target, label: 'Confidence', value: selectedPrediction.features.confidenceAvg?.toFixed(1) || '-', suffix: '/10', color: 'text-risk-green' },
+                    { icon: Zap, label: 'Stress', value: selectedPrediction.features.stressAvg?.toFixed(1) || '-', suffix: '/10', color: 'text-risk-yellow' },
+                    { icon: Moon, label: 'Sleep', value: selectedPrediction.features.sleepAvg?.toFixed(1) || '-', suffix: 'h', color: 'text-info' },
+                    { icon: Heart, label: 'HRV', value: selectedPrediction.features.hrvAvg?.toFixed(0) || '-', suffix: ' ms', color: 'text-risk-red' },
+                    { icon: Activity, label: 'Recovery', value: selectedPrediction.features.recoveryScore?.toFixed(0) || '-', suffix: '%', color: 'text-primary' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                      <item.icon className={cn("w-6 h-6", item.color)} />
+                      <div>
+                        <p className="text-xs text-muted-foreground">{item.label}</p>
+                        <p className="font-semibold text-foreground">{item.value}{item.suffix}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                    <Target className="w-8 h-8 text-green-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Confidence</p>
-                      <p className="font-bold">{selectedPrediction.features.confidenceAvg?.toFixed(1) || '-'}/10</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                    <Zap className="w-8 h-8 text-yellow-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Stress</p>
-                      <p className="font-bold">{selectedPrediction.features.stressAvg?.toFixed(1) || '-'}/10</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                    <Moon className="w-8 h-8 text-indigo-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Sleep</p>
-                      <p className="font-bold">{selectedPrediction.features.sleepAvg?.toFixed(1) || '-'}h</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                    <Heart className="w-8 h-8 text-red-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">HRV</p>
-                      <p className="font-bold">{selectedPrediction.features.hrvAvg?.toFixed(0) || '-'} ms</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                    <Activity className="w-8 h-8 text-purple-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Recovery</p>
-                      <p className="font-bold">{selectedPrediction.features.recoveryScore?.toFixed(0) || '-'}%</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
               {/* Contributing Factors */}
               <div>
-                <h3 className="font-bold mb-3">All Contributing Factors</h3>
+                <h3 className="font-semibold text-foreground mb-3">All Contributing Factors</h3>
                 <div className="space-y-2">
                   {selectedPrediction.contributingFactors.map((factor, i) => (
                     <div
                       key={i}
-                      className={`flex items-center justify-between p-4 rounded-xl ${factor.impact < 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-lg",
+                        factor.impact < 0 ? 'bg-risk-red/5' : 'bg-risk-green/5'
+                      )}
                     >
                       <div className="flex items-center gap-3">
                         {getFactorIcon(factor.factor)}
-                        <span className="font-medium">{formatFactor(factor.factor)}</span>
+                        <span className="font-medium text-foreground">{formatFactor(factor.factor)}</span>
                         {factor.actionable && (
-                          <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full">
+                          <span className="text-xs bg-info/10 text-info px-2 py-0.5 rounded-full">
                             Actionable
                           </span>
                         )}
                       </div>
-                      <span className={`font-bold ${factor.impact < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      <span className={cn(
+                        "font-semibold",
+                        factor.impact < 0 ? 'text-risk-red' : 'text-risk-green'
+                      )}>
                         {factor.impact >= 0 ? '+' : ''}
                         {(factor.impact * 100).toFixed(1)}%
                       </span>
@@ -465,14 +432,14 @@ export default function PredictionsDashboard() {
               {/* Recommended Actions */}
               {selectedPrediction.recommendedActions.length > 0 && (
                 <div>
-                  <h3 className="font-bold mb-3">Recommended Actions</h3>
-                  <div className="space-y-3">
+                  <h3 className="font-semibold text-foreground mb-3">Recommended Actions</h3>
+                  <div className="space-y-2">
                     {selectedPrediction.recommendedActions.map((action, i) => (
-                      <div key={i} className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                      <div key={i} className="p-3 rounded-lg bg-info/5 border border-info/10">
                         <div className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-blue-500 mt-0.5" />
+                          <CheckCircle2 className="w-5 h-5 text-info mt-0.5" />
                           <div>
-                            <p className="font-medium">{action.action}</p>
+                            <p className="font-medium text-foreground">{action.action}</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               Expected improvement: +{(action.expectedImpact * 100).toFixed(1)}%
                             </p>
@@ -484,19 +451,16 @@ export default function PredictionsDashboard() {
                 </div>
               )}
 
-              <div className="flex gap-4 pt-4">
-                <button
+              <div className="flex gap-3 pt-4">
+                <Button
                   onClick={() => router.push(`/coach/athletes/${selectedPrediction.athleteId}`)}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold"
+                  className="flex-1"
                 >
                   View Athlete Profile
-                </button>
-                <button
-                  onClick={() => setSelectedPrediction(null)}
-                  className="px-6 py-3 bg-gray-200 dark:bg-gray-600 text-foreground rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition-all font-bold"
-                >
+                </Button>
+                <Button variant="outline" onClick={() => setSelectedPrediction(null)}>
                   Close
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -96,54 +96,54 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Import Game Performance Stats
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Upload CSV files with game statistics to enable performance correlation analysis
           </p>
         </div>
 
         {/* Instructions Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-blue-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+        <div className="card-elevated p-6 mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
             How to Import Stats
           </h2>
 
-          <ol className="space-y-3 text-gray-700">
+          <ol className="space-y-3 text-muted-foreground">
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-semibold">
+              <span className="flex-shrink-0 w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
                 1
               </span>
               <span>
-                <strong>Download template:</strong> Click "Download Template" below to get a CSV file with the correct format
+                <strong className="text-foreground">Download template:</strong> Click "Download Template" below to get a CSV file with the correct format
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-semibold">
+              <span className="flex-shrink-0 w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
                 2
               </span>
               <span>
-                <strong>Fill in your data:</strong> Open the CSV in Excel/Google Sheets and add your athletes' game stats
+                <strong className="text-foreground">Fill in your data:</strong> Open the CSV in Excel/Google Sheets and add your athletes' game stats
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-semibold">
+              <span className="flex-shrink-0 w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
                 3
               </span>
               <span>
-                <strong>Upload:</strong> Select your sport, choose the file, and click "Upload Stats"
+                <strong className="text-foreground">Upload:</strong> Select your sport, choose the file, and click "Upload Stats"
               </span>
             </li>
           </ol>
 
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-900">
+          <div className="mt-4 p-4 bg-info/10 border border-info/20 rounded-lg">
+            <p className="text-sm text-info">
               <strong>💡 Tip:</strong> Make sure athlete names exactly match the names in your system. The import will
               automatically link game stats with mood logs from the same date to calculate correlations.
             </p>
@@ -151,18 +151,18 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
         </div>
 
         {/* Upload Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-blue-100">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Upload CSV File</h2>
+        <div className="card-elevated p-6 mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-6">Upload CSV File</h2>
 
           {/* Sport Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Sport
             </label>
             <select
               value={sport}
               onChange={(e) => setSport(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="Basketball">Basketball</option>
               <option value="Soccer">Soccer</option>
@@ -177,7 +177,7 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
           {/* Download Template Button */}
           <button
             onClick={downloadTemplate}
-            className="mb-6 flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="mb-6 flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
           >
             <Download className="w-4 h-4" />
             Download {sport} Template
@@ -185,7 +185,7 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
 
           {/* File Input */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               CSV File
             </label>
             <input
@@ -193,11 +193,11 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
               type="file"
               accept=".csv"
               onChange={handleFileSelect}
-              className="w-full p-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full p-3 border border-border rounded-lg bg-background text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
             />
             {file && (
-              <p className="mt-2 text-sm text-gray-600">
-                Selected: <span className="font-medium">{file.name}</span>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Selected: <span className="font-medium text-foreground">{file.name}</span>
               </p>
             )}
           </div>
@@ -206,10 +206,10 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
           <button
             onClick={handleUpload}
             disabled={!file || uploading}
-            className={`w-full py-3 px-6 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-colors ${
+            className={`w-full py-3 px-6 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors ${
               !file || uploading
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90'
             }`}
           >
             <Upload className="w-5 h-5" />
@@ -220,39 +220,39 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
         {/* Results */}
         {result && (
           <div
-            className={`rounded-2xl shadow-lg p-6 border ${
+            className={`rounded-lg p-6 border ${
               result.success
-                ? 'bg-secondary/10 border-secondary/20'
-                : 'bg-muted-foreground/10 border-muted-foreground'
+                ? 'bg-risk-green/5 border-risk-green/20'
+                : 'bg-risk-red/5 border-risk-red/20'
             }`}
           >
             <div className="flex items-start gap-3">
               {result.success ? (
-                <CheckCircle2 className="w-6 h-6 text-secondary flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-6 h-6 text-risk-green flex-shrink-0 mt-0.5" />
               ) : (
-                <AlertCircle className="w-6 h-6 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-6 h-6 text-risk-red flex-shrink-0 mt-0.5" />
               )}
               <div className="flex-1">
                 <h3
                   className={`font-semibold mb-2 ${
-                    result.success ? 'text-secondary' : 'text-chrome'
+                    result.success ? 'text-risk-green' : 'text-risk-red'
                   }`}
                 >
                   {result.success ? 'Import Successful!' : 'Import Failed'}
                 </h3>
                 <p
                   className={`text-sm mb-2 ${
-                    result.success ? 'text-secondary' : 'text-muted-foreground'
+                    result.success ? 'text-risk-green/80' : 'text-risk-red/80'
                   }`}
                 >
                   {result.message}
                 </p>
 
                 {result.success && result.imported !== undefined && (
-                  <div className="mt-3 text-sm text-secondary">
+                  <div className="mt-3 text-sm text-risk-green">
                     <p>✓ {result.imported} records imported successfully</p>
                     {result.errors && result.errors > 0 && (
-                      <p className="text-muted-foreground mt-1">
+                      <p className="text-warning mt-1">
                         ⚠ {result.errors} rows had errors (see details below)
                       </p>
                     )}
@@ -261,11 +261,11 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
 
                 {result.errorDetails && result.errorDetails.length > 0 && (
                   <div className="mt-4">
-                    <p className="font-medium text-sm text-gray-900 mb-2">Error Details:</p>
-                    <div className="max-h-48 overflow-y-auto bg-white rounded-lg p-3 space-y-1">
+                    <p className="font-medium text-sm text-foreground mb-2">Error Details:</p>
+                    <div className="max-h-48 overflow-y-auto bg-card rounded-lg p-3 space-y-1 border border-border">
                       {result.errorDetails.map((error, idx) => (
-                        <div key={idx} className="text-sm text-gray-700">
-                          <span className="font-medium">Row {error.row}:</span> {error.error}
+                        <div key={idx} className="text-sm text-muted-foreground">
+                          <span className="font-medium text-foreground">Row {error.row}:</span> {error.error}
                         </div>
                       ))}
                     </div>
@@ -277,29 +277,29 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
         )}
 
         {/* CSV Format Reference */}
-        <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">CSV Format Reference</h2>
+        <div className="mt-8 card-elevated p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">CSV Format Reference</h2>
 
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">Required Columns:</h3>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                <li><code className="bg-gray-100 px-2 py-0.5 rounded">Name</code> - Athlete full name (must match system)</li>
-                <li><code className="bg-gray-100 px-2 py-0.5 rounded">Date</code> - Game date (YYYY-MM-DD format)</li>
+              <h3 className="font-medium text-foreground mb-2">Required Columns:</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li><code className="bg-muted px-2 py-0.5 rounded text-foreground">Name</code> - Athlete full name (must match system)</li>
+                <li><code className="bg-muted px-2 py-0.5 rounded text-foreground">Date</code> - Game date (YYYY-MM-DD format)</li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">Optional Columns:</h3>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                <li><code className="bg-gray-100 px-2 py-0.5 rounded">Opponent</code> - Opponent team name</li>
-                <li><code className="bg-gray-100 px-2 py-0.5 rounded">Outcome</code> - WIN/LOSS/DRAW</li>
+              <h3 className="font-medium text-foreground mb-2">Optional Columns:</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li><code className="bg-muted px-2 py-0.5 rounded text-foreground">Opponent</code> - Opponent team name</li>
+                <li><code className="bg-muted px-2 py-0.5 rounded text-foreground">Outcome</code> - WIN/LOSS/DRAW</li>
                 <li>Sport-specific stats (Points, Assists, Goals, etc.)</li>
               </ul>
             </div>
 
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs font-mono text-gray-800">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs font-mono text-muted-foreground">
                 Example: Sarah Johnson,2024-12-15,UCLA,22,5,8,2,34,WIN
               </p>
             </div>

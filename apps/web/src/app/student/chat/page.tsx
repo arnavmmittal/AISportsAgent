@@ -1,279 +1,226 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/button';
-import { Input } from '@/components/shared/ui/input';
-import { Badge } from '@/components/shared/ui/badge';
 import {
-  Send,
-  Sparkles,
+  MessageSquare,
   Bot,
   User,
-  Lightbulb,
-  Heart,
-  Trophy,
-  BookOpen,
   Clock,
+  ChevronRight,
+  Sparkles,
+  Calendar,
+  Search,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface Message {
+/**
+ * Student Chat History Page - Updated with Design System v2.0
+ *
+ * Features:
+ * - List of past chat sessions
+ * - Quick access to AI coach
+ * - Session summaries and timestamps
+ */
+
+interface ChatSession {
   id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
+  title: string;
+  lastMessage: string;
+  createdAt: Date;
+  messageCount: number;
 }
 
-const SUGGESTED_PROMPTS = [
-  "I'm feeling anxious about tomorrow's game",
-  "How do I improve my pre-game routine?",
-  "I made a mistake and can't stop thinking about it",
-  "Tips for staying focused during competition",
-];
-
-const QUICK_TOPICS = [
-  { icon: Heart, label: 'Pre-Game Anxiety', color: 'text-pink-600 bg-pink-50' },
-  { icon: Trophy, label: 'Building Confidence', color: 'text-muted-foreground bg-muted/10' },
-  { icon: Lightbulb, label: 'Mental Toughness', color: 'text-accent bg-accent/10' },
-  { icon: BookOpen, label: 'Visualization', color: 'text-primary bg-blue-50' },
-];
-
-export default function StudentChatPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi! I'm your AI mental performance coach. I'm here to help you with pre-game anxiety, building confidence, staying focused, and developing mental toughness. What's on your mind today?",
-      timestamp: new Date(),
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+export default function StudentChatHistoryPage() {
+  const router = useRouter();
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    loadChatSessions();
+  }, []);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const loadChatSessions = async () => {
+    try {
+      setIsLoading(true);
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date(),
-    };
+      if (!profileData.success || !profileData.data?.userId) {
+        setSessions([]);
+        setIsLoading(false);
+        return;
+      }
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
+      const userId = profileData.data.userId;
+      const response = await fetch(`/api/chat/sessions?userId=${userId}`);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: generateMockResponse(userMessage.content),
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          const transformedSessions: ChatSession[] = data.data.map((session: any) => ({
+            id: session.id,
+            title: session.title || 'Chat Session',
+            lastMessage: session.lastMessage || 'No messages yet',
+            createdAt: new Date(session.createdAt),
+            messageCount: session.messageCount || 0,
+          }));
+          setSessions(transformedSessions);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading chat sessions:', error);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  const handlePromptClick = (prompt: string) => {
-    setInput(prompt);
+  const filteredSessions = sessions.filter(session =>
+    session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    session.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-muted-foreground">Loading conversations...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary" />
-            AI Mental Performance Coach
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Header */}
+        <header className="animate-fade-in">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+            <MessageSquare className="w-7 h-7 text-primary" />
+            Chat History
           </h1>
-          <p className="text-muted-foreground mt-1">Evidence-based sports psychology guidance, 24/7</p>
-        </div>
-        <Badge variant="secondary" className="gap-1">
-          <div className="w-2 h-2 bg-secondary/100 rounded-full animate-pulse"></div>
-          Online
-        </Badge>
-      </div>
+          <p className="text-muted-foreground mt-1">
+            Review your past conversations with AI Coach
+          </p>
+        </header>
 
-      {/* Quick Topics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Topics</CardTitle>
-          <CardDescription>Common mental performance areas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {QUICK_TOPICS.map((topic) => {
-              const Icon = topic.icon;
-              return (
-                <button
-                  key={topic.label}
-                  onClick={() => handlePromptClick(`Help me with ${topic.label.toLowerCase()}`)}
-                  className={`p-3 rounded-lg border-2 border-border hover:border-blue-400 transition-all ${topic.color}`}
-                >
-                  <Icon className="w-5 h-5 mx-auto mb-1" />
-                  <p className="text-xs font-medium text-center">{topic.label}</p>
-                </button>
-              );
-            })}
+        {/* Quick Action - New Chat */}
+        <button
+          onClick={() => router.push('/student/ai-coach')}
+          className="w-full card-interactive p-4 flex items-center gap-4 animate-slide-up"
+        >
+          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+            <Bot className="w-6 h-6 text-primary-foreground" />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Chat Container */}
-      <Card className="h-[600px] flex flex-col">
-        <CardHeader className="border-b">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-              <Bot className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Mental Performance Coach</CardTitle>
-              <CardDescription className="text-xs">Powered by sports psychology research</CardDescription>
-            </div>
+          <div className="flex-1 text-left">
+            <div className="font-medium text-foreground">Start New Conversation</div>
+            <p className="text-sm text-muted-foreground">Talk to your AI mental performance coach</p>
           </div>
-        </CardHeader>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
 
-        {/* Messages */}
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-            >
-              {/* Avatar */}
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-green-500 to-emerald-600'
-                    : 'bg-gradient-to-br from-blue-600 to-indigo-600'
-                }`}
-              >
-                {message.role === 'user' ? (
-                  <User className="w-5 h-5 text-white" />
-                ) : (
-                  <Bot className="w-5 h-5 text-white" />
-                )}
-              </div>
-
-              {/* Message Bubble */}
-              <div className={`flex-1 max-w-[70%] ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div
-                  className={`rounded-2xl px-4 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
-                      : 'bg-muted text-foreground'
-                  }`}
-                >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                </div>
-                <div className="flex items-center gap-2 mt-1 px-2">
-                  <Clock className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {isLoading && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div className="bg-muted rounded-2xl px-4 py-3">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </CardContent>
-
-        {/* Input Area */}
-        <div className="border-t p-4 space-y-3">
-          {/* Suggested Prompts */}
-          {messages.length <= 1 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs text-gray-500 w-full">Suggested:</span>
-              {SUGGESTED_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handlePromptClick(prompt)}
-                  className="text-xs px-3 py-1.5 bg-muted hover:bg-gray-200 rounded-full text-muted-foreground transition-colors"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
-              onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              placeholder="Type your message... (Press Enter to send)"
-              className="flex-1"
-              disabled={isLoading}
+        {/* Search */}
+        {sessions.length > 0 && (
+          <div className="relative animate-slide-up">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search conversations..."
+              className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
             />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-            >
-              <Send className="w-4 h-4" />
+          </div>
+        )}
+
+        {/* Sessions List */}
+        {sessions.length === 0 ? (
+          <div className="card-elevated p-8 text-center animate-slide-up">
+            <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+            <h3 className="font-medium text-foreground mb-1">No conversations yet</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Start a conversation with your AI coach to see your history here
+            </p>
+            <Button onClick={() => router.push('/student/ai-coach')}>
+              <Bot className="w-4 h-4 mr-2" />
+              Talk to AI Coach
             </Button>
           </div>
+        ) : filteredSessions.length === 0 ? (
+          <div className="card-elevated p-8 text-center animate-slide-up">
+            <Search className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+            <h3 className="font-medium text-foreground mb-1">No matches found</h3>
+            <p className="text-sm text-muted-foreground">Try a different search term</p>
+          </div>
+        ) : (
+          <div className="space-y-3 animate-slide-up">
+            {filteredSessions.map((session) => (
+              <button
+                key={session.id}
+                onClick={() => router.push(`/student/ai-coach?sessionId=${session.id}`)}
+                className="w-full card-interactive p-4 text-left"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-5 h-5 text-primary" />
+                  </div>
 
-          <p className="text-xs text-gray-500 text-center">
-            For crisis support, contact your coach or call the National Suicide Prevention Lifeline: 988
-          </p>
-        </div>
-      </Card>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <h3 className="font-medium text-foreground truncate">{session.title}</h3>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(session.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{session.lastMessage}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {session.messageCount} message{session.messageCount !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-2" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Tips Section */}
+        <section className="p-4 rounded-lg bg-info/5 border border-info/10 animate-slide-up">
+          <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-info" />
+            Get the Most from AI Coach
+          </h3>
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            <li>• Be specific about what's on your mind</li>
+            <li>• Share how you're feeling before games or practices</li>
+            <li>• Ask for specific techniques (visualization, breathing, etc.)</li>
+            <li>• Return to past conversations to track your progress</li>
+          </ul>
+        </section>
+      </div>
     </div>
   );
-}
-
-// Mock response generator (replace with actual AI API)
-function generateMockResponse(userMessage: string): string {
-  const lowerMessage = userMessage.toLowerCase();
-
-  if (lowerMessage.includes('anxious') || lowerMessage.includes('anxiety') || lowerMessage.includes('nervous')) {
-    return "Pre-game anxiety is completely normal and actually shows you care about your performance. Let's work on some strategies:\n\n1. **Breathing Exercise**: Try box breathing - inhale for 4 counts, hold for 4, exhale for 4, hold for 4. This activates your parasympathetic nervous system.\n\n2. **Reframe**: Instead of 'I'm nervous,' try 'I'm excited and ready.' Research shows this cognitive reframe improves performance.\n\n3. **Routine**: Create a consistent pre-game routine. Familiarity reduces uncertainty and anxiety.\n\nWhich of these would you like to explore further?";
-  }
-
-  if (lowerMessage.includes('confidence') || lowerMessage.includes('believe')) {
-    return "Building confidence is a skill you can develop. Here's what works:\n\n1. **Success Log**: Write down 3 things you did well after each practice/game. Your brain remembers what you focus on.\n\n2. **Process Goals**: Instead of 'win the game,' focus on controllables like 'execute my pre-shot routine.'\n\n3. **Positive Self-Talk**: Replace 'Don't mess up' with 'I've trained for this.'\n\nConfidence comes from preparation meeting opportunity. What area of your game would you like to build confidence in?";
-  }
-
-  if (lowerMessage.includes('mistake') || lowerMessage.includes('error')) {
-    return "Athletes who ruminate on mistakes actually perform worse. Let's break this pattern:\n\n1. **The 10-Second Rule**: Give yourself 10 seconds to feel frustrated, then move on. Champions have short memories for errors.\n\n2. **Learning Question**: Ask yourself 'What can I learn from this?' This shifts from emotion to growth.\n\n3. **Physical Reset**: Use a physical gesture (adjust your socks, tap your chest) to signal 'that point is over.'\n\nRemember: Michael Jordan missed over 9,000 shots. Mistakes are data, not definitions. What specifically are you struggling to let go of?";
-  }
-
-  if (lowerMessage.includes('focus') || lowerMessage.includes('concentrate') || lowerMessage.includes('distracted')) {
-    return "Staying focused under pressure is one of the most trainable mental skills:\n\n1. **Attention Cues**: Choose one thing to focus on (e.g., 'follow the ball,' 'feel my feet'). Return to this when distracted.\n\n2. **Present Moment**: Past and future don't exist in competition. If you notice yourself there, say 'be here now' internally.\n\n3. **Pre-Performance Routine**: Triggers automatic focus. Same routine = same focus state.\n\nWhere does your mind typically wander during competition?";
-  }
-
-  return "I'm here to help with your mental performance. Whether it's pre-game anxiety, building confidence, handling pressure, or developing mental toughness, we can work on specific strategies tailored to your sport.\n\nWhat specific situation or feeling would you like help with?";
 }

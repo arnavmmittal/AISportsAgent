@@ -12,6 +12,20 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { Users, TrendingUp, AlertTriangle, Activity, Key, Copy, ChevronRight, Loader2 } from 'lucide-react';
+import { Button } from '@/components/shared/ui/button';
+import { cn } from '@/lib/utils';
+
+/**
+ * EnhancedDashboard - Updated with Design System v2.0
+ *
+ * Features:
+ * - Overview stats with semantic color tokens
+ * - Mood trend chart
+ * - At-risk athlete cards
+ * - Today's readiness scores
+ * - Team invite code management
+ */
 
 interface DashboardData {
   overview: {
@@ -117,10 +131,8 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
   const copyInviteCode = () => {
     if (inviteCodeData?.inviteCode) {
       navigator.clipboard.writeText(inviteCodeData.inviteCode);
-      alert('Invite code copied to clipboard!');
     }
   };
-
 
   // Prepare chart data
   const chartData = dashboardData?.moodTrend?.map((d) => {
@@ -133,12 +145,53 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
     };
   }) || [];
 
+  // Get status color based on readiness
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case 'excellent':
+        return {
+          border: 'border-risk-green/30',
+          bg: 'bg-risk-green/5',
+          badge: 'bg-risk-green/20 text-risk-green',
+          text: 'text-risk-green',
+        };
+      case 'good':
+        return {
+          border: 'border-info/30',
+          bg: 'bg-info/5',
+          badge: 'bg-info/20 text-info',
+          text: 'text-info',
+        };
+      case 'fair':
+        return {
+          border: 'border-risk-yellow/30',
+          bg: 'bg-risk-yellow/5',
+          badge: 'bg-risk-yellow/20 text-risk-yellow',
+          text: 'text-risk-yellow',
+        };
+      case 'at-risk':
+        return {
+          border: 'border-risk-red/30',
+          bg: 'bg-risk-red/5',
+          badge: 'bg-risk-red/20 text-risk-red',
+          text: 'text-risk-red',
+        };
+      default:
+        return {
+          border: 'border-border',
+          bg: 'bg-muted/50',
+          badge: 'bg-muted text-muted-foreground',
+          text: 'text-muted-foreground',
+        };
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-6 text-muted-foreground font-semibold text-lg">Loading dashboard...</p>
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
+          <p className="mt-4 text-muted-foreground font-medium">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -146,108 +199,90 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
   if (error || !dashboardData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="text-center bg-card rounded-2xl shadow-2xl p-12 max-w-md">
-          <div className="text-muted-foreground text-7xl mb-6">⚠️</div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="card-elevated p-12 max-w-md text-center">
+          <AlertTriangle className="w-12 h-12 text-risk-red mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">
             {error || 'No data available'}
           </h2>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-8 py-3 bg-primary text-white rounded-xl hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all"
-          >
-            Retry
-          </button>
+          <p className="text-sm text-muted-foreground mb-6">
+            There was a problem loading your dashboard data.
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
 
-  const { overview, teamMood, atRiskAthletes, athleteReadiness, crisisAlerts } = dashboardData;
+  const { overview, teamMood, atRiskAthletes, athleteReadiness } = dashboardData;
 
   return (
-    <div className="min-h-screen">
-      {/* Header with Invite Code */}
-      <div className="bg-card shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
                 Coach Dashboard
               </h1>
-              <p className="mt-3 text-muted-foreground text-lg">
+              <p className="mt-1 text-muted-foreground">
                 Monitor your team's mental performance
               </p>
             </div>
-            <button
+            <Button
               onClick={() => setShowInviteCode(!showInviteCode)}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all shadow-lg flex items-center gap-3 font-bold text-lg hover:scale-105 transform"
+              variant={showInviteCode ? 'default' : 'outline'}
+              className="flex items-center gap-2"
             >
-              <span className="text-2xl">🔑</span>
-              <span>My Invite Code</span>
-            </button>
+              <Key className="w-4 h-4" />
+              My Invite Code
+            </Button>
           </div>
 
           {/* Invite Code Card */}
           {showInviteCode && inviteCodeData && (
-            <div className="mt-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
-              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <span className="text-3xl">🎯</span>
-                Your Team Invite Code
-              </h3>
-              <div className="bg-card/20 backdrop-blur-md rounded-xl p-6 mb-6 border border-white/30">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-wider opacity-90 mb-2 font-semibold">
-                      Share this code with your athletes
-                    </div>
-                    <div className="text-5xl font-mono font-black tracking-widest">
-                      {inviteCodeData.inviteCode}
-                    </div>
-                  </div>
-                  <button
-                    onClick={copyInviteCode}
-                    className="px-6 py-3 bg-card text-primary rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-lg hover:shadow-xl"
-                  >
-                    📋 Copy Code
-                  </button>
+            <div className="mt-6 card-elevated p-6 border-primary/20 animate-fade-in">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Key className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Your Team Invite Code</h3>
+                  <p className="text-sm text-muted-foreground">Share this code with your athletes</p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🏀</span>
-                  <span className="opacity-90">Sport:</span>{' '}
-                  <span className="font-bold text-lg">{inviteCodeData.sport}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">👥</span>
-                  <span className="opacity-90">Connected Athletes:</span>{' '}
-                  <span className="font-bold text-lg">{inviteCodeData.athleteCount}</span>
-                </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <code className="flex-1 px-4 py-3 rounded-lg bg-muted border border-border font-mono text-xl font-bold text-foreground tracking-wider">
+                  {inviteCodeData.inviteCode}
+                </code>
+                <Button variant="outline" onClick={copyInviteCode} className="flex items-center gap-2">
+                  <Copy className="w-4 h-4" />
+                  Copy
+                </Button>
               </div>
-              <div className="mt-6 bg-card/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <p className="text-sm leading-relaxed">
-                  💡 <strong>How it works:</strong> Athletes enter this code in their mobile app to join your team.
-                  They control their data sharing consent, giving you access to their mental performance metrics.
-                </p>
+              <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
+                <span>Sport: <strong className="text-foreground">{inviteCodeData.sport}</strong></span>
+                <span>Connected: <strong className="text-foreground">{inviteCodeData.athleteCount} athletes</strong></span>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Filters */}
-        <div className="mb-10 flex flex-col md:flex-row gap-6 items-stretch bg-card rounded-2xl shadow-lg p-6 border border-gray-100">
+        <div className="card-elevated p-4 flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-              <span className="text-lg">📅</span>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Time Range
             </label>
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:bg-card cursor-pointer"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
             >
               <option value="7">Last 7 days</option>
               <option value="14">Last 14 days</option>
@@ -256,139 +291,147 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
-              <span className="text-lg">🏀</span>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Sport Filter
             </label>
             <select
               value={sportFilter}
               onChange={(e) => setSportFilter(e.target.value)}
-              className="w-full px-5 py-3 border-2 border-border rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-lg font-semibold bg-background hover:bg-card cursor-pointer"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
             >
               <option value="">All Sports</option>
-              <option value="Basketball">🏀 Basketball</option>
-              <option value="Football">🏈 Football</option>
-              <option value="Soccer">⚽ Soccer</option>
-              <option value="Volleyball">🏐 Volleyball</option>
-              <option value="Baseball">⚾ Baseball</option>
-              <option value="Track">🏃 Track & Field</option>
+              <option value="Basketball">Basketball</option>
+              <option value="Football">Football</option>
+              <option value="Soccer">Soccer</option>
+              <option value="Volleyball">Volleyball</option>
+              <option value="Baseball">Baseball</option>
+              <option value="Track">Track & Field</option>
             </select>
           </div>
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Athletes */}
+          <div className="card-elevated p-5">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">
-                  Total Athletes
-                </div>
-                <div className="text-5xl font-black mb-2">
-                  {overview.totalAthletes}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                <p className="text-sm font-medium text-muted-foreground">Total Athletes</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{overview.totalAthletes}</p>
+                <p className="text-xs text-muted-foreground mt-1">
                   {overview.athletesWithConsent} with consent
-                </div>
+                </p>
               </div>
-              <div className="text-6xl opacity-20">👥</div>
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
+          {/* Avg Team Mood */}
+          <div className="card-elevated p-5">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">
-                  Avg Team Mood
-                </div>
-                <div className="text-5xl font-black mb-2">
+                <p className="text-sm font-medium text-muted-foreground">Avg Team Mood</p>
+                <p className="text-3xl font-bold text-foreground mt-1">
                   {teamMood.avgMood.toFixed(1)}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
                   {teamMood.totalLogs} logs
-                </div>
+                </p>
               </div>
-              <div className="text-6xl opacity-20">😊</div>
+              <div className="w-10 h-10 rounded-lg bg-risk-green/10 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-risk-green" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
+          {/* At-Risk Athletes */}
+          <div className="card-elevated p-5">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">
-                  At-Risk Athletes
-                </div>
-                <div className="text-5xl font-black mb-2">
+                <p className="text-sm font-medium text-muted-foreground">At-Risk Athletes</p>
+                <p className={cn(
+                  "text-3xl font-bold mt-1",
+                  overview.atRiskCount > 0 ? "text-risk-yellow" : "text-foreground"
+                )}>
                   {overview.atRiskCount}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  Need attention
-                </div>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Need attention</p>
               </div>
-              <div className="text-6xl opacity-20">⚠️</div>
+              <div className="w-10 h-10 rounded-lg bg-risk-yellow/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-risk-yellow" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
+          {/* Crisis Alerts */}
+          <div className="card-elevated p-5">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">
-                  Crisis Alerts
-                </div>
-                <div className="text-5xl font-black mb-2">
+                <p className="text-sm font-medium text-muted-foreground">Crisis Alerts</p>
+                <p className={cn(
+                  "text-3xl font-bold mt-1",
+                  overview.crisisAlertsCount > 0 ? "text-risk-red" : "text-foreground"
+                )}>
                   {overview.crisisAlertsCount}
-                </div>
-                <div className="text-sm bg-card/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  Unresolved
-                </div>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Unresolved</p>
               </div>
-              <div className="text-6xl opacity-20">🚨</div>
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center",
+                overview.crisisAlertsCount > 0 ? "bg-risk-red/10" : "bg-muted"
+              )}>
+                <Activity className={cn(
+                  "w-5 h-5",
+                  overview.crisisAlertsCount > 0 ? "text-risk-red" : "text-muted-foreground"
+                )} />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Mood Trend Chart */}
         {chartData.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
-              <span className="text-3xl">📈</span>
+          <div className="card-elevated p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
               Team Mental Performance Trends
             </h2>
-            <div className="h-96">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" stroke="#6b7280" />
-                  <YAxis domain={[0, 10]} stroke="#6b7280" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" className="text-muted-foreground" tick={{ fontSize: 12 }} />
+                  <YAxis domain={[0, 10]} className="text-muted-foreground" tick={{ fontSize: 12 }} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
                     }}
                   />
                   <Legend />
                   <Line
                     type="monotone"
                     dataKey="Mood"
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    dot={{ fill: '#3b82f6', r: 5 }}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="Confidence"
-                    stroke="#22c55e"
-                    strokeWidth={3}
-                    dot={{ fill: '#22c55e', r: 5 }}
+                    stroke="hsl(var(--risk-green))"
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--risk-green))', r: 4 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="Stress"
-                    stroke="#ef4444"
-                    strokeWidth={3}
-                    dot={{ fill: '#ef4444', r: 5 }}
+                    stroke="hsl(var(--risk-red))"
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--risk-red))', r: 4 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -398,62 +441,67 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* At-Risk Athletes */}
         {atRiskAthletes.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border-2 border-muted-foreground">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
-              <span className="text-3xl">⚠️</span>
+          <div className="card-elevated p-6 border-risk-yellow/20">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-risk-yellow" />
               At-Risk Athletes
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {atRiskAthletes.map((athlete) => (
                 <div
                   key={athlete.id}
-                  className="border-2 border-muted-foreground rounded-xl p-6 bg-gradient-to-br from-red-50 to-orange-50 hover:shadow-xl transition-all hover:scale-105 transform cursor-pointer"
+                  className="card-interactive p-4 border-risk-red/20"
                   onClick={() => router.push(`/coach/athletes/${athlete.id}`)}
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-black text-lg text-foreground">{athlete.name}</h3>
-                      <p className="text-sm text-muted-foreground font-semibold">
+                      <h3 className="font-semibold text-foreground">{athlete.name}</h3>
+                      <p className="text-sm text-muted-foreground">
                         {athlete.sport} • {athlete.year}
                       </p>
                     </div>
-                    <div className="text-3xl">🔴</div>
+                    <span className="px-2 py-1 rounded bg-risk-red/10 text-risk-red text-xs font-medium">
+                      At Risk
+                    </span>
                   </div>
                   {athlete.recentMood && (
-                    <div className="space-y-3 mb-4">
-                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold text-muted-foreground">Mood:</span>
-                        <span className="font-black text-lg">{athlete.recentMood.mood}/10</span>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Mood</span>
+                        <span className="font-medium text-foreground">{athlete.recentMood.mood}/10</span>
                       </div>
-                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold text-muted-foreground">Confidence:</span>
-                        <span className="font-black text-lg">{athlete.recentMood.confidence}/10</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Confidence</span>
+                        <span className="font-medium text-foreground">{athlete.recentMood.confidence}/10</span>
                       </div>
-                      <div className="flex justify-between items-center bg-card/60 rounded-lg px-3 py-2">
-                        <span className="text-sm font-semibold text-muted-foreground">Stress:</span>
-                        <span className="font-black text-lg text-muted-foreground">{athlete.recentMood.stress}/10</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Stress</span>
+                        <span className="font-medium text-risk-red">{athlete.recentMood.stress}/10</span>
                       </div>
                     </div>
                   )}
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(`/coach/athletes/${athlete.id}`);
                       }}
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-xl transition-all font-bold text-sm"
                     >
-                      👁️ View
-                    </button>
-                    <button
+                      View Profile
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-risk-red hover:bg-risk-red/90"
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(`/coach/athletes/${athlete.id}`);
                       }}
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:shadow-xl transition-all font-bold text-sm"
                     >
-                      📨 Check-In
-                    </button>
+                      Check-In
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -463,79 +511,62 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* Today's Readiness */}
         {athleteReadiness.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-3">
-              <span className="text-3xl">🎯</span>
+          <div className="card-elevated p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
               Today's Readiness Scores
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {athleteReadiness.map((item) => (
-                <div
-                  key={item.athlete.id}
-                  onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
-                  className={`border-2 rounded-xl p-6 cursor-pointer ${
-                    item.status === 'excellent'
-                      ? 'border-secondary/20 bg-gradient-to-br from-green-50 to-emerald-50'
-                      : item.status === 'good'
-                      ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50'
-                      : item.status === 'fair'
-                      ? 'border-muted bg-gradient-to-br from-yellow-50 to-amber-50'
-                      : 'border-muted-foreground bg-gradient-to-br from-red-50 to-orange-50'
-                  } hover:shadow-xl transition-all hover:scale-105 transform`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-black text-lg text-foreground">{item.athlete.name}</h3>
-                      <p className="text-sm text-muted-foreground font-semibold">{item.athlete.teamPosition}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {athleteReadiness.map((item) => {
+                const styles = getStatusStyles(item.status);
+                return (
+                  <div
+                    key={item.athlete.id}
+                    onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
+                    className={cn(
+                      "card-interactive p-4",
+                      styles.border,
+                      styles.bg
+                    )}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold text-foreground">{item.athlete.name}</h3>
+                        <p className="text-sm text-muted-foreground">{item.athlete.teamPosition}</p>
+                      </div>
+                      <span className={cn("text-2xl font-bold", styles.text)}>
+                        {item.readiness}
+                      </span>
                     </div>
-                    <div
-                      className={`text-3xl font-black ${
-                        item.status === 'excellent'
-                          ? 'text-secondary'
-                          : item.status === 'good'
-                          ? 'text-primary'
-                          : item.status === 'fair'
-                          ? 'text-muted-foreground'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {item.readiness}
-                    </div>
+                    <span className={cn(
+                      "text-xs uppercase font-medium px-2 py-1 rounded inline-block",
+                      styles.badge
+                    )}>
+                      {item.status.replace('-', ' ')}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground float-right mt-1" />
                   </div>
-                  <div className={`text-xs uppercase font-black tracking-wider px-3 py-2 rounded-lg inline-block ${
-                    item.status === 'excellent'
-                      ? 'bg-secondary/30 text-secondary'
-                      : item.status === 'good'
-                      ? 'bg-blue-200 text-blue-800'
-                      : item.status === 'fair'
-                      ? 'bg-muted/30 text-muted-foreground'
-                      : 'bg-muted-foreground/30 text-muted-foreground'
-                  }`}>
-                    {item.status.replace('-', ' ')}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* Empty State */}
         {overview.totalAthletes === 0 && (
-          <div className="bg-card rounded-2xl shadow-2xl p-16 text-center border-2 border-dashed border-border">
-            <div className="text-8xl mb-6">👋</div>
-            <h3 className="text-3xl font-black text-foreground mb-4">
+          <div className="card-elevated p-12 text-center">
+            <Users className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               Welcome to Your Coach Dashboard!
             </h3>
-            <p className="text-muted-foreground mb-8 text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Get started by sharing your invite code with athletes. Once they join and grant consent,
               you'll see their mental performance metrics right here.
             </p>
-            <button
-              onClick={() => setShowInviteCode(true)}
-              className="px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-black text-lg hover:scale-105 transform"
-            >
-              🔑 View Invite Code
-            </button>
+            <Button onClick={() => setShowInviteCode(true)}>
+              <Key className="w-4 h-4 mr-2" />
+              View Invite Code
+            </Button>
           </div>
         )}
       </div>

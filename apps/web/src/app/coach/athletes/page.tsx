@@ -1,9 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, User, Calendar, TrendingDown, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Search, User, Calendar, AlertTriangle, Users, ChevronRight, Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { SportFilter } from '@/components/SportFilter';
+import { cn } from '@/lib/utils';
+
+/**
+ * Coach Athletes Page - Updated with Design System v2.0
+ *
+ * Features:
+ * - Athlete roster with risk-based prioritization
+ * - Real-time readiness and mood tracking
+ * - Sport filtering and search
+ * - Risk level badges using semantic colors
+ */
 
 type RiskLevel = 'critical' | 'warning' | 'good' | 'no-data';
 
@@ -35,7 +46,6 @@ export default function AthletesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch athletes from API
   useEffect(() => {
     loadAthletes();
   }, [selectedSports]);
@@ -57,60 +67,57 @@ export default function AthletesPage() {
 
       const data = await response.json();
 
-      // Transform dates
       const transformedAthletes = data.athletes.map((a: any) => ({
         ...a,
         lastCheckIn: a.lastCheckIn ? new Date(a.lastCheckIn) : null,
       }));
 
       setAthletes(transformedAthletes);
-      console.log(`Loaded ${transformedAthletes.length} athletes from API`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load athletes';
       console.error('Error loading athletes:', error);
       setError(message);
-      setAthletes([]); // Clear athletes on error
+      setAthletes([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Use real data from API
   const displayAthletes = athletes;
 
-  const getRiskColor = (level: RiskLevel) => {
+  const getRiskStyles = (level: RiskLevel) => {
     switch (level) {
       case 'critical':
         return {
-          bg: 'bg-muted-foreground/10 dark:bg-muted-foreground/20',
-          border: 'border-muted-foreground dark:border-muted-foreground',
-          dot: 'bg-muted-foreground/100',
-          text: 'text-chrome dark:text-chrome',
-          badge: 'bg-muted-foreground/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome',
+          card: 'bg-risk-red-bg border-risk-red/30',
+          dot: 'bg-risk-red',
+          text: 'text-risk-red',
+          badge: 'bg-risk-red/10 text-risk-red',
+          button: 'bg-risk-red text-white hover:bg-risk-red/90',
         };
       case 'warning':
         return {
-          bg: 'bg-muted/10 dark:bg-muted-foreground/20/20',
-          border: 'border-muted dark:border-muted-foreground',
-          dot: 'bg-muted/100',
-          text: 'text-chrome dark:text-chrome',
-          badge: 'bg-muted/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome',
+          card: 'bg-risk-yellow-bg border-risk-yellow/30',
+          dot: 'bg-risk-yellow',
+          text: 'text-risk-yellow',
+          badge: 'bg-risk-yellow/10 text-risk-yellow',
+          button: 'bg-risk-yellow text-white hover:bg-risk-yellow/90',
         };
       case 'good':
         return {
-          bg: 'bg-secondary/10 dark:bg-secondary/20',
-          border: 'border-secondary/20 dark:border-secondary',
-          dot: 'bg-secondary/100',
-          text: 'text-secondary dark:text-accent',
-          badge: 'bg-secondary/20 dark:bg-secondary/20/30 text-secondary dark:text-accent',
+          card: 'bg-risk-green-bg border-risk-green/30',
+          dot: 'bg-risk-green',
+          text: 'text-risk-green',
+          badge: 'bg-risk-green/10 text-risk-green',
+          button: 'bg-muted text-foreground hover:bg-muted/80',
         };
       case 'no-data':
         return {
-          bg: 'bg-gray-50 dark:bg-gray-900/20',
-          border: 'border-gray-200 dark:border-gray-700',
-          dot: 'bg-gray-400',
-          text: 'text-gray-900 dark:text-gray-200',
-          badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+          card: 'bg-muted/50 border-border',
+          dot: 'bg-muted-foreground',
+          text: 'text-muted-foreground',
+          badge: 'bg-muted text-muted-foreground',
+          button: 'bg-muted text-foreground hover:bg-muted/80',
         };
     }
   };
@@ -135,7 +142,6 @@ export default function AthletesPage() {
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      // Sort by risk level: critical > warning > good > no-data
       const riskOrder = { critical: 0, warning: 1, good: 2, 'no-data': 3 };
       return riskOrder[a.riskLevel] - riskOrder[b.riskLevel];
     });
@@ -145,284 +151,270 @@ export default function AthletesPage() {
   const goodCount = displayAthletes.filter(a => a.riskLevel === 'good').length;
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <header className="animate-fade-in">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+            <Users className="w-7 h-7 text-primary" />
             Athletes
           </h1>
-          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Quick status overview with readiness tracking</p>
-        </div>
+          <p className="text-muted-foreground mt-1">Quick status overview with readiness tracking</p>
+        </header>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Total Athletes</div>
-                <div className="text-5xl font-black mb-2">{displayAthletes.length}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">
-                  {selectedSports.length > 0 ? `Filtered` : 'Active roster'}
-                </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users className="w-5 h-5 text-primary" />
               </div>
-              <div className="text-6xl opacity-20">👥</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total</p>
+                <p className="text-2xl font-bold text-foreground">{displayAthletes.length}</p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
-                <div className="text-5xl font-black mb-2">{criticalCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Immediate attention</div>
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-risk-red" />
               </div>
-              <div className="text-6xl opacity-20">🚨</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Critical</p>
+                <p className="text-2xl font-bold text-risk-red">{criticalCount}</p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Warning</div>
-                <div className="text-5xl font-black mb-2">{warningCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Monitor closely</div>
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-risk-yellow/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-risk-yellow" />
               </div>
-              <div className="text-6xl opacity-20">⚠️</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Warning</p>
+                <p className="text-2xl font-bold text-risk-yellow">{warningCount}</p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Good</div>
-                <div className="text-5xl font-black mb-2">{goodCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Doing well</div>
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-risk-green/10 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-risk-green" />
               </div>
-              <div className="text-6xl opacity-20">✅</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Good</p>
+                <p className="text-2xl font-bold text-risk-green">{goodCount}</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 mb-8">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search by name or sport..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-foreground dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            />
-          </div>
+        <div className="card-elevated p-4 animate-slide-up">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search by name or sport..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-shadow"
+              />
+            </div>
 
-          {/* Sport Filter */}
-          <SportFilter selectedSports={selectedSports} onSportsChange={setSelectedSports} />
+            <SportFilter selectedSports={selectedSports} onSportsChange={setSelectedSports} />
 
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                filter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              All ({displayAthletes.length})
-            </button>
-            <button
-              onClick={() => setFilter('critical')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                filter === 'critical'
-                  ? 'bg-muted-foreground/30 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              🔴 Critical
-            </button>
-            <button
-              onClick={() => setFilter('warning')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                filter === 'warning'
-                  ? 'bg-muted-foreground text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              🟡 Warning
-            </button>
-            <button
-              onClick={() => setFilter('good')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                filter === 'good'
-                  ? 'bg-secondary text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              🟢 Good
-            </button>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setFilter('all')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+                  filter === 'all'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                All ({displayAthletes.length})
+              </button>
+              <button
+                onClick={() => setFilter('critical')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+                  filter === 'critical'
+                    ? 'bg-risk-red text-white'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Critical
+              </button>
+              <button
+                onClick={() => setFilter('warning')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+                  filter === 'warning'
+                    ? 'bg-risk-yellow text-white'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Warning
+              </button>
+              <button
+                onClick={() => setFilter('good')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+                  filter === 'good'
+                    ? 'bg-risk-green text-white'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Good
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Athletes List */}
-      <div className="space-y-3">
-        {isLoading ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Loading athletes...</h3>
-          </div>
-        ) : error ? (
-          <div className="bg-muted-foreground/10 dark:bg-muted-foreground/20 rounded-lg shadow border-2 border-muted-foreground dark:border-muted-foreground p-12 text-center">
-            <div className="text-muted-foreground dark:text-muted-foreground mb-4">⚠️</div>
-            <h3 className="text-lg font-semibold text-chrome dark:text-chrome mb-2">Error Loading Athletes</h3>
-            <p className="text-sm text-muted-foreground dark:text-chrome">{error}</p>
-            <button
-              onClick={() => loadAthletes()}
-              className="mt-4 px-6 py-2 bg-muted-foreground/30 text-white rounded-lg hover:bg-muted-foreground/30 transition-colors font-medium"
-            >
-              Retry
-            </button>
-          </div>
-        ) : filteredAthletes.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
-            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No athletes found</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Try adjusting your search or filter</p>
-          </div>
-        ) : (
-          filteredAthletes.map((athlete) => {
-            const colors = getRiskColor(athlete.riskLevel);
-            return (
-              <div
-                key={athlete.id}
-                className={`${colors.bg} border ${colors.border} rounded-lg p-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow`}
+        {/* Athletes List */}
+        <div className="space-y-3 animate-slide-up">
+          {isLoading ? (
+            <div className="card-elevated p-12 text-center">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <h3 className="font-medium text-foreground">Loading athletes...</h3>
+            </div>
+          ) : error ? (
+            <div className="card-elevated p-12 text-center border-risk-red/30 bg-risk-red-bg">
+              <AlertCircle className="w-12 h-12 text-risk-red mx-auto mb-4" />
+              <h3 className="font-medium text-foreground mb-2">Error Loading Athletes</h3>
+              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <button
+                onClick={() => loadAthletes()}
+                className="px-6 py-2 bg-risk-red text-white rounded-lg hover:bg-risk-red/90 transition-colors font-medium"
               >
-                <div className="flex items-center gap-4 flex-1">
-                  {/* Status Dot */}
-                  <div className={`w-3 h-3 ${colors.dot} rounded-full flex-shrink-0`}></div>
+                Retry
+              </button>
+            </div>
+          ) : filteredAthletes.length === 0 ? (
+            <div className="card-elevated p-12 text-center">
+              <User className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+              <h3 className="font-medium text-foreground mb-1">No athletes found</h3>
+              <p className="text-sm text-muted-foreground">Try adjusting your search or filter</p>
+            </div>
+          ) : (
+            filteredAthletes.map((athlete) => {
+              const styles = getRiskStyles(athlete.riskLevel);
+              return (
+                <div
+                  key={athlete.id}
+                  className={cn(
+                    'rounded-lg border p-4 flex items-center justify-between gap-4 transition-shadow hover:shadow-md',
+                    styles.card
+                  )}
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className={cn('w-3 h-3 rounded-full flex-shrink-0', styles.dot)} />
 
-                  {/* Athlete Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`font-semibold ${colors.text}`}>{athlete.name}</h3>
-                      {athlete.riskLevel === 'critical' && (
-                        <AlertTriangle className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                      <span>{athlete.sport}</span>
-                      <span>•</span>
-                      <span>{athlete.year}</span>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>Last check-in: {getTimeAgo(athlete.lastCheckIn)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Info */}
-                  <div className="hidden md:block text-right min-w-[200px]">
-                    {athlete.readinessScore !== null && (
-                      <div className="mb-2">
-                        <div className="flex items-center justify-end gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                          <span>Readiness: {athlete.readinessScore}/100</span>
-                          {athlete.chatContribution !== 0 && (
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded ${
-                                athlete.chatContribution > 0
-                                  ? 'bg-secondary/20 dark:bg-secondary/20/30 text-secondary dark:text-accent'
-                                  : 'bg-muted-foreground/20 dark:bg-muted-foreground/20/30 text-muted-foreground dark:text-chrome'
-                              }`}
-                            >
-                              Chat: {athlete.chatContribution > 0 ? '+' : ''}
-                              {athlete.chatContribution}
-                            </span>
-                          )}
-                        </div>
-                        {athlete.chatInsights && athlete.chatInsights.sentiment && (
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            Sentiment: {athlete.chatInsights.sentiment}
-                          </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-foreground">{athlete.name}</h3>
+                        {athlete.riskLevel === 'critical' && (
+                          <AlertTriangle className="w-4 h-4 text-risk-red" />
                         )}
                       </div>
-                    )}
-                    {athlete.concern && (
-                      <div
-                        className={`text-sm ${
-                          athlete.riskLevel === 'critical'
-                            ? 'text-muted-foreground dark:text-chrome'
-                            : athlete.riskLevel === 'warning'
-                            ? 'text-muted-foreground dark:text-chrome'
-                            : 'text-gray-600 dark:text-gray-400'
-                        }`}
-                      >
-                        {athlete.concern}
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <span>{athlete.sport}</span>
+                        <span>-</span>
+                        <span>{athlete.year}</span>
+                        <span>-</span>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{getTimeAgo(athlete.lastCheckIn)}</span>
+                        </div>
                       </div>
-                    )}
-                    {athlete.chatInsights && athlete.chatInsights.themes.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1 justify-end">
-                        {athlete.chatInsights.themes.slice(0, 2).map((theme) => (
-                          <span
-                            key={theme}
-                            className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                          >
-                            {theme.replace(/-/g, ' ')}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {!athlete.concern && athlete.riskLevel === 'good' && (
-                      <div className="text-sm text-secondary dark:text-accent">
-                        All indicators healthy
-                      </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2">
-                  {athlete.riskLevel === 'critical' && (
-                    <button className="px-4 py-2 bg-muted-foreground/30 text-white rounded-lg hover:bg-muted-foreground/30 transition-colors font-medium text-sm whitespace-nowrap">
-                      Reach Out
-                    </button>
-                  )}
-                  {athlete.riskLevel === 'warning' && (
-                    <Link
-                      href={`/coach/athletes/${athlete.id}`}
-                      className="px-4 py-2 bg-muted-foreground text-white rounded-lg hover:bg-muted-foreground transition-colors font-medium text-sm text-center whitespace-nowrap"
-                    >
-                      View Details
-                    </Link>
-                  )}
-                  {athlete.riskLevel === 'good' && (
-                    <Link
-                      href={`/coach/athletes/${athlete.id}`}
-                      className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium text-sm text-center whitespace-nowrap"
-                    >
-                      View Profile
-                    </Link>
-                  )}
+                    <div className="hidden md:block text-right min-w-[200px]">
+                      {athlete.readinessScore !== null && (
+                        <div className="mb-2">
+                          <div className="flex items-center justify-end gap-2 text-sm font-semibold text-foreground mb-1">
+                            <Activity className="w-4 h-4" />
+                            <span>Readiness: {athlete.readinessScore}/100</span>
+                            {athlete.chatContribution !== 0 && (
+                              <span
+                                className={cn(
+                                  'text-xs px-2 py-0.5 rounded',
+                                  athlete.chatContribution > 0
+                                    ? 'bg-risk-green/10 text-risk-green'
+                                    : 'bg-risk-red/10 text-risk-red'
+                                )}
+                              >
+                                Chat: {athlete.chatContribution > 0 ? '+' : ''}
+                                {athlete.chatContribution}
+                              </span>
+                            )}
+                          </div>
+                          {athlete.chatInsights?.sentiment && (
+                            <div className="text-xs text-muted-foreground">
+                              Sentiment: {athlete.chatInsights.sentiment}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {athlete.concern && (
+                        <div className={cn('text-sm', styles.text)}>
+                          {athlete.concern}
+                        </div>
+                      )}
+                      {athlete.chatInsights?.themes && athlete.chatInsights.themes.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1 justify-end">
+                          {athlete.chatInsights.themes.slice(0, 2).map((theme) => (
+                            <span
+                              key={theme}
+                              className="text-xs px-2 py-0.5 rounded bg-info/10 text-info"
+                            >
+                              {theme.replace(/-/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {!athlete.concern && athlete.riskLevel === 'good' && (
+                        <div className="text-sm text-risk-green">
+                          All indicators healthy
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/coach/athletes/${athlete.id}`}
+                    className={cn(
+                      'px-4 py-2 rounded-lg font-medium text-sm text-center whitespace-nowrap transition-colors flex items-center gap-2',
+                      styles.button
+                    )}
+                  >
+                    {athlete.riskLevel === 'critical' ? 'Reach Out' : 'View'}
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
 
         {/* Mobile Concern Display */}
         {filteredAthletes.some(a => a.concern) && (
-          <div className="md:hidden bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 mt-8">
-            <h3 className="text-xl font-black text-foreground dark:text-gray-100 mb-4">Recent Concerns</h3>
-            <div className="space-y-3">
+          <div className="md:hidden card-elevated p-4">
+            <h3 className="font-medium text-foreground mb-3">Recent Concerns</h3>
+            <div className="space-y-2">
               {filteredAthletes
                 .filter(a => a.concern)
                 .map(athlete => (
                   <div key={athlete.id} className="text-sm">
-                    <span className="font-bold text-foreground dark:text-gray-100">{athlete.name}:</span>{' '}
-                    <span className="text-muted-foreground dark:text-gray-400">{athlete.concern}</span>
+                    <span className="font-medium text-foreground">{athlete.name}:</span>{' '}
+                    <span className="text-muted-foreground">{athlete.concern}</span>
                   </div>
                 ))}
             </div>

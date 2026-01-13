@@ -102,7 +102,7 @@ export default function RecordPerformancePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function RecordPerformancePage() {
         <div className="mb-6">
           <Link
             href="/coach/dashboard"
-            className="inline-flex items-center gap-2 text-primary hover:text-blue-700 mb-4"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -134,20 +134,20 @@ export default function RecordPerformancePage() {
         </div>
 
         {/* Info Card */}
-        <Card className="mb-6 bg-blue-50 border-blue-200">
+        <Card className="mb-6 bg-info/5 border-info/20">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <TrendingUp className="w-5 h-5 text-primary mt-0.5" />
+              <TrendingUp className="w-5 h-5 text-info mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900">
+                <h3 className="font-semibold text-foreground">
                   Building Your Proprietary Dataset
                 </h3>
-                <p className="text-sm text-blue-800 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   By recording game stats, you're building a proprietary mental performance dataset.
                   The system will automatically link these stats to the athlete's mental state data
                   (mood, stress, sleep) to prove the ROI of mental performance optimization.
                 </p>
-                <div className="mt-3 text-sm text-blue-700">
+                <div className="mt-3 text-sm text-info">
                   <strong>Example insights you'll get:</strong>
                   <ul className="list-disc list-inside mt-1 space-y-1">
                     <li>"Athletes with mood &gt;7 have +15% better shooting percentage"</li>

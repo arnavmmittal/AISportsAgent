@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
 import { Button } from '@/components/shared/ui/button';
 import { Input } from '@/components/shared/ui/input';
 import { Textarea } from '@/components/shared/ui/textarea';
-import { Badge } from '@/components/shared/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -28,8 +26,21 @@ import {
   Check,
   Minus,
   Calendar,
+  ChevronRight,
+  CheckCircle2,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+/**
+ * Student Goals Page - Updated with Design System v2.0
+ *
+ * Features:
+ * - Clean card-based goal list with semantic colors
+ * - Category badges with consistent styling
+ * - Progress tracking with new design system
+ * - AI suggestions section
+ */
 
 type GoalCategory = 'PERFORMANCE' | 'MENTAL' | 'ACADEMIC' | 'PERSONAL';
 type GoalStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
@@ -56,27 +67,23 @@ interface SuggestedGoal {
 const CATEGORY_CONFIG = {
   PERFORMANCE: {
     icon: Trophy,
-    color: 'text-accent bg-accent/20',
-    gradient: 'from-purple-600 to-violet-600',
-    bgGradient: 'from-purple-50 to-violet-50',
+    color: 'bg-primary/10 text-primary border-primary/20',
+    bgColor: 'bg-primary',
   },
   MENTAL: {
     icon: Heart,
-    color: 'text-pink-600 bg-pink-100',
-    gradient: 'from-pink-600 to-rose-600',
-    bgGradient: 'from-pink-50 to-rose-50',
+    color: 'bg-pink-500/10 text-pink-600 border-pink-500/20',
+    bgColor: 'bg-pink-500',
   },
   ACADEMIC: {
     icon: GraduationCap,
-    color: 'text-secondary bg-secondary/20',
-    gradient: 'from-green-600 to-emerald-600',
-    bgGradient: 'from-green-50 to-emerald-50',
+    color: 'bg-success/10 text-success border-success/20',
+    bgColor: 'bg-success',
   },
   PERSONAL: {
     icon: User,
-    color: 'text-muted-foreground bg-muted/20',
-    gradient: 'from-orange-600 to-amber-600',
-    bgGradient: 'from-orange-50 to-amber-50',
+    color: 'bg-warning/10 text-warning border-warning/20',
+    bgColor: 'bg-warning',
   },
 };
 
@@ -86,6 +93,7 @@ export default function StudentGoalsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [newGoal, setNewGoal] = useState({
     title: '',
     description: '',
@@ -100,23 +108,21 @@ export default function StudentGoalsPage() {
 
   const loadGoals = async () => {
     try {
-      // Get current user from Supabase session
+      setIsLoading(true);
       const response = await fetch('/api/athlete/profile');
       const profileData = await response.json();
 
       if (!profileData.success || !profileData.data?.userId) {
-        toast.error('Please log in to view your goals');
+        setGoals([]);
+        setIsLoading(false);
         return;
       }
 
       const userId = profileData.data.userId;
-
-      // Fetch goals from API
       const goalsResponse = await fetch(`/api/goals?athleteId=${userId}`);
       const goalsData = await goalsResponse.json();
 
       if (goalsData.success) {
-        // Transform API data to match component structure
         const transformedGoals = goalsData.data.map((goal: any) => ({
           ...goal,
           targetDate: goal.targetDate ? new Date(goal.targetDate) : undefined,
@@ -124,29 +130,24 @@ export default function StudentGoalsPage() {
         }));
         setGoals(transformedGoals);
       } else {
-        console.error('Failed to load goals:', goalsData.error);
         setGoals([]);
       }
     } catch (error) {
       console.error('Error loading goals:', error);
-      toast.error('Failed to load goals');
       setGoals([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const loadSuggestedGoals = async () => {
     try {
-      // Get current user from Supabase session
       const response = await fetch('/api/athlete/profile');
       const profileData = await response.json();
 
-      if (!profileData.success || !profileData.data?.userId) {
-        return;
-      }
+      if (!profileData.success || !profileData.data?.userId) return;
 
       const userId = profileData.data.userId;
-
-      // Fetch suggestions from API
       const suggestionsResponse = await fetch(`/api/goals/suggestions?athleteId=${userId}`);
       const suggestionsData = await suggestionsResponse.json();
 
@@ -168,7 +169,6 @@ export default function StudentGoalsPage() {
     }
 
     try {
-      // Get current user ID
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
 
@@ -178,13 +178,9 @@ export default function StudentGoalsPage() {
       }
 
       const userId = profileData.data.userId;
-
-      // Create goal via API
       const response = await fetch('/api/goals', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           athleteId: userId,
           title: newGoal.title,
@@ -197,7 +193,6 @@ export default function StudentGoalsPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Add to local state
         const createdGoal = {
           ...data.data,
           targetDate: data.data.targetDate ? new Date(data.data.targetDate) : undefined,
@@ -218,7 +213,6 @@ export default function StudentGoalsPage() {
 
   const addSuggestedGoal = async (suggestion: SuggestedGoal) => {
     try {
-      // Get current user ID
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
 
@@ -228,13 +222,9 @@ export default function StudentGoalsPage() {
       }
 
       const userId = profileData.data.userId;
-
-      // Create goal from suggestion via API
       const response = await fetch('/api/goals', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           athleteId: userId,
           title: suggestion.title,
@@ -268,42 +258,19 @@ export default function StudentGoalsPage() {
     if (!goal) return;
 
     const newProgress = Math.max(0, Math.min(100, goal.progress + delta));
-    const newStatus =
-      newProgress === 100
-        ? 'COMPLETED'
-        : newProgress > 0
-          ? 'IN_PROGRESS'
-          : 'NOT_STARTED';
+    const newStatus = newProgress === 100 ? 'COMPLETED' : newProgress > 0 ? 'IN_PROGRESS' : 'NOT_STARTED';
 
     try {
-      // Update via API
       const response = await fetch(`/api/goals/${goalId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          progress: newProgress,
-          status: newStatus,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ progress: newProgress, status: newStatus }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Update local state
-        setGoals(
-          goals.map((g) =>
-            g.id === goalId
-              ? {
-                  ...g,
-                  progress: newProgress,
-                  status: newStatus,
-                }
-              : g
-          )
-        );
-
+        setGoals(goals.map((g) => g.id === goalId ? { ...g, progress: newProgress, status: newStatus } : g));
         if (newProgress === 100) {
           toast.success('Goal completed! Great work!');
         }
@@ -318,15 +285,10 @@ export default function StudentGoalsPage() {
 
   const deleteGoal = async (goalId: string) => {
     try {
-      // Delete via API
-      const response = await fetch(`/api/goals/${goalId}`, {
-        method: 'DELETE',
-      });
-
+      const response = await fetch(`/api/goals/${goalId}`, { method: 'DELETE' });
       const data = await response.json();
 
       if (data.success) {
-        // Remove from local state
         setGoals(goals.filter((g) => g.id !== goalId));
         toast.success('Goal deleted');
       } else {
@@ -340,278 +302,251 @@ export default function StudentGoalsPage() {
 
   const filteredGoals = goals.filter((goal) => {
     const matchesCategory = selectedCategory === 'ALL' || goal.category === selectedCategory;
-    const matchesSearch =
-      !searchQuery ||
-      goal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      goal.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = !searchQuery || goal.title.toLowerCase().includes(searchQuery.toLowerCase()) || goal.description?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Target className="w-8 h-8 text-accent" />
-            Goals & Progress
-          </h1>
-          <p className="text-muted-foreground mt-1">Set targets and track your progress</p>
+  const completedCount = goals.filter((g) => g.status === 'COMPLETED').length;
+  const inProgressCount = goals.filter((g) => g.status === 'IN_PROGRESS').length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-muted-foreground">Loading goals...</span>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Goal
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Goal</DialogTitle>
-              <DialogDescription>
-                Set a specific, measurable goal to track your progress
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title *</label>
-                <Input
-                  value={newGoal.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewGoal({ ...newGoal, title: e.target.value })}
-                  placeholder="e.g., Improve free throw percentage to 80%"
-                  maxLength={100}
-                />
-              </div>
+      </div>
+    );
+  }
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  value={newGoal.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewGoal({ ...newGoal, description: e.target.value })}
-                  placeholder="Details about this goal..."
-                  className="min-h-[80px]"
-                  maxLength={500}
-                />
-              </div>
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Header */}
+        <header className="flex items-start justify-between animate-fade-in">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+              <Target className="w-7 h-7 text-primary" />
+              Goals
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {completedCount} completed, {inProgressCount} in progress
+            </p>
+          </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {(
-                    ['PERFORMANCE', 'MENTAL', 'ACADEMIC', 'PERSONAL'] as const
-                  ).map((category) => {
-                    const Icon = CATEGORY_CONFIG[category].icon;
-                    const isSelected = newGoal.category === category;
-                    return (
-                      <button
-                        key={category}
-                        onClick={() => setNewGoal({ ...newGoal, category })}
-                        className={`p-3 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? `bg-gradient-to-br ${CATEGORY_CONFIG[category].gradient} text-white border-transparent`
-                            : 'border-border hover:border-gray-300 bg-card'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-5 h-5" />
-                          <span className="font-semibold text-sm">{category}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                New Goal
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Create New Goal</DialogTitle>
+                <DialogDescription>Set a specific, measurable goal to track your progress</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Title *</label>
+                  <Input
+                    value={newGoal.title}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewGoal({ ...newGoal, title: e.target.value })}
+                    placeholder="e.g., Improve free throw percentage to 80%"
+                    maxLength={100}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Description</label>
+                  <Textarea
+                    value={newGoal.description}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewGoal({ ...newGoal, description: e.target.value })}
+                    placeholder="Details about this goal..."
+                    className="min-h-[80px]"
+                    maxLength={500}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Category</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(['PERFORMANCE', 'MENTAL', 'ACADEMIC', 'PERSONAL'] as const).map((category) => {
+                      const Icon = CATEGORY_CONFIG[category].icon;
+                      const isSelected = newGoal.category === category;
+                      return (
+                        <button
+                          key={category}
+                          onClick={() => setNewGoal({ ...newGoal, category })}
+                          className={cn(
+                            'p-3 rounded-lg border-2 transition-all text-left',
+                            isSelected
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className={cn('w-5 h-5', isSelected ? 'text-primary' : 'text-muted-foreground')} />
+                            <span className={cn('font-medium text-sm', isSelected ? 'text-foreground' : 'text-muted-foreground')}>
+                              {category.charAt(0) + category.slice(1).toLowerCase()}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Target Date (optional)</label>
+                  <Input
+                    type="date"
+                    value={newGoal.targetDate}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button onClick={createGoal} className="flex-1">
+                    Create Goal
+                  </Button>
                 </div>
               </div>
+            </DialogContent>
+          </Dialog>
+        </header>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Target Date (optional)</label>
-                <Input
-                  type="date"
-                  value={newGoal.targetDate}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={createGoal}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700"
-                >
-                  Create Goal
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                placeholder="Search goals..."
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {['ALL', 'PERFORMANCE', 'MENTAL', 'ACADEMIC', 'PERSONAL'].map((category) => (
-                <Button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  variant={selectedCategory === category ? 'default' : 'outline'}
-                  size="sm"
-                  className={
-                    selectedCategory === category
-                      ? 'bg-accent hover:bg-accent'
-                      : ''
-                  }
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
+        {/* Search and Filters */}
+        <div className="space-y-4 animate-slide-up">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+              placeholder="Search goals..."
+              className="pl-10"
+            />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex gap-2 flex-wrap">
+            {['ALL', 'PERFORMANCE', 'MENTAL', 'ACADEMIC', 'PERSONAL'].map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={cn(
+                  'px-3 py-1.5 text-sm font-medium rounded-full transition-all',
+                  selectedCategory === category
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                )}
+              >
+                {category === 'ALL' ? 'All' : category.charAt(0) + category.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* AI-Suggested Goals */}
-      {suggestedGoals.length > 0 && (
-        <Card className="border-2 border-muted bg-gradient-to-br from-yellow-50 to-orange-50">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-muted-foreground" />
-              <CardTitle className="text-lg">AI-Suggested Goals</CardTitle>
+        {/* AI-Suggested Goals */}
+        {suggestedGoals.length > 0 && (
+          <section className="card-elevated overflow-hidden animate-slide-up">
+            <div className="p-4 border-b border-border bg-info/5">
+              <h2 className="font-medium text-foreground flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-info" />
+                AI-Suggested Goals
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">Personalized recommendations based on your activity</p>
             </div>
-            <CardDescription>
-              Personalized recommendations based on your profile & recent activity
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 space-y-3">
               {suggestedGoals.map((suggestion) => {
                 const Icon = CATEGORY_CONFIG[suggestion.category].icon;
+                const config = CATEGORY_CONFIG[suggestion.category];
                 return (
-                  <div
-                    key={suggestion.id}
-                    className={`p-4 rounded-lg bg-gradient-to-br ${CATEGORY_CONFIG[suggestion.category].gradient} text-white`}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="w-12 h-12 bg-card/20 rounded-full flex items-center justify-center">
-                        <Icon className="w-6 h-6" />
+                  <div key={suggestion.id} className="card-interactive p-4">
+                    <div className="flex items-start gap-4">
+                      <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', config.color)}>
+                        <Icon className="w-5 h-5" />
                       </div>
-                      <Button
-                        onClick={() => addSuggestedGoal(suggestion)}
-                        size="sm"
-                        variant="secondary"
-                        className="bg-card/20 hover:bg-card/30 text-white border-0"
-                      >
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground">{suggestion.title}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{suggestion.description}</p>
+                        <span className={cn('inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full border', config.color)}>
+                          {suggestion.reason}
+                        </span>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => addSuggestedGoal(suggestion)}>
                         <Plus className="w-4 h-4 mr-1" />
                         Add
                       </Button>
-                    </div>
-                    <h4 className="font-bold text-white mb-2">{suggestion.title}</h4>
-                    <p className="text-sm text-white/90 mb-3">{suggestion.description}</p>
-                    <div className="flex items-center justify-between">
-                      <Badge className="bg-card/20 text-white border-0">
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        {suggestion.reason}
-                      </Badge>
-                      <span className="text-xs text-white/80 font-semibold">
-                        {suggestion.category}
-                      </span>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </section>
+        )}
 
-      {/* Goals List */}
-      <div className="space-y-4">
+        {/* Goals List */}
         {filteredGoals.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No goals yet</h3>
-              <p className="text-muted-foreground mb-6">
-                {searchQuery || selectedCategory !== 'ALL'
-                  ? 'No goals match your filters'
-                  : 'Set your first goal to start tracking your progress'}
-              </p>
-              {!searchQuery && selectedCategory === 'ALL' && (
-                <Button
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Goal
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <div className="card-elevated p-8 text-center animate-slide-up">
+            <Target className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+            <h3 className="font-medium text-foreground mb-1">
+              {searchQuery || selectedCategory !== 'ALL' ? 'No goals match your filters' : 'No goals yet'}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {searchQuery || selectedCategory !== 'ALL'
+                ? 'Try adjusting your search or filters'
+                : 'Set your first goal to start tracking progress'}
+            </p>
+            {!searchQuery && selectedCategory === 'ALL' && (
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Your First Goal
+              </Button>
+            )}
+          </div>
         ) : (
-          filteredGoals.map((goal) => {
-            const Icon = CATEGORY_CONFIG[goal.category].icon;
-            return (
-              <Card key={goal.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
+          <div className="space-y-4 animate-slide-up">
+            {filteredGoals.map((goal) => {
+              const Icon = CATEGORY_CONFIG[goal.category].icon;
+              const config = CATEGORY_CONFIG[goal.category];
+              const isComplete = goal.progress === 100;
+
+              return (
+                <div key={goal.id} className="card-elevated p-5">
                   <div className="space-y-4">
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
-                        <div
-                          className={`w-12 h-12 rounded-full bg-gradient-to-br ${CATEGORY_CONFIG[goal.category].gradient} flex items-center justify-center`}
-                        >
-                          <Icon className="w-6 h-6 text-white" />
+                        <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', config.color)}>
+                          <Icon className="w-5 h-5" />
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-foreground text-lg">{goal.title}</h3>
-                          <Badge
-                            variant="secondary"
-                            className={CATEGORY_CONFIG[goal.category].color}
-                          >
-                            {goal.category}
-                          </Badge>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-foreground">{goal.title}</h3>
+                            {isComplete && <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />}
+                          </div>
+                          <span className={cn('inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border', config.color)}>
+                            {goal.category.charAt(0) + goal.category.slice(1).toLowerCase()}
+                          </span>
                         </div>
                       </div>
-                      <Button
-                        onClick={() => deleteGoal(goal.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground hover:text-muted-foreground hover:bg-muted-foreground/10"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => deleteGoal(goal.id)} className="text-muted-foreground hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
 
-                    {/* Description */}
                     {goal.description && (
-                      <p className="text-muted-foreground text-sm">{goal.description}</p>
+                      <p className="text-sm text-muted-foreground">{goal.description}</p>
                     )}
 
-                    {/* Target Date */}
                     {goal.targetDate && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" />
                         <span>
-                          Target: {goal.targetDate.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
+                          Target: {goal.targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                       </div>
                     )}
@@ -619,16 +554,14 @@ export default function StudentGoalsPage() {
                     {/* Progress Bar */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Progress</span>
-                        <span className="text-sm font-bold text-foreground">
-                          {goal.progress}%
-                        </span>
+                        <span className="text-sm text-muted-foreground">Progress</span>
+                        <span className="text-sm font-medium text-foreground">{goal.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                         <div
-                          className={`h-full bg-gradient-to-r ${CATEGORY_CONFIG[goal.category].gradient} transition-all duration-300`}
+                          className={cn('h-full rounded-full transition-all duration-300', isComplete ? 'bg-success' : 'bg-primary')}
                           style={{ width: `${goal.progress}%` }}
-                        ></div>
+                        />
                       </div>
                     </div>
 
@@ -658,57 +591,33 @@ export default function StudentGoalsPage() {
                         onClick={() => updateGoalProgress(goal.id, 100 - goal.progress)}
                         disabled={goal.progress === 100}
                         size="sm"
-                        className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                        className={cn('flex-1', isComplete && 'bg-success hover:bg-success/90')}
                       >
                         <Check className="w-4 h-4 mr-1" />
-                        {goal.progress === 100 ? 'Done!' : 'Complete'}
+                        {isComplete ? 'Done!' : 'Complete'}
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
+                </div>
+              );
+            })}
+          </div>
         )}
-      </div>
 
-      {/* Tips Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-        <CardContent className="pt-6">
-          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
+        {/* Tips Card */}
+        <section className="p-4 rounded-lg bg-info/5 border border-info/10 animate-slide-up">
+          <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-info" />
             Goal Setting Tips
           </h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Make it SMART:</strong> Specific, Measurable, Achievable, Relevant,
-                Time-bound
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Focus on process:</strong> Break big goals into smaller daily actions
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Track consistently:</strong> Update progress regularly to maintain
-                momentum
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              <span>
-                <strong>Celebrate wins:</strong> Acknowledge progress at every milestone
-              </span>
-            </li>
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            <li>• <strong>Make it SMART:</strong> Specific, Measurable, Achievable, Relevant, Time-bound</li>
+            <li>• <strong>Focus on process:</strong> Break big goals into smaller daily actions</li>
+            <li>• <strong>Track consistently:</strong> Update progress regularly to maintain momentum</li>
+            <li>• <strong>Celebrate wins:</strong> Acknowledge progress at every milestone</li>
           </ul>
-        </CardContent>
-      </Card>
+        </section>
+      </div>
     </div>
   );
 }

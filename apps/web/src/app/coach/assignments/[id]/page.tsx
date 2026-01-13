@@ -142,8 +142,8 @@ export default function AssignmentDetailPage() {
                   <span
                     className={`px-3 py-1 rounded-full font-medium ${
                       isOverdue(assignment.dueDate)
-                        ? 'bg-muted-foreground/20 text-muted-foreground'
-                        : 'bg-blue-100 text-blue-700'
+                        ? 'bg-risk-red/10 text-risk-red'
+                        : 'bg-info/10 text-info'
                     }`}
                   >
                     {isOverdue(assignment.dueDate) ? '⚠️ Overdue: ' : '📅 Due: '}

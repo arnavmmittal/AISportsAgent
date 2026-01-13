@@ -1,8 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Clock, User, Calendar, MessageSquare } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Calendar, Bell, AlertCircle, ChevronRight, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
+/**
+ * Coach Alerts Page - Updated with Design System v2.0
+ *
+ * Features:
+ * - Critical wellness alerts with severity levels
+ * - Filter by severity and status
+ * - Quick actions for immediate response
+ * - Uses semantic risk colors
+ */
 
 type AlertSeverity = 'critical' | 'high' | 'medium';
 
@@ -21,7 +32,6 @@ interface Alert {
 export default function AlertsPage() {
   const [filter, setFilter] = useState<'all' | AlertSeverity | 'resolved'>('all');
 
-  // Mock data - will be replaced with API call
   const [alerts, setAlerts] = useState<Alert[]>([
     {
       id: '1',
@@ -30,7 +40,7 @@ export default function AlertsPage() {
       severity: 'critical',
       type: 'Crisis Keywords',
       reason: 'Chat message contained self-harm language',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
       status: 'active',
     },
     {
@@ -40,7 +50,7 @@ export default function AlertsPage() {
       severity: 'high',
       type: 'Wellness Decline',
       reason: 'Mood score dropped 3+ points in last 3 days (8.5 → 5.0)',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
       status: 'monitoring',
     },
     {
@@ -50,7 +60,7 @@ export default function AlertsPage() {
       severity: 'high',
       type: 'Stress Level',
       reason: 'Reported stress 9/10 for 4 consecutive days',
-      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       status: 'active',
     },
     {
@@ -60,7 +70,7 @@ export default function AlertsPage() {
       severity: 'medium',
       type: 'Sleep Deprivation',
       reason: 'Average 4.2 hours sleep over last week (recommended: 7-9)',
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       status: 'active',
     },
     {
@@ -70,34 +80,48 @@ export default function AlertsPage() {
       severity: 'medium',
       type: 'Check-in Missed',
       reason: 'No check-ins for 7 days (previously consistent)',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       status: 'active',
     },
   ]);
 
-  const getSeverityColor = (severity: AlertSeverity) => {
+  const getSeverityStyles = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical':
-        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/30 border-muted-foreground dark:border-muted-foreground text-chrome dark:text-chrome';
+        return {
+          card: 'bg-risk-red-bg border-l-risk-red',
+          icon: 'text-risk-red',
+          badge: 'bg-risk-red text-white',
+        };
       case 'high':
-        return 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/30 border-muted-foreground dark:border-muted-foreground text-chrome dark:text-chrome';
+        return {
+          card: 'bg-warning/5 border-l-warning',
+          icon: 'text-warning',
+          badge: 'bg-warning text-white',
+        };
       case 'medium':
-        return 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-900/30 border-muted-foreground dark:border-muted-foreground text-chrome dark:text-chrome';
+        return {
+          card: 'bg-risk-yellow-bg border-l-risk-yellow',
+          icon: 'text-risk-yellow',
+          badge: 'bg-risk-yellow text-white',
+        };
       default:
-        return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-900/30 border-gray-600 dark:border-gray-700 text-gray-900 dark:text-gray-200';
+        return {
+          card: 'bg-muted/50 border-l-border',
+          icon: 'text-muted-foreground',
+          badge: 'bg-muted text-muted-foreground',
+        };
     }
   };
 
-  const getSeverityBadge = (severity: AlertSeverity) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-gradient-to-r from-muted-foreground to-muted-foreground text-white border-2 border-muted-foreground';
-      case 'high':
-        return 'bg-gradient-to-r from-muted-foreground to-muted-foreground text-white border-2 border-muted-foreground';
-      case 'medium':
-        return 'bg-gradient-to-r from-muted-foreground to-muted-foreground text-white border-2 border-muted-foreground';
-      default:
-        return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-2 border-gray-700';
+  const getStatusStyles = (status: Alert['status']) => {
+    switch (status) {
+      case 'active':
+        return 'bg-risk-red/10 text-risk-red';
+      case 'monitoring':
+        return 'bg-warning/10 text-warning';
+      case 'resolved':
+        return 'bg-risk-green/10 text-risk-green';
     }
   };
 
@@ -126,129 +150,138 @@ export default function AlertsPage() {
   const criticalCount = activeAlerts.filter(a => a.severity === 'critical').length;
   const highCount = activeAlerts.filter(a => a.severity === 'high').length;
   const mediumCount = activeAlerts.filter(a => a.severity === 'medium').length;
+  const resolvedCount = alerts.filter(a => a.status === 'resolved').length;
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <header className="animate-fade-in">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+            <Bell className="w-7 h-7 text-primary" />
             Alerts
           </h1>
-          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Monitor critical wellness concerns and take action</p>
-        </div>
+          <p className="text-muted-foreground mt-1">Monitor critical wellness concerns and take action</p>
+        </header>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Critical</div>
-                <div className="text-5xl font-black mb-2">{criticalCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Immediate action</div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-risk-red" />
               </div>
-              <div className="text-6xl opacity-20">🚨</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Critical</p>
+                <p className="text-2xl font-bold text-risk-red">{criticalCount}</p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">High Priority</div>
-                <div className="text-5xl font-black mb-2">{highCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">24 hours</div>
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-warning" />
               </div>
-              <div className="text-6xl opacity-20">⚠️</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">High</p>
+                <p className="text-2xl font-bold text-warning">{highCount}</p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Medium Priority</div>
-                <div className="text-5xl font-black mb-2">{mediumCount}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Monitor closely</div>
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-risk-yellow/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-risk-yellow" />
               </div>
-              <div className="text-6xl opacity-20">⏰</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Medium</p>
+                <p className="text-2xl font-bold text-risk-yellow">{mediumCount}</p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Resolved</div>
-                <div className="text-5xl font-black mb-2">
-                  {alerts.filter(a => a.status === 'resolved').length}
-                </div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Last 30 days</div>
+          <div className="card-elevated p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-risk-green/10 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-risk-green" />
               </div>
-              <div className="text-6xl opacity-20">✅</div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Resolved</p>
+                <p className="text-2xl font-bold text-risk-green">{resolvedCount}</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100 mb-8">
-          <div className="flex items-center gap-3 p-6 border-b-2 border-gray-100 overflow-x-auto">
+        <div className="card-elevated overflow-hidden animate-slide-up">
+          <div className="flex items-center gap-2 p-4 border-b border-border overflow-x-auto">
             <button
               onClick={() => setFilter('all')}
-              className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap shadow ${
+              className={cn(
+                'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
                 filter === 'all'
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white scale-105 shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform'
-              }`}
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
+              )}
             >
               All Active ({activeAlerts.length})
             </button>
             <button
               onClick={() => setFilter('critical')}
-              className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap shadow ${
+              className={cn(
+                'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
                 filter === 'critical'
-                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white scale-105 shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform'
-              }`}
+                  ? 'bg-risk-red text-white'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
+              )}
             >
-              🚨 Critical ({criticalCount})
+              Critical ({criticalCount})
             </button>
             <button
               onClick={() => setFilter('high')}
-              className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap shadow ${
+              className={cn(
+                'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
                 filter === 'high'
-                  ? 'bg-gradient-to-r from-orange-600 to-orange-700 text-white scale-105 shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform'
-              }`}
+                  ? 'bg-warning text-white'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
+              )}
             >
-              ⚠️ High ({highCount})
+              High ({highCount})
             </button>
             <button
               onClick={() => setFilter('medium')}
-              className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap shadow ${
+              className={cn(
+                'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
                 filter === 'medium'
-                  ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white scale-105 shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform'
-              }`}
+                  ? 'bg-risk-yellow text-white'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
+              )}
             >
-              ⏰ Medium ({mediumCount})
+              Medium ({mediumCount})
             </button>
             <button
               onClick={() => setFilter('resolved')}
-              className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap shadow ${
+              className={cn(
+                'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
                 filter === 'resolved'
-                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white scale-105 shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 transform'
-              }`}
+                  ? 'bg-risk-green text-white'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
+              )}
             >
-              ✅ Resolved
+              Resolved
             </button>
           </div>
 
           {/* Alerts List */}
-          <div className="p-6 space-y-6">
+          <div className="p-4 space-y-3">
             {filteredAlerts.length === 0 ? (
-              <div className="p-16 text-center">
-                <div className="text-8xl mb-6">✅</div>
-                <h3 className="text-3xl font-black text-foreground mb-3">No alerts found</h3>
-                <p className="text-lg text-muted-foreground">
+              <div className="p-12 text-center">
+                <Shield className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+                <h3 className="font-medium text-foreground mb-1">No alerts found</h3>
+                <p className="text-sm text-muted-foreground">
                   {filter === 'resolved'
                     ? 'No resolved alerts to display'
                     : 'All athletes are doing well!'
@@ -256,76 +289,86 @@ export default function AlertsPage() {
                 </p>
               </div>
             ) : (
-              filteredAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className={`rounded-2xl border-l-8 shadow-xl hover:shadow-2xl transition-all p-8 ${getSeverityColor(alert.severity)}`}
-                >
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-4 flex-wrap">
-                        <div className="flex items-center gap-3">
-                          <AlertTriangle className={`w-7 h-7 ${
-                            alert.severity === 'critical' ? 'text-muted-foreground' :
-                            alert.severity === 'high' ? 'text-muted-foreground' :
-                            'text-muted-foreground'
-                          }`} />
+              filteredAlerts.map((alert) => {
+                const styles = getSeverityStyles(alert.severity);
+                return (
+                  <div
+                    key={alert.id}
+                    className={cn(
+                      'rounded-lg border-l-4 p-4 transition-shadow hover:shadow-md',
+                      styles.card
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
+                          <AlertTriangle className={cn('w-5 h-5', styles.icon)} />
                           <Link
                             href={`/coach/athletes/${alert.athleteId}`}
-                            className="text-2xl font-black text-foreground hover:text-blue-600 transition-colors"
+                            className="font-semibold text-foreground hover:text-primary transition-colors"
                           >
                             {alert.athleteName}
                           </Link>
+                          <span className={cn('px-2 py-0.5 rounded text-xs font-medium', styles.badge)}>
+                            {alert.severity.toUpperCase()}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                            {alert.type}
+                          </span>
                         </div>
-                        <span className={`px-4 py-2 rounded-xl text-sm font-black shadow-lg ${getSeverityBadge(alert.severity)}`}>
-                          {alert.severity.toUpperCase()}
-                        </span>
-                        <span className="px-4 py-2 rounded-xl text-sm font-black bg-gray-100 text-gray-800 shadow border-2 border-gray-200">
-                          {alert.type}
-                        </span>
-                      </div>
 
-                      <p className="text-base text-foreground font-semibold mb-4 ml-10 leading-relaxed">{alert.reason}</p>
+                        <p className="text-sm text-foreground mb-3 ml-8">{alert.reason}</p>
 
-                      <div className="flex items-center gap-6 text-sm text-muted-foreground ml-10">
-                        <div className="flex items-center gap-2 font-bold">
-                          <Calendar className="w-4 h-4" />
-                          <span>{getTimeAgo(alert.timestamp)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 font-bold">
-                          <span className={`w-3 h-3 rounded-full shadow ${
-                            alert.status === 'active' ? 'bg-muted-foreground/100' :
-                            alert.status === 'monitoring' ? 'bg-muted/100' :
-                            'bg-secondary/100'
-                          }`} />
-                          <span className="capitalize">{alert.status}</span>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground ml-8">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{getTimeAgo(alert.timestamp)}</span>
+                          </div>
+                          <span className={cn('px-2 py-0.5 rounded capitalize', getStatusStyles(alert.status))}>
+                            {alert.status}
+                          </span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col gap-3">
-                      {alert.status !== 'resolved' && (
-                        <>
-                          <Link
-                            href={`/coach/athletes/${alert.athleteId}`}
-                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-center whitespace-nowrap hover:scale-105 transform"
-                          >
-                            View Profile
-                          </Link>
-                          <button
-                            onClick={() => handleMarkResolved(alert.id)}
-                            className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold whitespace-nowrap hover:scale-105 transform"
-                          >
-                            ✅ Mark Resolved
-                          </button>
-                        </>
-                      )}
+                      <div className="flex flex-col gap-2">
+                        {alert.status !== 'resolved' && (
+                          <>
+                            <Link
+                              href={`/coach/athletes/${alert.athleteId}`}
+                              className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm text-center whitespace-nowrap flex items-center gap-1"
+                            >
+                              View
+                              <ChevronRight className="w-4 h-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleMarkResolved(alert.id)}
+                              className="px-3 py-1.5 bg-risk-green text-white rounded-lg hover:bg-risk-green/90 transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-1"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              Resolve
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
+        </div>
+
+        {/* Quick Help */}
+        <div className="p-4 rounded-lg bg-info/5 border border-info/10 animate-slide-up">
+          <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-info" />
+            Alert Response Guidelines
+          </h3>
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            <li><span className="font-medium text-risk-red">Critical:</span> Immediate action required - contact athlete within 1 hour</li>
+            <li><span className="font-medium text-warning">High:</span> Address within 24 hours - schedule a check-in</li>
+            <li><span className="font-medium text-risk-yellow">Medium:</span> Monitor closely - review at next opportunity</li>
+          </ul>
         </div>
       </div>
     </div>

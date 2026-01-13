@@ -142,7 +142,7 @@ export default async function CoachInsightsPage() {
                   <p className="text-sm text-muted-foreground">Active Athletes</p>
                   <p className="text-2xl font-bold text-foreground">{activeAthletes}/{totalAthletes}</p>
                 </div>
-                <Users className="size-8 text-blue-500" />
+                <Users className="size-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -207,7 +207,7 @@ export default async function CoachInsightsPage() {
                         ? 'bg-muted/10 border-muted'
                         : alert.severity === 'MEDIUM'
                         ? 'bg-muted/10 border-muted'
-                        : 'bg-blue-50 border-blue-200'
+                        : 'bg-info/10 border-info/30'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -222,7 +222,7 @@ export default async function CoachInsightsPage() {
                                 ? 'bg-muted/100'
                                 : alert.severity === 'MEDIUM'
                                 ? 'bg-muted/100'
-                                : 'bg-blue-500'
+                                : 'bg-info'
                             }
                           >
                             {alert.severity}
@@ -329,7 +329,7 @@ export default async function CoachInsightsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">High (7-10)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 mx-3 bg-muted rounded-full h-2">
                         <div
                           className="bg-secondary/100 rounded-full h-2"
                           style={{
@@ -343,7 +343,7 @@ export default async function CoachInsightsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Medium (4-6)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 mx-3 bg-muted rounded-full h-2">
                         <div
                           className="bg-muted/100 rounded-full h-2"
                           style={{
@@ -357,7 +357,7 @@ export default async function CoachInsightsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Low (1-3)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 mx-3 bg-muted rounded-full h-2">
                         <div
                           className="bg-muted-foreground/100 rounded-full h-2"
                           style={{
@@ -377,7 +377,7 @@ export default async function CoachInsightsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Low (1-4)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 mx-3 bg-muted rounded-full h-2">
                         <div
                           className="bg-secondary/100 rounded-full h-2"
                           style={{
@@ -391,7 +391,7 @@ export default async function CoachInsightsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Medium (5-7)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 mx-3 bg-muted rounded-full h-2">
                         <div
                           className="bg-muted/100 rounded-full h-2"
                           style={{
@@ -405,7 +405,7 @@ export default async function CoachInsightsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">High (8-10)</span>
-                      <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 mx-3 bg-muted rounded-full h-2">
                         <div
                           className="bg-muted-foreground/100 rounded-full h-2"
                           style={{

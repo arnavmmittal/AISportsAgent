@@ -1,5 +1,18 @@
 'use client';
 
+/**
+ * AthleteDetailView - Enhanced Coach's Deep Dive into Athlete Data
+ *
+ * Features:
+ * - ReadinessGauge with animated scoring
+ * - 14-day heatmap + 7-day forecast
+ * - Performance vs readiness correlation charts
+ * - Risk-level badges with semantic colors
+ * - Intervention tools (check-in, notes)
+ *
+ * Uses design system v2.0 with semantic tokens
+ */
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,6 +25,27 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import {
+  ArrowLeft,
+  Mail,
+  StickyNote,
+  Calendar,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  Sparkles,
+  Moon,
+  Activity,
+  Brain,
+  Dumbbell,
+  X,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/shared/ui/button';
+import { ReadinessGauge, ReadinessGaugeMini, type ReadinessLevel } from '@/components/shared/athlete';
+import { RiskBadge, RiskIndicator, getRiskLevelFromScore, type RiskLevel } from '@/components/shared/athlete';
 import WeeklySummaryDrawer from './weekly-summary/WeeklySummaryDrawer';
 
 interface AthleteData {
@@ -74,6 +108,30 @@ interface AthleteData {
   };
 }
 
+// Convert backend risk level to design system RiskLevel
+function mapRiskLevel(backendLevel: string): RiskLevel {
+  switch (backendLevel?.toUpperCase()) {
+    case 'LOW':
+      return 'low';
+    case 'MEDIUM':
+    case 'MODERATE':
+      return 'moderate';
+    case 'HIGH':
+      return 'high';
+    case 'CRITICAL':
+      return 'critical';
+    default:
+      return 'moderate';
+  }
+}
+
+// Convert readiness score to ReadinessLevel
+function getReadinessLevel(score: number): ReadinessLevel {
+  if (score >= 75) return 'green';
+  if (score >= 55) return 'yellow';
+  return 'red';
+}
+
 export default function AthleteDetailView({ athleteId }: { athleteId: string }) {
   const router = useRouter();
   const [athleteData, setAthleteData] = useState<AthleteData | null>(null);
@@ -99,7 +157,7 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       setLoading(true);
       const [athleteRes, perfRes] = await Promise.all([
         fetch(`/api/coach/athletes/${athleteId}`),
-        fetch(`/api/performance/${athleteId}?limit=10`)
+        fetch(`/api/performance/${athleteId}?limit=10`),
       ]);
 
       if (!athleteRes.ok) throw new Error('Failed to fetch athlete data');
@@ -108,7 +166,6 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       setAthleteData(athleteJson);
       setRelationshipNotes(athleteJson.data.relationship.notes || '');
 
-      // Performance data is optional
       if (perfRes.ok) {
         const perfJson = await perfRes.json();
         setPerformanceMetrics(perfJson.data || []);
@@ -139,13 +196,11 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
       if (!res.ok) throw new Error('Failed to send check-in');
 
-      alert('Check-in sent successfully!');
       setCheckInMessage('');
       setShowCheckIn(false);
       fetchAthleteData();
     } catch (err) {
       console.error('Error sending check-in:', err);
-      alert('Failed to send check-in');
     } finally {
       setSaving(false);
     }
@@ -172,7 +227,6 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       fetchAthleteData();
     } catch (err) {
       console.error('Error adding note:', err);
-      alert('Failed to add note');
     } finally {
       setSaving(false);
     }
@@ -184,91 +238,84 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       const res = await fetch(`/api/coach/athletes/${athleteId}/intervention`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          notes: relationshipNotes,
-        }),
+        body: JSON.stringify({ notes: relationshipNotes }),
       });
 
       if (!res.ok) throw new Error('Failed to update notes');
-
-      alert('Notes updated successfully!');
       fetchAthleteData();
     } catch (err) {
       console.error('Error updating notes:', err);
-      alert('Failed to update notes');
     } finally {
       setSaving(false);
     }
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-6 text-muted-foreground font-semibold text-lg">Loading athlete data...</p>
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 rounded-full border-4 border-muted" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
+          </div>
+          <p className="text-muted-foreground font-medium">Loading athlete data...</p>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error || !athleteData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50">
-        <div className="text-center bg-card rounded-2xl shadow-2xl p-12 max-w-md">
-          <div className="text-muted-foreground text-7xl mb-6">⚠️</div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="card-elevated max-w-md w-full p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">
             {error || 'Athlete not found'}
           </h2>
-          <button
-            onClick={() => router.back()}
-            className="px-8 py-3 bg-primary text-white rounded-xl hover:opacity-90 font-semibold shadow-lg hover:shadow-xl transition-all"
-          >
-            Go Back
-          </button>
+          <p className="text-muted-foreground mb-6">
+            We couldn't load the athlete's data. Please try again.
+          </p>
+          <Button onClick={() => router.back()}>Go Back</Button>
         </div>
       </div>
     );
   }
 
-  const { athlete, relationship, statistics, moodLogs, goals, coachNotes, crisisAlerts } = athleteData.data;
+  const { athlete, relationship, statistics, moodLogs, goals, coachNotes, crisisAlerts } =
+    athleteData.data;
 
-  // Calculate readiness score (0-100) from mood, confidence, stress, sleep
-  const calculateReadinessScore = (mood: number, confidence: number, stress: number, sleep: number) => {
-    // Normalize all to 0-100 scale (mood, confidence, sleep are 0-10, stress is inverted)
-    const moodScore = mood * 10; // 0-10 -> 0-100
-    const confidenceScore = confidence * 10; // 0-10 -> 0-100
-    const stressScore = (10 - stress) * 10; // Inverted: low stress = high score
-    const sleepScore = (sleep / 9) * 100; // 0-9 hours -> 0-100 (9hrs = 100%)
-
-    // Weighted average: mood 25%, confidence 25%, stress 30%, sleep 20%
-    return Math.round((moodScore * 0.25) + (confidenceScore * 0.25) + (stressScore * 0.30) + (sleepScore * 0.20));
+  // Calculate readiness score from mood dimensions
+  const calculateReadinessScore = (
+    mood: number,
+    confidence: number,
+    stress: number,
+    sleep: number
+  ) => {
+    const moodScore = mood * 10;
+    const confidenceScore = confidence * 10;
+    const stressScore = (10 - stress) * 10;
+    const sleepScore = (sleep / 9) * 100;
+    return Math.round(
+      moodScore * 0.25 + confidenceScore * 0.25 + stressScore * 0.3 + sleepScore * 0.2
+    );
   };
 
-  const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'from-secondary to-secondary';
-    if (score >= 70) return 'from-muted-foreground to-muted-foreground';
-    if (score >= 50) return 'from-muted-foreground to-muted-foreground';
-    return 'from-muted-foreground to-muted-foreground';
-  };
-
-  // Prepare readiness data with last 14 days
+  // Prepare readiness data
   const last14Days = moodLogs?.slice(0, 14).reverse() || [];
-  const readinessScores = last14Days.map(log =>
+  const readinessScores = last14Days.map((log) =>
     calculateReadinessScore(log.mood, log.confidence, log.stress, log.sleep)
   );
-
   const currentReadiness = readinessScores[readinessScores.length - 1] || 0;
 
-  // Calculate 7-day forecast (simple trend-based prediction)
+  // Calculate 7-day forecast
   const calculateForecast = (scores: number[]): number[] => {
     if (scores.length < 3) return [];
-
-    // Calculate trend from last 7 days
     const recent = scores.slice(-7);
     const avgChange = (recent[recent.length - 1] - recent[0]) / recent.length;
-
-    // Project forward 7 days
     const forecast: number[] = [];
     let lastScore = recent[recent.length - 1];
     for (let i = 1; i <= 7; i++) {
@@ -279,65 +326,76 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
   };
 
   const forecast = calculateForecast(readinessScores);
+  const trendDirection =
+    forecast.length > 0
+      ? forecast[forecast.length - 1] > currentReadiness + 5
+        ? 'up'
+        : forecast[forecast.length - 1] < currentReadiness - 5
+        ? 'down'
+        : 'stable'
+      : 'stable';
 
-  // Prepare mood chart data
-  const chartData = last14Days.map((log) => {
-    const date = new Date(log.createdAt);
-    return {
-      date: `${date.getMonth() + 1}/${date.getDate()}`,
-      Readiness: calculateReadinessScore(log.mood, log.confidence, log.stress, log.sleep),
-      Mood: log.mood,
-      Confidence: log.confidence,
-      Stress: 10 - log.stress, // Invert for visualization
-      Sleep: log.sleep,
-    };
-  }) || [];
+  // Chart data
+  const chartData =
+    last14Days.map((log) => {
+      const date = new Date(log.createdAt);
+      return {
+        date: `${date.getMonth() + 1}/${date.getDate()}`,
+        Readiness: calculateReadinessScore(log.mood, log.confidence, log.stress, log.sleep),
+        Mood: log.mood * 10,
+        Confidence: log.confidence * 10,
+        Stress: (10 - log.stress) * 10,
+      };
+    }) || [];
 
   // No consent view
   if (!athleteData.consentGranted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <button
             onClick={() => router.back()}
-            className="mb-6 text-primary hover:text-blue-700 font-semibold flex items-center gap-2"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
           >
-            ← Back to Athletes
+            <ArrowLeft size={18} />
+            <span className="font-medium">Back to Athletes</span>
           </button>
 
-          <div className="bg-card rounded-2xl shadow-xl p-12 text-center border-2 border-muted">
-            <div className="text-6xl mb-6">🔒</div>
-            <h2 className="text-3xl font-black text-foreground mb-4">
-              {athlete.name}
-            </h2>
-            <p className="text-muted-foreground mb-2">{athlete.sport} • {athlete.year}</p>
-            <p className="text-muted-foreground mb-8">{athlete.teamPosition}</p>
+          <div className="card-elevated p-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-warning/10 flex items-center justify-center">
+              <AlertTriangle className="w-10 h-10 text-warning" />
+            </div>
+            <h2 className="text-2xl font-semibold text-foreground mb-2">{athlete.name}</h2>
+            <p className="text-muted-foreground mb-1">
+              {athlete.sport} • {athlete.year}
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">{athlete.teamPosition}</p>
 
-            <div className="bg-muted/20 border-2 border-muted rounded-xl p-6 mb-8">
-              <p className="text-muted-foreground font-semibold">
-                This athlete has not granted data sharing consent yet.
-              </p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                You can see basic profile information, but detailed metrics, mood logs, and goals are private until consent is granted.
+            <div className="bg-warning/5 border border-warning/20 rounded-lg p-6 mb-8">
+              <p className="text-foreground font-medium mb-1">Consent Not Granted</p>
+              <p className="text-sm text-muted-foreground">
+                This athlete has not granted data sharing consent. Basic profile information is
+                visible, but detailed metrics, mood logs, and goals are private.
               </p>
             </div>
 
-            <div className="text-left bg-background rounded-xl p-6">
-              <h3 className="font-bold text-foreground mb-3">Relationship Notes</h3>
+            <div className="text-left">
+              <h3 className="font-medium text-foreground mb-3">Private Relationship Notes</h3>
               <textarea
                 value={relationshipNotes}
                 onChange={(e) => setRelationshipNotes(e.target.value)}
                 placeholder="Add private notes about this athlete..."
-                className="w-full px-4 py-3 border-2 border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                 rows={4}
               />
-              <button
+              <Button
                 onClick={handleUpdateRelationshipNotes}
                 disabled={saving}
-                className="mt-3 px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 font-semibold disabled:opacity-50"
+                className="mt-3"
+                size="sm"
               >
                 {saving ? 'Saving...' : 'Save Notes'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -346,157 +404,207 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-accent/20">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="mb-6 text-primary hover:text-blue-700 font-semibold flex items-center gap-2 transition-colors"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
-          ← Back to Athletes
+          <ArrowLeft size={18} />
+          <span className="font-medium">Back to Athletes</span>
         </button>
 
-        {/* Athlete Profile Header */}
-        <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-3">
-                <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-accent bg-clip-text text-transparent">{athlete.name}</h1>
-                {currentReadiness > 0 && (
-                  <div className={`bg-gradient-to-br ${getReadinessColor(currentReadiness)} rounded-2xl px-6 py-4 text-white shadow-lg`}>
-                    <div className="text-xs font-bold uppercase tracking-wider opacity-90">Readiness</div>
-                    <div className="text-4xl font-black">{currentReadiness}<span className="text-xl opacity-75">/100</span></div>
-                  </div>
-                )}
+        {/* ─────────────────────────────────────────────────────────────────
+            HEADER - Athlete Profile
+        ───────────────────────────────────────────────────────────────── */}
+        <header className="card-elevated p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+            {/* Profile Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-4 mb-3">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-foreground truncate">
+                    {athlete.name}
+                  </h1>
+                  <p className="text-muted-foreground mt-1">
+                    {athlete.sport} • {athlete.year} • {athlete.teamPosition}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">{athlete.email}</p>
+                </div>
               </div>
-              <p className="text-xl text-muted-foreground mb-3 font-semibold">{athlete.sport} • {athlete.year} • {athlete.teamPosition}</p>
-              <p className="text-sm text-muted-foreground mb-4">{athlete.email}</p>
-              <div className="flex gap-3 flex-wrap">
-                <span className={`px-4 py-2 rounded-xl text-sm font-bold shadow ${
-                  athlete.riskLevel === 'LOW'
-                    ? 'bg-secondary/20 text-secondary'
-                    : athlete.riskLevel === 'MEDIUM'
-                    ? 'bg-muted/20 text-muted-foreground'
-                    : 'bg-muted-foreground/20 text-muted-foreground'
-                }`}>
-                  {athlete.riskLevel} Risk
-                </span>
-                <span className="px-4 py-2 rounded-xl text-sm font-bold bg-blue-100 text-blue-800 shadow">
+
+              <div className="flex items-center gap-3 flex-wrap">
+                <RiskBadge
+                  level={mapRiskLevel(athlete.riskLevel)}
+                  showIcon
+                  variant="subtle"
+                  label={`${athlete.riskLevel} Risk`}
+                />
+                <span className="px-3 py-1 text-sm bg-muted rounded-full text-muted-foreground">
+                  <Calendar size={14} className="inline mr-1.5" />
                   Joined {new Date(relationship.joinedAt).toLocaleDateString()}
                 </span>
               </div>
             </div>
 
+            {/* Readiness Gauge */}
+            {currentReadiness > 0 && (
+              <div className="flex items-center gap-6">
+                <ReadinessGauge score={currentReadiness} size="lg" showLabel showStatus animated />
+
+                {/* Trend Indicator */}
+                <div className="text-center">
+                  <div
+                    className={cn(
+                      'w-12 h-12 rounded-full flex items-center justify-center mb-2',
+                      trendDirection === 'up' && 'bg-success/10',
+                      trendDirection === 'down' && 'bg-destructive/10',
+                      trendDirection === 'stable' && 'bg-muted'
+                    )}
+                  >
+                    {trendDirection === 'up' && <TrendingUp className="w-6 h-6 text-success" />}
+                    {trendDirection === 'down' && (
+                      <TrendingDown className="w-6 h-6 text-destructive" />
+                    )}
+                    {trendDirection === 'stable' && <Minus className="w-6 h-6 text-muted-foreground" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground font-medium">7-day trend</p>
+                </div>
+              </div>
+            )}
+
             {/* Quick Actions */}
-            <div className="flex flex-col gap-3">
-              <button
+            <div className="flex flex-row lg:flex-col gap-3">
+              <Button
                 onClick={() => setShowCheckIn(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-accent text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
+                className="flex-1 lg:flex-none"
+                size="sm"
               >
-                📨 Send Check-In
-              </button>
-              <button
+                <Mail size={16} className="mr-2" />
+                Send Check-In
+              </Button>
+              <Button
                 onClick={() => setShowAddNote(true)}
-                className="px-6 py-3 bg-gradient-to-r from-secondary to-blue-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold flex items-center gap-2 justify-center hover:scale-105 transform"
+                variant="outline"
+                className="flex-1 lg:flex-none"
+                size="sm"
               >
-                📝 Add Note
-              </button>
+                <StickyNote size={16} className="mr-2" />
+                Add Note
+              </Button>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Readiness Breakdown - Statistics Overview */}
+        {/* ─────────────────────────────────────────────────────────────────
+            STATISTICS CARDS
+        ───────────────────────────────────────────────────────────────── */}
         {statistics && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Avg Mood</div>
-                  <div className="text-5xl font-black mb-2">{statistics.avgMood.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
-                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Last 7 days</div>
-                </div>
-                <div className="text-6xl opacity-20">😊</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-secondary to-secondary rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Confidence</div>
-                  <div className="text-5xl font-black mb-2">{statistics.avgConfidence.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
-                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Average</div>
-                </div>
-                <div className="text-6xl opacity-20">💪</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Stress Level</div>
-                  <div className="text-5xl font-black mb-2">{statistics.avgStress.toFixed(1)}<span className="text-2xl opacity-75">/10</span></div>
-                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Lower is better</div>
-                </div>
-                <div className="text-6xl opacity-20">😰</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-accent/50 text-xs font-bold uppercase tracking-wider mb-2">Active Goals</div>
-                  <div className="text-5xl font-black mb-2">{statistics.activeGoals}</div>
-                  <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">{statistics.completedGoals} completed</div>
-                </div>
-                <div className="text-6xl opacity-20">🎯</div>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={Sparkles}
+              label="Avg Mood"
+              value={statistics.avgMood.toFixed(1)}
+              suffix="/10"
+              sublabel="Last 7 days"
+              color="primary"
+            />
+            <StatCard
+              icon={Dumbbell}
+              label="Confidence"
+              value={statistics.avgConfidence.toFixed(1)}
+              suffix="/10"
+              sublabel="Average"
+              color="success"
+            />
+            <StatCard
+              icon={Brain}
+              label="Stress Level"
+              value={statistics.avgStress.toFixed(1)}
+              suffix="/10"
+              sublabel="Lower is better"
+              color="warning"
+            />
+            <StatCard
+              icon={Target}
+              label="Active Goals"
+              value={statistics.activeGoals.toString()}
+              sublabel={`${statistics.completedGoals} completed`}
+              color="info"
+            />
           </div>
         )}
 
-        {/* 14-Day Readiness Heatmap + 7-Day Forecast */}
+        {/* ─────────────────────────────────────────────────────────────────
+            14-DAY HEATMAP + 7-DAY FORECAST
+        ───────────────────────────────────────────────────────────────── */}
         {readinessScores.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
-              <span className="text-3xl">🔥</span>
+          <section className="card-elevated p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Activity size={20} className="text-primary" />
               14-Day Readiness Trend + 7-Day Forecast
             </h2>
-            <div className="flex flex-col md:flex-row gap-6 items-center">
+
+            <div className="flex flex-col md:flex-row gap-6">
               {/* Last 14 Days */}
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wider">Last 14 Days</h3>
-                <div className="flex gap-2 flex-wrap">
-                  {readinessScores.map((score, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div
-                        className={`w-14 h-14 rounded-lg bg-gradient-to-br ${getReadinessColor(score)} text-white font-black text-sm flex items-center justify-center shadow-lg hover:scale-110 transform transition-all cursor-pointer`}
-                        title={`Day ${index - 13}: ${score}/100`}
-                      >
-                        {score}
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                  Last 14 Days
+                </h3>
+                <div className="flex gap-1.5 flex-wrap">
+                  {readinessScores.map((score, index) => {
+                    const level = getReadinessLevel(score);
+                    return (
+                      <div key={index} className="flex flex-col items-center">
+                        <div
+                          className={cn(
+                            'w-10 h-10 rounded-lg flex items-center justify-center text-xs font-semibold text-white cursor-pointer transition-transform hover:scale-110',
+                            level === 'green' && 'bg-readiness-green',
+                            level === 'yellow' && 'bg-readiness-yellow',
+                            level === 'red' && 'bg-readiness-red'
+                          )}
+                          title={`Day ${index - 13}: ${score}/100`}
+                        >
+                          {score}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1">
+                          D{index - 13}
+                        </span>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1 font-semibold">
-                        D{index - 13}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
               {/* 7-Day Forecast */}
               {forecast.length > 0 && (
-                <div className="md:border-l-2 md:border-gray-200 md:pl-6">
-                  <h3 className="text-sm font-bold text-muted-foreground mb-3 uppercase tracking-wider">7-Day Forecast</h3>
-                  <div className="flex gap-2">
-                    {forecast.map((score, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <div
-                          className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getReadinessColor(score)} text-white font-bold text-xs flex items-center justify-center shadow opacity-75`}
-                          title={`Day +${index + 1}: ${score}/100`}
-                        >
-                          {score}
+                <div className="md:border-l md:border-border md:pl-6">
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                    7-Day Forecast
+                  </h3>
+                  <div className="flex gap-1.5">
+                    {forecast.map((score, index) => {
+                      const level = getReadinessLevel(score);
+                      return (
+                        <div key={index} className="flex flex-col items-center">
+                          <div
+                            className={cn(
+                              'w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-medium text-white opacity-70',
+                              level === 'green' && 'bg-readiness-green',
+                              level === 'yellow' && 'bg-readiness-yellow',
+                              level === 'red' && 'bg-readiness-red'
+                            )}
+                            title={`Day +${index + 1}: ${score}/100`}
+                          >
+                            {score}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground mt-1">
+                            +{index + 1}
+                          </span>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1 font-semibold">
-                          +{index + 1}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -504,287 +612,317 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
 
             {/* Trend Insight */}
             {forecast.length > 0 && (
-              <div className={`mt-6 p-4 rounded-xl border-l-4 ${
-                forecast[forecast.length - 1] < currentReadiness - 10
-                  ? 'bg-muted-foreground/10 border-muted-foreground'
-                  : forecast[forecast.length - 1] > currentReadiness + 10
-                  ? 'bg-secondary/10 border-secondary'
-                  : 'bg-blue-50 border-blue-500'
-              }`}>
-                <p className={`font-semibold text-sm ${
-                  forecast[forecast.length - 1] < currentReadiness - 10
-                    ? 'text-chrome'
-                    : forecast[forecast.length - 1] > currentReadiness + 10
-                    ? 'text-secondary'
-                    : 'text-blue-900'
-                }`}>
-                  {forecast[forecast.length - 1] < currentReadiness - 10 && '⚠️ Declining trend detected - forecast shows readiness dropping to ' + forecast[forecast.length - 1] + ' in 7 days. Consider proactive intervention.'}
-                  {forecast[forecast.length - 1] > currentReadiness + 10 && '✅ Improving trend detected - forecast shows readiness rising to ' + forecast[forecast.length - 1] + ' in 7 days. Great progress!'}
-                  {forecast[forecast.length - 1] >= currentReadiness - 10 && forecast[forecast.length - 1] <= currentReadiness + 10 && '→ Stable trend - forecast shows readiness maintaining around ' + forecast[forecast.length - 1] + ' in 7 days.'}
-                </p>
+              <div
+                className={cn(
+                  'mt-6 p-4 rounded-lg border-l-4 text-sm',
+                  trendDirection === 'down' &&
+                    'bg-destructive/5 border-destructive text-destructive',
+                  trendDirection === 'up' && 'bg-success/5 border-success text-success',
+                  trendDirection === 'stable' && 'bg-info/5 border-info text-info'
+                )}
+              >
+                {trendDirection === 'down' && (
+                  <p className="font-medium">
+                    Declining trend detected - forecast shows readiness dropping to{' '}
+                    {forecast[forecast.length - 1]} in 7 days. Consider proactive intervention.
+                  </p>
+                )}
+                {trendDirection === 'up' && (
+                  <p className="font-medium">
+                    Improving trend detected - forecast shows readiness rising to{' '}
+                    {forecast[forecast.length - 1]} in 7 days. Great progress!
+                  </p>
+                )}
+                {trendDirection === 'stable' && (
+                  <p className="font-medium">
+                    Stable trend - forecast shows readiness maintaining around{' '}
+                    {forecast[forecast.length - 1]} in 7 days.
+                  </p>
+                )}
               </div>
             )}
-          </div>
+          </section>
         )}
 
-        {/* Mood Trend Chart */}
+        {/* ─────────────────────────────────────────────────────────────────
+            READINESS COMPONENTS CHART
+        ───────────────────────────────────────────────────────────────── */}
         {chartData.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
-              <span className="text-3xl">📊</span>
+          <section className="card-elevated p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Readiness Components (Last 14 Days)
             </h2>
-            <div className="h-80">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" stroke="#6b7280" style={{ fontWeight: 600 }} />
-                  <YAxis domain={[0, 100]} stroke="#6b7280" style={{ fontWeight: 600 }} />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="date" className="text-xs" />
+                  <YAxis domain={[0, 100]} className="text-xs" />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                      fontWeight: 600,
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
                     }}
                   />
-                  <Legend wrapperStyle={{ fontWeight: 700 }} />
-                  <Line type="monotone" dataKey="Readiness" stroke="#8b5cf6" strokeWidth={4} dot={{ fill: '#8b5cf6', r: 6 }} name="Readiness Score (0-100)" />
-                  <Line type="monotone" dataKey="Mood" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} name="Mood" opacity={0.6} />
-                  <Line type="monotone" dataKey="Confidence" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} name="Confidence" opacity={0.6} />
-                  <Line type="monotone" dataKey="Stress" stroke="#71717a" strokeWidth={2} dot={{ fill: '#71717a', r: 4 }} name="Stress (Inverted)" opacity={0.6} />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="Readiness"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={3}
+                    dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                    name="Readiness Score"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Mood"
+                    stroke="hsl(var(--readiness-green))"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    opacity={0.6}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Confidence"
+                    stroke="hsl(var(--info))"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    opacity={0.6}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Stress"
+                    stroke="hsl(var(--readiness-yellow))"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    opacity={0.6}
+                    name="Stress (inverted)"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Weekly Summaries Section */}
-        <div className="mb-8">
-          <WeeklySummaryDrawer
-            athleteId={athleteId}
-            athleteName={athlete.name}
-            consentGranted={athleteData.consentGranted}
-          />
-        </div>
+        {/* Weekly Summaries */}
+        <WeeklySummaryDrawer
+          athleteId={athleteId}
+          athleteName={athlete.name}
+          consentGranted={athleteData.consentGranted}
+        />
 
-        {/* Performance Metrics Section */}
+        {/* ─────────────────────────────────────────────────────────────────
+            PERFORMANCE METRICS
+        ───────────────────────────────────────────────────────────────── */}
         {performanceMetrics.length > 0 && (
           <>
-            {/* Performance Summary Stats */}
-            <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-              <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
-                <span className="text-3xl">🏆</span>
-                Performance Summary
-              </h2>
+            {/* Performance Summary */}
+            <section className="card-elevated p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Performance Summary</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-secondary/10 to-secondary/20 rounded-xl p-6 border-2 border-secondary/20">
-                  <div className="text-4xl font-black text-secondary">
-                    {performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'WIN').length}
+                <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                  <div className="text-3xl font-semibold text-success">
+                    {performanceMetrics.filter((m) => m.outcome?.toUpperCase() === 'WIN').length}
                   </div>
-                  <div className="text-sm font-semibold text-secondary mt-2">Wins</div>
+                  <div className="text-sm text-success/80 font-medium mt-1">Wins</div>
                 </div>
-                <div className="bg-gradient-to-br from-muted-foreground/10 to-muted-foreground/20 rounded-xl p-6 border-2 border-muted-foreground">
-                  <div className="text-4xl font-black text-muted-foreground">
-                    {performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'LOSS').length}
+                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <div className="text-3xl font-semibold text-destructive">
+                    {performanceMetrics.filter((m) => m.outcome?.toUpperCase() === 'LOSS').length}
                   </div>
-                  <div className="text-sm font-semibold text-muted-foreground mt-2">Losses</div>
+                  <div className="text-sm text-destructive/80 font-medium mt-1">Losses</div>
                 </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
-                  <div className="text-4xl font-black text-blue-700">
-                    {((performanceMetrics.filter(m => m.outcome?.toUpperCase() === 'WIN').length / performanceMetrics.length) * 100).toFixed(0)}%
+                <div className="p-4 rounded-lg bg-info/10 border border-info/20">
+                  <div className="text-3xl font-semibold text-info">
+                    {(
+                      (performanceMetrics.filter((m) => m.outcome?.toUpperCase() === 'WIN').length /
+                        performanceMetrics.length) *
+                      100
+                    ).toFixed(0)}
+                    %
                   </div>
-                  <div className="text-sm font-semibold text-blue-600 mt-2">Win Rate</div>
+                  <div className="text-sm text-info/80 font-medium mt-1">Win Rate</div>
                 </div>
-                <div className="bg-gradient-to-br from-accent/20 to-accent/30 rounded-xl p-6 border-2 border-accent">
-                  <div className="text-4xl font-black text-accent">
-                    {performanceMetrics.filter(m => m.readinessScore).length > 0
-                      ? (performanceMetrics
-                          .filter(m => m.readinessScore)
-                          .reduce((sum, m) => sum + m.readinessScore, 0) /
-                        performanceMetrics.filter(m => m.readinessScore).length).toFixed(0)
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <div className="text-3xl font-semibold text-primary">
+                    {performanceMetrics.filter((m) => m.readinessScore).length > 0
+                      ? (
+                          performanceMetrics
+                            .filter((m) => m.readinessScore)
+                            .reduce((sum, m) => sum + m.readinessScore, 0) /
+                          performanceMetrics.filter((m) => m.readinessScore).length
+                        ).toFixed(0)
                       : 'N/A'}
                   </div>
-                  <div className="text-sm font-semibold text-accent mt-2">Avg Readiness</div>
+                  <div className="text-sm text-primary/80 font-medium mt-1">Avg Readiness</div>
                 </div>
               </div>
-            </div>
+            </section>
 
             {/* Performance vs Readiness Correlation */}
-            {performanceMetrics.filter(m => m.readinessScore && m.stats?.points).length >= 5 && (
-              <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-                <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
-                  <span className="text-3xl">📈</span>
+            {performanceMetrics.filter((m) => m.readinessScore && m.stats?.points).length >= 5 && (
+              <section className="card-elevated p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-2">
                   Performance vs Readiness Correlation
                 </h2>
-                <p className="text-sm text-muted-foreground mb-6">
-                  This chart shows the correlation between mental readiness scores and game performance (points scored).
-                  Higher readiness typically correlates with better performance outcomes.
+                <p className="text-sm text-muted-foreground mb-4">
+                  Shows correlation between mental readiness scores and game performance.
                 </p>
-                <div className="h-80">
+                <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={performanceMetrics.slice(0, 10).reverse().map((m, idx) => ({
-                      game: `Game ${idx + 1}`,
-                      points: m.stats?.points || 0,
-                      readiness: m.readinessScore || 0,
-                      outcome: m.outcome
-                    }))}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="game" stroke="#6b7280" style={{ fontWeight: 600 }} />
-                      <YAxis yAxisId="left" stroke="#6b7280" style={{ fontWeight: 600 }} />
-                      <YAxis yAxisId="right" orientation="right" stroke="#8b5cf6" style={{ fontWeight: 600 }} />
+                    <LineChart
+                      data={performanceMetrics
+                        .slice(0, 10)
+                        .reverse()
+                        .map((m, idx) => ({
+                          game: `Game ${idx + 1}`,
+                          points: m.stats?.points || 0,
+                          readiness: m.readinessScore || 0,
+                        }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="game" className="text-xs" />
+                      <YAxis yAxisId="left" className="text-xs" />
+                      <YAxis yAxisId="right" orientation="right" className="text-xs" />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#fff',
-                          border: '2px solid #e5e7eb',
-                          borderRadius: '12px',
-                          boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                          fontWeight: 600,
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
                         }}
                       />
-                      <Legend wrapperStyle={{ fontWeight: 700 }} />
+                      <Legend />
                       <Line
                         yAxisId="left"
                         type="monotone"
                         dataKey="points"
-                        stroke="#3b82f6"
+                        stroke="hsl(var(--info))"
                         strokeWidth={3}
-                        dot={{ fill: '#3b82f6', r: 5 }}
+                        dot={{ r: 4 }}
                         name="Points Scored"
                       />
                       <Line
                         yAxisId="right"
                         type="monotone"
                         dataKey="readiness"
-                        stroke="#8b5cf6"
+                        stroke="hsl(var(--primary))"
                         strokeWidth={3}
-                        dot={{ fill: '#8b5cf6', r: 5 }}
+                        dot={{ r: 4 }}
                         name="Readiness Score"
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </section>
             )}
 
             {/* Recent Games */}
-            <div className="bg-card rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-              <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
-                <span className="text-3xl">🎮</span>
-                Recent Games
-              </h2>
-              <div className="space-y-4">
+            <section className="card-elevated p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Recent Games</h2>
+              <div className="space-y-3">
                 {performanceMetrics.slice(0, 5).map((metric, idx) => (
                   <div
                     key={idx}
-                    className="border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-all hover:shadow-lg"
+                    className="p-4 rounded-lg border border-border hover:border-primary/30 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="text-sm text-muted-foreground font-semibold">
+                        <div className="text-xs text-muted-foreground">
                           {new Date(metric.gameDate).toLocaleDateString('en-US', {
                             weekday: 'short',
                             month: 'short',
-                            day: 'numeric'
+                            day: 'numeric',
                           })}
                         </div>
-                        <div className="text-lg font-bold text-foreground mt-1">
-                          vs {metric.opponentName}
-                        </div>
+                        <div className="font-medium text-foreground">vs {metric.opponentName}</div>
                       </div>
-                      <span className={`px-4 py-2 rounded-lg font-black text-sm ${
-                        metric.outcome?.toUpperCase() === 'WIN'
-                          ? 'bg-secondary/20 text-secondary border-2 border-secondary/20'
-                          : metric.outcome?.toUpperCase() === 'LOSS'
-                          ? 'bg-muted-foreground/20 text-muted-foreground border-2 border-muted-foreground'
-                          : 'bg-gray-100 text-gray-800 border-2 border-gray-300'
-                      }`}>
+                      <span
+                        className={cn(
+                          'px-3 py-1 rounded-full text-sm font-medium',
+                          metric.outcome?.toUpperCase() === 'WIN' &&
+                            'bg-success/10 text-success border border-success/20',
+                          metric.outcome?.toUpperCase() === 'LOSS' &&
+                            'bg-destructive/10 text-destructive border border-destructive/20'
+                        )}
+                      >
                         {metric.outcome?.toUpperCase() || 'N/A'}
                       </span>
                     </div>
 
                     {metric.stats && (
-                      <div className="flex gap-4 mb-3 flex-wrap">
+                      <div className="flex gap-2 flex-wrap mb-3">
                         {metric.stats.points !== undefined && (
-                          <div className="flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
-                            <span className="font-black text-blue-700">{metric.stats.points}</span>
-                            <span className="text-xs text-blue-600 font-semibold">PTS</span>
-                          </div>
+                          <span className="px-2 py-1 bg-info/10 text-info text-xs font-medium rounded">
+                            {metric.stats.points} PTS
+                          </span>
                         )}
                         {metric.stats.assists !== undefined && (
-                          <div className="flex items-center gap-1 bg-accent/10 px-3 py-1 rounded-lg border border-accent/20">
-                            <span className="font-black text-accent">{metric.stats.assists}</span>
-                            <span className="text-xs text-accent font-semibold">AST</span>
-                          </div>
+                          <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
+                            {metric.stats.assists} AST
+                          </span>
                         )}
                         {metric.stats.rebounds !== undefined && (
-                          <div className="flex items-center gap-1 bg-muted/10 px-3 py-1 rounded-lg border border-muted">
-                            <span className="font-black text-muted-foreground">{metric.stats.rebounds}</span>
-                            <span className="text-xs text-muted-foreground font-semibold">REB</span>
-                          </div>
+                          <span className="px-2 py-1 bg-muted text-muted-foreground text-xs font-medium rounded">
+                            {metric.stats.rebounds} REB
+                          </span>
                         )}
                       </div>
                     )}
 
                     {metric.readinessScore && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground font-semibold">Mental Readiness:</span>
-                        <div className={`px-3 py-1 rounded-lg font-bold ${
-                          metric.readinessScore >= 80
-                            ? 'bg-secondary/20 text-secondary'
-                            : metric.readinessScore >= 60
-                            ? 'bg-muted/20 text-muted-foreground'
-                            : 'bg-muted-foreground/20 text-muted-foreground'
-                        }`}>
-                          {metric.readinessScore}/100
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Mental Readiness:</span>
+                        <ReadinessGaugeMini score={metric.readinessScore} />
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           </>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* ─────────────────────────────────────────────────────────────────
+            GOALS & NOTES GRID
+        ───────────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Goals */}
-          <div className="bg-card rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
-              <span className="text-3xl">🎯</span>
+          <section className="card-elevated p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Target size={20} className="text-primary" />
               Goals
             </h2>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {goals && goals.length > 0 ? (
                 goals.slice(0, 10).map((goal) => (
                   <div
                     key={goal.id}
-                    className={`border-2 rounded-xl p-4 ${
-                      goal.status === 'COMPLETED'
-                        ? 'border-secondary/20 bg-secondary/10 dark:bg-secondary/20'
-                        : goal.status === 'IN_PROGRESS'
-                        ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    }`}
+                    className={cn(
+                      'p-4 rounded-lg border',
+                      goal.status === 'COMPLETED' && 'bg-success/5 border-success/20',
+                      goal.status === 'IN_PROGRESS' && 'bg-info/5 border-info/20',
+                      goal.status === 'NOT_STARTED' && 'bg-muted border-border'
+                    )}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-gray-900 dark:text-gray-100">{goal.title}</h3>
-                      <span className={`text-xs px-2 py-1 rounded font-bold ${
-                        goal.status === 'COMPLETED'
-                          ? 'bg-secondary/30 text-secondary dark:bg-secondary dark:text-accent'
-                          : goal.status === 'IN_PROGRESS'
-                          ? 'bg-blue-200 text-blue-800 dark:bg-blue-700 dark:text-blue-100'
-                          : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
-                      }`}>
+                      <h3 className="font-medium text-foreground">{goal.title}</h3>
+                      <span
+                        className={cn(
+                          'text-xs px-2 py-0.5 rounded-full font-medium',
+                          goal.status === 'COMPLETED' && 'bg-success/20 text-success',
+                          goal.status === 'IN_PROGRESS' && 'bg-info/20 text-info',
+                          goal.status === 'NOT_STARTED' && 'bg-muted text-muted-foreground'
+                        )}
+                      >
                         {goal.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{goal.description}</p>
-                    <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400">
-                      <span>📌 {goal.type}</span>
+                    <p className="text-sm text-muted-foreground mb-2">{goal.description}</p>
+                    <div className="flex gap-3 text-xs text-muted-foreground">
+                      <span>{goal.type}</span>
                       <span>•</span>
-                      <span>🗓️ {new Date(goal.targetDate).toLocaleDateString()}</span>
+                      <span>Due {new Date(goal.targetDate).toLocaleDateString()}</span>
                     </div>
                   </div>
                 ))
@@ -792,23 +930,20 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                 <p className="text-muted-foreground text-center py-8">No goals yet</p>
               )}
             </div>
-          </div>
+          </section>
 
           {/* Coach Notes */}
-          <div className="bg-card rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-black text-foreground mb-6 flex items-center gap-2">
-              <span className="text-3xl">📝</span>
+          <section className="card-elevated p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <StickyNote size={20} className="text-primary" />
               Coach Notes
             </h2>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {coachNotes && coachNotes.length > 0 ? (
                 coachNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    className="border-2 border-border rounded-xl p-4 bg-background"
-                  >
+                  <div key={note.id} className="p-4 rounded-lg border border-border bg-background">
                     <div className="flex items-start justify-between mb-2">
-                      <span className="text-xs px-2 py-1 rounded bg-blue-200 text-blue-800 font-bold">
+                      <span className="text-xs px-2 py-0.5 rounded bg-info/10 text-info font-medium">
                         {note.category}
                       </span>
                       <span className="text-xs text-muted-foreground">
@@ -822,74 +957,88 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
                 <p className="text-muted-foreground text-center py-8">No notes yet</p>
               )}
             </div>
-          </div>
+          </section>
         </div>
 
-        {/* Crisis Alerts */}
+        {/* ─────────────────────────────────────────────────────────────────
+            CRISIS ALERTS
+        ───────────────────────────────────────────────────────────────── */}
         {crisisAlerts && crisisAlerts.length > 0 && (
-          <div className="bg-muted-foreground/10 border-2 border-muted-foreground rounded-2xl shadow-xl p-8 mt-8">
-            <h2 className="text-2xl font-black text-chrome mb-6 flex items-center gap-2">
-              <span className="text-3xl">🚨</span>
+          <section className="p-6 rounded-lg bg-risk-critical/5 border border-risk-critical/20">
+            <h2 className="text-lg font-semibold text-risk-critical mb-4 flex items-center gap-2">
+              <AlertTriangle size={20} />
               Crisis Alerts
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {crisisAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="bg-card border-2 border-muted-foreground rounded-xl p-4"
+                  className="p-4 rounded-lg bg-card border border-risk-critical/30"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-sm px-3 py-1 rounded-lg font-bold ${
-                      alert.severity === 'HIGH'
-                        ? 'bg-muted-foreground/30 text-muted-foreground'
-                        : 'bg-muted/30 text-muted-foreground'
-                    }`}>
-                      {alert.severity} SEVERITY
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <RiskBadge
+                      level={alert.severity === 'HIGH' ? 'critical' : 'high'}
+                      showIcon
+                      variant="filled"
+                      label={`${alert.severity} Severity`}
+                    />
                     <span className="text-sm text-muted-foreground">
                       {new Date(alert.detectedAt).toLocaleString()}
                     </span>
                   </div>
-                  <div className="mt-3 text-sm">
-                    <span className={`font-semibold ${
-                      alert.reviewed ? 'text-secondary' : 'text-muted-foreground'
-                    }`}>
-                      {alert.reviewed ? '✓ Reviewed' : '⚠️ Needs Review'}
-                    </span>
+                  <div className="flex items-center gap-2 text-sm">
+                    {alert.reviewed ? (
+                      <span className="text-success font-medium">Reviewed</span>
+                    ) : (
+                      <span className="text-risk-critical font-medium">Needs Review</span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────────
+          MODALS
+      ───────────────────────────────────────────────────────────────── */}
 
       {/* Check-In Modal */}
       {showCheckIn && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <h3 className="text-2xl font-black text-foreground mb-4">Send Check-In</h3>
+          <div className="card-elevated max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Send Check-In</h3>
+              <button
+                onClick={() => setShowCheckIn(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={20} />
+              </button>
+            </div>
             <textarea
               value={checkInMessage}
               onChange={(e) => setCheckInMessage(e.target.value)}
               placeholder="Write your message to the athlete..."
-              className="w-full px-4 py-3 border-2 border-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-4"
-              rows={6}
+              className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none mb-4"
+              rows={5}
             />
             <div className="flex gap-3">
-              <button
+              <Button
                 onClick={() => setShowCheckIn(false)}
-                className="flex-1 px-6 py-3 border-2 border-border text-muted-foreground rounded-xl hover:bg-background font-semibold transition-colors"
+                variant="outline"
+                className="flex-1"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSendCheckIn}
                 disabled={saving || !checkInMessage.trim()}
-                className="flex-1 px-6 py-3 bg-primary text-white rounded-xl hover:opacity-90 font-semibold disabled:opacity-50 transition-colors"
+                className="flex-1"
               >
                 {saving ? 'Sending...' : 'Send'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -898,12 +1047,20 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
       {/* Add Note Modal */}
       {showAddNote && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <h3 className="text-2xl font-black text-foreground mb-4">Add Coach Note</h3>
+          <div className="card-elevated max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Add Coach Note</h3>
+              <button
+                onClick={() => setShowAddNote(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X size={20} />
+              </button>
+            </div>
             <select
               value={noteCategory}
               onChange={(e) => setNoteCategory(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4 font-semibold"
+              className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent mb-4"
             >
               <option value="GENERAL">General</option>
               <option value="PERFORMANCE">Performance</option>
@@ -915,27 +1072,60 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Write your note..."
-              className="w-full px-4 py-3 border-2 border-border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-4"
-              rows={6}
+              className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none mb-4"
+              rows={5}
             />
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowAddNote(false)}
-                className="flex-1 px-6 py-3 border-2 border-border text-muted-foreground rounded-xl hover:bg-background font-semibold transition-colors"
-              >
+              <Button onClick={() => setShowAddNote(false)} variant="outline" className="flex-1">
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleAddNote}
                 disabled={saving || !newNote.trim()}
-                className="flex-1 px-6 py-3 bg-secondary text-white rounded-xl hover:bg-secondary font-semibold disabled:opacity-50 transition-colors"
+                className="flex-1"
               >
                 {saving ? 'Saving...' : 'Add Note'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// HELPER COMPONENTS
+// ─────────────────────────────────────────────────────────────────
+
+interface StatCardProps {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  suffix?: string;
+  sublabel: string;
+  color: 'primary' | 'success' | 'warning' | 'info';
+}
+
+function StatCard({ icon: Icon, label, value, suffix, sublabel, color }: StatCardProps) {
+  const colorStyles = {
+    primary: 'bg-primary/10 text-primary border-primary/20',
+    success: 'bg-success/10 text-success border-success/20',
+    warning: 'bg-warning/10 text-warning border-warning/20',
+    info: 'bg-info/10 text-info border-info/20',
+  };
+
+  return (
+    <div className={cn('card-elevated p-4 border', colorStyles[color])}>
+      <div className="flex items-center gap-3 mb-2">
+        <Icon size={18} />
+        <span className="text-xs font-medium uppercase tracking-wider opacity-80">{label}</span>
+      </div>
+      <div className="text-3xl font-semibold">
+        {value}
+        {suffix && <span className="text-lg opacity-60">{suffix}</span>}
+      </div>
+      <div className="text-xs opacity-70 mt-1">{sublabel}</div>
     </div>
   );
 }

@@ -1,8 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ClipboardList, Plus, ChevronRight, Calendar, Users, AlertCircle, X, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/shared/ui/button';
+
+/**
+ * Coach Assignments Page - Updated with Design System v2.0
+ *
+ * Features:
+ * - Create and manage assignments for athletes
+ * - Track submission status
+ * - Filter by sport and due date
+ */
 
 interface Assignment {
   id: string;
@@ -21,7 +32,6 @@ interface Assignment {
 }
 
 export default function CoachAssignmentsPage() {
-  const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -63,50 +73,43 @@ export default function CoachAssignmentsPage() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-10">
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 animate-fade-in">
           <div>
-            <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+              <ClipboardList className="w-7 h-7 text-primary" />
               Assignments
             </h1>
-            <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">
-              Create and manage assignments for your athletes
-            </p>
+            <p className="text-muted-foreground mt-1">Create and manage assignments for your athletes</p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform"
-          >
-            📝 Create Assignment
-          </button>
-        </div>
+          <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Create Assignment
+          </Button>
+        </header>
 
         {/* Main Content */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-accent"></div>
-            <p className="mt-6 text-muted-foreground dark:text-gray-400 font-semibold text-lg">Loading assignments...</p>
+          <div className="card-elevated p-12 text-center animate-slide-up">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">Loading assignments...</p>
           </div>
         ) : assignments.length === 0 ? (
-          <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl p-16 text-center border border-gray-100 dark:border-gray-700">
-            <div className="text-8xl mb-6">📋</div>
-            <h3 className="text-3xl font-black text-foreground dark:text-gray-100 mb-4">
-              No assignments yet
-            </h3>
-            <p className="text-muted-foreground dark:text-gray-400 text-lg mb-8 max-w-md mx-auto">
+          <div className="card-elevated p-12 text-center animate-slide-up">
+            <ClipboardList className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+            <h3 className="font-medium text-foreground mb-2">No assignments yet</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
               Create your first assignment to get started with athlete check-ins and journaling.
             </p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg hover:scale-105 transform"
-            >
-              📝 Create First Assignment
-            </button>
+            <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 mx-auto">
+              <Plus className="w-4 h-4" />
+              Create First Assignment
+            </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3 animate-slide-up">
             {assignments.map((assignment) => {
               const stats = getSubmissionStats(assignment);
               const overdue = isOverdue(assignment.dueDate);
@@ -115,38 +118,32 @@ export default function CoachAssignmentsPage() {
                 <Link
                   key={assignment.id}
                   href={`/coach/assignments/${assignment.id}`}
-                  className="block bg-card dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all p-8 border border-gray-100 dark:border-gray-700 hover:scale-102 transform"
+                  className="block card-interactive p-4"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
-                      <div className="flex items-start gap-6">
-                        <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-accent to-accent rounded-2xl flex items-center justify-center shadow-lg">
-                          <span className="text-3xl">📋</span>
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <ClipboardList className="w-6 h-6 text-primary" />
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-2xl font-black text-foreground dark:text-gray-100 mb-2">
-                            {assignment.title}
-                          </h3>
-                          <p className="text-muted-foreground dark:text-gray-400 text-base mb-4 line-clamp-2 font-semibold">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground mb-1">{assignment.title}</h3>
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                             {assignment.description}
                           </p>
 
-                          <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
                             {/* Submission Stats */}
-                            <div className="flex items-center gap-2 bg-gradient-to-r from-secondary/10 to-secondary/20 dark:from-green-900/20 dark:to-green-900/30 px-4 py-2 rounded-xl border-2 border-secondary/20 dark:border-secondary">
-                              <span className="text-sm font-bold text-secondary dark:text-accent">Submissions:</span>
-                              <span className="text-lg font-black text-secondary dark:text-accent">
-                                {stats.submitted}
-                              </span>
-                              <span className="text-sm font-bold text-secondary dark:text-accent">/</span>
-                              <span className="text-lg font-black text-secondary dark:text-accent">
-                                {stats.total}
+                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-risk-green/10 text-risk-green">
+                              <Users className="w-3 h-3" />
+                              <span className="text-xs font-medium">
+                                {stats.submitted}/{stats.total} submitted
                               </span>
                             </div>
 
                             {/* Pending Count */}
                             {stats.pending > 0 && (
-                              <span className="px-4 py-2 bg-muted/20 dark:bg-muted-foreground/20/20 text-muted-foreground dark:text-chrome rounded-xl text-sm font-black shadow border-2 border-muted dark:border-muted-foreground">
+                              <span className="px-2 py-1 rounded bg-warning/10 text-warning text-xs font-medium">
                                 {stats.pending} pending
                               </span>
                             )}
@@ -154,20 +151,21 @@ export default function CoachAssignmentsPage() {
                             {/* Due Date */}
                             {assignment.dueDate && (
                               <span
-                                className={`px-4 py-2 rounded-xl text-sm font-black shadow border-2 ${
+                                className={cn(
+                                  'px-2 py-1 rounded text-xs font-medium flex items-center gap-1',
                                   overdue
-                                    ? 'bg-muted-foreground/20 text-muted-foreground border-muted-foreground'
-                                    : 'bg-blue-100 text-blue-800 border-blue-200'
-                                }`}
+                                    ? 'bg-risk-red/10 text-risk-red'
+                                    : 'bg-info/10 text-info'
+                                )}
                               >
-                                {overdue ? '⚠️ ' : '📅 '}
+                                <Calendar className="w-3 h-3" />
                                 {formatDueDate(assignment.dueDate)}
                               </span>
                             )}
 
-                            {/* Target Info */}
+                            {/* Target Sport */}
                             {assignment.targetSport && (
-                              <span className="px-4 py-2 bg-accent/20 text-secondary rounded-xl text-sm font-black shadow border-2 border-accent/20">
+                              <span className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs font-medium">
                                 {assignment.targetSport}
                               </span>
                             )}
@@ -176,21 +174,7 @@ export default function CoachAssignmentsPage() {
                       </div>
                     </div>
 
-                    <div className="ml-4">
-                      <svg
-                        className="w-6 h-6 text-muted-foreground"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-2" />
                   </div>
                 </Link>
               );
@@ -213,7 +197,6 @@ export default function CoachAssignmentsPage() {
   );
 }
 
-// Create Assignment Modal Component
 function CreateAssignmentModal({
   onClose,
   onSuccess,
@@ -250,7 +233,6 @@ function CreateAssignmentModal({
         targetSport: formData.targetSport || undefined,
       };
 
-      // If assign to all, set targetAthleteIds to null
       if (formData.assignToAll) {
         payload.targetAthleteIds = null;
       }
@@ -276,57 +258,55 @@ function CreateAssignmentModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-100">
-        <div className="p-8 border-b-2 border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
-          <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Create Assignment
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              type="button"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+      <div className="bg-card rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-border">
+        <div className="p-6 border-b border-border flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-primary" />
+            Create Assignment
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            type="button"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {error && (
-            <div className="bg-muted-foreground/10 border border-muted-foreground text-muted-foreground px-4 py-3 rounded">
+            <div className="p-3 rounded-lg bg-risk-red/10 border border-risk-red/30 flex items-center gap-2 text-sm text-risk-red">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
           )}
 
           {/* Title */}
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-muted-foreground mb-1">
-              Title *
+          <div className="space-y-2">
+            <label htmlFor="title" className="block text-sm font-medium text-foreground">
+              Title <span className="text-risk-red">*</span>
             </label>
             <input
               type="text"
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground"
               placeholder="e.g., Pre-Game Visualization Exercise"
               required
             />
           </div>
 
           {/* Description */}
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-muted-foreground mb-1">
-              Description *
+          <div className="space-y-2">
+            <label htmlFor="description" className="block text-sm font-medium text-foreground">
+              Description <span className="text-risk-red">*</span>
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground resize-none"
               rows={4}
               placeholder="Describe what you want your athletes to reflect on or do..."
               required
@@ -334,44 +314,44 @@ function CreateAssignmentModal({
           </div>
 
           {/* Due Date */}
-          <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-muted-foreground mb-1">
-              Due Date (Optional)
+          <div className="space-y-2">
+            <label htmlFor="dueDate" className="block text-sm font-medium text-foreground">
+              Due Date <span className="text-muted-foreground text-xs">(Optional)</span>
             </label>
             <input
               type="datetime-local"
               id="dueDate"
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
             />
           </div>
 
           {/* Target Sport */}
-          <div>
-            <label htmlFor="targetSport" className="block text-sm font-medium text-muted-foreground mb-1">
-              Target Sport (Optional)
+          <div className="space-y-2">
+            <label htmlFor="targetSport" className="block text-sm font-medium text-foreground">
+              Target Sport <span className="text-muted-foreground text-xs">(Optional)</span>
             </label>
             <input
               type="text"
               id="targetSport"
               value={formData.targetSport}
               onChange={(e) => setFormData({ ...formData, targetSport: e.target.value })}
-              className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="e.g., Basketball, Soccer, Tennis (leave blank for all sports)"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground"
+              placeholder="e.g., Basketball, Soccer (leave blank for all)"
             />
           </div>
 
-          {/* Assign to All Checkbox */}
-          <div className="flex items-start">
+          {/* Assign to All */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
             <input
               type="checkbox"
               id="assignToAll"
               checked={formData.assignToAll}
               onChange={(e) => setFormData({ ...formData, assignToAll: e.target.checked })}
-              className="mt-1 h-4 w-4 text-accent focus:ring-purple-500 border-border rounded"
+              className="mt-0.5 h-4 w-4 text-primary focus:ring-primary border-border rounded"
             />
-            <label htmlFor="assignToAll" className="ml-2 block text-sm text-muted-foreground">
+            <label htmlFor="assignToAll" className="text-sm text-foreground">
               Assign to all athletes
               {formData.targetSport && (
                 <span className="text-muted-foreground"> in {formData.targetSport}</span>
@@ -379,22 +359,21 @@ function CreateAssignmentModal({
             </label>
           </div>
 
-          {/* Submit Buttons */}
-          <div className="flex gap-4 pt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-4 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-bold text-lg"
-            >
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transform"
-            >
-              {isSubmitting ? 'Creating...' : '✅ Create Assignment'}
-            </button>
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="flex-1">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Assignment'
+              )}
+            </Button>
           </div>
         </form>
       </div>

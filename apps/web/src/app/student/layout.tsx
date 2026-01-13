@@ -8,21 +8,41 @@ import { createClient } from '@/lib/supabase-client';
 import {
   LayoutDashboard,
   MessageSquare,
-  Heart,
   Target,
+  Activity,
   ClipboardList,
   Settings,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Brain,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+
+/**
+ * Student Portal Layout - Consolidated Navigation (v2.1)
+ *
+ * Streamlined to 6 primary navigation items:
+ * - Home (Dashboard) - Overview and quick stats
+ * - AI Coach - Chat interface with integrated Chat History
+ * - Wellness - Combined Readiness + Mood logging
+ * - Goals - Goal setting with integrated Progress tracking
+ * - Assignments - Coach-assigned tasks
+ * - Settings - Account preferences
+ *
+ * Consolidated features:
+ * - Chat History → accessible within AI Coach page
+ * - Mood Log → merged into Wellness page
+ * - Progress → integrated into Goals page
+ */
 
 const navItems = [
-  { href: '/student/home', label: 'Home', icon: LayoutDashboard },
-  { href: '/student/assignments', label: 'My Assignments', icon: ClipboardList },
-  { href: '/student/ai-coach', label: 'AI Wellness Coach', icon: MessageSquare },
-  { href: '/student/progress', label: 'My Progress', icon: Target },
+  { href: '/student/home', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/student/ai-coach', label: 'AI Coach', icon: Brain, primary: true },
+  { href: '/student/wellness', label: 'Wellness', icon: Activity },
+  { href: '/student/goals', label: 'Goals', icon: Target },
+  { href: '/student/assignments', label: 'Assignments', icon: ClipboardList },
   { href: '/student/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -54,39 +74,50 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Hamburger Menu Button - Visible on all screen sizes */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-xl hover:shadow-2xl transition-all hover:scale-105 transform border border-gray-200 dark:border-gray-700"
+        className={cn(
+          'fixed top-4 z-50 p-2.5 bg-card rounded-lg shadow-md hover:shadow-lg transition-all',
+          'border border-border hover:border-primary/30',
+          isSidebarOpen ? 'left-[17rem]' : 'left-4'
+        )}
         aria-label="Toggle sidebar"
       >
         {isSidebarOpen ? (
-          <ChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
         ) : (
-          <ChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
         )}
       </button>
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed top-0 left-0 h-full bg-white dark:bg-gray-900 shadow-2xl z-40 transition-all duration-300 ease-in-out
-          ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
-        `}
+        className={cn(
+          'fixed top-0 left-0 h-full bg-card border-r border-border z-40 transition-all duration-300 ease-in-out',
+          isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'
+        )}
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Logo/Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700 mt-16">
-            <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap">
-              Student Portal
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 whitespace-nowrap">AI Sports Agent</p>
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <Brain className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground whitespace-nowrap">
+                  AI Sports Agent
+                </h1>
+                <p className="text-xs text-muted-foreground whitespace-nowrap">Athlete Portal</p>
+              </div>
+            </div>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4 overflow-y-auto">
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
@@ -99,16 +130,22 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                         e.preventDefault();
                         router.push(item.href);
                       }}
-                      className={`
-                        flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap
-                        ${isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }
-                      `}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap',
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : item.primary
+                          ? 'text-primary hover:bg-primary/10'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      )}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
-                      <span>{item.label}</span>
+                      <span className="text-sm">{item.label}</span>
+                      {item.primary && !isActive && (
+                        <span className="ml-auto px-1.5 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary rounded">
+                          NEW
+                        </span>
+                      )}
                     </a>
                   </li>
                 );
@@ -116,11 +153,25 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </ul>
           </nav>
 
-          {/* Sign Out Button */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          {/* User Actions */}
+          <div className="p-4 border-t border-border space-y-2">
+            {/* Quick Help */}
+            <a
+              href="/student/ai-coach"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push('/student/ai-coach');
+              }}
+              className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-all whitespace-nowrap"
+            >
+              <MessageSquare className="w-5 h-5 flex-shrink-0" />
+              <span>Talk to AI Coach</span>
+            </a>
+
+            {/* Sign Out */}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/20 hover:text-muted-foreground dark:hover:text-muted-foreground rounded-lg font-medium transition-all whitespace-nowrap"
+              className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all whitespace-nowrap"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span>Sign Out</span>
@@ -131,9 +182,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
       {/* Main content */}
       <main
-        className={`min-h-screen transition-all duration-300 ease-in-out ${
+        className={cn(
+          'min-h-screen transition-all duration-300 ease-in-out',
           isSidebarOpen ? 'ml-64' : 'ml-0'
-        }`}
+        )}
       >
         {children}
       </main>
