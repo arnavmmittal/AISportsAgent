@@ -53,7 +53,7 @@ interface Goal {
   description?: string;
   category: GoalCategory;
   status: GoalStatus;
-  progress: number;
+  completionPct: number;
   targetDate?: Date;
   createdAt: Date;
 }
@@ -259,20 +259,20 @@ export default function StudentGoalsPage() {
     const goal = goals.find((g) => g.id === goalId);
     if (!goal) return;
 
-    const newProgress = Math.max(0, Math.min(100, goal.progress + delta));
+    const newProgress = Math.max(0, Math.min(100, goal.completionPct + delta));
     const newStatus = newProgress === 100 ? 'COMPLETED' : newProgress > 0 ? 'IN_PROGRESS' : 'NOT_STARTED';
 
     try {
       const response = await fetch(`/api/goals/${goalId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ progress: newProgress, status: newStatus }),
+        body: JSON.stringify({ completionPct: newProgress, status: newStatus }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setGoals(goals.map((g) => g.id === goalId ? { ...g, progress: newProgress, status: newStatus } : g));
+        setGoals(goals.map((g) => g.id === goalId ? { ...g, completionPct: newProgress, status: newStatus } : g));
         if (newProgress === 100) {
           toast.success('Goal completed! Great work!');
         }
@@ -312,7 +312,7 @@ export default function StudentGoalsPage() {
   const inProgressCount = goals.filter((g) => g.status === 'IN_PROGRESS').length;
   const totalGoals = goals.length;
   const completionRate = totalGoals > 0 ? Math.round((completedCount / totalGoals) * 100) : 0;
-  const avgProgress = totalGoals > 0 ? Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / totalGoals) : 0;
+  const avgProgress = totalGoals > 0 ? Math.round(goals.reduce((sum, g) => sum + g.completionPct, 0) / totalGoals) : 0;
 
   if (isLoading) {
     return (
@@ -539,7 +539,7 @@ export default function StudentGoalsPage() {
             {filteredGoals.map((goal) => {
               const Icon = CATEGORY_CONFIG[goal.category].icon;
               const config = CATEGORY_CONFIG[goal.category];
-              const isComplete = goal.progress === 100;
+              const isComplete = goal.completionPct === 100;
 
               return (
                 <div key={goal.id} className="card-elevated p-5">
@@ -582,12 +582,12 @@ export default function StudentGoalsPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Progress</span>
-                        <span className="text-sm font-medium text-foreground">{goal.progress}%</span>
+                        <span className="text-sm font-medium text-foreground">{goal.completionPct}%</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                         <div
                           className={cn('h-full rounded-full transition-all duration-300', isComplete ? 'bg-success' : 'bg-primary')}
-                          style={{ width: `${goal.progress}%` }}
+                          style={{ width: `${goal.completionPct}%` }}
                         />
                       </div>
                     </div>
@@ -596,7 +596,7 @@ export default function StudentGoalsPage() {
                     <div className="flex gap-2">
                       <Button
                         onClick={() => updateGoalProgress(goal.id, -10)}
-                        disabled={goal.progress === 0}
+                        disabled={goal.completionPct === 0}
                         variant="outline"
                         size="sm"
                         className="flex-1"
@@ -606,7 +606,7 @@ export default function StudentGoalsPage() {
                       </Button>
                       <Button
                         onClick={() => updateGoalProgress(goal.id, 10)}
-                        disabled={goal.progress === 100}
+                        disabled={goal.completionPct === 100}
                         variant="outline"
                         size="sm"
                         className="flex-1"
@@ -615,8 +615,8 @@ export default function StudentGoalsPage() {
                         +10%
                       </Button>
                       <Button
-                        onClick={() => updateGoalProgress(goal.id, 100 - goal.progress)}
-                        disabled={goal.progress === 100}
+                        onClick={() => updateGoalProgress(goal.id, 100 - goal.completionPct)}
+                        disabled={goal.completionPct === 100}
                         size="sm"
                         className={cn('flex-1', isComplete && 'bg-success hover:bg-success/90')}
                       >
