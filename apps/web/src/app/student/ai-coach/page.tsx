@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Send,
   MessageSquare,
@@ -11,6 +12,12 @@ import {
   ChevronRight,
   AlertTriangle,
   X,
+  History,
+  Clock,
+  Bot,
+  Search,
+  ChevronLeft,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
@@ -19,7 +26,7 @@ import { VoiceButton, AudioVisualizer } from '@/components/shared/voice/VoiceBut
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 
 /**
- * Enhanced AI Coach Page
+ * Enhanced AI Coach Page (v2.1 - With Integrated History)
  *
  * Features:
  * - Streaming text responses with typewriter effect
@@ -27,6 +34,7 @@ import { useVoiceChat } from '@/hooks/useVoiceChat';
  * - Crisis detection and resources
  * - Quick prompts for common topics
  * - Privacy-first design with clear messaging
+ * - Integrated chat history drawer (consolidated from /student/chat)
  * - New design system integration
  */
 
@@ -42,6 +50,14 @@ interface Message {
 interface CrisisAlert {
   final_risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   message?: string;
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  lastMessage: string;
+  createdAt: Date;
+  messageCount: number;
 }
 
 const quickPrompts = [
@@ -69,6 +85,8 @@ const quickPrompts = [
 
 export default function AICoachPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -78,6 +96,12 @@ export default function AICoachPage() {
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // History drawer state
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
 
   // Voice integration
   const {
@@ -159,6 +183,100 @@ export default function AICoachPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Load chat sessions for history drawer
+  const loadChatSessions = useCallback(async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      setIsLoadingSessions(true);
+      const profileResponse = await fetch('/api/athlete/profile');
+      const profileData = await profileResponse.json();
+
+      if (!profileData.success || !profileData.data?.userId) {
+        setChatSessions([]);
+        return;
+      }
+
+      const userId = profileData.data.userId;
+      const response = await fetch(`/api/chat/sessions?userId=${userId}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          const transformedSessions: ChatSession[] = data.data.map((s: any) => ({
+            id: s.id,
+            title: s.title || 'Chat Session',
+            lastMessage: s.lastMessage || 'No messages yet',
+            createdAt: new Date(s.createdAt),
+            messageCount: s.messageCount || 0,
+          }));
+          setChatSessions(transformedSessions);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading chat sessions:', error);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, [session?.user?.id]);
+
+  // Load sessions when history drawer opens
+  useEffect(() => {
+    if (historyOpen) {
+      loadChatSessions();
+    }
+  }, [historyOpen, loadChatSessions]);
+
+  // Handle session switch from URL param or click
+  const switchToSession = useCallback((newSessionId: string) => {
+    setSessionId(newSessionId);
+    setMessages([]);
+    setHistoryOpen(false);
+    router.push(`/student/ai-coach?sessionId=${newSessionId}`, { scroll: false });
+  }, [router]);
+
+  // Check for sessionId in URL params
+  useEffect(() => {
+    const urlSessionId = searchParams.get('sessionId');
+    if (urlSessionId && session?.user?.id) {
+      setSessionId(urlSessionId);
+    }
+  }, [searchParams, session?.user?.id]);
+
+  // Start a new chat session
+  const startNewSession = useCallback(() => {
+    if (session?.user?.id) {
+      const newId = `session_${session.user.id}_${Date.now()}`;
+      setSessionId(newId);
+      setMessages([]);
+      setHistoryOpen(false);
+      router.push('/student/ai-coach', { scroll: false });
+    }
+  }, [session?.user?.id, router]);
+
+  // Format date for history items
+  const formatSessionDate = (date: Date) => {
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  // Filter sessions by search query
+  const filteredSessions = chatSessions.filter(s =>
+    s.title.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+    s.lastMessage.toLowerCase().includes(historySearchQuery.toLowerCase())
+  );
 
   const sendMessage = useCallback(async (messageText?: string) => {
     const text = messageText || inputValue;
@@ -314,12 +432,138 @@ export default function AICoachPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* History Drawer Overlay */}
+      {historyOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setHistoryOpen(false)}
+        />
+      )}
+
+      {/* History Drawer */}
+      <aside
+        className={cn(
+          'fixed top-0 left-0 h-full w-80 bg-card border-r border-border z-50 transition-transform duration-300 ease-in-out',
+          historyOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="flex flex-col h-full">
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              Chat History
+            </h2>
+            <button
+              onClick={() => setHistoryOpen(false)}
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+
+          {/* New Chat Button */}
+          <div className="p-3 border-b border-border">
+            <Button
+              onClick={startNewSession}
+              className="w-full"
+              variant="default"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Conversation
+            </Button>
+          </div>
+
+          {/* Search */}
+          {chatSessions.length > 0 && (
+            <div className="p-3 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={historySearchQuery}
+                  onChange={(e) => setHistorySearchQuery(e.target.value)}
+                  placeholder="Search conversations..."
+                  className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Sessions List */}
+          <div className="flex-1 overflow-y-auto">
+            {isLoadingSessions ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : chatSessions.length === 0 ? (
+              <div className="p-6 text-center">
+                <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">No past conversations</p>
+              </div>
+            ) : filteredSessions.length === 0 ? (
+              <div className="p-6 text-center">
+                <Search className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">No matches found</p>
+              </div>
+            ) : (
+              <div className="p-2 space-y-1">
+                {filteredSessions.map((chatSession) => (
+                  <button
+                    key={chatSession.id}
+                    onClick={() => switchToSession(chatSession.id)}
+                    className={cn(
+                      'w-full p-3 text-left rounded-lg transition-colors hover:bg-muted',
+                      sessionId === chatSession.id && 'bg-primary/10 border border-primary/20'
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-foreground truncate">
+                            {chatSession.title}
+                          </span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatSessionDate(chatSession.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                          {chatSession.lastMessage}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Drawer Footer */}
+          <div className="p-3 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center">
+              {chatSessions.length} conversation{chatSessions.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+      </aside>
+
       <div className="max-w-4xl mx-auto h-screen flex flex-col">
         {/* Header */}
         <header className="flex-shrink-0 p-4 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* History Toggle Button */}
+              <button
+                onClick={() => setHistoryOpen(true)}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                aria-label="Open chat history"
+              >
+                <History className="w-5 h-5 text-muted-foreground" />
+              </button>
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
