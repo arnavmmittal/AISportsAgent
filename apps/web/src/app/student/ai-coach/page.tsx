@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
@@ -84,7 +84,7 @@ const quickPrompts = [
   },
 ];
 
-export default function AICoachPage() {
+function AICoachPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -795,5 +795,24 @@ export default function AICoachPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AICoachPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AICoachPageContent />
+    </Suspense>
   );
 }

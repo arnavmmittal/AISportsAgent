@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   TrendingUp,
@@ -65,7 +65,7 @@ interface Alert {
   status: 'active' | 'resolved' | 'monitoring';
 }
 
-export default function ReadinessPage() {
+function ReadinessPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'readiness' | 'alerts'>(
@@ -783,5 +783,24 @@ function AlertsTab({
         </ul>
       </div>
     </>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ReadinessPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ReadinessPageContent />
+    </Suspense>
   );
 }
