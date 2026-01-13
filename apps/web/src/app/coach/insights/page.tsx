@@ -114,59 +114,55 @@ export default function InsightsPage() {
         setIsLoading(true);
         setError(null);
 
-        // Fetch dashboard stats
+        // Fetch dashboard stats (this contains most of the data we need)
         const dashboardRes = await fetch('/api/coach/dashboard');
         if (dashboardRes.ok) {
           const dashboardJson = await dashboardRes.json();
+          const data = dashboardJson.data || dashboardJson;
+
+          // Set dashboard stats
           setDashboardStats({
-            totalAthletes: dashboardJson.totalAthletes || 0,
-            activeToday: dashboardJson.activeToday || 0,
-            atRiskCount: dashboardJson.atRiskCount || 0,
-            avgReadiness: dashboardJson.avgReadiness || 0,
-            crisisAlerts: dashboardJson.crisisAlerts?.length || 0,
+            totalAthletes: data.overview?.totalAthletes || 0,
+            activeToday: data.overview?.athletesWithConsent || 0,
+            atRiskCount: data.overview?.atRiskCount || 0,
+            avgReadiness: data.teamMood?.avgMood ? Math.round(data.teamMood.avgMood * 10) : 0,
+            crisisAlerts: data.overview?.crisisAlertsCount || 0,
           });
-        }
 
-        // Fetch performance correlation data
-        const correlationRes = await fetch('/api/coach/analytics/performance-correlation');
-        if (correlationRes.ok) {
-          const correlationJson = await correlationRes.json();
-          if (correlationJson.correlations && correlationJson.correlations.length > 0) {
-            const firstCorrelation = correlationJson.correlations[0];
-            setCorrelationData({
-              correlationStrength: firstCorrelation.correlationStrength || 0,
-              pValue: firstCorrelation.pValue || 1,
-              highReadinessPerformance: 0,
-              lowReadinessPerformance: 0,
-            });
-          }
-        }
-
-        // Fetch reports if there's an API for it
-        const reportsRes = await fetch('/api/coach/reports');
-        if (reportsRes.ok) {
-          const reportsJson = await reportsRes.json();
-          if (reportsJson.reports) {
-            setReports(reportsJson.reports);
-          }
-        }
-
-        // Try to get more analytics from different endpoints
-        const analyticsRes = await fetch('/api/coach/analytics/team-summary');
-        if (analyticsRes.ok) {
-          const analyticsJson = await analyticsRes.json();
+          // Derive analytics data from dashboard response
           setAnalyticsData({
-            performanceTrend: analyticsJson.performanceTrend || '-',
-            monthlyTrend: analyticsJson.monthlyTrend || '-',
-            sportBreakdown: analyticsJson.sportBreakdown || [],
-            moodAvg: analyticsJson.moodAvg || 0,
-            confidenceAvg: analyticsJson.confidenceAvg || 0,
-            stressAvg: analyticsJson.stressAvg || 0,
-            engagementRate: analyticsJson.engagementRate || 0,
-            activeGoals: analyticsJson.activeGoals || 0,
-            completedGoals: analyticsJson.completedGoals || 0,
-            resolvedThisWeek: analyticsJson.resolvedThisWeek || 0,
+            performanceTrend: data.teamMood?.avgMood ? `${data.teamMood.avgMood.toFixed(1)}/10` : '-',
+            monthlyTrend: 'Stable',
+            sportBreakdown: [], // Would need additional API to get sport breakdown
+            moodAvg: data.teamMood?.avgMood || 0,
+            confidenceAvg: data.teamMood?.avgConfidence || 0,
+            stressAvg: data.teamMood?.avgStress || 0,
+            engagementRate: data.overview?.totalAthletes
+              ? Math.round((data.overview.athletesWithConsent / data.overview.totalAthletes) * 100)
+              : 0,
+            activeGoals: 0,
+            completedGoals: 0,
+            resolvedThisWeek: 0,
           });
+        }
+
+        // Fetch performance correlation data (use the correct API endpoint)
+        try {
+          const correlationRes = await fetch('/api/analytics/performance-correlation');
+          if (correlationRes.ok) {
+            const correlationJson = await correlationRes.json();
+            if (correlationJson.correlations && correlationJson.correlations.length > 0) {
+              const firstCorrelation = correlationJson.correlations[0];
+              setCorrelationData({
+                correlationStrength: firstCorrelation.correlationStrength || 0,
+                pValue: firstCorrelation.pValue || 1,
+                highReadinessPerformance: firstCorrelation.highReadinessPerformance || 0,
+                lowReadinessPerformance: firstCorrelation.lowReadinessPerformance || 0,
+              });
+            }
+          }
+        } catch {
+          // Correlation data is optional - continue without it
         }
       } catch (err) {
         console.error('Failed to fetch insights data:', err);
