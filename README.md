@@ -52,6 +52,19 @@ At universities like UW, there are only ~6 Sports Psychologists serving hundreds
 
 **Pricing:** $100-200k/year (market-rate for D1 performance tech)
 
+### UX Design for 1:150+ Ratio
+
+The Coach Portal is specifically designed for the reality that one sports psychologist serves 150+ athletes:
+
+- **Triage-first dashboard**: Critical-risk athletes surface to the top automatically
+- **Visual heatmaps**: See 100+ athletes' readiness at a glance, no clicking required
+- **AI-prioritized intervention queue**: Recommendations on who needs attention most
+- **Risk-based filtering**: Instantly filter to Critical / Warning / Good status
+- **Bulk assignments**: Create mental skills exercises for entire teams
+- **Crisis escalation**: Automatic alerts ensure high-risk cases never get missed
+
+This design means a psychologist can effectively monitor their entire caseload in minutes, not hours.
+
 ---
 
 ## 🏗️ Architecture
