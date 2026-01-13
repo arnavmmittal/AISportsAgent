@@ -8,7 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { GameStatsForm } from '@/components/student/performance/GameStatsForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/shared/ui/card';
@@ -23,27 +23,27 @@ interface Athlete {
 }
 
 export default function RecordPerformancePage() {
-  const { data: session, status } = useSession();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Redirect if not authenticated or not a coach
   useEffect(() => {
-    if (status === 'loading') return;
+    if (isLoading) return;
 
-    if (!session) {
+    if (!isAuthenticated) {
       router.push('/auth/signin?callbackUrl=/coach/performance/record');
       return;
     }
 
-    if (session.user?.role !== 'COACH') {
+    if (user?.role !== 'COACH') {
       router.push('/dashboard');
       return;
     }
 
     fetchAthletes();
-  }, [session, status, router]);
+  }, [user, isLoading, isAuthenticated, router]);
 
   const fetchAthletes = async () => {
     try {
@@ -98,7 +98,7 @@ export default function RecordPerformancePage() {
     router.push('/coach/dashboard');
   };
 
-  if (loading || status === 'loading') {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -109,11 +109,11 @@ export default function RecordPerformancePage() {
     );
   }
 
-  if (!session || session.user?.role !== 'COACH') {
+  if (!user || user.role !== 'COACH') {
     return null;
   }
 
-  const sport = session.user.coach?.sport || 'Basketball';
+  const sport = user.coach?.sport || 'Basketball';
 
   return (
     <div className="min-h-screen bg-background">

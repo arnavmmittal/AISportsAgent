@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth, signOut } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 
 export function Navigation() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -33,9 +33,9 @@ export function Navigation() {
     { href: '/coach/settings', label: 'Settings', icon: '⚙️' },
   ];
 
-  const links = session?.user?.role === 'COACH' ? coachLinks : athleteLinks;
+  const links = user?.role === 'COACH' ? coachLinks : athleteLinks;
 
-  if (!session) return null;
+  if (!user) return null;
 
   return (
     <nav className="bg-card border-b border-gray-200 sticky top-0 z-50">
@@ -70,11 +70,11 @@ export function Navigation() {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <div className="flex items-center gap-4">
               <div className="text-sm text-right">
-                <p className="font-medium text-gray-900">{session.user.name}</p>
-                <p className="text-gray-500 capitalize">{session.user.role?.toLowerCase()}</p>
+                <p className="font-medium text-gray-900">{user.name}</p>
+                <p className="text-gray-500 capitalize">{user.role?.toLowerCase()}</p>
               </div>
               <button
-                onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                onClick={() => signOut()}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Sign Out
@@ -125,11 +125,11 @@ export function Navigation() {
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="px-4 mb-3">
-              <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-              <p className="text-sm text-gray-500 capitalize">{session.user.role?.toLowerCase()}</p>
+              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <p className="text-sm text-gray-500 capitalize">{user.role?.toLowerCase()}</p>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+              onClick={() => signOut()}
               className="w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:bg-muted-foreground/10"
             >
               Sign Out

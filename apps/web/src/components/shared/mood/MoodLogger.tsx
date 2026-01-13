@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MoodLogData {
   mood: number;
@@ -18,7 +18,7 @@ interface MoodLogData {
 }
 
 export function MoodLogger() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<MoodLogData>({
     mood: 5,
     confidence: 5,

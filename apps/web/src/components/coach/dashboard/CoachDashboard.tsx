@@ -5,11 +5,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { apiClient, type TeamAnalytics, type Recommendation } from '@/lib/api-client';
 
 export function CoachDashboard() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState<TeamAnalytics | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,13 +17,13 @@ export function CoachDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState(30);
 
   useEffect(() => {
-    if (session?.user?.id && session?.user?.role === 'COACH') {
+    if (user?.id && user?.role === 'COACH') {
       loadDashboardData();
     }
   }, [session, selectedPeriod]);
 
   const loadDashboardData = async () => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     setLoading(true);
     setError(null);
@@ -44,7 +44,7 @@ export function CoachDashboard() {
     }
   };
 
-  if (session?.user?.role !== 'COACH') {
+  if (user?.role !== 'COACH') {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-gray-500">This dashboard is only available for coaches</p>

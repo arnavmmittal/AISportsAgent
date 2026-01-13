@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
@@ -31,7 +31,7 @@ const moodEmojis = [
 ];
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const router = useRouter();
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [dashboardData, setDashboardData] = useState<AthleteDashboard | null>(null);
@@ -173,7 +173,7 @@ export default function DashboardPage() {
     };
 
     fetchDashboardData();
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   const handleMoodSelect = async (moodValue: number) => {
     setSelectedMood(moodValue);
@@ -249,7 +249,7 @@ export default function DashboardPage() {
     }
   };
 
-  const firstName = session?.user?.name?.split(' ')[0] || 'Athlete';
+  const firstName = user?.name?.split(' ')[0] || 'Athlete';
 
   // Show loading state
   if (loading) {

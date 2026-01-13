@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -9,16 +9,16 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { data: session, status } = useSession();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!isLoading && !isAuthenticated) {
       router.push('/auth/signin');
     }
-  }, [status, router]);
+  }, [isLoading, isAuthenticated, router]);
 
-  if (status === 'loading') {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -29,7 +29,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
 import { Button } from '@/components/shared/ui/button';
@@ -47,7 +47,7 @@ interface HistoricalMoodLog {
 }
 
 export default function MoodPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<MoodLogData>({
     mood: 3, // UI scale 1-5
     confidence: 5,
