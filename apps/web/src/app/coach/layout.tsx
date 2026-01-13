@@ -25,17 +25,21 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Coach Portal Layout - Updated with Design System v2.0
+ * Coach Portal Layout - Consolidated Navigation (v2.1)
  *
- * Navigation includes all coach-focused routes:
+ * Streamlined to 8 primary navigation items (from 10):
  * - Dashboard (main overview)
  * - Athletes (roster management)
- * - Readiness (team readiness tracking)
- * - Performance (stats & metrics)
+ * - Readiness (team readiness + integrated Predictions tab)
+ * - Performance (stats recording & import)
  * - Assignments (coach assignments)
  * - Alerts (crisis & wellness alerts)
- * - Analytics (insights & reports)
+ * - Insights (merged Analytics + Reports)
  * - Settings
+ *
+ * Consolidated features:
+ * - Predictions → integrated into Readiness page as tab
+ * - Analytics + Reports → merged into Insights page
  */
 
 const navItems = [
@@ -45,9 +49,7 @@ const navItems = [
   { href: '/coach/performance', label: 'Performance', icon: TrendingUp },
   { href: '/coach/assignments', label: 'Assignments', icon: ClipboardList },
   { href: '/coach/alerts', label: 'Alerts', icon: AlertTriangle, badge: true },
-  { href: '/coach/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/coach/predictions', label: 'Predictions', icon: Target },
-  { href: '/coach/reports', label: 'Reports', icon: FileText },
+  { href: '/coach/insights', label: 'Insights', icon: BarChart3 },
   { href: '/coach/settings', label: 'Settings', icon: Settings },
 ];
 
