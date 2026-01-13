@@ -1,6 +1,12 @@
 /**
  * Athlete Agent
  * Main conversation agent with 5-step protocol and sport-specific interventions
+ *
+ * Enhanced with AthleteContextService integration:
+ * - Uses ML predictions for proactive support
+ * - Personalizes responses based on athlete's history
+ * - Incorporates real-time readiness data
+ * - Leverages effective past interventions
  */
 
 import { BaseAgent } from '../core/BaseAgent';
@@ -12,6 +18,7 @@ import {
   KnowledgeContext,
 } from '../core/types';
 import OpenAI from 'openai';
+import { getAthleteContextService, type EnrichedAthleteContext } from '@/services/AthleteContextService';
 
 const ATHLETE_SYSTEM_PROMPT = `You are an empathetic sports psychology assistant for collegiate athletes.
 
@@ -51,6 +58,12 @@ IMPORTANT GUIDELINES:
 - Acknowledge the unique pressures of collegiate athletics
 - Never diagnose or provide clinical treatment
 - If crisis language detected, express concern and suggest resources
+
+PROACTIVE SUPPORT (when context is available):
+- If you notice patterns in the athlete's data, gently acknowledge them
+- Reference techniques that have worked for them before
+- Be aware of upcoming competitions and adjust your approach
+- If their state is below their baseline, show extra care
 
 Your goal is to help athletes develop mental resilience and perform at their best.`;
 
@@ -125,22 +138,22 @@ export class AthleteAgent extends BaseAgent {
   }
 
   /**
-   * Process with additional knowledge context (RAG)
+   * Process with additional knowledge context (RAG) and enriched athlete context
    */
   async processWithContext(
     message: string,
     context: AgentContext,
     knowledgeContext: KnowledgeContext
   ): Promise<AgentResponse> {
-    // Augment system prompt with retrieved knowledge
-    const augmentedPrompt = this.augmentPromptWithKnowledge(
-      this.config.systemPrompt,
+    // Build fully enhanced system prompt
+    const enhancedPrompt = this.buildEnhancedSystemPrompt(
+      context.enrichedContext,
       knowledgeContext
     );
 
     // Temporarily override system prompt
     const originalPrompt = this.config.systemPrompt;
-    this.config.systemPrompt = augmentedPrompt;
+    this.config.systemPrompt = enhancedPrompt;
 
     const response = await this.process(message, context);
 
@@ -148,6 +161,74 @@ export class AthleteAgent extends BaseAgent {
     this.config.systemPrompt = originalPrompt;
 
     return response;
+  }
+
+  /**
+   * Process with streaming support AND enriched context
+   */
+  async processStreamWithContext(
+    message: string,
+    context: AgentContext,
+    knowledgeContext: KnowledgeContext,
+    onChunk: (chunk: string) => void
+  ): Promise<AgentResponse> {
+    // Build fully enhanced system prompt
+    const enhancedPrompt = this.buildEnhancedSystemPrompt(
+      context.enrichedContext,
+      knowledgeContext
+    );
+
+    // Temporarily override system prompt
+    const originalPrompt = this.config.systemPrompt;
+    this.config.systemPrompt = enhancedPrompt;
+
+    const response = await this.processStream(message, context, onChunk);
+
+    // Restore original prompt
+    this.config.systemPrompt = originalPrompt;
+
+    return response;
+  }
+
+  /**
+   * Build an enhanced system prompt incorporating:
+   * - Base protocol
+   * - Enriched athlete context (ML predictions, readiness, patterns)
+   * - Knowledge context (RAG documents)
+   */
+  private buildEnhancedSystemPrompt(
+    enrichedContext: EnrichedAthleteContext | undefined,
+    knowledgeContext: KnowledgeContext
+  ): string {
+    let prompt = this.config.systemPrompt;
+
+    // Add enriched athlete context if available
+    if (enrichedContext) {
+      const contextService = getAthleteContextService();
+      const athleteEnhancement = contextService.generatePromptEnhancement(enrichedContext);
+
+      prompt = `${prompt}
+
+═══════════════════════════════════════════════════════════════
+PERSONALIZED ATHLETE INTELLIGENCE (Use this to be proactive)
+═══════════════════════════════════════════════════════════════
+
+${athleteEnhancement}
+
+HOW TO USE THIS CONTEXT:
+- If risk is high/critical or slump detected: Gently acknowledge patterns you're seeing
+- Reference effective interventions that have worked for this athlete
+- Be aware of their baseline - if they're below their typical state, acknowledge that
+- Use upcoming game context to tailor advice to competition preparation
+- Don't overwhelm them with all this info - use it naturally in conversation`;
+    }
+
+    // Add knowledge context (RAG)
+    if (knowledgeContext.documents.length > 0) {
+      prompt = this.augmentPromptWithKnowledge(prompt, knowledgeContext);
+    }
+
+    return prompt;
   }
 
   /**

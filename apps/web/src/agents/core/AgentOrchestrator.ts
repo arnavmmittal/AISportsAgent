@@ -1,12 +1,18 @@
 /**
  * Agent Orchestrator
  * Routes requests to appropriate agents and coordinates responses
+ *
+ * Enhanced with AthleteContextService for proactive, personalized AI:
+ * - Fetches ML predictions before each conversation
+ * - Injects real-time readiness data
+ * - Provides historical patterns and effective interventions
  */
 
 import { AgentContext, AgentResponse, CrisisDetection } from './types';
 import { AthleteAgent } from '../athlete/AthleteAgent';
 import { GovernanceAgent } from '../governance/GovernanceAgent';
 import { KnowledgeAgent } from '../knowledge/KnowledgeAgent';
+import { getAthleteContextService } from '@/services/AthleteContextService';
 
 export class AgentOrchestrator {
   private athleteAgent: AthleteAgent;
@@ -23,6 +29,8 @@ export class AgentOrchestrator {
   /**
    * Main orchestration method
    * Coordinates all agents to generate a response
+   *
+   * Flow: Enriched Context → Crisis Detection → Knowledge Retrieval → Response
    */
   async processMessage(
     message: string,
@@ -34,6 +42,28 @@ export class AgentOrchestrator {
     const startTime = Date.now();
 
     try {
+      // Step 0: Fetch enriched athlete context (ML predictions, readiness, patterns)
+      // This runs in parallel with crisis detection for performance
+      const contextService = getAthleteContextService();
+      let enrichedContext = context.enrichedContext;
+
+      if (!enrichedContext) {
+        try {
+          enrichedContext = await contextService.getEnrichedContext(context.athleteId);
+          context.enrichedContext = enrichedContext;
+          this.log('info', 'Enriched context loaded', {
+            athleteId: context.athleteId,
+            readinessScore: enrichedContext.readiness.score,
+            riskLevel: enrichedContext.prediction?.riskLevel,
+            insightsCount: enrichedContext.insights.length,
+          });
+        } catch (error) {
+          this.log('warn', 'Failed to fetch enriched context, continuing without', {
+            error: error instanceof Error ? error.message : 'Unknown',
+          });
+        }
+      }
+
       // Step 1: Crisis detection (always runs first for safety)
       const crisisCheck = await this.governanceAgent.detectCrisis(message, context);
 
@@ -48,7 +78,7 @@ export class AgentOrchestrator {
       // Step 2: Retrieve relevant knowledge (RAG)
       const knowledgeContext = await this.knowledgeAgent.retrieve(message, context);
 
-      // Step 3: Generate response with athlete agent
+      // Step 3: Generate response with athlete agent (now with enriched context)
       const response = await this.athleteAgent.processWithContext(
         message,
         context,
@@ -68,6 +98,8 @@ export class AgentOrchestrator {
         sessionId: context.sessionId,
         hasCrisis: crisisCheck.isCrisis,
         knowledgeDocsUsed: knowledgeContext.documents.length,
+        hasEnrichedContext: !!enrichedContext,
+        readinessLevel: enrichedContext?.readiness.level,
       });
 
       return {
@@ -96,6 +128,8 @@ export class AgentOrchestrator {
   /**
    * Process message with streaming support
    * Returns crisis detection immediately, streams tokens via callback
+   *
+   * Flow: Enriched Context → Crisis Detection → Knowledge Retrieval → Streaming Response
    */
   async processMessageStream(
     message: string,
@@ -108,6 +142,27 @@ export class AgentOrchestrator {
     const startTime = Date.now();
 
     try {
+      // Step 0: Fetch enriched athlete context (ML predictions, readiness, patterns)
+      const contextService = getAthleteContextService();
+      let enrichedContext = context.enrichedContext;
+
+      if (!enrichedContext) {
+        try {
+          enrichedContext = await contextService.getEnrichedContext(context.athleteId);
+          context.enrichedContext = enrichedContext;
+          this.log('info', 'Enriched context loaded for streaming', {
+            athleteId: context.athleteId,
+            readinessScore: enrichedContext.readiness.score,
+            riskLevel: enrichedContext.prediction?.riskLevel,
+            slumpDetected: enrichedContext.prediction?.slumpDetected,
+          });
+        } catch (error) {
+          this.log('warn', 'Failed to fetch enriched context for streaming', {
+            error: error instanceof Error ? error.message : 'Unknown',
+          });
+        }
+      }
+
       // Step 1: Crisis detection (always runs first for safety)
       const crisisCheck = await this.governanceAgent.detectCrisis(message, context);
 
@@ -122,10 +177,11 @@ export class AgentOrchestrator {
       // Step 2: Retrieve relevant knowledge (RAG)
       const knowledgeContext = await this.knowledgeAgent.retrieve(message, context);
 
-      // Step 3: Generate streaming response with athlete agent
-      const response = await this.athleteAgent.processStream(
+      // Step 3: Generate streaming response with athlete agent (now with enriched context)
+      const response = await this.athleteAgent.processStreamWithContext(
         message,
         context,
+        knowledgeContext,
         onChunk
       );
 
@@ -142,6 +198,8 @@ export class AgentOrchestrator {
         sessionId: context.sessionId,
         hasCrisis: crisisCheck.isCrisis,
         knowledgeDocsUsed: knowledgeContext.documents.length,
+        hasEnrichedContext: !!enrichedContext,
+        readinessLevel: enrichedContext?.readiness.level,
       });
 
       return {
