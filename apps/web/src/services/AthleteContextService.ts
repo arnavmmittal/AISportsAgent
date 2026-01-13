@@ -418,7 +418,7 @@ class AthleteContextService {
     // Try MCP server first (if available and enabled)
     if (this.mcpAvailable && process.env.USE_MCP_SERVER === 'true') {
       try {
-        const response = await fetch(`${this.mcpServerUrl}/api/v1/predictions/athlete/${athleteId}?days=14`, {
+        const response = await fetch(`${this.mcpServerUrl}/api/predictions/athlete/${athleteId}?days=14`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${process.env.MCP_SERVICE_TOKEN}`,
