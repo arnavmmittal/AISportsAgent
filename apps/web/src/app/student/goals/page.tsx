@@ -33,13 +33,15 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 /**
- * Student Goals Page - Updated with Design System v2.0
+ * Student Goals Page (v2.1 - With Integrated Progress)
  *
  * Features:
  * - Clean card-based goal list with semantic colors
  * - Category badges with consistent styling
  * - Progress tracking with new design system
  * - AI suggestions section
+ * - Progress statistics header (consolidated from /student/progress)
+ * - Overall completion metrics
  */
 
 type GoalCategory = 'PERFORMANCE' | 'MENTAL' | 'ACADEMIC' | 'PERSONAL';
@@ -308,6 +310,9 @@ export default function StudentGoalsPage() {
 
   const completedCount = goals.filter((g) => g.status === 'COMPLETED').length;
   const inProgressCount = goals.filter((g) => g.status === 'IN_PROGRESS').length;
+  const totalGoals = goals.length;
+  const completionRate = totalGoals > 0 ? Math.round((completedCount / totalGoals) * 100) : 0;
+  const avgProgress = totalGoals > 0 ? Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / totalGoals) : 0;
 
   if (isLoading) {
     return (
@@ -419,6 +424,28 @@ export default function StudentGoalsPage() {
             </DialogContent>
           </Dialog>
         </header>
+
+        {/* Progress Statistics - Consolidated from /student/progress */}
+        {totalGoals > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-slide-up">
+            <div className="card-elevated p-4 text-center">
+              <div className="text-2xl font-bold text-foreground">{totalGoals}</div>
+              <div className="text-xs text-muted-foreground mt-1">Total Goals</div>
+            </div>
+            <div className="card-elevated p-4 text-center">
+              <div className="text-2xl font-bold text-success">{completedCount}</div>
+              <div className="text-xs text-muted-foreground mt-1">Completed</div>
+            </div>
+            <div className="card-elevated p-4 text-center">
+              <div className="text-2xl font-bold text-primary">{inProgressCount}</div>
+              <div className="text-xs text-muted-foreground mt-1">In Progress</div>
+            </div>
+            <div className="card-elevated p-4 text-center">
+              <div className="text-2xl font-bold text-foreground">{avgProgress}%</div>
+              <div className="text-xs text-muted-foreground mt-1">Avg Progress</div>
+            </div>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="space-y-4 animate-slide-up">
