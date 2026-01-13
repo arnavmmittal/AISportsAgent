@@ -14,17 +14,51 @@ from app.api.routes import chat, coach, voice, athlete, analytics, usage
 from app.middleware.cost_control import CostControlMiddleware
 from app.middleware.security import SecurityMiddleware, RateLimitMiddleware
 
-# Optional imports for full deployment (require ML dependencies)
-try:
-    from app.api.routes import predictions, knowledge, orchestrator
-    FULL_DEPLOYMENT = True
-except ImportError:
-    FULL_DEPLOYMENT = False
-    predictions = None
-    knowledge = None
-    orchestrator = None
-
+# Initialize logger early for import error logging
 logger = setup_logging()
+
+# Deployment mode detection based on available dependencies
+# MINIMAL: Chat, Voice, Coach, Analytics (no ML)
+# STAGING: + Predictions, Orchestrator (XGBoost/scipy, no embeddings)
+# FULL: + Knowledge Base (requires sentence-transformers/ChromaDB)
+
+PREDICTIONS_AVAILABLE = False
+KNOWLEDGE_AVAILABLE = False
+ORCHESTRATOR_AVAILABLE = False
+
+# Try ML predictions (XGBoost, scipy - ~400MB)
+try:
+    from app.api.routes import predictions
+    PREDICTIONS_AVAILABLE = True
+except ImportError as e:
+    predictions = None
+    logger.warning(f"Predictions module not available: {e}")
+
+# Try orchestrator (depends on predictions)
+try:
+    from app.api.routes import orchestrator
+    ORCHESTRATOR_AVAILABLE = True
+except ImportError as e:
+    orchestrator = None
+    logger.warning(f"Orchestrator module not available: {e}")
+
+# Try knowledge base (requires sentence-transformers/ChromaDB - ~8GB!)
+try:
+    from app.api.routes import knowledge
+    KNOWLEDGE_AVAILABLE = True
+except ImportError as e:
+    knowledge = None
+    logger.warning(f"Knowledge module not available (expected in staging): {e}")
+
+# Determine deployment mode
+if KNOWLEDGE_AVAILABLE:
+    DEPLOYMENT_MODE = "full"
+elif PREDICTIONS_AVAILABLE:
+    DEPLOYMENT_MODE = "staging"
+else:
+    DEPLOYMENT_MODE = "minimal"
+
+logger.info(f"Deployment mode: {DEPLOYMENT_MODE}")
 
 
 @asynccontextmanager
@@ -96,16 +130,18 @@ async def health_check():
         "status": "healthy",
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
-        "mode": "full" if FULL_DEPLOYMENT else "minimal",
+        "mode": DEPLOYMENT_MODE,
         "features": {
             "chat": True,
             "voice": True,
             "coach": True,
+            "athlete": True,
+            "analytics": True,
             "security": True,
             "rate_limiting": True,
-            "predictions": FULL_DEPLOYMENT,
-            "knowledge": FULL_DEPLOYMENT,
-            "orchestrator": FULL_DEPLOYMENT,
+            "predictions": PREDICTIONS_AVAILABLE,
+            "orchestrator": ORCHESTRATOR_AVAILABLE,
+            "knowledge": KNOWLEDGE_AVAILABLE,
         }
     }
 
@@ -146,24 +182,28 @@ app.include_router(
     tags=["Usage & Billing"]
 )
 
-# ML/AI routes (only in full deployment)
-if FULL_DEPLOYMENT:
+# ML Predictions routes (staging + full deployment)
+if PREDICTIONS_AVAILABLE:
     app.include_router(
         predictions.router,
         prefix="/api",
         tags=["ML Predictions"]
     )
 
-    app.include_router(
-        knowledge.router,
-        prefix="/api",
-        tags=["Knowledge Base"]
-    )
-
+# Orchestrator routes (staging + full deployment)
+if ORCHESTRATOR_AVAILABLE:
     app.include_router(
         orchestrator.router,
         prefix="/api",
         tags=["Agent Orchestrator"]
+    )
+
+# Knowledge Base routes (full deployment only - requires embeddings)
+if KNOWLEDGE_AVAILABLE:
+    app.include_router(
+        knowledge.router,
+        prefix="/api",
+        tags=["Knowledge Base"]
     )
 
 
