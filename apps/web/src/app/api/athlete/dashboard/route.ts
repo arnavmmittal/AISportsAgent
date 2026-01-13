@@ -65,15 +65,16 @@ export async function GET(req: NextRequest) {
         orderBy: { updatedAt: 'desc' },
         select: {
           id: true,
-          title: true,
+          topic: true,
+          focusArea: true,
           updatedAt: true,
         },
       }),
 
-      // Pending assignments (due in next 7 days)
+      // Pending assignments (due in next 7 days) that athlete hasn't submitted
       prisma.assignment.findMany({
         where: {
-          submissions: {
+          AssignmentSubmission: {
             none: {
               athleteId,
             },
@@ -89,7 +90,7 @@ export async function GET(req: NextRequest) {
           id: true,
           title: true,
           dueDate: true,
-          estimatedMinutes: true,
+          description: true,
         },
       }),
 
@@ -98,7 +99,7 @@ export async function GET(req: NextRequest) {
         where: { id: athleteId },
         select: {
           name: true,
-          athlete: {
+          Athlete: {
             select: {
               sport: true,
               year: true,
@@ -116,7 +117,7 @@ export async function GET(req: NextRequest) {
 
     // Calculate goals progress
     const completedGoals = goals.filter((g) => g.status === 'COMPLETED').length;
-    const activeGoals = goals.filter((g) => g.status === 'ACTIVE').length;
+    const activeGoals = goals.filter((g) => g.status === 'IN_PROGRESS').length;
 
     // Generate insight based on patterns
     const insight = generateInsight(recentMoodLogs, goals, streak);
@@ -133,15 +134,15 @@ export async function GET(req: NextRequest) {
       data: {
         user: {
           name: athleteProfile?.name || 'Athlete',
-          sport: athleteProfile?.athlete?.sport || null,
-          year: athleteProfile?.athlete?.year || null,
+          sport: athleteProfile?.Athlete?.sport || null,
+          year: athleteProfile?.Athlete?.year || null,
         },
         readiness,
         stats: {
           checkInStreak: streak,
           goalsCompleted: completedGoals,
           goalsTotal: completedGoals + activeGoals,
-          lastChatTopic: recentChatSession?.title || null,
+          lastChatTopic: recentChatSession?.topic || recentChatSession?.focusArea || null,
           hasCompletedCheckIn: !!todayMoodLog,
         },
         insight,
@@ -151,7 +152,7 @@ export async function GET(req: NextRequest) {
           id: a.id,
           title: a.title,
           dueDate: a.dueDate,
-          estimatedTime: a.estimatedMinutes ? `${a.estimatedMinutes} min` : null,
+          description: a.description || null,
         })),
       },
     });
