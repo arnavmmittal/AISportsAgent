@@ -120,7 +120,10 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
             <ul className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+                // Special handling for Dashboard: also highlight when at /coach (which redirects to /coach/dashboard)
+                const isActive = item.href === '/coach/dashboard'
+                  ? pathname === '/coach' || pathname === '/coach/dashboard' || pathname?.startsWith('/coach/dashboard/')
+                  : pathname === item.href || pathname?.startsWith(item.href + '/');
 
                 return (
                   <li key={item.href}>
