@@ -9,46 +9,39 @@ import {
   LayoutDashboard,
   Users,
   ClipboardList,
-  AlertTriangle,
-  FileText,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Activity,
-  TrendingUp,
   Brain,
   BarChart3,
-  Target,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Coach Portal Layout - Consolidated Navigation (v2.1)
+ * Coach Portal Layout - Further Consolidated Navigation (v2.2)
  *
- * Streamlined to 8 primary navigation items (from 10):
+ * Streamlined to 6 primary navigation items (from 8):
  * - Dashboard (main overview)
- * - Athletes (roster management)
- * - Readiness (team readiness + integrated Predictions tab)
- * - Performance (stats recording & import)
+ * - Team (merged Athletes + Performance with tabs)
+ * - Readiness (merged Readiness + Alerts with tabs)
  * - Assignments (coach assignments)
- * - Alerts (crisis & wellness alerts)
  * - Insights (merged Analytics + Reports)
  * - Settings
  *
  * Consolidated features:
- * - Predictions → integrated into Readiness page as tab
- * - Analytics + Reports → merged into Insights page
+ * - Athletes + Performance → Team page with Roster/Performance tabs
+ * - Readiness + Alerts → Readiness page with Team Readiness/Alerts tabs
+ * - Analytics + Reports → Insights page (from v2.1)
  */
 
 const navItems = [
   { href: '/coach/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/coach/athletes', label: 'Athletes', icon: Users },
-  { href: '/coach/readiness', label: 'Readiness', icon: Activity },
-  { href: '/coach/performance', label: 'Performance', icon: TrendingUp },
+  { href: '/coach/team', label: 'Team', icon: Users },
+  { href: '/coach/readiness', label: 'Readiness', icon: Activity, badge: true },
   { href: '/coach/assignments', label: 'Assignments', icon: ClipboardList },
-  { href: '/coach/alerts', label: 'Alerts', icon: AlertTriangle, badge: true },
   { href: '/coach/insights', label: 'Insights', icon: BarChart3 },
   { href: '/coach/settings', label: 'Settings', icon: Settings },
 ];
