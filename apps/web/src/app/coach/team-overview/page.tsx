@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, Target, Users, ClipboardList, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/shared/ui/card';
+import { Button } from '@/components/shared/ui/button';
+import { cn } from '@/lib/utils';
 
 interface AthleteReadiness {
   id: string;
@@ -74,227 +77,260 @@ export default function TeamOverviewPage() {
   ];
 
   const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'from-secondary to-secondary';
-    if (score >= 70) return 'from-muted-foreground to-muted-foreground';
-    if (score >= 50) return 'from-muted-foreground to-muted-foreground';
-    return 'from-muted-foreground to-muted-foreground';
+    if (score >= 85) return 'bg-risk-green';
+    if (score >= 70) return 'bg-info';
+    if (score >= 50) return 'bg-risk-yellow';
+    return 'bg-risk-red';
+  };
+
+  const getReadinessTextColor = (score: number) => {
+    if (score >= 85) return 'text-risk-green';
+    if (score >= 70) return 'text-info';
+    if (score >= 50) return 'text-risk-yellow';
+    return 'text-risk-red';
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Team Overview
-          </h1>
-          <p className="mt-3 text-muted-foreground dark:text-gray-400 text-lg">Mental readiness analytics & performance forecasting</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold text-foreground">Team Overview</h1>
+          <p className="mt-2 text-muted-foreground">Mental readiness analytics & performance forecasting</p>
         </div>
 
         {/* Critical Alert */}
         {stats.criticalAlerts > 0 && (
-          <div className="mb-8 bg-gradient-to-r from-muted-foreground to-muted-foreground rounded-2xl shadow-2xl p-8 text-white animate-pulse">
+          <div className="mb-8 card-elevated p-6 border-risk-red/30 bg-risk-red/5">
             <div className="flex items-start gap-4">
-              <div className="text-5xl">⚠️</div>
+              <div className="w-12 h-12 rounded-lg bg-risk-red/10 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-risk-red" />
+              </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-black mb-2">
+                <h3 className="text-xl font-semibold text-foreground">
                   {stats.criticalAlerts} athlete{stats.criticalAlerts > 1 ? 's' : ''} need immediate attention
                 </h3>
-                <p className="text-chrome text-lg font-semibold">Crisis keywords detected or severe readiness decline</p>
+                <p className="text-muted-foreground mt-1">Crisis keywords detected or severe readiness decline</p>
               </div>
-              <Link
-                href="/coach/alerts"
-                className="px-8 py-4 bg-white text-muted-foreground rounded-xl hover:shadow-2xl transition-all font-black text-lg hover:scale-105 transform whitespace-nowrap"
-              >
-                Review Now
+              <Link href="/coach/readiness?tab=alerts">
+                <Button variant="destructive">Review Now</Button>
               </Link>
             </div>
           </div>
         )}
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="card-elevated p-6">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Team Readiness</div>
-                <div className="text-5xl font-black mb-2">{stats.teamAvgReadiness}<span className="text-2xl opacity-75">/100</span></div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">WHOOP for mental</div>
+                <p className="text-sm font-medium text-muted-foreground">Team Readiness</p>
+                <p className="text-3xl font-bold text-foreground mt-1">
+                  {stats.teamAvgReadiness}
+                  <span className="text-lg text-muted-foreground">/100</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">WHOOP for mental</p>
               </div>
-              <div className="text-6xl opacity-20">🎯</div>
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Target className="w-5 h-5 text-primary" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
+          <div className="card-elevated p-6">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">High Risk</div>
-                <div className="text-5xl font-black mb-2">{stats.highRisk}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Need intervention</div>
+                <p className="text-sm font-medium text-muted-foreground">High Risk</p>
+                <p className={cn(
+                  "text-3xl font-bold mt-1",
+                  stats.highRisk > 0 ? "text-risk-red" : "text-foreground"
+                )}>
+                  {stats.highRisk}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Need intervention</p>
               </div>
-              <div className="text-6xl opacity-20">⚠️</div>
+              <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-risk-red" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
+          <div className="card-elevated p-6">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Declining Trends</div>
-                <div className="text-5xl font-black mb-2">{stats.decliningTrends}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Watch closely</div>
+                <p className="text-sm font-medium text-muted-foreground">Declining Trends</p>
+                <p className={cn(
+                  "text-3xl font-bold mt-1",
+                  stats.decliningTrends > 0 ? "text-risk-yellow" : "text-foreground"
+                )}>
+                  {stats.decliningTrends}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Watch closely</p>
               </div>
-              <div className="text-6xl opacity-20">📉</div>
+              <div className="w-10 h-10 rounded-lg bg-risk-yellow/10 flex items-center justify-center">
+                <TrendingDown className="w-5 h-5 text-risk-yellow" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all">
-            <div className="text-sm font-bold uppercase tracking-wider opacity-90 mb-4">Quick Actions</div>
-            <div className="space-y-3">
-              <Link
-                href="/coach/assignments?action=create"
-                className="block w-full px-4 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition-all text-center backdrop-blur-sm hover:scale-105 transform"
-              >
-                📝 Create Assignment
+          <div className="card-elevated p-6">
+            <p className="text-sm font-medium text-muted-foreground mb-4">Quick Actions</p>
+            <div className="space-y-2">
+              <Link href="/coach/assignments?action=create" className="block">
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  Create Assignment
+                </Button>
               </Link>
-              <Link
-                href="/coach/reports"
-                className="block w-full px-4 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-bold transition-all text-center backdrop-blur-sm hover:scale-105 transform"
-              >
-                📊 View Reports
+              <Link href="/coach/insights" className="block">
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  View Reports
+                </Button>
               </Link>
             </div>
           </div>
         </div>
 
         {/* Intervention Queue */}
-        <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 mb-8">
-          <div className="p-8 border-b border-gray-100 dark:border-gray-700">
-            <h2 className="text-2xl font-black text-foreground dark:text-gray-100 flex items-center gap-3">
-              <span className="text-3xl">🚨</span>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-risk-red" />
               Intervention Queue
-            </h2>
-            <p className="text-muted-foreground dark:text-gray-400 mt-2 text-lg">AI-prioritized recommendations based on readiness forecasts</p>
-          </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {interventions.map((int) => (
-              <div key={int.id} className="p-6 hover:bg-background dark:hover:bg-gray-700/50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className="bg-gradient-to-r from-muted-foreground to-muted-foreground rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-black shadow-lg flex-shrink-0">
-                    P{int.priority}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">AI-prioritized recommendations based on readiness forecasts</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {interventions.map((int) => (
+                <div key={int.id} className="card-interactive p-4 border-risk-red/20">
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0",
+                      int.priority === 1 ? "bg-risk-red" : "bg-risk-yellow"
+                    )}>
+                      P{int.priority}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-foreground">{int.name}</h3>
+                        <span className={cn("text-lg font-bold", getReadinessTextColor(int.readiness))}>
+                          {int.readiness}/100
+                        </span>
+                      </div>
+                      <div className="bg-risk-red/5 border-l-4 border-risk-red p-3 rounded mb-2">
+                        <p className="text-sm text-muted-foreground">{int.reason}</p>
+                      </div>
+                      <div className="bg-info/5 border-l-4 border-info p-3 rounded">
+                        <p className="text-sm text-muted-foreground">💡 {int.action}</p>
+                      </div>
+                    </div>
+                    <Link href={`/coach/athletes/${int.id}`}>
+                      <Button size="sm">View Profile</Button>
+                    </Link>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-black text-foreground dark:text-gray-100">{int.name}</h3>
-                      <span className={`text-2xl font-black bg-gradient-to-r ${getReadinessColor(int.readiness)} bg-clip-text text-transparent`}>
-                        {int.readiness}/100
-                      </span>
-                    </div>
-                    <div className="bg-muted-foreground/10 dark:bg-muted-foreground/20 border-l-4 border-muted-foreground p-4 rounded-lg mb-3">
-                      <p className="text-chrome dark:text-chrome font-semibold text-sm">{int.reason}</p>
-                    </div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-lg">
-                      <p className="text-blue-900 dark:text-blue-200 font-semibold text-sm">💡 {int.action}</p>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/coach/athletes/${int.id}`}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform whitespace-nowrap"
-                  >
-                    View Profile
-                  </Link>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 14-Day Readiness Heatmap */}
-        <div className="bg-card dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
-          <div className="p-8 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <h2 className="text-2xl font-black text-foreground dark:text-gray-100 flex items-center gap-3">
-                <span className="text-3xl">🔥</span>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
                 14-Day Readiness Heatmap
-              </h2>
-              <p className="text-muted-foreground dark:text-gray-400 mt-2 text-lg">Mental performance trends + 7-day forecast</p>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Mental performance trends + 7-day forecast</p>
             </div>
-            <Link
-              href="/coach/athletes"
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform"
-            >
-              View All Athletes →
+            <Link href="/coach/team">
+              <Button variant="outline" size="sm">
+                <Users className="w-4 h-4 mr-2" />
+                View All Athletes
+              </Button>
             </Link>
-          </div>
-          <div className="p-8 overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-                  <th className="text-left pb-4 pr-6 font-black text-foreground dark:text-gray-100">Athlete</th>
-                  {[...Array(14)].map((_, i) => (
-                    <th key={i} className="text-center pb-4 px-1 text-xs font-bold text-muted-foreground dark:text-gray-400">
-                      D{i - 13}
-                    </th>
-                  ))}
-                  <th className="text-center pb-4 pl-6 font-black text-foreground dark:text-gray-100">Trend</th>
-                  <th className="text-center pb-4 pl-6 font-black text-foreground dark:text-gray-100">7-Day Forecast</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {athletesReadiness.map((athlete) => (
-                  <tr key={athlete.id} className="hover:bg-background dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="py-4 pr-6">
-                      <div className="font-black text-foreground dark:text-gray-100">{athlete.name}</div>
-                      <div className="text-sm text-muted-foreground dark:text-gray-400">{athlete.sport}</div>
-                    </td>
-                    {athlete.scores.map((score, index) => (
-                      <td key={index} className="py-4 px-1">
-                        <div
-                          className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getReadinessColor(score)} text-white font-black text-sm flex items-center justify-center shadow-lg hover:scale-110 transform transition-all cursor-pointer`}
-                          title={`Readiness: ${score}/100`}
-                        >
-                          {score}
-                        </div>
-                      </td>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left pb-4 pr-6 font-semibold text-foreground">Athlete</th>
+                    {[...Array(14)].map((_, i) => (
+                      <th key={i} className="text-center pb-4 px-1 text-xs font-medium text-muted-foreground">
+                        D{i - 13}
+                      </th>
                     ))}
-                    <td className="py-4 pl-6 text-center">
-                      {athlete.trend === 'improving' && (
-                        <div className="flex items-center justify-center gap-2 text-secondary font-bold">
-                          <TrendingUp className="w-5 h-5" />
-                          Up
-                        </div>
-                      )}
-                      {athlete.trend === 'declining' && (
-                        <div className="flex items-center justify-center gap-2 text-muted-foreground font-bold">
-                          <TrendingDown className="w-5 h-5" />
-                          Down
-                        </div>
-                      )}
-                      {athlete.trend === 'stable' && (
-                        <div className="flex items-center justify-center gap-2 text-gray-600 font-bold">
-                          →
-                          Stable
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-4 pl-6">
-                      <div className="flex gap-1">
-                        {athlete.forecast.map((score, index) => (
+                    <th className="text-center pb-4 pl-4 font-semibold text-foreground">Trend</th>
+                    <th className="text-center pb-4 pl-4 font-semibold text-foreground">7-Day Forecast</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {athletesReadiness.map((athlete) => (
+                    <tr key={athlete.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="py-4 pr-6">
+                        <div className="font-medium text-foreground">{athlete.name}</div>
+                        <div className="text-sm text-muted-foreground">{athlete.sport}</div>
+                      </td>
+                      {athlete.scores.map((score, index) => (
+                        <td key={index} className="py-4 px-1">
                           <div
-                            key={index}
-                            className={`w-8 h-8 rounded bg-gradient-to-br ${getReadinessColor(score)} text-white font-bold text-xs flex items-center justify-center shadow opacity-75`}
-                            title={`Day +${index + 1}: ${score}/100`}
+                            className={cn(
+                              "w-10 h-10 rounded-md text-white font-medium text-sm flex items-center justify-center",
+                              getReadinessColor(score)
+                            )}
+                            title={`Readiness: ${score}/100`}
                           >
                             {score}
                           </div>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                        </td>
+                      ))}
+                      <td className="py-4 pl-4 text-center">
+                        {athlete.trend === 'improving' && (
+                          <div className="flex items-center justify-center gap-1 text-risk-green font-medium">
+                            <TrendingUp className="w-4 h-4" />
+                            Up
+                          </div>
+                        )}
+                        {athlete.trend === 'declining' && (
+                          <div className="flex items-center justify-center gap-1 text-risk-red font-medium">
+                            <TrendingDown className="w-4 h-4" />
+                            Down
+                          </div>
+                        )}
+                        {athlete.trend === 'stable' && (
+                          <div className="flex items-center justify-center gap-1 text-muted-foreground font-medium">
+                            →
+                            Stable
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 pl-4">
+                        <div className="flex gap-1">
+                          {athlete.forecast.map((score, index) => (
+                            <div
+                              key={index}
+                              className={cn(
+                                "w-7 h-7 rounded text-white font-medium text-xs flex items-center justify-center opacity-75",
+                                getReadinessColor(score)
+                              )}
+                              title={`Day +${index + 1}: ${score}/100`}
+                            >
+                              {score}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
