@@ -22,38 +22,57 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 
 /**
  * Helper to create or update a Supabase Auth user
+ * Returns the Supabase Auth UUID to use as the Prisma user ID
  */
-async function upsertSupabaseAuthUser(email: string, password: string, userId: string) {
+async function getOrCreateSupabaseAuthUser(email: string, password: string): Promise<string | null> {
   try {
-    // First, try to get existing user by email
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(u => u.email === email);
+    // Try to create the user first
+    const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm for seed users
+    });
 
-    if (existingUser) {
-      // Update the existing user's password and ID mapping
-      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-        password,
-        user_metadata: { prisma_user_id: userId },
-      });
-      console.log(`   ↻ Updated Supabase Auth user: ${email}`);
-      return existingUser.id;
-    } else {
-      // Create new auth user with specific ID matching Prisma
-      const { data, error } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true, // Auto-confirm for seed users
-        user_metadata: { prisma_user_id: userId },
-      });
+    if (!createError && createData.user) {
+      console.log(`   ✓ Created Supabase Auth user: ${email} (ID: ${createData.user.id})`);
+      return createData.user.id;
+    }
 
-      if (error) {
-        console.error(`   ✗ Failed to create Supabase Auth user ${email}:`, error.message);
-        return null;
+    // If user already exists, find them and update password
+    if (createError?.message?.includes('already been registered')) {
+      // List users with pagination to find the existing user
+      let page = 1;
+      const perPage = 1000;
+
+      while (true) {
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
+          page,
+          perPage,
+        });
+
+        const existingUser = listData?.users?.find(u => u.email === email);
+        if (existingUser) {
+          // Update the password
+          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+            password,
+          });
+          console.log(`   ↻ Updated Supabase Auth user: ${email} (ID: ${existingUser.id})`);
+          return existingUser.id;
+        }
+
+        // If we got fewer users than perPage, we've reached the end
+        if (!listData?.users || listData.users.length < perPage) {
+          break;
+        }
+        page++;
       }
 
-      console.log(`   ✓ Created Supabase Auth user: ${email}`);
-      return data.user?.id;
+      console.error(`   ✗ User ${email} exists but couldn't be found in list`);
+      return null;
     }
+
+    console.error(`   ✗ Failed to create Supabase Auth user ${email}:`, createError?.message);
+    return null;
   } catch (error: any) {
     console.error(`   ✗ Error with Supabase Auth for ${email}:`, error.message);
     return null;
@@ -127,15 +146,25 @@ async function main() {
   const coachPasswordPlain = 'Coach2024!';
   const coachPassword = await hash(coachPasswordPlain, 10);
 
-  // Create Supabase Auth user for coach
+  // Create Supabase Auth user for coach FIRST to get the UUID
   console.log('   Creating Supabase Auth user for coach...');
-  await upsertSupabaseAuthUser('coach@uw.edu', coachPasswordPlain, 'user-coach-001');
+  const coachAuthId = await getOrCreateSupabaseAuthUser('coach@uw.edu', coachPasswordPlain);
+  if (!coachAuthId) {
+    throw new Error('Failed to create Supabase Auth user for coach');
+  }
 
+  // Use Supabase Auth UUID as Prisma user ID
   const coach = await prisma.user.upsert({
-    where: { email: 'coach@uw.edu' },
-    update: {},
+    where: { id: coachAuthId },
+    update: {
+      email: 'coach@uw.edu',
+      name: 'Coach Mike Johnson',
+      password: coachPassword,
+      role: 'COACH',
+      schoolId: school.id,
+    },
     create: {
-      id: 'user-coach-001',
+      id: coachAuthId, // Use Supabase Auth UUID
       email: 'coach@uw.edu',
       name: 'Coach Mike Johnson',
       password: coachPassword,
@@ -184,9 +213,6 @@ async function main() {
   const athletePasswordPlain = 'Athlete2024!';
   const athletePassword = await hash(athletePasswordPlain, 10);
 
-  // Create Supabase Auth users for athletes (batch)
-  console.log('🔐 Creating Supabase Auth users for athletes...');
-
   // First and last names for realistic athlete names
   const firstNames = [
     'Alex', 'Jordan', 'Morgan', 'Taylor', 'Casey', 'Riley', 'Avery', 'Quinn', 'Blake', 'Cameron',
@@ -210,14 +236,26 @@ async function main() {
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
     const athleteName = `${firstName} ${lastName}`;
     const athleteEmail = `athlete${i}@uw.edu`;
-    const athleteId = `user-athlete-${String(i).padStart(3, '0')}`;
 
-    // Create Supabase Auth user for this athlete
-    await upsertSupabaseAuthUser(athleteEmail, athletePasswordPlain, athleteId);
+    // Create Supabase Auth user FIRST to get the UUID
+    const athleteAuthId = await getOrCreateSupabaseAuthUser(athleteEmail, athletePasswordPlain);
+    if (!athleteAuthId) {
+      console.error(`   ✗ Skipping athlete ${i} - failed to create Supabase Auth user`);
+      continue;
+    }
 
-    const athlete = await prisma.user.create({
-      data: {
-        id: athleteId,
+    // Use Supabase Auth UUID as Prisma user ID
+    const athlete = await prisma.user.upsert({
+      where: { id: athleteAuthId },
+      update: {
+        email: athleteEmail,
+        name: athleteName,
+        password: athletePassword,
+        role: 'ATHLETE',
+        schoolId: school.id,
+      },
+      create: {
+        id: athleteAuthId, // Use Supabase Auth UUID
         email: athleteEmail,
         name: athleteName,
         password: athletePassword,
@@ -245,7 +283,7 @@ async function main() {
       console.log(`   ✓ Created ${i}/50 athletes`);
     }
   }
-  console.log(`   ✓ All 50 athletes created!`);
+  console.log(`   ✓ All ${athletes.length} athletes created!`);
 
   // Create coach-athlete relationships for all athletes
   console.log('🔗 Creating coach-athlete relationships...');
