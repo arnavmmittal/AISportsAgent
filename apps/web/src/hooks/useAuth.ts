@@ -51,12 +51,16 @@ export function useAuth(): AuthState {
   const supabase = createClient();
 
   // Fetch user profile from database
-  const fetchUserProfile = useCallback(async (userId: string) => {
+  // Don't pass userId - let server get it from session to avoid race conditions
+  const fetchUserProfile = useCallback(async () => {
     try {
-      const response = await fetch(`/api/user/profile?userId=${userId}`);
+      const response = await fetch('/api/user/profile');
       if (response.ok) {
         const profile = await response.json();
         setUser(profile);
+      } else if (response.status === 401) {
+        // Not authenticated yet - session might be loading
+        setUser(null);
       } else {
         console.error('Failed to fetch user profile');
         setUser(null);
@@ -69,7 +73,7 @@ export function useAuth(): AuthState {
 
   const refreshProfile = useCallback(async () => {
     if (authUser?.id) {
-      await fetchUserProfile(authUser.id);
+      await fetchUserProfile();
     }
   }, [authUser?.id, fetchUserProfile]);
 
@@ -80,7 +84,7 @@ export function useAuth(): AuthState {
         const { data: { user: supabaseUser } } = await supabase.auth.getUser();
         setAuthUser(supabaseUser);
         if (supabaseUser?.id) {
-          await fetchUserProfile(supabaseUser.id);
+          await fetchUserProfile();
         }
       } catch (error) {
         console.error('Error getting user:', error);
@@ -98,7 +102,7 @@ export function useAuth(): AuthState {
       async (_event, session) => {
         setAuthUser(session?.user ?? null);
         if (session?.user?.id) {
-          await fetchUserProfile(session.user.id);
+          await fetchUserProfile();
         } else {
           setUser(null);
         }

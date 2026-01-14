@@ -11,31 +11,19 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get userId from query param or from authenticated session
-    const { searchParams } = new URL(request.url);
-    let userId = searchParams.get('userId');
-
-    // If no userId provided, try to get from Supabase session
-    if (!userId) {
-      const supabaseUser = await getUser();
-      userId = supabaseUser?.id || null;
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID required' },
-        { status: 400 }
-      );
-    }
-
-    // Verify the request is for the authenticated user (security check)
+    // Get authenticated user from Supabase session
     const supabaseUser = await getUser();
-    if (supabaseUser?.id !== userId) {
+
+    // If no session, return 401 (not authenticated)
+    if (!supabaseUser) {
       return NextResponse.json(
-        { error: 'Unauthorized - Cannot access other user profiles' },
-        { status: 403 }
+        { error: 'Unauthorized - Not authenticated' },
+        { status: 401 }
       );
     }
+
+    // Use session user ID (ignore query param for security)
+    const userId = supabaseUser.id;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
