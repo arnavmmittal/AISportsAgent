@@ -114,13 +114,14 @@ export default function StudentGoalsPage() {
       const response = await fetch('/api/athlete/profile');
       const profileData = await response.json();
 
-      if (!profileData.success || !profileData.data?.userId) {
+      // API returns { profile: { id, ... } } format
+      if (!response.ok || !profileData.profile?.id) {
         setGoals([]);
         setIsLoading(false);
         return;
       }
 
-      const userId = profileData.data.userId;
+      const userId = profileData.profile.id;
       const goalsResponse = await fetch(`/api/goals?athleteId=${userId}`);
       const goalsData = await goalsResponse.json();
 
@@ -147,9 +148,9 @@ export default function StudentGoalsPage() {
       const response = await fetch('/api/athlete/profile');
       const profileData = await response.json();
 
-      if (!profileData.success || !profileData.data?.userId) return;
+      if (!response.ok || !profileData.profile?.id) return;
 
-      const userId = profileData.data.userId;
+      const userId = profileData.profile.id;
       const suggestionsResponse = await fetch(`/api/goals/suggestions?athleteId=${userId}`);
       const suggestionsData = await suggestionsResponse.json();
 
@@ -174,12 +175,12 @@ export default function StudentGoalsPage() {
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
 
-      if (!profileData.success || !profileData.data?.userId) {
+      if (!profileResponse.ok || !profileData.profile?.id) {
         toast.error('Please log in to create goals');
         return;
       }
 
-      const userId = profileData.data.userId;
+      const userId = profileData.profile.id;
       const response = await fetch('/api/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -218,12 +219,12 @@ export default function StudentGoalsPage() {
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
 
-      if (!profileData.success || !profileData.data?.userId) {
+      if (!profileResponse.ok || !profileData.profile?.id) {
         toast.error('Please log in to add goals');
         return;
       }
 
-      const userId = profileData.data.userId;
+      const userId = profileData.profile.id;
       const response = await fetch('/api/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
