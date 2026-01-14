@@ -164,14 +164,35 @@ export function ChatInterface() {
     },
   });
 
-  // Initialize session ID (persistent per user)
+  // Initialize session ID - load most recent session or create new UUID
   useEffect(() => {
-    if (user?.id) {
-      // Use persistent session ID based on user ID only (no timestamp)
-      // This allows session history to persist across page refreshes
-      setSessionId(`session_${user.id}`);
-    }
-  }, [user]);
+    if (!user?.id) return;
+
+    const initializeSession = async () => {
+      try {
+        // Try to load the most recent chat session
+        const response = await fetch('/api/chat?limit=1');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data?.length > 0) {
+            // Use the most recent session
+            setSessionId(data.data[0].id);
+            return;
+          }
+        }
+
+        // No existing session - generate a new UUID
+        // The session will be created when the user sends their first message
+        setSessionId(crypto.randomUUID());
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+        // Fallback to new UUID
+        setSessionId(crypto.randomUUID());
+      }
+    };
+
+    initializeSession();
+  }, [user?.id]);
 
   // Load message history when session ID is set
   useEffect(() => {

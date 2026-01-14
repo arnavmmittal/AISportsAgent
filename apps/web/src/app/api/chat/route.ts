@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Transform to expected format
     const transformedSessions = sessions.map((session) => ({
       id: session.id,
-      title: session.title || 'Untitled Session',
+      title: session.topic || session.summary || 'Chat Session',
       preview: session.Message[0]?.content || 'No messages yet',
       createdAt: session.createdAt.toISOString(),
       messageCount: session.Message.length,
@@ -82,14 +82,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Call MCP server with real user ID
+    // Call MCP server with real user ID and proper UUID session
     const mcpResponse = await fetch(`${mcpServerUrl}/api/chat/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        session_id: `session-${user.id}-${Date.now()}`,
+        session_id: crypto.randomUUID(),
         message: message,
         athlete_id: user.id,
         stream: false,

@@ -166,12 +166,42 @@ function AICoachPageContent() {
     },
   });
 
-  // Initialize persistent session ID
+  // Initialize session ID - load most recent session or create new UUID
   useEffect(() => {
-    if (user?.id) {
-      setSessionId(`session_${user.id}`);
-    }
-  }, [user]);
+    if (!user?.id) return;
+
+    const initializeSession = async () => {
+      try {
+        // First, check for sessionId in URL params
+        const urlSessionId = searchParams.get('sessionId');
+        if (urlSessionId) {
+          setSessionId(urlSessionId);
+          return;
+        }
+
+        // Try to load the most recent chat session
+        const response = await fetch('/api/chat?limit=1');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data?.length > 0) {
+            // Use the most recent session
+            setSessionId(data.data[0].id);
+            return;
+          }
+        }
+
+        // No existing session - generate a new UUID
+        // The session will be created when the user sends their first message
+        setSessionId(crypto.randomUUID());
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+        // Fallback to new UUID
+        setSessionId(crypto.randomUUID());
+      }
+    };
+
+    initializeSession();
+  }, [user?.id, searchParams]);
 
   // Load message history
   useEffect(() => {
@@ -214,16 +244,8 @@ function AICoachPageContent() {
 
     try {
       setIsLoadingSessions(true);
-      const profileResponse = await fetch('/api/athlete/profile');
-      const profileData = await profileResponse.json();
-
-      if (!profileData.success || !profileData.data?.userId) {
-        setChatSessions([]);
-        return;
-      }
-
-      const userId = profileData.data.userId;
-      const response = await fetch(`/api/chat/sessions?userId=${userId}`);
+      // Use /api/chat endpoint which returns sessions for authenticated user
+      const response = await fetch('/api/chat?limit=20');
 
       if (response.ok) {
         const data = await response.json();
@@ -231,7 +253,7 @@ function AICoachPageContent() {
           const transformedSessions: ChatSession[] = data.data.map((s: any) => ({
             id: s.id,
             title: s.title || 'Chat Session',
-            lastMessage: s.lastMessage || 'No messages yet',
+            lastMessage: s.preview || 'No messages yet',
             createdAt: new Date(s.createdAt),
             messageCount: s.messageCount || 0,
           }));
@@ -260,18 +282,10 @@ function AICoachPageContent() {
     router.push(`/student/ai-coach?sessionId=${newSessionId}`, { scroll: false });
   }, [router]);
 
-  // Check for sessionId in URL params
-  useEffect(() => {
-    const urlSessionId = searchParams.get('sessionId');
-    if (urlSessionId && user?.id) {
-      setSessionId(urlSessionId);
-    }
-  }, [searchParams, user?.id]);
-
-  // Start a new chat session
+  // Start a new chat session with a proper UUID
   const startNewSession = useCallback(() => {
     if (user?.id) {
-      const newId = `session_${user.id}_${Date.now()}`;
+      const newId = crypto.randomUUID();
       setSessionId(newId);
       setMessages([]);
       setHistoryOpen(false);

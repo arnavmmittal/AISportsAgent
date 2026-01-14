@@ -721,23 +721,24 @@ export default function WellnessPage() {
             </section>
 
             {/* Quick Check-In CTA */}
-            <button
+            <section
               onClick={() => setActiveTab('checkin')}
-              className="w-full"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setActiveTab('checkin')}
+              className="p-5 rounded-lg bg-success-muted border border-success/20 flex items-center gap-4 hover:shadow-sm transition-shadow cursor-pointer"
             >
-              <section className="p-5 rounded-lg bg-success-muted border border-success/20 flex items-center gap-4 hover:shadow-sm transition-shadow">
-                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
-                  <Sparkles size={20} className="text-success" />
-                </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-medium text-foreground">Update Your Check-In</h3>
-                  <p className="text-sm text-muted-foreground">Keep your readiness score accurate</p>
-                </div>
-                <Button size="sm" className="bg-success hover:bg-success/90">
-                  Check In
-                </Button>
-              </section>
-            </button>
+              <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
+                <Sparkles size={20} className="text-success" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-medium text-foreground">Update Your Check-In</h3>
+                <p className="text-sm text-muted-foreground">Keep your readiness score accurate</p>
+              </div>
+              <span className="inline-flex items-center justify-center h-8 px-3 text-sm font-medium rounded-md bg-success hover:bg-success/90 text-success-foreground">
+                Check In
+              </span>
+            </section>
 
             {/* Low Readiness Warning */}
             {level === 'red' && (

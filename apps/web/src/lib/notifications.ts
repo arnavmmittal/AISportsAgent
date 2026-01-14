@@ -6,7 +6,7 @@
  * For production: Add email (Resend) and SMS (Twilio) integrations
  */
 
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from '@/lib/sentry-stub';
 
 export type NotificationChannel = 'email' | 'sms' | 'dashboard';
 export type CrisisSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -149,7 +149,7 @@ async function sendEmailNotification(params: {
     console.log('[EMAIL] Would send:', params);
   } catch (error) {
     console.error('[EMAIL] Failed to send notification:', error);
-    Sentry.captureException(error, {
+    Sentry.captureException(error as Error, {
       tags: { type: 'email_notification_failure' },
     });
   }
@@ -183,7 +183,7 @@ async function sendSMSNotification(params: { to: string; body: string }): Promis
     console.log('[SMS] Would send:', params);
   } catch (error) {
     console.error('[SMS] Failed to send notification:', error);
-    Sentry.captureException(error, {
+    Sentry.captureException(error as Error, {
       tags: { type: 'sms_notification_failure' },
     });
   }

@@ -94,8 +94,11 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/student/chat') {
       return NextResponse.redirect(new URL('/student/ai-coach', request.url));
     }
-    if (pathname === '/student/mood' || pathname === '/student/goals') {
-      return NextResponse.redirect(new URL('/student/progress', request.url));
+    // Note: /student/mood redirects to /student/wellness (wellness page handles mood tracking)
+    // /student/progress redirects to /student/goals (goals page shows progress stats)
+    // Don't redirect /student/goals - it's the canonical location now
+    if (pathname === '/student/mood') {
+      return NextResponse.redirect(new URL('/student/wellness', request.url));
     }
   }
 

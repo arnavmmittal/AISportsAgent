@@ -22,7 +22,7 @@
  */
 
 import OpenAI from 'openai';
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from '@/lib/sentry-stub';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -130,7 +130,7 @@ export async function detectCrisis(
   } catch (error) {
     // Don't fail if AI is down - keyword detection still works
     console.error('OpenAI moderation API failed:', error);
-    Sentry.captureException(error, {
+    Sentry.captureException(error as Error, {
       tags: { service: 'crisis_detection_ai' },
     });
   }

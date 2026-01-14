@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-helpers';
 import { z } from 'zod';
 import { validateRequest, ValidationError } from './api-validation';
 import { checkRateLimit } from '@/middleware/rate-limit';
@@ -95,21 +95,21 @@ export function withApiMiddleware<T = any>(
       let user: ApiContext['user'] | null = null;
 
       if (options.requireAuth !== false) {
-        const session = await auth();
+        const { authorized, user: authUser, response } = await requireAuth(request);
 
-        if (!session?.user) {
-          return NextResponse.json(
+        if (!authorized || !authUser) {
+          return response || NextResponse.json(
             { error: 'Unauthorized', message: 'Authentication required' },
             { status: 401 }
           );
         }
 
         user = {
-          id: session.user.id,
-          email: session.user.email || '',
-          role: session.user.role as 'ATHLETE' | 'COACH' | 'ADMIN',
-          schoolId: session.user.schoolId,
-          name: session.user.name || undefined,
+          id: authUser.id,
+          email: authUser.email || '',
+          role: authUser.role as 'ATHLETE' | 'COACH' | 'ADMIN',
+          schoolId: authUser.schoolId,
+          name: undefined, // authUser doesn't have name
         };
       }
 

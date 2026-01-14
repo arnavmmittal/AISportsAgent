@@ -20,7 +20,7 @@ export function CoachDashboard() {
     if (user?.id && user?.role === 'COACH') {
       loadDashboardData();
     }
-  }, [session, selectedPeriod]);
+  }, [user?.id, selectedPeriod]);
 
   const loadDashboardData = async () => {
     if (!user?.id) return;
@@ -30,8 +30,8 @@ export function CoachDashboard() {
 
     try {
       const [analyticsData, recsData] = await Promise.all([
-        apiClient.getTeamAnalytics(session.user.id, selectedPeriod),
-        apiClient.getRecommendations(session.user.id),
+        apiClient.getTeamAnalytics(user.id, selectedPeriod),
+        apiClient.getRecommendations(user.id),
       ]);
 
       setAnalytics(analyticsData);

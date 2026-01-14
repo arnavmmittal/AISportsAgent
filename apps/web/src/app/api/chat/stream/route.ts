@@ -165,15 +165,16 @@ export async function POST(req: NextRequest) {
           const { prisma } = await import('@/lib/prisma');
 
           // Get or create session
+          const effectiveSessionId = session_id || crypto.randomUUID();
           let session = await prisma.chatSession.findUnique({
-            where: { id: session_id || `session_${athlete_id}` },
+            where: { id: effectiveSessionId },
             include: { Athlete: { include: { User: true } } },
           });
 
           if (!session) {
             session = await prisma.chatSession.create({
               data: {
-                id: session_id || `session_${athlete_id}`,
+                id: effectiveSessionId,
                 athleteId: athlete_id,
               },
               include: { Athlete: { include: { User: true } } },
