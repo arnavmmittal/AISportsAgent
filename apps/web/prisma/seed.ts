@@ -1,12 +1,71 @@
 import { PrismaClient } from '@prisma/client';
 import { hash } from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
+import { config } from 'dotenv';
 import { calculateReadiness } from '../src/lib/analytics/readiness';
 import { getSportConfig } from '../src/lib/analytics/sport-configs';
 
+// Load environment variables from .env.local
+config({ path: '.env.local' });
+
 const prisma = new PrismaClient();
+
+// Initialize Supabase Admin client for auth user creation
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
+
+/**
+ * Helper to create or update a Supabase Auth user
+ */
+async function upsertSupabaseAuthUser(email: string, password: string, userId: string) {
+  try {
+    // First, try to get existing user by email
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === email);
+
+    if (existingUser) {
+      // Update the existing user's password and ID mapping
+      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        password,
+        user_metadata: { prisma_user_id: userId },
+      });
+      console.log(`   ↻ Updated Supabase Auth user: ${email}`);
+      return existingUser.id;
+    } else {
+      // Create new auth user with specific ID matching Prisma
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true, // Auto-confirm for seed users
+        user_metadata: { prisma_user_id: userId },
+      });
+
+      if (error) {
+        console.error(`   ✗ Failed to create Supabase Auth user ${email}:`, error.message);
+        return null;
+      }
+
+      console.log(`   ✓ Created Supabase Auth user: ${email}`);
+      return data.user?.id;
+    }
+  } catch (error: any) {
+    console.error(`   ✗ Error with Supabase Auth for ${email}:`, error.message);
+    return null;
+  }
+}
 
 async function main() {
   console.log('🌱 Starting database seed...');
+  console.log('');
+  console.log('📋 Supabase URL:', supabaseUrl ? '✓ Set' : '✗ Missing');
+  console.log('📋 Service Key:', supabaseServiceKey ? '✓ Set' : '✗ Missing');
+  console.log('');
 
   // Clear all existing data (delete in correct order to respect foreign keys)
   console.log('🗑️  Clearing existing data...');
@@ -65,7 +124,13 @@ async function main() {
 
   // Create demo coach
   console.log('👨‍🏫 Creating demo coach...');
-  const coachPassword = await hash('Coach2024!', 10);
+  const coachPasswordPlain = 'Coach2024!';
+  const coachPassword = await hash(coachPasswordPlain, 10);
+
+  // Create Supabase Auth user for coach
+  console.log('   Creating Supabase Auth user for coach...');
+  await upsertSupabaseAuthUser('coach@uw.edu', coachPasswordPlain, 'user-coach-001');
+
   const coach = await prisma.user.upsert({
     where: { email: 'coach@uw.edu' },
     update: {},
@@ -116,7 +181,11 @@ async function main() {
     Lacrosse: ['Attack', 'Midfield', 'Defense', 'Goalie'],
   };
 
-  const athletePassword = await hash('Athlete2024!', 10);
+  const athletePasswordPlain = 'Athlete2024!';
+  const athletePassword = await hash(athletePasswordPlain, 10);
+
+  // Create Supabase Auth users for athletes (batch)
+  console.log('🔐 Creating Supabase Auth users for athletes...');
 
   // First and last names for realistic athlete names
   const firstNames = [
@@ -140,11 +209,16 @@ async function main() {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
     const athleteName = `${firstName} ${lastName}`;
+    const athleteEmail = `athlete${i}@uw.edu`;
+    const athleteId = `user-athlete-${String(i).padStart(3, '0')}`;
+
+    // Create Supabase Auth user for this athlete
+    await upsertSupabaseAuthUser(athleteEmail, athletePasswordPlain, athleteId);
 
     const athlete = await prisma.user.create({
       data: {
-        id: `user-athlete-${String(i).padStart(3, '0')}`,
-        email: `athlete${i}@uw.edu`,
+        id: athleteId,
+        email: athleteEmail,
         name: athleteName,
         password: athletePassword,
         role: 'ATHLETE',
