@@ -12,7 +12,8 @@
  * All data is fetched from APIs - no mock data.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   BarChart3,
@@ -77,8 +78,12 @@ interface CorrelationData {
   lowReadinessPerformance: number;
 }
 
-export default function InsightsPage() {
-  const [activeTab, setActiveTab] = useState<InsightsTab>('analytics');
+function InsightsPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<InsightsTab>(
+    (searchParams.get('tab') as InsightsTab) || 'analytics'
+  );
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showCustomReportModal, setShowCustomReportModal] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -106,6 +111,18 @@ export default function InsightsPage() {
     },
     athleteFilter: 'all' as 'all' | 'specific',
   });
+
+  // Handle tab changes with URL sync
+  const handleTabChange = (tab: InsightsTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'analytics') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    router.replace(`/coach/insights${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   // Fetch data on mount
   useEffect(() => {
@@ -146,18 +163,21 @@ export default function InsightsPage() {
           });
         }
 
-        // Fetch performance correlation data (use the correct API endpoint)
+        // Fetch performance correlation data (team-wide for coaches)
         try {
           const correlationRes = await fetch('/api/analytics/performance-correlation');
           if (correlationRes.ok) {
             const correlationJson = await correlationRes.json();
-            if (correlationJson.correlations && correlationJson.correlations.length > 0) {
-              const firstCorrelation = correlationJson.correlations[0];
+            // Handle new team-wide response format: { success: true, data: { type: 'team', correlations: [...] } }
+            const correlations = correlationJson.data?.correlations || correlationJson.correlations || [];
+            if (correlations.length > 0) {
+              // Find the strongest correlation (first one, already sorted by strength)
+              const topCorrelation = correlations[0];
               setCorrelationData({
-                correlationStrength: firstCorrelation.correlationStrength || 0,
-                pValue: firstCorrelation.pValue || 1,
-                highReadinessPerformance: firstCorrelation.highReadinessPerformance || 0,
-                lowReadinessPerformance: firstCorrelation.lowReadinessPerformance || 0,
+                correlationStrength: topCorrelation.correlation || 0,
+                pValue: topCorrelation.isSignificant ? 0.01 : 0.1, // Approximate p-value from significance flag
+                highReadinessPerformance: 0, // Not available in team-wide analysis
+                lowReadinessPerformance: 0,
               });
             }
           }
@@ -270,7 +290,7 @@ export default function InsightsPage() {
           {/* Tab Navigation */}
           <div className="flex gap-2 mt-6 p-1 bg-muted rounded-lg w-fit">
             <button
-              onClick={() => setActiveTab('analytics')}
+              onClick={() => handleTabChange('analytics')}
               className={cn(
                 'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2',
                 activeTab === 'analytics'
@@ -282,7 +302,7 @@ export default function InsightsPage() {
               Analytics
             </button>
             <button
-              onClick={() => setActiveTab('reports')}
+              onClick={() => handleTabChange('reports')}
               className={cn(
                 'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2',
                 activeTab === 'reports'
@@ -539,34 +559,40 @@ export default function InsightsPage() {
               </Card>
             </div>
 
-            {/* Coming Soon */}
+            {/* Quick Links to Other Tools */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Rocket className="w-5 h-5 text-primary" />
-                  Coming Soon
+                  More Analytics Tools
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
-                    <h3 className="font-semibold text-foreground mb-2">Custom Reports</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Generate custom analytics reports for specific time periods.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-risk-green/5 rounded-lg border border-risk-green/10">
-                    <h3 className="font-semibold text-foreground mb-2">AI Predictions</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Link
+                    href="/coach/predictions"
+                    className="p-4 bg-risk-green/5 rounded-lg border border-risk-green/10 text-left hover:bg-risk-green/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Brain className="w-5 h-5 text-risk-green" />
+                      <h3 className="font-semibold text-foreground">AI Predictions</h3>
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       ML-powered predictions for athlete performance and risk levels.
                     </p>
-                  </div>
-                  <div className="p-4 bg-info/5 rounded-lg border border-info/10">
-                    <h3 className="font-semibold text-foreground mb-2">Comparative Analysis</h3>
+                  </Link>
+                  <Link
+                    href="/coach/readiness"
+                    className="p-4 bg-info/5 rounded-lg border border-info/10 text-left hover:bg-info/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-5 h-5 text-info" />
+                      <h3 className="font-semibold text-foreground">Team Readiness</h3>
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      Compare athletes or teams against benchmarks.
+                      Monitor team wellness and intervention queue.
                     </p>
-                  </div>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -979,5 +1005,23 @@ export default function InsightsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function InsightsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading insights...</p>
+          </div>
+        </div>
+      }
+    >
+      <InsightsPageContent />
+    </Suspense>
   );
 }

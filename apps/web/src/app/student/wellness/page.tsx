@@ -24,8 +24,8 @@
  * Uses design system v2.0 semantic tokens
  */
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Clock,
@@ -168,9 +168,24 @@ function getMoodEmoji(value: number) {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
 
-export default function WellnessPage() {
+function WellnessPageContent() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<WellnessTab>('readiness');
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<WellnessTab>(
+    (searchParams.get('tab') as WellnessTab) || 'readiness'
+  );
+
+  // Handle tab changes with URL sync
+  const handleTabChange = (tab: WellnessTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'readiness') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    router.replace(`/student/wellness${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   // ── Readiness State ──
   const [readiness] = useState<ReadinessData>({
@@ -412,7 +427,7 @@ export default function WellnessPage() {
         ───────────────────────────────────────────────────────────────── */}
         <div className="flex gap-2 p-1 bg-muted rounded-lg">
           <button
-            onClick={() => setActiveTab('readiness')}
+            onClick={() => handleTabChange('readiness')}
             className={cn(
               'flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2',
               activeTab === 'readiness'
@@ -424,7 +439,7 @@ export default function WellnessPage() {
             Readiness
           </button>
           <button
-            onClick={() => setActiveTab('checkin')}
+            onClick={() => handleTabChange('checkin')}
             className={cn(
               'flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2',
               activeTab === 'checkin'
@@ -718,26 +733,6 @@ export default function WellnessPage() {
                   </div>
                 </div>
               </div>
-            </section>
-
-            {/* Quick Check-In CTA */}
-            <section
-              onClick={() => setActiveTab('checkin')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setActiveTab('checkin')}
-              className="p-5 rounded-lg bg-success-muted border border-success/20 flex items-center gap-4 hover:shadow-sm transition-shadow cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
-                <Sparkles size={20} className="text-success" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-medium text-foreground">Update Your Check-In</h3>
-                <p className="text-sm text-muted-foreground">Keep your readiness score accurate</p>
-              </div>
-              <span className="inline-flex items-center justify-center h-8 px-3 text-sm font-medium rounded-md bg-success hover:bg-success/90 text-success-foreground">
-                Check In
-              </span>
             </section>
 
             {/* Low Readiness Warning */}
@@ -1094,5 +1089,26 @@ function DimensionCard({ icon: Icon, label, value, inverted, color }: DimensionC
         </span>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PAGE EXPORT WITH SUSPENSE
+// ─────────────────────────────────────────────────────────────────
+
+export default function WellnessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Activity className="w-8 h-8 animate-pulse text-primary" />
+            <p className="text-muted-foreground">Loading wellness...</p>
+          </div>
+        </div>
+      }
+    >
+      <WellnessPageContent />
+    </Suspense>
   );
 }
