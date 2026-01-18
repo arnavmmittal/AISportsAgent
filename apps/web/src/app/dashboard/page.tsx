@@ -136,7 +136,7 @@ export default function DashboardPage() {
 
             // Calculate streak starting from today
             const today = new Date().toISOString().split('T')[0];
-            let currentDate = new Date(today);
+            const currentDate = new Date(today);
 
             for (let i = 0; i < sortedDates.length; i++) {
               const checkDate = currentDate.toISOString().split('T')[0];
@@ -223,7 +223,7 @@ export default function DashboardPage() {
 
           // Calculate streak
           const today = new Date().toISOString().split('T')[0];
-          let currentDate = new Date(today);
+          const currentDate = new Date(today);
           const sortedDates = Array.from(logsByDate.keys()).sort().reverse();
 
           for (let i = 0; i < sortedDates.length; i++) {

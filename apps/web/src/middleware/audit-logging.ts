@@ -171,13 +171,13 @@ export async function getAthleteAuditLogs(data: {
  * Simplified middleware wrapper for routes that need audit logging
  */
 export function withAuditLog(
-  handler: Function,
+  handler: (req: Request, context: unknown) => Promise<Response>,
   options: {
     resourceType: string;
     requireConsent?: boolean;
   }
 ) {
-  return async (req: Request, context: any) => {
+  return async (req: Request, context: unknown) => {
     try {
       const response = await handler(req, context);
       return response;

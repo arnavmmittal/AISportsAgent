@@ -512,7 +512,6 @@ async function main() {
       // Create varied sentiment patterns based on topic
       let sentiment: number;
       let tone: string;
-      let selectedTopics: string[];
       let selectedStressors: string[];
       let selectedCoping: string[];
 
@@ -544,7 +543,7 @@ async function main() {
       const isPreGame = Math.random() < 0.2;
       const preGameDate = isPreGame ? new Date(sessionDate.getTime() + 24 * 60 * 60 * 1000) : null;
 
-      selectedTopics = [sessionTopic];
+      const selectedTopics: string[] = [sessionTopic];
       if (Math.random() < 0.4) {
         selectedTopics.push(topics[Math.floor(Math.random() * topics.length)]);
       }

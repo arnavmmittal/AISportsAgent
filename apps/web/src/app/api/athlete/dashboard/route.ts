@@ -243,7 +243,7 @@ function calculateStreak(moodLogs: MoodLog[]): number {
 
   // Count consecutive days with mood logs
   let streak = 0;
-  let currentDate = new Date();
+  const currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0);
 
   const logDates = new Set(
