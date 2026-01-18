@@ -522,9 +522,11 @@ export function ChatInterface() {
                 metrics={currentMetadata.tracking.metrics}
                 adherence_check={currentMetadata.tracking.adherence_check}
                 one_word_debrief={currentMetadata.tracking.one_word_debrief}
-                onLogMetric={(metricName, value) => {
-                  console.log(`Logged ${metricName}: ${value}`);
-                  // TODO: Save to database
+                onLogMetric={async (metricName, value) => {
+                  // Note: Custom metrics tracking API not yet implemented.
+                  // For MVP, metrics are stored in chat context only.
+                  // TODO: Create /api/athlete/metrics endpoint for persistence
+                  console.log(`Metric logged: ${metricName} = ${value}`);
                 }}
               />
             )}
@@ -534,12 +536,16 @@ export function ChatInterface() {
               <PracticeDrillCard
                 drill={currentMetadata.practice_drill}
                 onStartDrill={() => {
-                  console.log('Starting drill:', currentMetadata.practice_drill?.name);
-                  // TODO: Navigate to drill timer/tracker
+                  // Note: Drill timer/tracker feature not yet implemented.
+                  // For now, drills are instruction-only from chat.
+                  // TODO: Create drill timer component and /api/athlete/drills endpoint
+                  console.log('Drill started:', currentMetadata.practice_drill?.name);
                 }}
                 onTrackProgress={(week, notes) => {
+                  // Note: Drill progress tracking API not yet implemented.
+                  // Progress is stored in chat context only for MVP.
+                  // TODO: Create /api/athlete/drill-progress endpoint
                   console.log(`Week ${week} progress:`, notes);
-                  // TODO: Save progress to database
                 }}
               />
             )}
@@ -549,12 +555,16 @@ export function ChatInterface() {
               <RoutineBuilderWidget
                 routine={currentMetadata.pre_performance_routine}
                 onComplete={() => {
+                  // Note: Routine completion tracking not yet implemented.
+                  // For MVP, routines are suggested but not persisted.
+                  // TODO: Create /api/athlete/routines endpoint for persistence
                   console.log('Routine completed!');
-                  // TODO: Log completion, ask for feedback
                 }}
                 onSaveCustomization={(customizedRoutine) => {
-                  console.log('Saving customized routine:', customizedRoutine);
-                  // TODO: Save to athlete memory
+                  // Note: Custom routine persistence not yet implemented.
+                  // Customizations are session-only for MVP.
+                  // TODO: Save customized routines to athlete profile
+                  console.log('Customized routine (not persisted):', customizedRoutine);
                 }}
               />
             )}
