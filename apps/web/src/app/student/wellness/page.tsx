@@ -352,12 +352,12 @@ function WellnessPageContent() {
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
 
-      if (!profileData.success || !profileData.data?.userId) {
+      if (!profileResponse.ok || !profileData.profile?.id) {
         setIsLoadingHistory(false);
         return;
       }
 
-      const userId = profileData.data.userId;
+      const userId = profileData.profile.id;
       const response = await fetch(`/api/mood-logs?athleteId=${userId}&limit=7`);
       const data = await response.json();
 
@@ -387,7 +387,7 @@ function WellnessPageContent() {
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
 
-      if (!profileData.success || !profileData.data?.userId) {
+      if (!profileResponse.ok || !profileData.profile?.id) {
         toast.error('Please log in to save mood logs');
         setIsSubmitting(false);
         return;
@@ -397,7 +397,7 @@ function WellnessPageContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          athleteId: profileData.data.userId,
+          athleteId: profileData.profile.id,
           mood,
           confidence,
           stress,
