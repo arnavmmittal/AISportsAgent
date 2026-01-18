@@ -187,38 +187,25 @@ function WellnessPageContent() {
     router.replace(`/student/wellness${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
-  // ── Readiness State ──
-  const [readiness] = useState<ReadinessData>({
-    score: 72,
+  // ── Readiness State (fetched from API) ──
+  const [readiness, setReadiness] = useState<ReadinessData>({
+    score: 50,
     dimensions: {
-      mood: 68,
-      sleep: 82,
-      stress: 35,
-      confidence: 75,
+      mood: 50,
+      sleep: 50,
+      stress: 50,
+      confidence: 50,
     },
-    trend: 'up',
-    change: 4,
+    trend: 'stable',
+    change: 0,
   });
+  const [isLoadingReadiness, setIsLoadingReadiness] = useState(true);
 
-  const [upcomingGame] = useState<UpcomingGame>({
-    id: '1',
-    opponent: 'Oregon State',
-    date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    location: 'Alaska Airlines Arena',
-    isHome: true,
-  });
+  const [upcomingGame, setUpcomingGame] = useState<UpcomingGame | null>(null);
 
-  const [history] = useState<DayHistory[]>([
-    { date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), score: 65, checkedIn: true },
-    { date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), score: 58, checkedIn: true },
-    { date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), score: 62, checkedIn: true },
-    { date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), score: 70, checkedIn: true },
-    { date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), score: 68, checkedIn: true },
-    { date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), score: 68, checkedIn: true },
-    { date: new Date(), score: readiness.score, checkedIn: true },
-  ]);
+  const [history, setHistory] = useState<DayHistory[]>([]);
 
-  const [countdown, setCountdown] = useState(formatTimeUntil(upcomingGame.date));
+  const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number } | null>(null);
   const [breathingActive, setBreathingActive] = useState(false);
   const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [breathCount, setBreathCount] = useState(0);
@@ -237,13 +224,89 @@ function WellnessPageContent() {
 
   // ── Effects ──
 
+  // Fetch readiness data from athlete dashboard API
+  useEffect(() => {
+    const fetchReadinessData = async () => {
+      try {
+        setIsLoadingReadiness(true);
+        const response = await fetch('/api/athlete/dashboard');
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          // Update readiness from API
+          if (data.data.readiness) {
+            setReadiness({
+              score: data.data.readiness.score,
+              dimensions: {
+                mood: data.data.readiness.dimensions?.mood || 50,
+                sleep: data.data.readiness.dimensions?.sleep || 50,
+                stress: data.data.readiness.dimensions?.stress || 50,
+                confidence: data.data.readiness.dimensions?.engagement || 50,
+              },
+              trend: data.data.readiness.trend || 'stable',
+              change: data.data.readiness.change || 0,
+            });
+          }
+
+          // Check for upcoming game
+          if (data.data.hasGameTomorrow) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(14, 0, 0, 0); // Default game time
+            setUpcomingGame({
+              id: 'upcoming',
+              opponent: 'Opponent',
+              date: tomorrow,
+              location: 'Home Arena',
+              isHome: true,
+            });
+            setCountdown(formatTimeUntil(tomorrow));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching readiness data:', error);
+      } finally {
+        setIsLoadingReadiness(false);
+      }
+    };
+
+    fetchReadinessData();
+  }, []);
+
+  // Build history from pastWeekLogs when they change
+  useEffect(() => {
+    if (pastWeekLogs.length > 0) {
+      // Calculate readiness score for each day based on mood log data
+      const historyData: DayHistory[] = pastWeekLogs.map((log) => {
+        // Simple readiness calculation: average of mood and confidence, with stress inverted
+        const readinessScore = Math.round(
+          (log.mood * 10 * 0.3) +
+          (log.confidence * 10 * 0.25) +
+          ((10 - log.stress) * 10 * 0.25) +
+          ((log.sleep || 7) / 10 * 100 * 0.2)
+        );
+        return {
+          date: new Date(log.date),
+          score: Math.min(100, Math.max(0, readinessScore)),
+          checkedIn: true,
+        };
+      });
+      // Sort by date ascending
+      historyData.sort((a, b) => a.date.getTime() - b.date.getTime());
+      setHistory(historyData);
+    }
+  }, [pastWeekLogs]);
+
   // Update countdown every minute
   useEffect(() => {
+    if (!upcomingGame) return;
+
+    setCountdown(formatTimeUntil(upcomingGame.date));
     const interval = setInterval(() => {
       setCountdown(formatTimeUntil(upcomingGame.date));
     }, 60000);
     return () => clearInterval(interval);
-  }, [upcomingGame.date]);
+  }, [upcomingGame]);
 
   // Breathing exercise timer
   useEffect(() => {
@@ -370,7 +433,7 @@ function WellnessPageContent() {
 
   const level = getReadinessLevel(readiness.score);
   const message = getReadinessMessage(level);
-  const isGameDay = countdown.days === 0 && countdown.hours < 24;
+  const isGameDay = countdown ? countdown.days === 0 && countdown.hours < 24 : false;
 
   // Calculate mood trend
   const getMoodTrend = () => {
@@ -460,59 +523,61 @@ function WellnessPageContent() {
         ───────────────────────────────────────────────────────────────── */}
         {activeTab === 'readiness' && (
           <div className="space-y-6 animate-fade-in">
-            {/* Upcoming Game Countdown */}
-            <section
-              className={cn(
-                'card-elevated p-6',
-                isGameDay && 'border-2 border-primary ring-4 ring-primary/10'
-              )}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                    <Calendar size={14} />
-                    {upcomingGame.date.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </div>
-                  <h2 className="text-xl font-semibold text-foreground">
-                    vs {upcomingGame.opponent}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {upcomingGame.isHome ? 'Home' : 'Away'} • {upcomingGame.location}
-                  </p>
-                </div>
-                {isGameDay && (
-                  <span className="px-3 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full animate-pulse">
-                    GAME DAY
-                  </span>
+            {/* Upcoming Game Countdown - Only show when there's an upcoming game */}
+            {upcomingGame && countdown && (
+              <section
+                className={cn(
+                  'card-elevated p-6',
+                  isGameDay && 'border-2 border-primary ring-4 ring-primary/10'
                 )}
-              </div>
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                      <Calendar size={14} />
+                      {upcomingGame.date.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </div>
+                    <h2 className="text-xl font-semibold text-foreground">
+                      vs {upcomingGame.opponent}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {upcomingGame.isHome ? 'Home' : 'Away'} • {upcomingGame.location}
+                    </p>
+                  </div>
+                  {isGameDay && (
+                    <span className="px-3 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full animate-pulse">
+                      GAME DAY
+                    </span>
+                  )}
+                </div>
 
-              {/* Countdown */}
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-4 bg-muted rounded-lg">
-                  <div className="text-3xl font-semibold tabular-nums text-foreground">
-                    {countdown.days}
+                {/* Countdown */}
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <div className="text-3xl font-semibold tabular-nums text-foreground">
+                      {countdown.days}
+                    </div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Days</div>
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Days</div>
-                </div>
-                <div className="p-4 bg-muted rounded-lg">
-                  <div className="text-3xl font-semibold tabular-nums text-foreground">
-                    {countdown.hours}
+                  <div className="p-4 bg-muted rounded-lg">
+                    <div className="text-3xl font-semibold tabular-nums text-foreground">
+                      {countdown.hours}
+                    </div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Hours</div>
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Hours</div>
-                </div>
-                <div className="p-4 bg-muted rounded-lg">
-                  <div className="text-3xl font-semibold tabular-nums text-foreground">
-                    {countdown.minutes}
+                  <div className="p-4 bg-muted rounded-lg">
+                    <div className="text-3xl font-semibold tabular-nums text-foreground">
+                      {countdown.minutes}
+                    </div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Minutes</div>
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Minutes</div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* Readiness Gauge */}
             <section className="card-elevated p-8" aria-labelledby="readiness-heading">
@@ -690,49 +755,63 @@ function WellnessPageContent() {
             <section className="card-elevated p-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">7-Day History</h2>
 
-              <div className="flex justify-between gap-2">
-                {history.map((day, index) => {
-                  const dayLevel = getReadinessLevel(day.score);
-                  const isToday = index === history.length - 1;
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center">
-                      <div
-                        className={cn(
-                          'w-full aspect-square rounded-lg flex items-center justify-center text-sm font-medium text-white transition-transform hover:scale-105',
-                          dayLevel === 'green' && 'bg-readiness-green',
-                          dayLevel === 'yellow' && 'bg-readiness-yellow',
-                          dayLevel === 'red' && 'bg-readiness-red',
-                          isToday && 'ring-2 ring-foreground ring-offset-2 ring-offset-background'
-                        )}
-                      >
-                        {day.score}
-                      </div>
-                      <span className="text-xs text-muted-foreground mt-2">
-                        {day.date.toLocaleDateString('en-US', { weekday: 'short' })}
-                      </span>
-                      {isToday && (
-                        <span className="text-xs text-primary font-medium">Today</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Insight */}
-              <div className="mt-6 p-4 bg-info/5 border border-info/20 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 size={18} className="text-info mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Consistent improvement this week
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Your readiness has increased by {Math.abs(history[history.length - 1].score - history[0].score)} points
-                      over the past 7 days. You're trending in the right direction for game day.
-                    </p>
+              {history.length > 0 ? (
+                <>
+                  <div className="flex justify-between gap-2">
+                    {history.map((day, index) => {
+                      const dayLevel = getReadinessLevel(day.score);
+                      const isToday = index === history.length - 1;
+                      return (
+                        <div key={index} className="flex-1 flex flex-col items-center">
+                          <div
+                            className={cn(
+                              'w-full aspect-square rounded-lg flex items-center justify-center text-sm font-medium text-white transition-transform hover:scale-105',
+                              dayLevel === 'green' && 'bg-readiness-green',
+                              dayLevel === 'yellow' && 'bg-readiness-yellow',
+                              dayLevel === 'red' && 'bg-readiness-red',
+                              isToday && 'ring-2 ring-foreground ring-offset-2 ring-offset-background'
+                            )}
+                          >
+                            {day.score}
+                          </div>
+                          <span className="text-xs text-muted-foreground mt-2">
+                            {day.date.toLocaleDateString('en-US', { weekday: 'short' })}
+                          </span>
+                          {isToday && (
+                            <span className="text-xs text-primary font-medium">Today</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {/* Insight - only show when we have at least 2 days of data */}
+                  {history.length >= 2 && (
+                    <div className="mt-6 p-4 bg-info/5 border border-info/20 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 size={18} className="text-info mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            {history[history.length - 1].score >= history[0].score
+                              ? 'Consistent improvement this week'
+                              : 'Room for improvement'}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Your readiness has {history[history.length - 1].score >= history[0].score ? 'increased' : 'decreased'} by {Math.abs(history[history.length - 1].score - history[0].score)} points
+                            over the past {history.length} days.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No check-in data yet this week.</p>
+                  <p className="text-sm">Complete your first check-in to see your history.</p>
                 </div>
-              </div>
+              )}
             </section>
 
             {/* Low Readiness Warning */}
