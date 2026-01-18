@@ -65,19 +65,18 @@ export default function StudentSettingsPage() {
     position: '',
   });
 
-  // Notification preferences
+  // Notification preferences (matches API field names)
   const [notifications, setNotifications] = useState({
-    assignmentReminders: true,
+    pushEnabled: true,
+    taskReminders: true,
+    assignmentNotifs: true,
+    chatMessages: false,
     goalMilestones: true,
-    coachMessages: true,
-    weeklyReports: false,
-    emailDigest: true,
   });
 
-  // Privacy settings
+  // Privacy settings (consentChatSummaries from API)
   const [privacy, setPrivacy] = useState({
-    shareWithCoach: true,
-    anonymousData: false,
+    consentChatSummaries: true,
   });
 
   // Fetch profile on mount
@@ -107,8 +106,14 @@ export default function StudentSettingsPage() {
         const notifRes = await fetch('/api/athlete/notifications');
         if (notifRes.ok) {
           const notifJson = await notifRes.json();
-          if (notifJson.preferences) {
-            setNotifications(notifJson.preferences);
+          if (notifJson.notifications) {
+            setNotifications({
+              pushEnabled: notifJson.notifications.pushEnabled ?? true,
+              taskReminders: notifJson.notifications.taskReminders ?? true,
+              assignmentNotifs: notifJson.notifications.assignmentNotifs ?? true,
+              chatMessages: notifJson.notifications.chatMessages ?? false,
+              goalMilestones: notifJson.notifications.goalMilestones ?? true,
+            });
           }
         }
 
@@ -116,12 +121,9 @@ export default function StudentSettingsPage() {
         const consentRes = await fetch('/api/athlete/consent');
         if (consentRes.ok) {
           const consentJson = await consentRes.json();
-          if (consentJson.consent) {
-            setPrivacy({
-              shareWithCoach: consentJson.consent.shareWithCoach ?? true,
-              anonymousData: consentJson.consent.anonymousResearch ?? false,
-            });
-          }
+          setPrivacy({
+            consentChatSummaries: consentJson.consentChatSummaries ?? true,
+          });
         }
       } catch (error) {
         console.error('Error fetching settings:', error);
@@ -180,8 +182,7 @@ export default function StudentSettingsPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          shareWithCoach: privacy.shareWithCoach,
-          anonymousResearch: privacy.anonymousData,
+          consentChatSummaries: privacy.consentChatSummaries,
         }),
       });
 
@@ -381,18 +382,72 @@ export default function StudentSettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="assignment-reminders" className="text-sm font-medium">
-                    Assignment Reminders
+                  <Label htmlFor="push-enabled" className="text-sm font-medium">
+                    Push Notifications
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Enable push notifications for updates
+                  </p>
+                </div>
+                <Switch
+                  id="push-enabled"
+                  checked={notifications.pushEnabled}
+                  onCheckedChange={(checked: boolean) =>
+                    setNotifications({ ...notifications, pushEnabled: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="task-reminders" className="text-sm font-medium">
+                    Task Reminders
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Get reminded about pending tasks and activities
+                  </p>
+                </div>
+                <Switch
+                  id="task-reminders"
+                  checked={notifications.taskReminders}
+                  onCheckedChange={(checked: boolean) =>
+                    setNotifications({ ...notifications, taskReminders: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="assignment-notifs" className="text-sm font-medium">
+                    Assignment Notifications
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     Get notified about upcoming assignment due dates
                   </p>
                 </div>
                 <Switch
-                  id="assignment-reminders"
-                  checked={notifications.assignmentReminders}
+                  id="assignment-notifs"
+                  checked={notifications.assignmentNotifs}
                   onCheckedChange={(checked: boolean) =>
-                    setNotifications({ ...notifications, assignmentReminders: checked })
+                    setNotifications({ ...notifications, assignmentNotifs: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="chat-messages" className="text-sm font-medium">
+                    Chat Messages
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Receive notifications for new chat messages
+                  </p>
+                </div>
+                <Switch
+                  id="chat-messages"
+                  checked={notifications.chatMessages}
+                  onCheckedChange={(checked: boolean) =>
+                    setNotifications({ ...notifications, chatMessages: checked })
                   }
                 />
               </div>
@@ -411,60 +466,6 @@ export default function StudentSettingsPage() {
                   checked={notifications.goalMilestones}
                   onCheckedChange={(checked: boolean) =>
                     setNotifications({ ...notifications, goalMilestones: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="coach-messages" className="text-sm font-medium">
-                    Sports Psychologist Messages
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Receive notifications for messages from your sports psychologist
-                  </p>
-                </div>
-                <Switch
-                  id="coach-messages"
-                  checked={notifications.coachMessages}
-                  onCheckedChange={(checked: boolean) =>
-                    setNotifications({ ...notifications, coachMessages: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="weekly-reports" className="text-sm font-medium">
-                    Weekly Progress Reports
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Get a summary of your weekly mood and goal progress
-                  </p>
-                </div>
-                <Switch
-                  id="weekly-reports"
-                  checked={notifications.weeklyReports}
-                  onCheckedChange={(checked: boolean) =>
-                    setNotifications({ ...notifications, weeklyReports: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="email-digest" className="text-sm font-medium">
-                    Email Digest
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Receive daily email summaries of your activity
-                  </p>
-                </div>
-                <Switch
-                  id="email-digest"
-                  checked={notifications.emailDigest}
-                  onCheckedChange={(checked: boolean) =>
-                    setNotifications({ ...notifications, emailDigest: checked })
                   }
                 />
               </div>
@@ -494,36 +495,18 @@ export default function StudentSettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="share-coach" className="text-sm font-medium">
-                    Share Data with Sports Psychologist
+                  <Label htmlFor="consent-summaries" className="text-sm font-medium">
+                    Share Weekly Chat Summaries
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Allow your sports psychologist to view your mood logs, goals, and progress
+                    Allow your sports psychologist to view anonymized weekly summaries of your chat sessions
                   </p>
                 </div>
                 <Switch
-                  id="share-coach"
-                  checked={privacy.shareWithCoach}
+                  id="consent-summaries"
+                  checked={privacy.consentChatSummaries}
                   onCheckedChange={(checked: boolean) =>
-                    setPrivacy({ ...privacy, shareWithCoach: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="anonymous-data" className="text-sm font-medium">
-                    Anonymous Research Data
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Contribute anonymized data for sports psychology research
-                  </p>
-                </div>
-                <Switch
-                  id="anonymous-data"
-                  checked={privacy.anonymousData}
-                  onCheckedChange={(checked: boolean) =>
-                    setPrivacy({ ...privacy, anonymousData: checked })
+                    setPrivacy({ ...privacy, consentChatSummaries: checked })
                   }
                 />
               </div>
@@ -535,8 +518,8 @@ export default function StudentSettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Your Data is Protected</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    All data is encrypted and stored securely. Your sports psychologist only sees aggregated trends
-                    unless you explicitly share specific information. You can revoke access at any time.
+                    All data is encrypted and stored securely. Your sports psychologist only sees weekly chat summaries
+                    (not individual messages) when you grant consent. You can revoke access at any time and all summaries will be deleted.
                   </p>
                 </div>
               </div>
