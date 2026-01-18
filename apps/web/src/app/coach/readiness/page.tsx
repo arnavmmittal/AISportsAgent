@@ -552,10 +552,29 @@ function AlertsTab({
   };
 
   const handleMarkResolved = async (alertId: string) => {
-    setAlerts(alerts.map(alert =>
-      alert.id === alertId ? { ...alert, status: 'resolved' as const } : alert
-    ));
-    // TODO: Call API to mark as resolved
+    try {
+      // Optimistically update UI
+      setAlerts(alerts.map(alert =>
+        alert.id === alertId ? { ...alert, status: 'resolved' as const } : alert
+      ));
+
+      // Call API to mark crisis alert as reviewed
+      const response = await fetch('/api/coach/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: alertId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark alert as resolved');
+      }
+    } catch (error) {
+      console.error('Error marking alert as resolved:', error);
+      // Revert optimistic update on failure
+      setAlerts(alerts.map(alert =>
+        alert.id === alertId ? { ...alert, status: 'active' as const } : alert
+      ));
+    }
   };
 
   const filteredAlerts = alerts.filter(alert => {
