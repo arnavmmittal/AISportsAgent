@@ -96,14 +96,10 @@ export default function CoachSettingsPage() {
           }
         }
 
-        // Fetch notification preferences if API exists
-        const notifRes = await fetch('/api/coach/notifications');
-        if (notifRes.ok) {
-          const notifJson = await notifRes.json();
-          if (notifJson.preferences) {
-            setNotifications(notifJson.preferences);
-          }
-        }
+        // Note: Coach notification preferences API doesn't exist yet.
+        // The /api/coach/notifications endpoint returns crisis alerts, not preferences.
+        // Notification preferences are currently stored in local state only.
+        // TODO: Create /api/coach/notification-preferences endpoint when needed.
       } catch (error) {
         console.error('Error fetching settings:', error);
       } finally {
@@ -134,23 +130,17 @@ export default function CoachSettingsPage() {
   };
 
   const handleSaveNotifications = async () => {
-    try {
-      // TODO: Implement notifications preferences update API
-      toast.success('Notification preferences saved!');
-    } catch (error) {
-      console.error('Error saving notifications:', error);
-      toast.error('Failed to save preferences. Please try again.');
-    }
+    // Note: No API endpoint for coach notification preferences yet.
+    // These are stored locally for demonstration purposes only.
+    // TODO: Create /api/coach/notification-preferences endpoint for persistence
+    toast.info('Notification preferences updated locally (not persisted to server yet)');
   };
 
   const handleSavePrivacy = async () => {
-    try {
-      // TODO: Implement privacy settings update API
-      toast.success('Privacy settings saved!');
-    } catch (error) {
-      console.error('Error saving privacy settings:', error);
-      toast.error('Failed to save settings. Please try again.');
-    }
+    // Note: No API endpoint for coach privacy settings yet.
+    // These are stored locally for demonstration purposes only.
+    // TODO: Create /api/coach/privacy-settings endpoint for persistence
+    toast.info('Privacy settings updated locally (not persisted to server yet)');
   };
 
   const handleCopyInviteCode = () => {
@@ -162,9 +152,22 @@ export default function CoachSettingsPage() {
 
   const handleGenerateNewCode = async () => {
     try {
-      // TODO: Implement new code generation API
-      toast.success('New invite code generated!');
+      const response = await fetch('/api/coach/invite-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data) {
+          setInviteCodeData(data.data);
+          toast.success('New invite code generated!');
+        }
+      } else {
+        throw new Error('Failed to generate new code');
+      }
     } catch (error) {
+      console.error('Error generating invite code:', error);
       toast.error('Failed to generate new code.');
     }
   };
