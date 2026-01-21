@@ -1,13 +1,15 @@
 name: MCP Server - Full Integration Tests
 
-# Run less frequently (nightly or manual) to save CI minutes
+# DISABLED: Heavy integration tests - only run manually when preparing for production
+# These tests require Docker builds with ~2GB dependencies and often timeout/fail
+# Re-enable schedule when ready for production deployment
 on:
-  workflow_dispatch:  # Manual trigger
-  schedule:
-    - cron: '0 2 * * *'  # 2 AM daily
-  push:
-    branches:
-      - main  # Only on main branch merges
+  workflow_dispatch:  # Manual trigger only
+  # schedule:
+  #   - cron: '0 2 * * *'  # 2 AM daily - DISABLED until production ready
+  # push:
+  #   branches:
+  #     - main  # Only on main branch merges - DISABLED until production ready
 
 jobs:
   integration-test:
