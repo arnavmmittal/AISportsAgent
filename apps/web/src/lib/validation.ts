@@ -80,14 +80,39 @@ export const nameSchema = z
   .transform(sanitizeHtml);
 
 /**
+ * CUID validation (Prisma's default ID format)
+ * CUIDs start with 'c' followed by lowercase alphanumeric characters
+ */
+export const cuidSchema = z.string().regex(/^c[a-z0-9]{20,}$/, 'Invalid CUID format');
+
+/**
+ * Flexible ID schema that accepts both UUID and CUID formats
+ * - UUID: 12fbaf48-7716-43b6-b3eb-6ab0e8762f26
+ * - CUID: cmkwqze7602ets7hx9gh0crf6
+ */
+export const flexibleIdSchema = z.string().refine(
+  (val) => {
+    // Check if valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(val)) return true;
+    // Check if valid CUID (starts with 'c', followed by lowercase alphanumeric)
+    const cuidRegex = /^c[a-z0-9]{20,}$/;
+    if (cuidRegex.test(val)) return true;
+    return false;
+  },
+  { message: 'Invalid ID format (expected UUID or CUID)' }
+);
+
+/**
  * Optional session ID
  * Handles empty strings by converting them to undefined
+ * Accepts both UUID and CUID formats (Prisma uses CUIDs by default)
  */
 export const sessionIdSchema = z
   .string()
   .optional()
   .transform((val) => (val === '' ? undefined : val))
-  .pipe(z.string().uuid('Invalid session ID').optional());
+  .pipe(flexibleIdSchema.optional());
 
 // ============================================
 // API Route Schemas

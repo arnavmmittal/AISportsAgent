@@ -10,12 +10,20 @@ export const dynamic = 'force-dynamic';
  * Send the same payload as /api/chat/stream to see exactly what's failing
  */
 export async function POST(req: NextRequest) {
-  const results: Record<string, unknown> = {
+  const errors: string[] = [];
+  const results: {
+    timestamp: string;
+    rawBody: string | null;
+    parsedBody: unknown;
+    validationResult: unknown;
+    errors: string[];
+    fieldChecks?: Record<string, unknown>;
+  } = {
     timestamp: new Date().toISOString(),
     rawBody: null,
     parsedBody: null,
     validationResult: null,
-    errors: [],
+    errors,
   };
 
   try {
@@ -29,7 +37,7 @@ export async function POST(req: NextRequest) {
       body = JSON.parse(bodyText);
       results.parsedBody = body;
     } catch (e) {
-      results.errors.push(`JSON parse error: ${e instanceof Error ? e.message : 'unknown'}`);
+      errors.push(`JSON parse error: ${e instanceof Error ? e.message : 'unknown'}`);
       return NextResponse.json(results, { status: 400 });
     }
 
@@ -56,25 +64,43 @@ export async function POST(req: NextRequest) {
       };
 
       // session_id check
+      const sessionIdVal = obj.session_id;
       fieldChecks.session_id = {
-        value: obj.session_id,
-        type: typeof obj.session_id,
-        isEmpty: obj.session_id === '',
-        isNull: obj.session_id === null,
-        isUndefined: obj.session_id === undefined,
-        isValidUUID: typeof obj.session_id === 'string' && obj.session_id !== '' &&
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(obj.session_id),
+        value: sessionIdVal,
+        type: typeof sessionIdVal,
+        isEmpty: sessionIdVal === '',
+        isNull: sessionIdVal === null,
+        isUndefined: sessionIdVal === undefined,
+        isValidUUID: typeof sessionIdVal === 'string' && sessionIdVal !== '' &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionIdVal),
+        isValidCUID: typeof sessionIdVal === 'string' && sessionIdVal !== '' &&
+          /^c[a-z0-9]{20,}$/.test(sessionIdVal),
+        isValidId: typeof sessionIdVal === 'string' && sessionIdVal !== '' &&
+          (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionIdVal) ||
+           /^c[a-z0-9]{20,}$/.test(sessionIdVal)),
       };
     }
 
     results.fieldChecks = fieldChecks;
 
     // Now try the actual validation schema
+    // Flexible ID schema that accepts both UUID and CUID
+    const flexibleIdSchema = z.string().refine(
+      (val) => {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(val)) return true;
+        const cuidRegex = /^c[a-z0-9]{20,}$/;
+        if (cuidRegex.test(val)) return true;
+        return false;
+      },
+      { message: 'Invalid ID format (expected UUID or CUID)' }
+    );
+
     const sessionIdSchema = z
       .string()
       .optional()
       .transform((val) => (val === '' ? undefined : val))
-      .pipe(z.string().uuid('Invalid session ID').optional());
+      .pipe(flexibleIdSchema.optional());
 
     const chatStreamRequestSchema = z.object({
       message: z.string().min(1).max(2000),
@@ -105,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(results);
   } catch (error) {
-    results.errors.push(error instanceof Error ? error.message : 'Unknown error');
+    errors.push(error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(results, { status: 500 });
   }
 }
