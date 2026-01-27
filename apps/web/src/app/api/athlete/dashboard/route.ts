@@ -27,40 +27,57 @@ export async function GET(req: NextRequest) {
     const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Fetch data in parallel
-    const [
-      recentMoodLogs,
-      todayMoodLog,
-      goals,
-      recentChatSession,
-      pendingAssignments,
-      athleteProfile,
-    ] = await Promise.all([
-      // Last 7 days of mood logs for readiness calculation
-      prisma.moodLog.findMany({
+    // Fetch data with individual error handling to identify failures
+    let recentMoodLogs: Awaited<ReturnType<typeof prisma.moodLog.findMany>> = [];
+    let todayMoodLog: Awaited<ReturnType<typeof prisma.moodLog.findFirst>> = null;
+    let goals: Awaited<ReturnType<typeof prisma.goal.findMany>> = [];
+    let recentChatSession: { id: string; topic: string | null; focusArea: string | null; updatedAt: Date } | null = null;
+    let pendingAssignments: { id: string; title: string; dueDate: Date | null; description: string }[] = [];
+    let athleteProfile: { name: string; Athlete: { sport: string; year: string } | null } | null = null;
+
+    const errors: string[] = [];
+
+    // Last 7 days of mood logs for readiness calculation
+    try {
+      recentMoodLogs = await prisma.moodLog.findMany({
         where: {
           athleteId,
           createdAt: { gte: sevenDaysAgo },
         },
         orderBy: { createdAt: 'desc' },
         take: 14, // Up to 2 per day
-      }),
+      });
+    } catch (e) {
+      console.error('[Dashboard] moodLog.findMany failed:', e);
+      errors.push(`moodLog: ${e instanceof Error ? e.message : 'unknown'}`);
+    }
 
-      // Today's mood log to check if check-in completed
-      prisma.moodLog.findFirst({
+    // Today's mood log to check if check-in completed
+    try {
+      todayMoodLog = await prisma.moodLog.findFirst({
         where: {
           athleteId,
           createdAt: { gte: today },
         },
-      }),
+      });
+    } catch (e) {
+      console.error('[Dashboard] moodLog.findFirst failed:', e);
+      errors.push(`todayMoodLog: ${e instanceof Error ? e.message : 'unknown'}`);
+    }
 
-      // Goals for progress stats
-      prisma.goal.findMany({
+    // Goals for progress stats
+    try {
+      goals = await prisma.goal.findMany({
         where: { athleteId },
-      }),
+      });
+    } catch (e) {
+      console.error('[Dashboard] goal.findMany failed:', e);
+      errors.push(`goals: ${e instanceof Error ? e.message : 'unknown'}`);
+    }
 
-      // Most recent chat session for "last topic"
-      prisma.chatSession.findFirst({
+    // Most recent chat session for "last topic"
+    try {
+      recentChatSession = await prisma.chatSession.findFirst({
         where: { athleteId },
         orderBy: { updatedAt: 'desc' },
         select: {
@@ -69,10 +86,15 @@ export async function GET(req: NextRequest) {
           focusArea: true,
           updatedAt: true,
         },
-      }),
+      });
+    } catch (e) {
+      console.error('[Dashboard] chatSession.findFirst failed:', e);
+      errors.push(`chatSession: ${e instanceof Error ? e.message : 'unknown'}`);
+    }
 
-      // Pending assignments (due in next 7 days) that athlete hasn't submitted
-      prisma.assignment.findMany({
+    // Pending assignments (due in next 7 days) that athlete hasn't submitted
+    try {
+      pendingAssignments = await prisma.assignment.findMany({
         where: {
           AssignmentSubmission: {
             none: {
@@ -92,10 +114,15 @@ export async function GET(req: NextRequest) {
           dueDate: true,
           description: true,
         },
-      }),
+      });
+    } catch (e) {
+      console.error('[Dashboard] assignment.findMany failed:', e);
+      errors.push(`assignments: ${e instanceof Error ? e.message : 'unknown'}`);
+    }
 
-      // Athlete profile for name and sport info
-      prisma.user.findUnique({
+    // Athlete profile for name and sport info
+    try {
+      athleteProfile = await prisma.user.findUnique({
         where: { id: athleteId },
         select: {
           name: true,
@@ -106,8 +133,16 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-      }),
-    ]);
+      });
+    } catch (e) {
+      console.error('[Dashboard] user.findUnique failed:', e);
+      errors.push(`athleteProfile: ${e instanceof Error ? e.message : 'unknown'}`);
+    }
+
+    // If any critical errors occurred, return them in development
+    if (errors.length > 0 && process.env.NODE_ENV !== 'production') {
+      console.error('[Dashboard] Query errors:', errors);
+    }
 
     // Calculate readiness score from mood logs
     const readiness = calculateReadiness(recentMoodLogs, todayMoodLog);
@@ -158,8 +193,15 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching athlete dashboard:', error);
+    // Include error details in non-production for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data' },
+      {
+        error: 'Failed to fetch dashboard data',
+        details: process.env.NODE_ENV !== 'production' ? errorMessage : undefined,
+        stack: process.env.NODE_ENV !== 'production' ? errorStack : undefined,
+      },
       { status: 500 }
     );
   }
