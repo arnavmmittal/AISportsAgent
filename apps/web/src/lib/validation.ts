@@ -81,11 +81,13 @@ export const nameSchema = z
 
 /**
  * Optional session ID
+ * Handles empty strings by converting them to undefined
  */
 export const sessionIdSchema = z
   .string()
-  .uuid('Invalid session ID')
-  .optional();
+  .optional()
+  .transform((val) => (val === '' ? undefined : val))
+  .pipe(z.string().uuid('Invalid session ID').optional());
 
 // ============================================
 // API Route Schemas
