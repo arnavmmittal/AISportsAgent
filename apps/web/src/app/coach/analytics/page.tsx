@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Analytics redirect (v2.1 Navigation Consolidation)
+ * Analytics Redirect (v3.0 Navigation Consolidation)
  *
- * Analytics has been merged into the Insights page.
- * The Insights page has tabs for Analytics and Reports.
- * This redirect ensures old bookmarks and links continue to work.
+ * All analytics are now showcased in AI Insights.
+ * "AI Insights" = "What should I KNOW and DO?" (THE SHOWCASE)
+ *
+ * This redirect ensures old bookmarks continue to work.
  */
 export default function AnalyticsRedirect() {
-  redirect('/coach/insights');
+  redirect('/coach/ai-insights');
 }

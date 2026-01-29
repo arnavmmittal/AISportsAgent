@@ -1,14 +1,13 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Reports redirect (v2.1 Navigation Consolidation)
+ * Reports Redirect (v3.0 Navigation Consolidation)
  *
- * Reports has been merged into the Insights page.
- * The Insights page has tabs for Analytics and Reports.
- * This redirect ensures old bookmarks and links continue to work.
+ * Reports are now in the Data Hub under the Reports tab.
+ * "Data Hub" = "Manage my DATA"
  *
- * Users can access Reports via the "Reports" tab in Insights.
+ * This redirect ensures old bookmarks continue to work.
  */
 export default function ReportsRedirect() {
-  redirect('/coach/insights?tab=reports');
+  redirect('/coach/data?tab=reports');
 }

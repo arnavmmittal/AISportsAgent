@@ -1,14 +1,13 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Performance redirect (v2.1 Navigation Consolidation)
+ * Performance Redirect (v3.0 Navigation Consolidation)
  *
- * Performance has been merged into the Team page.
- * The Team page has tabs for Roster and Performance.
- * This redirect ensures old bookmarks and links continue to work.
+ * Performance data management is now in the Data Hub.
+ * "Data Hub" = "Manage my DATA"
  *
- * Users can access performance tools via the "Performance" tab in Team.
+ * This redirect ensures old bookmarks continue to work.
  */
 export default function PerformanceRedirect() {
-  redirect('/coach/team?tab=performance');
+  redirect('/coach/data');
 }
