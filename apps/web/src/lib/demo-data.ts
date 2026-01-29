@@ -686,6 +686,199 @@ export function generateDemoChatSessions(): DemoChatSession[] {
 }
 
 // ============================================================
+// CHAT INSIGHTS (Team-wide conversation analysis for coaches)
+// ============================================================
+
+export interface DemoChatInsightsResponse {
+  teamSentiment: {
+    current: number;
+    trend: 'improving' | 'stable' | 'declining';
+    weeklyChange: number;
+  };
+  topThemes: {
+    theme: string;
+    count: number;
+    athletes: string[];
+    trend: 'increasing' | 'stable' | 'decreasing';
+  }[];
+  sentimentHistory: {
+    date: string;
+    avgSentiment: number;
+    sessionCount: number;
+  }[];
+  disengagedAthletes: {
+    id: string;
+    name: string;
+    sport: string | null;
+    daysSinceChat: number;
+    lastChatDate: string | null;
+  }[];
+  concerningAthletes: {
+    id: string;
+    name: string;
+    sport: string | null;
+    concerningTopics: string[];
+    avgSentiment: number;
+    recentSessions: number;
+  }[];
+  stats: {
+    totalSessions: number;
+    athletesWithChats: number;
+    avgSessionsPerAthlete: number;
+    chatEngagementRate: number;
+  };
+  generatedAt: string;
+}
+
+const CHAT_THEMES = [
+  'performance-anxiety',
+  'competition-preparation',
+  'mindset-mental',
+  'recovery-rest',
+  'team-conflict',
+  'academic-stress',
+  'coach-pressure',
+  'injury-concern',
+  'goal-setting',
+  'technique-refinement',
+];
+
+const CONCERNING_CHAT_TOPICS = [
+  'fear of failure',
+  'performance expectations',
+  'comparison to others',
+  'social isolation',
+];
+
+export function generateDemoChatInsights(): DemoChatInsightsResponse {
+  // Generate 14 days of sentiment history
+  const sentimentHistory: DemoChatInsightsResponse['sentimentHistory'] = [];
+  let baseSentiment = 0.1;
+  for (let i = 13; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    baseSentiment += (Math.random() - 0.45) * 0.15; // Slight upward trend
+    baseSentiment = Math.max(-0.8, Math.min(0.8, baseSentiment));
+    sentimentHistory.push({
+      date: date.toISOString().split('T')[0],
+      avgSentiment: Math.round(baseSentiment * 100) / 100,
+      sessionCount: Math.floor(Math.random() * 8) + 3,
+    });
+  }
+
+  // Current sentiment from last few days
+  const recentSentiments = sentimentHistory.slice(-3);
+  const currentSentiment = recentSentiments.reduce((sum, d) => sum + d.avgSentiment, 0) / recentSentiments.length;
+  const olderSentiments = sentimentHistory.slice(-7, -3);
+  const olderSentiment = olderSentiments.reduce((sum, d) => sum + d.avgSentiment, 0) / olderSentiments.length;
+  const weeklyChange = currentSentiment - olderSentiment;
+
+  // Generate top themes with realistic distribution
+  const topThemes: DemoChatInsightsResponse['topThemes'] = [
+    {
+      theme: 'competition-preparation',
+      count: 28,
+      athletes: ['Sarah Johnson', 'Mike Chen', 'Emma Williams', 'James Garcia', 'Olivia Smith'],
+      trend: 'increasing',
+    },
+    {
+      theme: 'performance-anxiety',
+      count: 19,
+      athletes: ['Mike Chen', 'Sophia Davis', 'Lucas Miller'],
+      trend: 'stable',
+    },
+    {
+      theme: 'mindset-mental',
+      count: 15,
+      athletes: ['Emma Williams', 'Ava Wilson', 'Noah Taylor'],
+      trend: 'increasing',
+    },
+    {
+      theme: 'recovery-rest',
+      count: 12,
+      athletes: ['James Garcia', 'Isabella Anderson'],
+      trend: 'stable',
+    },
+    {
+      theme: 'academic-stress',
+      count: 8,
+      athletes: ['Sophia Davis', 'Charlotte Thomas'],
+      trend: 'increasing',
+    },
+    {
+      theme: 'team-conflict',
+      count: 5,
+      athletes: ['Ethan Brown', 'Mason Martinez'],
+      trend: 'decreasing',
+    },
+  ];
+
+  // Generate disengaged athletes (haven't chatted in 7+ days)
+  const disengagedAthletes: DemoChatInsightsResponse['disengagedAthletes'] = [
+    {
+      id: 'demo-athlete-15',
+      name: 'Tyler Robinson',
+      sport: 'Football',
+      daysSinceChat: 14,
+      lastChatDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'demo-athlete-16',
+      name: 'Rachel Lee',
+      sport: 'Swimming',
+      daysSinceChat: 10,
+      lastChatDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'demo-athlete-17',
+      name: 'David Kim',
+      sport: 'Basketball',
+      daysSinceChat: 8,
+      lastChatDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  // Generate athletes with concerning patterns
+  const concerningAthletes: DemoChatInsightsResponse['concerningAthletes'] = [
+    {
+      id: 'demo-athlete-2',
+      name: 'Mike Chen',
+      sport: 'Football',
+      concerningTopics: ['performance-anxiety', 'fear of failure', 'comparison to others'],
+      avgSentiment: -0.35,
+      recentSessions: 4,
+    },
+    {
+      id: 'demo-athlete-6',
+      name: 'Sophia Davis',
+      sport: 'Soccer',
+      concerningTopics: ['academic-stress', 'performance expectations'],
+      avgSentiment: -0.22,
+      recentSessions: 3,
+    },
+  ];
+
+  return {
+    teamSentiment: {
+      current: Math.round(currentSentiment * 100) / 100,
+      trend: weeklyChange > 0.1 ? 'improving' : weeklyChange < -0.1 ? 'declining' : 'stable',
+      weeklyChange: Math.round(weeklyChange * 100) / 100,
+    },
+    topThemes,
+    sentimentHistory,
+    disengagedAthletes,
+    concerningAthletes,
+    stats: {
+      totalSessions: 87,
+      athletesWithChats: 22,
+      avgSessionsPerAthlete: 3.9,
+      chatEngagementRate: 88,
+    },
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+// ============================================================
 // HELPER: Check if demo mode is enabled
 // ============================================================
 

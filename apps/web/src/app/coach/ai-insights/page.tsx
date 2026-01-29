@@ -27,15 +27,19 @@ import {
   Zap,
   ChevronRight,
   FlaskConical,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   isDemoMode,
   generateDemoInsights,
   generateDemoTeamSummary,
+  generateDemoChatInsights,
   type DemoInsight,
   type DemoTeamSummary,
+  type DemoChatInsightsResponse,
 } from '@/lib/demo-data';
+import { ChatInsightsPanel } from '@/components/coach/insights/ChatInsightsPanel';
 
 interface InsightMetric {
   value: number | string;
@@ -68,6 +72,46 @@ interface TeamSummary {
   decliningCount: number;
 }
 
+interface ChatInsightsData {
+  teamSentiment: {
+    current: number;
+    trend: 'improving' | 'stable' | 'declining';
+    weeklyChange: number;
+  };
+  topThemes: {
+    theme: string;
+    count: number;
+    athletes: string[];
+    trend: 'increasing' | 'stable' | 'decreasing';
+  }[];
+  sentimentHistory: {
+    date: string;
+    avgSentiment: number;
+    sessionCount: number;
+  }[];
+  disengagedAthletes: {
+    id: string;
+    name: string;
+    sport: string | null;
+    daysSinceChat: number;
+    lastChatDate: string | null;
+  }[];
+  concerningAthletes: {
+    id: string;
+    name: string;
+    sport: string | null;
+    concerningTopics: string[];
+    avgSentiment: number;
+    recentSessions: number;
+  }[];
+  stats: {
+    totalSessions: number;
+    athletesWithChats: number;
+    avgSessionsPerAthlete: number;
+    chatEngagementRate: number;
+  };
+}
+
 function AIInsightsPageContent() {
   const searchParams = useSearchParams();
   const demoMode = isDemoMode(searchParams);
@@ -76,6 +120,7 @@ function AIInsightsPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
+  const [chatInsights, setChatInsights] = useState<ChatInsightsData | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
@@ -93,6 +138,7 @@ function AIInsightsPageContent() {
     setTimeout(() => {
       const demoInsights = generateDemoInsights();
       const demoSummary = generateDemoTeamSummary();
+      const demoChatInsights = generateDemoChatInsights();
 
       // Map demo insights to the page's Insight type
       setInsights(demoInsights.map(i => ({
@@ -100,6 +146,7 @@ function AIInsightsPageContent() {
         category: i.category as Insight['category'],
       })));
       setTeamSummary(demoSummary);
+      setChatInsights(demoChatInsights);
       setGeneratedAt(new Date().toISOString());
       setLoading(false);
     }, 800);
@@ -110,16 +157,27 @@ function AIInsightsPageContent() {
     setError(null);
 
     try {
-      const response = await fetch('/api/coach/ai-insights');
-      const data = await response.json();
+      // Fetch both AI insights and chat insights in parallel
+      const [insightsResponse, chatResponse] = await Promise.all([
+        fetch('/api/coach/ai-insights'),
+        fetch('/api/coach/chat-insights'),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch insights');
+      const insightsData = await insightsResponse.json();
+      const chatData = await chatResponse.json();
+
+      if (!insightsResponse.ok) {
+        throw new Error(insightsData.error || 'Failed to fetch insights');
       }
 
-      setInsights(data.insights || []);
-      setTeamSummary(data.teamSummary || null);
-      setGeneratedAt(data.generatedAt || null);
+      setInsights(insightsData.insights || []);
+      setTeamSummary(insightsData.teamSummary || null);
+      setGeneratedAt(insightsData.generatedAt || null);
+
+      // Chat insights are optional - don't fail if they're not available
+      if (chatResponse.ok) {
+        setChatInsights(chatData);
+      }
     } catch (err) {
       console.error('Error fetching AI insights:', err);
       setError(err instanceof Error ? err.message : 'Failed to load insights');
@@ -142,6 +200,7 @@ function AIInsightsPageContent() {
   // Count insights by category
   const categoryCounts = {
     all: insights.length,
+    conversation: chatInsights?.stats.totalSessions || 0,
     correlation: insights.filter(i => i.category === 'correlation').length,
     prediction: insights.filter(i => i.category === 'prediction').length,
     'effective-technique': insights.filter(i => i.category === 'effective-technique').length,
@@ -151,6 +210,7 @@ function AIInsightsPageContent() {
 
   const filterOptions = [
     { key: 'all', label: 'All Insights', icon: Sparkles },
+    { key: 'conversation', label: 'Conversations', icon: MessageSquare },
     { key: 'correlation', label: 'Correlations', icon: BarChart3 },
     { key: 'effective-technique', label: 'Effective Techniques', icon: Target },
     { key: 'pattern', label: 'Patterns', icon: TrendingUp },
@@ -314,8 +374,27 @@ function AIInsightsPageContent() {
               ))}
             </div>
 
-            {/* Insights Grid */}
-            {otherInsights.length > 0 ? (
+            {/* Conversation Insights Panel */}
+            {activeFilter === 'conversation' && chatInsights && (
+              <ChatInsightsPanel data={chatInsights} />
+            )}
+
+            {/* Conversation Empty State */}
+            {activeFilter === 'conversation' && !chatInsights && (
+              <div className="text-center py-12">
+                <MessageSquare className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  No Conversation Data Yet
+                </h3>
+                <p className="text-slate-400 max-w-md mx-auto">
+                  Conversation insights appear when athletes chat with the AI coach.
+                  Encourage athletes to use the chat feature for mental performance support.
+                </p>
+              </div>
+            )}
+
+            {/* Insights Grid (for non-conversation filters) */}
+            {activeFilter !== 'conversation' && otherInsights.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {otherInsights.map((insight) => (
                   <InsightCard
@@ -332,7 +411,10 @@ function AIInsightsPageContent() {
                   />
                 ))}
               </div>
-            ) : (
+            )}
+
+            {/* Empty State (for non-conversation filters) */}
+            {activeFilter !== 'conversation' && otherInsights.length === 0 && (
               <div className="text-center py-12">
                 <Brain className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">
