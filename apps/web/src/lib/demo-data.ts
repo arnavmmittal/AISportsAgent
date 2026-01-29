@@ -879,6 +879,226 @@ export function generateDemoChatInsights(): DemoChatInsightsResponse {
 }
 
 // ============================================================
+// ALERT RULES (Coach-defined monitoring rules)
+// ============================================================
+
+export interface DemoAlertRule {
+  id: string;
+  name: string;
+  description: string | null;
+  triggerType: 'READINESS_DROP' | 'READINESS_DECLINE' | 'INACTIVITY' | 'CHAT_INACTIVITY' | 'SENTIMENT_DECLINE' | 'THEME_MENTION' | 'MULTIPLE_ATHLETES' | 'FORECAST_DECLINE' | 'MISSED_CHECKINS';
+  threshold: number | null;
+  thresholdString: string | null;
+  comparisonOp: string | null;
+  timeWindowDays: number | null;
+  minOccurrences: number | null;
+  channels: ('IN_APP' | 'EMAIL' | 'SMS')[];
+  isEnabled: boolean;
+  createdAt: string;
+  lastTriggeredAt: string | null;
+  triggerCount: number;
+}
+
+export interface DemoGeneratedAlert {
+  id: string;
+  title: string;
+  message: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  isRead: boolean;
+  createdAt: string;
+  athleteId: string | null;
+  athleteName: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface DemoAlertsResponse {
+  alerts: DemoGeneratedAlert[];
+  unreadCount: number;
+}
+
+export interface DemoAlertRulesResponse {
+  rules: DemoAlertRule[];
+}
+
+export function generateDemoAlertRules(): DemoAlertRulesResponse {
+  const rules: DemoAlertRule[] = [
+    {
+      id: 'rule-1',
+      name: 'Low Readiness Alert',
+      description: 'Alert when any athlete\'s readiness drops below 50',
+      triggerType: 'READINESS_DROP',
+      threshold: 50,
+      thresholdString: null,
+      comparisonOp: 'lt',
+      timeWindowDays: null,
+      minOccurrences: null,
+      channels: ['IN_APP', 'EMAIL'],
+      isEnabled: true,
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      lastTriggeredAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      triggerCount: 8,
+    },
+    {
+      id: 'rule-2',
+      name: 'Check-in Inactivity',
+      description: 'Alert when an athlete hasn\'t checked in for 5+ days',
+      triggerType: 'INACTIVITY',
+      threshold: 5,
+      thresholdString: null,
+      comparisonOp: null,
+      timeWindowDays: null,
+      minOccurrences: null,
+      channels: ['IN_APP'],
+      isEnabled: true,
+      createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+      lastTriggeredAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      triggerCount: 12,
+    },
+    {
+      id: 'rule-3',
+      name: 'Negative Sentiment Trend',
+      description: 'Alert when chat sentiment is consistently negative',
+      triggerType: 'SENTIMENT_DECLINE',
+      threshold: -0.3,
+      thresholdString: null,
+      comparisonOp: 'lt',
+      timeWindowDays: 7,
+      minOccurrences: null,
+      channels: ['IN_APP', 'EMAIL'],
+      isEnabled: true,
+      createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+      lastTriggeredAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      triggerCount: 3,
+    },
+    {
+      id: 'rule-4',
+      name: 'Injury Concern Mentioned',
+      description: 'Alert when athletes discuss injury-related topics',
+      triggerType: 'THEME_MENTION',
+      threshold: null,
+      thresholdString: 'injury-concern',
+      comparisonOp: 'contains',
+      timeWindowDays: 7,
+      minOccurrences: null,
+      channels: ['IN_APP', 'EMAIL', 'SMS'],
+      isEnabled: true,
+      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      lastTriggeredAt: null,
+      triggerCount: 0,
+    },
+    {
+      id: 'rule-5',
+      name: 'Team-wide Low Readiness',
+      description: 'Alert when 3+ athletes have low readiness simultaneously',
+      triggerType: 'MULTIPLE_ATHLETES',
+      threshold: 60,
+      thresholdString: null,
+      comparisonOp: 'lt',
+      timeWindowDays: null,
+      minOccurrences: 3,
+      channels: ['IN_APP', 'EMAIL'],
+      isEnabled: true,
+      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      lastTriggeredAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      triggerCount: 2,
+    },
+    {
+      id: 'rule-6',
+      name: 'Readiness Declining Trend',
+      description: 'Alert when readiness is trending downward over time',
+      triggerType: 'READINESS_DECLINE',
+      threshold: -1.5,
+      thresholdString: null,
+      comparisonOp: null,
+      timeWindowDays: 7,
+      minOccurrences: null,
+      channels: ['IN_APP'],
+      isEnabled: false,
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      lastTriggeredAt: null,
+      triggerCount: 0,
+    },
+  ];
+
+  return { rules };
+}
+
+export function generateDemoAlerts(): DemoAlertsResponse {
+  const alerts: DemoGeneratedAlert[] = [
+    {
+      id: 'alert-1',
+      title: 'Low Readiness Alert',
+      message: "James Garcia's readiness dropped to 42 (below 50)",
+      severity: 'HIGH',
+      isRead: false,
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      athleteId: 'demo-athlete-4',
+      athleteName: 'James Garcia',
+      metadata: { score: 42, threshold: 50 },
+    },
+    {
+      id: 'alert-2',
+      title: 'Check-in Inactivity',
+      message: "Tyler Robinson hasn't checked in for 14 days",
+      severity: 'MEDIUM',
+      isRead: false,
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      athleteId: 'demo-athlete-15',
+      athleteName: 'Tyler Robinson',
+      metadata: { daysSinceLog: 14, thresholdDays: 5 },
+    },
+    {
+      id: 'alert-3',
+      title: 'Negative Sentiment Trend',
+      message: "Mike Chen's conversation sentiment is concerning (-35)",
+      severity: 'MEDIUM',
+      isRead: false,
+      createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+      athleteId: 'demo-athlete-2',
+      athleteName: 'Mike Chen',
+      metadata: { avgSentiment: -0.35, threshold: -0.3 },
+    },
+    {
+      id: 'alert-4',
+      title: 'Team-wide Low Readiness',
+      message: '4 athletes have readiness below 60: James Garcia, Sarah Johnson, Emma Williams...',
+      severity: 'HIGH',
+      isRead: true,
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      athleteId: null,
+      athleteName: null,
+      metadata: { count: 4, threshold: 60 },
+    },
+    {
+      id: 'alert-5',
+      title: 'Check-in Inactivity',
+      message: "Rachel Lee hasn't checked in for 10 days",
+      severity: 'MEDIUM',
+      isRead: true,
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      athleteId: 'demo-athlete-16',
+      athleteName: 'Rachel Lee',
+      metadata: { daysSinceLog: 10, thresholdDays: 5 },
+    },
+    {
+      id: 'alert-6',
+      title: 'Low Readiness Alert',
+      message: "Sophia Davis's readiness dropped to 48 (below 50)",
+      severity: 'HIGH',
+      isRead: true,
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      athleteId: 'demo-athlete-6',
+      athleteName: 'Sophia Davis',
+      metadata: { score: 48, threshold: 50 },
+    },
+  ];
+
+  const unreadCount = alerts.filter(a => !a.isRead).length;
+
+  return { alerts, unreadCount };
+}
+
+// ============================================================
 // HELPER: Check if demo mode is enabled
 // ============================================================
 

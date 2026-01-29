@@ -17,10 +17,12 @@ import {
   Shield,
   Loader2,
   RefreshCw,
+  Settings,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/shared/ui/button';
 import { cn } from '@/lib/utils';
+import AlertRulesPanel from '@/components/coach/alerts/AlertRulesPanel';
 
 /**
  * Readiness Page (v2.1 Navigation Consolidation)
@@ -68,8 +70,8 @@ interface Alert {
 function ReadinessPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'readiness' | 'alerts'>(
-    (searchParams.get('tab') as 'readiness' | 'alerts') || 'readiness'
+  const [activeTab, setActiveTab] = useState<'readiness' | 'alerts' | 'rules'>(
+    (searchParams.get('tab') as 'readiness' | 'alerts' | 'rules') || 'readiness'
   );
 
   // Data states
@@ -134,7 +136,7 @@ function ReadinessPageContent() {
   }, []);
 
   // Handle tab changes with URL sync
-  const handleTabChange = (tab: 'readiness' | 'alerts') => {
+  const handleTabChange = (tab: 'readiness' | 'alerts' | 'rules') => {
     setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
     if (tab === 'readiness') {
@@ -201,6 +203,18 @@ function ReadinessPageContent() {
               </span>
             )}
           </button>
+          <button
+            onClick={() => handleTabChange('rules')}
+            className={cn(
+              'px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2',
+              activeTab === 'rules'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Settings className="w-4 h-4" />
+            Alert Rules
+          </button>
         </div>
 
         {/* Error State */}
@@ -219,7 +233,9 @@ function ReadinessPageContent() {
         {!error && (
           activeTab === 'readiness'
             ? <ReadinessTab athletes={heatmapData} interventions={interventions} />
-            : <AlertsTab alerts={alerts} setAlerts={setAlerts} />
+            : activeTab === 'alerts'
+              ? <AlertsTab alerts={alerts} setAlerts={setAlerts} />
+              : <AlertRulesTab />
         )}
       </div>
     </div>
@@ -802,6 +818,54 @@ function AlertsTab({
         </ul>
       </div>
     </>
+  );
+}
+
+// ============================================
+// ALERT RULES TAB
+// ============================================
+function AlertRulesTab() {
+  return (
+    <div className="space-y-6 animate-slide-up">
+      {/* Intro */}
+      <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+        <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+          <Settings className="w-4 h-4 text-primary" />
+          Smart Alert Rules
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Create custom rules to proactively monitor your athletes. Rules automatically evaluate
+          conditions like low readiness scores, missed check-ins, or concerning chat patterns
+          and generate alerts when triggered.
+        </p>
+      </div>
+
+      {/* Alert Rules Panel */}
+      <AlertRulesPanel />
+
+      {/* Quick Help */}
+      <div className="p-4 rounded-lg bg-muted/50 border border-border">
+        <h3 className="font-medium text-foreground mb-2">Rule Types</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="font-medium text-foreground">Readiness Monitoring</p>
+            <p className="text-muted-foreground">Track scores dropping below thresholds or declining trends</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Engagement Tracking</p>
+            <p className="text-muted-foreground">Alert on missed check-ins or chat inactivity</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Sentiment Analysis</p>
+            <p className="text-muted-foreground">Monitor for negative sentiment trends in conversations</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Topic Detection</p>
+            <p className="text-muted-foreground">Get notified when specific topics appear in chats</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
