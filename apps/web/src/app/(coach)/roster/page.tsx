@@ -5,14 +5,17 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Upload, Download, X } from 'lucide-react';
 import CoachPortalLayout from '@/components/coach/layouts/CoachPortalLayout';
 import { DashboardSection, DashboardContainer } from '@/components/coach/layouts/DashboardGrid';
 import FilterBar from '@/components/coach/roster/FilterBar';
 import AthleteGrid from '@/components/coach/roster/AthleteGrid';
 import AthleteProfileModal from '@/components/coach/roster/AthleteProfileModal';
+import BulkRosterPanel from '@/components/coach/roster/BulkRosterPanel';
 import { SkeletonAthleteCard } from '@/components/coach/ui/Skeleton';
 import { Athlete, AthleteFilters, ReadinessLevel } from '@/types/coach-portal';
+import { Button } from '@/components/shared/ui/button';
 
 function getReadinessLevel(mood: number, confidence: number, stress: number): ReadinessLevel {
   const score = Math.round(((mood + confidence + (11 - stress)) / 3) * 10);
@@ -30,16 +33,10 @@ export default function RosterPage() {
   const [filters, setFilters] = useState<AthleteFilters>({});
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showBulkPanel, setShowBulkPanel] = useState(false);
+  const [inviteCode, setInviteCode] = useState<string | undefined>();
 
-  useEffect(() => {
-    loadAthletes();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [athletes, filters, searchQuery]);
-
-  async function loadAthletes() {
+  const loadAthletes = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/coach/athletes');
@@ -70,7 +67,31 @@ export default function RosterPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  // Fetch invite code on mount
+  useEffect(() => {
+    const fetchInviteCode = async () => {
+      try {
+        const response = await fetch('/api/coach/invite-code');
+        if (response.ok) {
+          const data = await response.json();
+          setInviteCode(data.data?.inviteCode);
+        }
+      } catch (error) {
+        console.error('Error fetching invite code:', error);
+      }
+    };
+    fetchInviteCode();
+  }, []);
+
+  useEffect(() => {
+    loadAthletes();
+  }, [loadAthletes]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [athletes, filters, searchQuery]);
 
   function applyFilters() {
     let result = [...athletes];
@@ -121,12 +142,27 @@ export default function RosterPage() {
     setFilteredAthletes(result);
   }
 
+  const handleImportComplete = (count: number) => {
+    loadAthletes(); // Refresh the list
+    setShowBulkPanel(false);
+  };
+
   return (
     <CoachPortalLayout>
       <DashboardContainer>
         <DashboardSection
           title="Roster"
           description={`${filteredAthletes.length} athletes ${searchQuery || Object.keys(filters).length > 0 ? '(filtered)' : ''}`}
+          action={
+            <Button
+              onClick={() => setShowBulkPanel(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Bulk Operations
+            </Button>
+          }
         >
           {/* Search and Filters */}
           <FilterBar
@@ -162,6 +198,33 @@ export default function RosterPage() {
             athlete={selectedAthlete}
             onClose={() => setSelectedAthlete(null)}
           />
+        )}
+
+        {/* Bulk Roster Operations Modal */}
+        {showBulkPanel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Bulk Roster Operations</h2>
+                  <p className="text-sm text-muted-foreground">Import, export, and manage athletes in bulk</p>
+                </div>
+                <button
+                  onClick={() => setShowBulkPanel(false)}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <BulkRosterPanel
+                  onImportComplete={handleImportComplete}
+                  inviteCode={inviteCode}
+                  currentRosterSize={athletes.length}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </DashboardContainer>
     </CoachPortalLayout>
