@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/shared/ui/button';
 import { Input } from '@/components/shared/ui/input';
 import { Textarea } from '@/components/shared/ui/textarea';
@@ -28,9 +29,12 @@ import {
   Calendar,
   ChevronRight,
   CheckCircle2,
+  FlaskConical,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { isDemoMode, generateDemoGoals } from '@/lib/demo-data';
 
 /**
  * Student Goals Page (v2.1 - With Integrated Progress)
@@ -89,7 +93,9 @@ const CATEGORY_CONFIG = {
   },
 };
 
-export default function StudentGoalsPage() {
+function StudentGoalsPageContent() {
+  const searchParams = useSearchParams();
+  const demoMode = isDemoMode(searchParams);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [suggestedGoals, setSuggestedGoals] = useState<SuggestedGoal[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,10 +109,49 @@ export default function StudentGoalsPage() {
     targetDate: '',
   });
 
-  useEffect(() => {
-    loadGoals();
-    loadSuggestedGoals();
+  // Load demo goals
+  const loadDemoGoals = useCallback(() => {
+    setIsLoading(true);
+    setTimeout(() => {
+      const demoGoals = generateDemoGoals();
+      const transformedGoals: Goal[] = demoGoals.map((g) => ({
+        id: g.id,
+        title: g.title,
+        category: g.category.toUpperCase() as GoalCategory,
+        status: g.status === 'completed' ? 'COMPLETED' : g.status === 'at-risk' ? 'IN_PROGRESS' : 'IN_PROGRESS',
+        completionPct: Math.round((g.progress / g.target) * 100),
+        targetDate: new Date(g.dueDate),
+        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+      }));
+      setGoals(transformedGoals);
+      setSuggestedGoals([
+        {
+          id: 'sug-1',
+          title: 'Practice mindfulness before games',
+          description: 'Based on your pre-game anxiety patterns, daily mindfulness could help',
+          category: 'MENTAL',
+          reason: 'AI detected elevated stress before recent games',
+        },
+        {
+          id: 'sug-2',
+          title: 'Improve sleep consistency',
+          description: 'Your performance correlates with sleep quality',
+          category: 'PERSONAL',
+          reason: 'Sleep data shows high variability',
+        },
+      ]);
+      setIsLoading(false);
+    }, 400);
   }, []);
+
+  useEffect(() => {
+    if (demoMode) {
+      loadDemoGoals();
+    } else {
+      loadGoals();
+      loadSuggestedGoals();
+    }
+  }, [demoMode, loadDemoGoals]);
 
   const loadGoals = async () => {
     try {
@@ -171,6 +216,25 @@ export default function StudentGoalsPage() {
       return;
     }
 
+    // Demo mode: simulate goal creation
+    if (demoMode) {
+      const createdGoal: Goal = {
+        id: `demo-${Date.now()}`,
+        title: newGoal.title,
+        description: newGoal.description || undefined,
+        category: newGoal.category,
+        status: 'NOT_STARTED',
+        completionPct: 0,
+        targetDate: newGoal.targetDate ? new Date(newGoal.targetDate) : undefined,
+        createdAt: new Date(),
+      };
+      setGoals([createdGoal, ...goals]);
+      setIsCreateDialogOpen(false);
+      setNewGoal({ title: '', description: '', category: 'PERFORMANCE', targetDate: '' });
+      toast.success('Goal created! (Demo mode)');
+      return;
+    }
+
     try {
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
@@ -215,6 +279,23 @@ export default function StudentGoalsPage() {
   };
 
   const addSuggestedGoal = async (suggestion: SuggestedGoal) => {
+    // Demo mode: simulate adding suggested goal
+    if (demoMode) {
+      const createdGoal: Goal = {
+        id: `demo-${Date.now()}`,
+        title: suggestion.title,
+        description: suggestion.description,
+        category: suggestion.category,
+        status: 'NOT_STARTED',
+        completionPct: 0,
+        createdAt: new Date(),
+      };
+      setGoals([createdGoal, ...goals]);
+      setSuggestedGoals(suggestedGoals.filter((s) => s.id !== suggestion.id));
+      toast.success(`"${suggestion.title}" added! (Demo mode)`);
+      return;
+    }
+
     try {
       const profileResponse = await fetch('/api/athlete/profile');
       const profileData = await profileResponse.json();
@@ -329,6 +410,19 @@ export default function StudentGoalsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
+            <FlaskConical className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-amber-200 font-medium">Demo Mode Active</p>
+              <p className="text-amber-300/70 text-sm">
+                Viewing sample goals. Remove <code className="bg-amber-500/20 px-1 rounded">?demo=true</code> from URL to see real data.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <header className="flex items-start justify-between animate-fade-in">
           <div>
@@ -647,5 +741,24 @@ export default function StudentGoalsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading goals...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function StudentGoalsPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <StudentGoalsPageContent />
+    </Suspense>
   );
 }

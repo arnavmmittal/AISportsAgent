@@ -24,7 +24,7 @@
  * Uses design system v2.0 semantic tokens
  */
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -52,6 +52,7 @@ import {
   Battery,
   Check,
   MessageSquare,
+  FlaskConical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
@@ -62,6 +63,7 @@ import {
 } from '@/components/shared/athlete';
 import { MoodSlider, MoodQuickSelect } from '@/components/shared/athlete';
 import { toast } from 'sonner';
+import { isDemoMode, generateDemoAthleteDashboard, generateDemoMoodLogs, type DemoMoodLog } from '@/lib/demo-data';
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
@@ -171,6 +173,7 @@ function getMoodEmoji(value: number) {
 function WellnessPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const demoMode = isDemoMode(searchParams);
   const [activeTab, setActiveTab] = useState<WellnessTab>(
     (searchParams.get('tab') as WellnessTab) || 'readiness'
   );
@@ -224,8 +227,46 @@ function WellnessPageContent() {
 
   // ── Effects ──
 
+  // Load demo data for readiness
+  const loadDemoReadinessData = useCallback(() => {
+    setIsLoadingReadiness(true);
+    setTimeout(() => {
+      const demoData = generateDemoAthleteDashboard();
+      setReadiness({
+        score: demoData.readiness.score,
+        dimensions: {
+          mood: demoData.readiness.dimensions.mood,
+          sleep: demoData.readiness.dimensions.sleep,
+          stress: demoData.readiness.dimensions.stress,
+          confidence: demoData.readiness.dimensions.engagement,
+        },
+        trend: demoData.readiness.trend,
+        change: demoData.readiness.change,
+      });
+      if (demoData.hasGameTomorrow) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(14, 0, 0, 0);
+        setUpcomingGame({
+          id: 'upcoming',
+          opponent: 'State University',
+          date: tomorrow,
+          location: 'Home Arena',
+          isHome: true,
+        });
+        setCountdown(formatTimeUntil(tomorrow));
+      }
+      setIsLoadingReadiness(false);
+    }, 400);
+  }, []);
+
   // Fetch readiness data from athlete dashboard API
   useEffect(() => {
+    if (demoMode) {
+      loadDemoReadinessData();
+      return;
+    }
+
     const fetchReadinessData = async () => {
       try {
         setIsLoadingReadiness(true);
@@ -271,7 +312,7 @@ function WellnessPageContent() {
     };
 
     fetchReadinessData();
-  }, []);
+  }, [demoMode, loadDemoReadinessData]);
 
   // Build history from pastWeekLogs when they change
   useEffect(() => {
@@ -341,10 +382,34 @@ function WellnessPageContent() {
     runPhase();
   }, [breathingActive]);
 
+  // Load demo mood logs
+  const loadDemoMoodLogs = useCallback(() => {
+    setIsLoadingHistory(true);
+    setTimeout(() => {
+      const demoLogs = generateDemoMoodLogs(7);
+      const transformedLogs: MoodLogData[] = demoLogs.map((log: DemoMoodLog) => ({
+        id: log.id,
+        date: log.date,
+        mood: log.mood,
+        confidence: log.confidence,
+        stress: log.stress,
+        energy: log.energy,
+        sleep: log.sleep,
+        notes: log.notes,
+      }));
+      setPastWeekLogs(transformedLogs);
+      setIsLoadingHistory(false);
+    }, 300);
+  }, []);
+
   // Load mood logs
   useEffect(() => {
+    if (demoMode) {
+      loadDemoMoodLogs();
+      return;
+    }
     loadPastWeekLogs();
-  }, []);
+  }, [demoMode, loadDemoMoodLogs]);
 
   const loadPastWeekLogs = async () => {
     try {
@@ -382,6 +447,22 @@ function WellnessPageContent() {
   };
 
   const handleSubmitCheckIn = async () => {
+    // Demo mode: simulate successful check-in
+    if (demoMode) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        toast.success('Check-in saved! (Demo mode)');
+        setMood(5);
+        setConfidence(5);
+        setStress(5);
+        setEnergy(5);
+        setSleep(7);
+        setNotes('');
+        setIsSubmitting(false);
+      }, 500);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const profileResponse = await fetch('/api/athlete/profile');
@@ -473,6 +554,19 @@ function WellnessPageContent() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
+            <FlaskConical className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-amber-200 font-medium">Demo Mode Active</p>
+              <p className="text-amber-300/70 text-sm">
+                Viewing sample wellness data. Remove <code className="bg-amber-500/20 px-1 rounded">?demo=true</code> from URL to see real data.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ─────────────────────────────────────────────────────────────────
             HEADER
         ───────────────────────────────────────────────────────────────── */}

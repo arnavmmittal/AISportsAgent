@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Calendar,
   Clock,
@@ -17,12 +18,14 @@ import {
   Loader2,
   AlertCircle,
   Brain,
+  FlaskConical,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
 import { ReadinessGauge, type ReadinessLevel } from '@/components/shared/athlete/ReadinessGauge';
 import { useAuth } from '@/hooks/useAuth';
+import { isDemoMode, generateDemoAthleteDashboard } from '@/lib/demo-data';
 
 /**
  * Athlete Home Page - Daily landing dashboard
@@ -145,7 +148,9 @@ function getTimeUntilDue(dueDate: string): string {
   return `Due in ${Math.floor(seconds / 86400)} days`;
 }
 
-export default function StudentHomePage() {
+function StudentHomePageContent() {
+  const searchParams = useSearchParams();
+  const demoMode = isDemoMode(searchParams);
   const { user: authUser, isLoading: authLoading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,8 +162,23 @@ export default function StudentHomePage() {
     setRoutineCompletions(loadRoutineCompletions());
   }, []);
 
+  // Load demo data
+  const loadDemoData = useCallback(() => {
+    setIsLoading(true);
+    setTimeout(() => {
+      const demoData = generateDemoAthleteDashboard();
+      setData(demoData);
+      setIsLoading(false);
+    }, 500);
+  }, []);
+
   // Fetch dashboard data
   const fetchDashboard = useCallback(async () => {
+    if (demoMode) {
+      loadDemoData();
+      return;
+    }
+
     if (!authUser) return;
 
     try {
@@ -188,7 +208,7 @@ export default function StudentHomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [authUser]);
+  }, [authUser, demoMode, loadDemoData]);
 
   useEffect(() => {
     fetchDashboard();
@@ -203,8 +223,8 @@ export default function StudentHomePage() {
     });
   };
 
-  // Loading state
-  if (authLoading || isLoading) {
+  // Loading state (skip authLoading check in demo mode)
+  if ((!demoMode && authLoading) || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -254,6 +274,19 @@ export default function StudentHomePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
+            <FlaskConical className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-amber-200 font-medium">Demo Mode Active</p>
+              <p className="text-amber-300/70 text-sm">
+                Viewing sample athlete data. Remove <code className="bg-amber-500/20 px-1 rounded">?demo=true</code> from URL to see real data.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ─────────────────────────────────────────────────────────────────
             HEADER - Personalized greeting
         ───────────────────────────────────────────────────────────────── */}
@@ -574,5 +607,24 @@ export default function StudentHomePage() {
         )}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading your dashboard...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function StudentHomePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <StudentHomePageContent />
+    </Suspense>
   );
 }

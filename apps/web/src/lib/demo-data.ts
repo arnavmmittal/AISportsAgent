@@ -414,6 +414,278 @@ export function generateDemoReadinessHeatmap(days: number = 14): DemoReadinessDa
 }
 
 // ============================================================
+// ATHLETE PORTAL DEMO DATA
+// ============================================================
+
+export interface DemoAthleteDashboard {
+  user: {
+    name: string;
+    sport: string | null;
+    year: string | null;
+  };
+  readiness: {
+    score: number;
+    dimensions: { mood: number; sleep: number; stress: number; engagement: number };
+    trend: 'up' | 'down' | 'stable';
+    change: number;
+  };
+  stats: {
+    checkInStreak: number;
+    goalsCompleted: number;
+    goalsTotal: number;
+    lastChatTopic: string | null;
+    hasCompletedCheckIn: boolean;
+  };
+  insight: {
+    text: string;
+    type: 'pattern' | 'recommendation' | 'celebration';
+    actionUrl: string;
+    actionLabel: string;
+  };
+  focusItems: {
+    id: string;
+    title: string;
+    completed: boolean;
+    type: 'routine' | 'assignment';
+  }[];
+  hasGameTomorrow: boolean;
+  upcomingAssignments: {
+    id: string;
+    title: string;
+    dueDate: string;
+    estimatedTime: string | null;
+  }[];
+}
+
+export interface DemoMoodLog {
+  id: string;
+  date: Date;
+  mood: number;
+  confidence: number;
+  stress: number;
+  energy: number;
+  sleep: number;
+  notes?: string;
+}
+
+export interface DemoGoal {
+  id: string;
+  title: string;
+  category: 'performance' | 'mental' | 'academic' | 'personal';
+  progress: number;
+  target: number;
+  unit: string;
+  dueDate: string;
+  status: 'on-track' | 'at-risk' | 'completed';
+}
+
+export interface DemoChatSession {
+  id: string;
+  title: string;
+  lastMessage: string;
+  timestamp: Date;
+  messageCount: number;
+  topic: string;
+}
+
+export function generateDemoAthleteDashboard(): DemoAthleteDashboard {
+  const insightOptions = [
+    {
+      text: "Your mood scores are 15% higher on days you get 7+ hours of sleep. Consider prioritizing rest tonight!",
+      type: 'pattern' as const,
+      actionUrl: '/student/wellness?tab=checkin',
+      actionLabel: 'Log Sleep'
+    },
+    {
+      text: "You've completed 5 check-ins in a row! Your consistency is paying off - keep building that awareness.",
+      type: 'celebration' as const,
+      actionUrl: '/student/wellness',
+      actionLabel: 'View History'
+    },
+    {
+      text: "Pre-game anxiety has been a theme in your recent chats. Try the box breathing exercise before tomorrow's game.",
+      type: 'recommendation' as const,
+      actionUrl: '/student/wellness?tab=readiness',
+      actionLabel: 'Try Breathing'
+    },
+  ];
+
+  return {
+    user: {
+      name: 'Alex Johnson',
+      sport: 'Basketball',
+      year: 'Junior',
+    },
+    readiness: {
+      score: 78,
+      dimensions: {
+        mood: 82,
+        sleep: 75,
+        stress: 68,
+        engagement: 85,
+      },
+      trend: 'up',
+      change: 8,
+    },
+    stats: {
+      checkInStreak: 7,
+      goalsCompleted: 3,
+      goalsTotal: 5,
+      lastChatTopic: 'Pre-game focus techniques',
+      hasCompletedCheckIn: false,
+    },
+    insight: randomChoice(insightOptions),
+    focusItems: [
+      { id: 'r1', title: 'Morning check-in', completed: false, type: 'routine' },
+      { id: 'r2', title: '5-minute visualization', completed: false, type: 'routine' },
+      { id: 'a1', title: 'Reflection: Post-game analysis', completed: false, type: 'assignment' },
+    ],
+    hasGameTomorrow: true,
+    upcomingAssignments: [
+      {
+        id: 'assign-1',
+        title: 'Pre-Game Mental Prep Checklist',
+        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        estimatedTime: '10 min',
+      },
+      {
+        id: 'assign-2',
+        title: 'Weekly Goal Review',
+        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        estimatedTime: '15 min',
+      },
+    ],
+  };
+}
+
+export function generateDemoMoodLogs(days: number = 7): DemoMoodLog[] {
+  const logs: DemoMoodLog[] = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    // Skip some days randomly to simulate missed check-ins
+    if (i > 0 && Math.random() < 0.15) continue;
+
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    date.setHours(8, randomInt(0, 59), 0, 0);
+
+    // Create realistic mood patterns - better on recent days (streak effect)
+    const baseMood = 5 + (7 - i) * 0.3;
+
+    logs.push({
+      id: generateId(),
+      date,
+      mood: Math.min(10, Math.max(1, Math.round(baseMood + randomFloat(-1.5, 1.5, 0)))),
+      confidence: randomInt(5, 9),
+      stress: randomInt(3, 7),
+      energy: randomInt(5, 8),
+      sleep: randomFloat(6, 8.5, 1),
+      notes: i === 0 ? undefined : randomChoice([
+        undefined,
+        'Feeling ready for practice',
+        'A bit tired today',
+        'Good energy after rest day',
+        'Looking forward to the game',
+      ]),
+    });
+  }
+
+  return logs;
+}
+
+export function generateDemoGoals(): DemoGoal[] {
+  return [
+    {
+      id: generateId(),
+      title: 'Improve free throw percentage',
+      category: 'performance',
+      progress: 78,
+      target: 85,
+      unit: '%',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'on-track',
+    },
+    {
+      id: generateId(),
+      title: 'Complete 30 visualization sessions',
+      category: 'mental',
+      progress: 18,
+      target: 30,
+      unit: 'sessions',
+      dueDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'on-track',
+    },
+    {
+      id: generateId(),
+      title: 'Maintain 3.5 GPA',
+      category: 'academic',
+      progress: 3.6,
+      target: 3.5,
+      unit: 'GPA',
+      dueDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'completed',
+    },
+    {
+      id: generateId(),
+      title: 'Build pre-game routine',
+      category: 'mental',
+      progress: 4,
+      target: 5,
+      unit: 'steps',
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'on-track',
+    },
+    {
+      id: generateId(),
+      title: 'Reduce pre-game anxiety',
+      category: 'mental',
+      progress: 2,
+      target: 5,
+      unit: 'techniques',
+      dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'at-risk',
+    },
+  ];
+}
+
+export function generateDemoChatSessions(): DemoChatSession[] {
+  return [
+    {
+      id: generateId(),
+      title: 'Pre-game focus techniques',
+      lastMessage: "Try the 4-7-8 breathing technique before stepping on the court...",
+      timestamp: hoursAgo(2),
+      messageCount: 12,
+      topic: 'anxiety',
+    },
+    {
+      id: generateId(),
+      title: 'Dealing with performance pressure',
+      lastMessage: "Remember, pressure is a privilege. It means you're in a position to make an impact...",
+      timestamp: daysAgo(1),
+      messageCount: 18,
+      topic: 'confidence',
+    },
+    {
+      id: generateId(),
+      title: 'Sleep and recovery',
+      lastMessage: "Your sleep data shows improvement! The consistent bedtime routine is working...",
+      timestamp: daysAgo(3),
+      messageCount: 8,
+      topic: 'recovery',
+    },
+    {
+      id: generateId(),
+      title: 'Post-game reflection',
+      lastMessage: "Let's break down what went well and identify one area for tomorrow's practice...",
+      timestamp: daysAgo(5),
+      messageCount: 15,
+      topic: 'reflection',
+    },
+  ];
+}
+
+// ============================================================
 // HELPER: Check if demo mode is enabled
 // ============================================================
 
