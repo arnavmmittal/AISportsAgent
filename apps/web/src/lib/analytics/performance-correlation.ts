@@ -349,7 +349,7 @@ export async function analyzePerformanceCorrelations(
 /**
  * Get team-wide performance correlations (aggregated across athletes)
  *
- * Useful for identifying sport-specific or team-wide patterns
+ * OPTIMIZED: Uses batched queries to fetch all data at once instead of per-athlete
  */
 export async function analyzeTeamPerformanceCorrelations(
   schoolId: string,
@@ -360,38 +360,150 @@ export async function analyzeTeamPerformanceCorrelations(
   avgCorrelations: CorrelationResult[];
   consistentFactors: string[]; // Factors that correlate across >70% of athletes
 }> {
+  const toDate = new Date();
+  const fromDate = new Date();
+  fromDate.setDate(fromDate.getDate() - days);
+  const fromDateMinus24h = new Date(fromDate.getTime() - 24 * 60 * 60 * 1000);
+
   // Get all athletes for the school/sport
   const athletes = await prisma.athlete.findMany({
     where: {
-      User: {
-        schoolId,
-      },
+      User: { schoolId },
       ...(sport && { sport }),
     },
-    select: {
-      userId: true,
-    },
+    select: { userId: true },
   });
 
-  const individualAnalyses = await Promise.all(
-    athletes.map((a) => analyzePerformanceCorrelations(a.userId, days))
-  );
+  const athleteIds = athletes.map((a) => a.userId);
 
-  // Aggregate correlations across athletes
-  const metricAggregates: Record<
-    string,
-    { correlations: number[]; athleteCount: number }
-  > = {};
+  if (athleteIds.length === 0) {
+    return { teamSize: 0, avgCorrelations: [], consistentFactors: [] };
+  }
 
-  for (const analysis of individualAnalyses) {
-    for (const corr of analysis.correlations) {
-      if (!metricAggregates[corr.metric]) {
-        metricAggregates[corr.metric] = { correlations: [], athleteCount: 0 };
+  // BATCH FETCH: Get all data for all athletes in parallel
+  const [allPerformance, allMoods, allReadiness] = await Promise.all([
+    prisma.performanceMetric.findMany({
+      where: {
+        athleteId: { in: athleteIds },
+        gameDate: { gte: fromDate, lte: toDate },
+      },
+      orderBy: { gameDate: 'asc' },
+      select: { athleteId: true, gameDate: true, readinessScore: true },
+    }),
+    prisma.moodLog.findMany({
+      where: {
+        athleteId: { in: athleteIds },
+        createdAt: { gte: fromDateMinus24h, lte: toDate },
+      },
+      orderBy: { createdAt: 'asc' },
+      select: { athleteId: true, createdAt: true, mood: true, stress: true, confidence: true, sleep: true },
+    }),
+    prisma.readinessScore.findMany({
+      where: {
+        athleteId: { in: athleteIds },
+        calculatedAt: { gte: fromDateMinus24h, lte: toDate },
+      },
+      orderBy: { calculatedAt: 'asc' },
+      select: { athleteId: true, calculatedAt: true, score: true },
+    }),
+  ]);
+
+  // Index data by athleteId
+  const perfByAthlete = new Map<string, typeof allPerformance>();
+  for (const p of allPerformance) {
+    if (!perfByAthlete.has(p.athleteId)) perfByAthlete.set(p.athleteId, []);
+    perfByAthlete.get(p.athleteId)!.push(p);
+  }
+
+  const moodsByAthlete = new Map<string, typeof allMoods>();
+  for (const m of allMoods) {
+    if (!moodsByAthlete.has(m.athleteId)) moodsByAthlete.set(m.athleteId, []);
+    moodsByAthlete.get(m.athleteId)!.push(m);
+  }
+
+  const readinessByAthlete = new Map<string, typeof allReadiness>();
+  for (const r of allReadiness) {
+    if (!readinessByAthlete.has(r.athleteId)) readinessByAthlete.set(r.athleteId, []);
+    readinessByAthlete.get(r.athleteId)!.push(r);
+  }
+
+  // Calculate correlations per athlete using pre-fetched data
+  const metricAggregates: Record<string, { correlations: number[]; athleteCount: number }> = {};
+
+  for (const athleteId of athleteIds) {
+    const performanceData = perfByAthlete.get(athleteId) || [];
+    const moodData = moodsByAthlete.get(athleteId) || [];
+    const readinessData = readinessByAthlete.get(athleteId) || [];
+
+    if (performanceData.length < 10) continue; // Need minimum data
+
+    // Match performance with mental state metrics
+    const matchedData: {
+      performance: number;
+      mood?: number;
+      stress?: number;
+      confidence?: number;
+      sleep?: number;
+      readiness?: number;
+    }[] = [];
+
+    for (const perf of performanceData) {
+      if (!perf.readinessScore) continue;
+      const perfDate = perf.gameDate.getTime();
+      const match: any = { performance: perf.readinessScore };
+
+      const closestMood = moodData.find((m) => {
+        const hoursBefore = (perfDate - m.createdAt.getTime()) / (1000 * 60 * 60);
+        return hoursBefore >= 0 && hoursBefore <= 24;
+      });
+
+      if (closestMood) {
+        match.mood = closestMood.mood;
+        match.stress = closestMood.stress;
+        match.confidence = closestMood.confidence;
+        match.sleep = closestMood.sleep;
       }
 
-      metricAggregates[corr.metric].correlations.push(corr.correlation);
-      if (corr.isSignificant) {
-        metricAggregates[corr.metric].athleteCount++;
+      const closestReadiness = readinessData.find((r) => {
+        const hoursBefore = (perfDate - r.calculatedAt.getTime()) / (1000 * 60 * 60);
+        return hoursBefore >= 0 && hoursBefore <= 24;
+      });
+
+      if (closestReadiness) {
+        match.readiness = closestReadiness.score;
+      }
+
+      matchedData.push(match);
+    }
+
+    // Calculate correlations for this athlete
+    const metrics: { key: string; name: string }[] = [
+      { key: 'mood', name: 'Mood' },
+      { key: 'stress', name: 'Stress' },
+      { key: 'confidence', name: 'Confidence' },
+      { key: 'sleep', name: 'Sleep Quality' },
+      { key: 'readiness', name: 'Readiness Score' },
+    ];
+
+    for (const metric of metrics) {
+      const metricValues = matchedData
+        .filter((d) => (d as any)[metric.key] !== undefined)
+        .map((d) => (d as any)[metric.key] as number);
+      const performanceValues = matchedData
+        .filter((d) => (d as any)[metric.key] !== undefined)
+        .map((d) => d.performance);
+
+      if (metricValues.length >= 5) {
+        const r = calculatePearsonCorrelation(metricValues, performanceValues);
+        const isSignificant = isStatisticallySignificant(r, metricValues.length);
+
+        if (!metricAggregates[metric.name]) {
+          metricAggregates[metric.name] = { correlations: [], athleteCount: 0 };
+        }
+        metricAggregates[metric.name].correlations.push(r);
+        if (isSignificant) {
+          metricAggregates[metric.name].athleteCount++;
+        }
       }
     }
   }
@@ -399,8 +511,7 @@ export async function analyzeTeamPerformanceCorrelations(
   // Calculate average correlations
   const avgCorrelations: CorrelationResult[] = Object.entries(metricAggregates).map(
     ([metric, data]) => {
-      const avgR =
-        data.correlations.reduce((sum, r) => sum + r, 0) / data.correlations.length;
+      const avgR = data.correlations.reduce((sum, r) => sum + r, 0) / data.correlations.length;
       const strength = getCorrelationStrength(avgR);
       const direction = avgR > 0.05 ? 'positive' : avgR < -0.05 ? 'negative' : 'none';
 
@@ -410,13 +521,13 @@ export async function analyzeTeamPerformanceCorrelations(
         strength,
         direction,
         sampleSize: data.correlations.length,
-        isSignificant: data.athleteCount / athletes.length >= 0.5, // Significant if true for >50% of athletes
+        isSignificant: data.athleteCount / athletes.length >= 0.5,
         insight: generateInsight(metric, avgR, strength),
       };
     }
   );
 
-  // Identify consistent factors (significant for >70% of athletes)
+  // Identify consistent factors
   const consistentFactors = Object.entries(metricAggregates)
     .filter(([_, data]) => data.athleteCount / athletes.length >= 0.7)
     .map(([metric]) => metric);
