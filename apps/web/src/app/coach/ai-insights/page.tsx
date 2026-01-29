@@ -8,7 +8,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DashboardShell } from '@/components/coach/layouts/DashboardShell';
 import {
   InsightCard,
   FeaturedInsightCard,
@@ -123,8 +122,8 @@ export default function AIInsightsPage() {
   ];
 
   return (
-    <DashboardShell>
-      <div className="space-y-8">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Hero Header */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-8">
           <div className="absolute top-0 right-0 w-96 h-96 -mr-48 -mt-48 opacity-10">
@@ -326,6 +325,6 @@ export default function AIInsightsPage() {
           </>
         )}
       </div>
-    </DashboardShell>
+    </div>
   );
 }

@@ -77,13 +77,8 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from home page to their dashboard
   if (pathname === '/' && user && role) {
-    const redirectUrl = role === 'COACH' ? '/coach/team-overview' : '/student/home';
+    const redirectUrl = role === 'COACH' ? '/coach/dashboard' : '/student/home';
     return NextResponse.redirect(new URL(redirectUrl, request.url));
-  }
-
-  // Redirect old coach routes to new structure
-  if (pathname === '/coach/dashboard' && user && role === 'COACH') {
-    return NextResponse.redirect(new URL('/coach/team-overview', request.url));
   }
 
   // Redirect old student routes to new structure
@@ -116,7 +111,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages to their role-specific home
   if (user && isAuthPage && role) {
-    const redirectUrl = role === 'COACH' ? '/coach/team-overview' : '/student/home';
+    const redirectUrl = role === 'COACH' ? '/coach/dashboard' : '/student/home';
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
@@ -124,7 +119,7 @@ export async function middleware(request: NextRequest) {
   if (user && role) {
     // Coaches cannot access athlete routes
     if (role === 'COACH' && isAthleteRoute) {
-      return NextResponse.redirect(new URL('/coach/team-overview', request.url));
+      return NextResponse.redirect(new URL('/coach/dashboard', request.url));
     }
 
     // Athletes cannot access coach routes
