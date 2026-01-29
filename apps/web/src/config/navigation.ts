@@ -17,6 +17,7 @@ import {
   Heart,
   Target,
   ClipboardList,
+  BarChart3,
   LucideIcon,
 } from 'lucide-react';
 
@@ -54,6 +55,12 @@ export const COACH_NAV: NavItem[] = [
     description: 'ML-powered analytics & recommendations',
     badge: 'AI',
     highlight: true,
+  },
+  {
+    label: 'ROI Dashboard',
+    href: '/coach/roi',
+    icon: BarChart3,
+    description: 'Demonstrate value to Athletic Directors',
   },
   {
     label: 'Athletes',
