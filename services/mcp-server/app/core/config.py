@@ -121,15 +121,13 @@ class Settings(BaseSettings):
     # OpenAI Whisper (Fallback STT)
     WHISPER_MODEL: str = "whisper-1"
 
-    # Legacy Cartesia (deprecated, kept for fallback)
-    CARTESIA_API_KEY: Optional[str] = None
-    CARTESIA_VOICE_ID: str = "voice-id-supportive"
-
     # Voice provider preference
-    TTS_PROVIDER: str = "elevenlabs"  # elevenlabs, openai, cartesia
+    # Note: ElevenLabs is the only supported TTS provider (best quality for sports psych)
+    # OpenAI TTS is used as automatic fallback if ElevenLabs fails
+    TTS_PROVIDER: str = "elevenlabs"  # elevenlabs only (openai as fallback)
     STT_PROVIDER: str = "whisper"  # deepgram, whisper
 
-    @field_validator("ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY", "CARTESIA_API_KEY", mode="before")
+    @field_validator("ELEVENLABS_API_KEY", "DEEPGRAM_API_KEY", mode="before")
     @classmethod
     def parse_voice_api_keys(cls, v: Any) -> Optional[str]:
         """Parse voice API keys (optional)."""

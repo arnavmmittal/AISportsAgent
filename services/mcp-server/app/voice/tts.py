@@ -1,10 +1,12 @@
 """
 Text-to-Speech Pipeline
 
-Unified TTS interface with intelligent fallback:
+Unified TTS interface with ElevenLabs as the primary provider:
 1. ElevenLabs (Primary) - High quality, emotional expressiveness
-2. OpenAI TTS (Fallback) - Reliable, good quality
-3. Cartesia.ai (Legacy) - Ultra-low latency option
+2. OpenAI TTS (Fallback) - Reliable backup if ElevenLabs fails
+
+Note: Cartesia has been removed due to quality issues.
+ElevenLabs provides superior voice quality for sports psychology contexts.
 
 Features:
 - Automatic provider failover
@@ -29,9 +31,6 @@ from app.voice.elevenlabs_tts import (
     get_voice_settings,
 )
 
-# Legacy Cartesia configuration (deprecated)
-CARTESIA_API_URL = "https://api.cartesia.ai/v1"
-
 
 async def synthesize_speech_stream_openai(
     text: str,
@@ -40,6 +39,7 @@ async def synthesize_speech_stream_openai(
 ) -> AsyncGenerator[bytes, None]:
     """
     Synthesize speech with streaming using OpenAI TTS API.
+    Used as fallback when ElevenLabs is unavailable.
 
     Args:
         text: Text to convert to speech
@@ -74,67 +74,6 @@ async def synthesize_speech_stream_openai(
         raise Exception(f"OpenAI TTS failed: {str(e)}")
 
 
-async def synthesize_speech_stream_cartesia(
-    text: str,
-    voice_id: str = "voice-id-supportive",
-    emotion: str = "supportive",
-    speed: float = 1.0,
-) -> AsyncGenerator[bytes, None]:
-    """
-    Legacy Cartesia.ai TTS streaming (deprecated, kept for fallback).
-
-    Args:
-        text: Text to convert to speech
-        voice_id: Cartesia voice ID
-        emotion: Emotion/tone
-        speed: Speech rate
-
-    Yields:
-        Audio chunks
-    """
-    cartesia_key = settings.CARTESIA_API_KEY
-    if not cartesia_key:
-        raise Exception("CARTESIA_API_KEY not configured")
-
-    logger.info(f"Cartesia TTS: {len(text)} chars")
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                "Authorization": f"Bearer {cartesia_key}",
-                "Content-Type": "application/json",
-            }
-
-            payload = {
-                "text": text,
-                "voice_id": voice_id,
-                "output_format": "mp3",
-                "language": "en",
-                "speed": speed,
-                "emotion": emotion,
-                "stream": True,
-            }
-
-            async with session.post(
-                f"{CARTESIA_API_URL}/synthesize/stream",
-                headers=headers,
-                json=payload,
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"Cartesia API error: {error_text}")
-
-                async for chunk in response.content.iter_chunked(4096):
-                    if chunk:
-                        yield chunk
-
-        logger.info("Cartesia TTS streaming complete")
-
-    except Exception as e:
-        logger.error(f"Cartesia TTS error: {e}")
-        raise Exception(f"Cartesia TTS failed: {str(e)}")
-
-
 async def synthesize_speech_stream(
     text: str,
     voice: str = "alloy",
@@ -143,12 +82,11 @@ async def synthesize_speech_stream(
     detected_emotion: Optional[str] = None,
 ) -> AsyncGenerator[bytes, None]:
     """
-    Unified TTS streaming with intelligent fallback.
+    Unified TTS streaming with ElevenLabs as primary provider.
 
-    Provider priority based on configuration:
+    Provider priority:
     1. ElevenLabs (default) - Best quality, emotional expressiveness
     2. OpenAI TTS - Reliable fallback
-    3. Cartesia (legacy) - Ultra-low latency option
 
     Args:
         text: Text to convert to speech
@@ -163,13 +101,12 @@ async def synthesize_speech_stream(
     Raises:
         Exception: If all providers fail
     """
-    provider = settings.TTS_PROVIDER.lower()
     errors = []
 
-    # Try ElevenLabs first (if configured as primary or as fallback)
-    if provider == "elevenlabs" or settings.ELEVENLABS_API_KEY:
+    # Try ElevenLabs first (primary provider)
+    if settings.ELEVENLABS_API_KEY:
         try:
-            logger.info("Attempting TTS with ElevenLabs...")
+            logger.info("Attempting TTS with ElevenLabs (primary)...")
 
             # Intelligently select voice based on content
             voice_id = select_voice_for_content(text, detected_emotion)
@@ -186,26 +123,7 @@ async def synthesize_speech_stream(
 
         except Exception as e:
             errors.append(f"ElevenLabs: {str(e)}")
-            logger.warning(f"ElevenLabs TTS failed: {e}")
-
-    # Try Cartesia (if configured as primary)
-    if provider == "cartesia" and settings.CARTESIA_API_KEY:
-        try:
-            logger.info("Attempting TTS with Cartesia...")
-
-            async for chunk in synthesize_speech_stream_cartesia(
-                text=text,
-                emotion=context,
-                speed=speed,
-            ):
-                yield chunk
-
-            logger.info("Successfully used Cartesia TTS")
-            return
-
-        except Exception as e:
-            errors.append(f"Cartesia: {str(e)}")
-            logger.warning(f"Cartesia TTS failed: {e}")
+            logger.warning(f"ElevenLabs TTS failed, falling back to OpenAI: {e}")
 
     # Fallback to OpenAI TTS
     try:
@@ -268,8 +186,6 @@ def get_voice_for_context(context: str = "general") -> str:
     Returns:
         Voice identifier appropriate for the current TTS provider
     """
-    provider = settings.TTS_PROVIDER.lower()
-
     context_mapping = {
         "anxiety": "calm",
         "stress": "calm",
@@ -283,17 +199,17 @@ def get_voice_for_context(context: str = "general") -> str:
 
     emotional_context = context_mapping.get(context, "supportive")
 
-    if provider == "elevenlabs":
+    # ElevenLabs is the primary provider
+    if settings.ELEVENLABS_API_KEY:
         return get_voice_settings(emotional_context)["voice_id"]
-    elif provider == "openai":
-        openai_mapping = {
-            "calm": "shimmer",
-            "encouraging": "onyx",
-            "supportive": "nova",
-        }
-        return openai_mapping.get(emotional_context, "nova")
-    else:
-        return "voice-id-supportive"  # Cartesia default
+
+    # OpenAI fallback voices
+    openai_mapping = {
+        "calm": "shimmer",
+        "encouraging": "onyx",
+        "supportive": "nova",
+    }
+    return openai_mapping.get(emotional_context, "nova")
 
 
 async def get_tts_status() -> dict:
@@ -304,30 +220,30 @@ async def get_tts_status() -> dict:
         Dictionary with provider status and configuration
     """
     status = {
-        "primary_provider": settings.TTS_PROVIDER,
+        "primary_provider": "elevenlabs",
+        "fallback_provider": "openai",
         "providers": {},
     }
 
-    # Check ElevenLabs
+    # Check ElevenLabs (primary)
     if settings.ELEVENLABS_API_KEY:
         status["providers"]["elevenlabs"] = {
             "configured": True,
             "model": settings.ELEVENLABS_MODEL_ID,
             "voice_id": settings.ELEVENLABS_VOICE_ID,
+            "status": "primary",
         }
     else:
-        status["providers"]["elevenlabs"] = {"configured": False}
+        status["providers"]["elevenlabs"] = {
+            "configured": False,
+            "status": "not configured - using OpenAI fallback",
+        }
 
-    # Check OpenAI (always available if OPENAI_API_KEY is set)
+    # Check OpenAI (fallback - always available if OPENAI_API_KEY is set)
     status["providers"]["openai"] = {
         "configured": bool(settings.OPENAI_API_KEY),
         "model": "tts-1",
-    }
-
-    # Check Cartesia (legacy)
-    status["providers"]["cartesia"] = {
-        "configured": bool(settings.CARTESIA_API_KEY),
-        "deprecated": True,
+        "status": "fallback",
     }
 
     return status
