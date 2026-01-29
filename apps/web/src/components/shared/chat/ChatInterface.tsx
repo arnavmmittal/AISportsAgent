@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useChatPersistence, useAthleteActivity } from '@/hooks/useChatPersistence';
 import { VoiceButton, AudioVisualizer } from '@/components/shared/voice/VoiceButton';
+import { MobileVoiceWidget } from '@/components/shared/voice/MobileVoiceWidget';
 import { ActionPlanWidget } from '@/components/shared/chat/ActionPlanWidget';
 import { MetricTrackerWidget } from '@/components/shared/chat/MetricTrackerWidget';
 import { PracticeDrillCard } from '@/components/shared/chat/PracticeDrillCard';
@@ -679,6 +680,19 @@ export function ChatInterface() {
           )}
         </div>
       </div>
+
+      {/* Mobile Voice Widget - Floating FAB and full-screen voice UI for mobile */}
+      <MobileVoiceWidget
+        voiceState={voiceState}
+        volume={volume}
+        transcript={transcript}
+        isListening={isListening}
+        onToggle={() => {
+          setVoiceMode(!voiceMode);
+          toggleVoice();
+        }}
+        disabled={isLoading || !sessionId || !user?.id}
+      />
     </div>
   );
 }
