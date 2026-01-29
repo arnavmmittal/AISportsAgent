@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, Moon, Sun, Settings, Loader2 } from 'lucide-react';
+import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, Moon, Sun, Settings, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/shared/ui/button';
@@ -9,6 +9,7 @@ import { Input } from '@/components/shared/ui/input';
 import { Label } from '@/components/shared/ui/label';
 import { Switch } from '@/components/shared/ui/switch';
 import { cn } from '@/lib/utils';
+import { WeeklyDigestPanel } from '@/components/coach/digest';
 
 /**
  * Coach Settings Page - Updated with Design System v2.0
@@ -55,13 +56,6 @@ export default function CoachSettingsPage() {
     teamName: '',
   });
 
-  // Notification preferences
-  const [notifications, setNotifications] = useState({
-    crisisAlerts: true,
-    dailySummary: true,
-    athleteCheckIns: false,
-    weeklyReports: true,
-  });
 
   // Privacy settings
   const [privacy, setPrivacy] = useState({
@@ -129,12 +123,6 @@ export default function CoachSettingsPage() {
     }
   };
 
-  const handleSaveNotifications = async () => {
-    // Note: No API endpoint for coach notification preferences yet.
-    // These are stored locally for demonstration purposes only.
-    // TODO: Create /api/coach/notification-preferences endpoint for persistence
-    toast.info('Notification preferences updated locally (not persisted to server yet)');
-  };
 
   const handleSavePrivacy = async () => {
     // Note: No API endpoint for coach privacy settings yet.
@@ -279,74 +267,19 @@ export default function CoachSettingsPage() {
           </div>
         </section>
 
-        {/* Notification Preferences */}
+        {/* Email Digest & Notifications */}
         <section className="card-elevated overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-info" />
+              <Mail className="w-5 h-5 text-info" />
             </div>
             <div>
-              <h2 className="font-medium text-foreground">Notification Preferences</h2>
-              <p className="text-sm text-muted-foreground">Choose what updates you want to receive</p>
+              <h2 className="font-medium text-foreground">Email Digest & Notifications</h2>
+              <p className="text-sm text-muted-foreground">Configure weekly summaries and alerts</p>
             </div>
           </div>
-          <div className="p-4 space-y-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="crisis-alerts" className="text-sm font-medium">Crisis Alerts</Label>
-                  <p className="text-xs text-muted-foreground">Get notified immediately for crisis situations</p>
-                </div>
-                <Switch
-                  id="crisis-alerts"
-                  checked={notifications.crisisAlerts}
-                  onCheckedChange={(checked: boolean) => setNotifications({ ...notifications, crisisAlerts: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="daily-summary" className="text-sm font-medium">Daily Summary</Label>
-                  <p className="text-xs text-muted-foreground">Receive daily email summaries of team activity</p>
-                </div>
-                <Switch
-                  id="daily-summary"
-                  checked={notifications.dailySummary}
-                  onCheckedChange={(checked: boolean) => setNotifications({ ...notifications, dailySummary: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="athlete-checkins" className="text-sm font-medium">Athlete Check-ins</Label>
-                  <p className="text-xs text-muted-foreground">Notify when athletes complete mood logs</p>
-                </div>
-                <Switch
-                  id="athlete-checkins"
-                  checked={notifications.athleteCheckIns}
-                  onCheckedChange={(checked: boolean) => setNotifications({ ...notifications, athleteCheckIns: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="weekly-reports" className="text-sm font-medium">Weekly Reports</Label>
-                  <p className="text-xs text-muted-foreground">Get comprehensive weekly performance reports</p>
-                </div>
-                <Switch
-                  id="weekly-reports"
-                  checked={notifications.weeklyReports}
-                  onCheckedChange={(checked: boolean) => setNotifications({ ...notifications, weeklyReports: checked })}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button variant="outline" onClick={handleSaveNotifications}>
-                <Save className="w-4 h-4 mr-2" />
-                Save Preferences
-              </Button>
-            </div>
+          <div className="p-4">
+            <WeeklyDigestPanel />
           </div>
         </section>
 

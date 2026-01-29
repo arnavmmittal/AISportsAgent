@@ -241,19 +241,20 @@ model ChatSummary {
 }
 
 model Coach {
-  userId          String                 @id
-  sport           String
-  title           String?
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  inviteCode      String?                @unique
-  User            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  CoachAthletes   CoachAthleteRelation[]
-  CoachNote       CoachNote[]
-  ChatSummary     ChatSummary[]
-  CoachTouchpoint CoachTouchpoint[]
-  AlertRule       AlertRule[]
-  GeneratedAlert  GeneratedAlert[]
+  userId              String                   @id
+  sport               String
+  title               String?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  inviteCode          String?                  @unique
+  User                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CoachAthletes       CoachAthleteRelation[]
+  CoachNote           CoachNote[]
+  ChatSummary         ChatSummary[]
+  CoachTouchpoint     CoachTouchpoint[]
+  AlertRule           AlertRule[]
+  GeneratedAlert      GeneratedAlert[]
+  DigestPreferences   CoachDigestPreferences?
 
   @@index([inviteCode])
 }
@@ -323,6 +324,64 @@ enum TouchpointStatus {
   COMPLETED
   SKIPPED
   OVERDUE
+}
+
+// Coach Digest Preferences - Notification and email digest settings
+model CoachDigestPreferences {
+  id                    String   @id @default(cuid())
+  coachId               String   @unique
+  weeklyDigestEnabled   Boolean  @default(true)
+  dailySummaryEnabled   Boolean  @default(false)
+  crisisAlertsEnabled   Boolean  @default(true)
+  athleteCheckInsEnabled Boolean @default(false)
+  digestDay             Int      @default(1)    // 0=Sunday, 1=Monday, etc.
+  digestHour            Int      @default(8)    // Hour of day (0-23)
+  digestTimezone        String   @default("America/Los_Angeles")
+  lastDigestSentAt      DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  Coach                 Coach    @relation(fields: [coachId], references: [userId], onDelete: Cascade)
+
+  @@index([coachId])
+}
+
+// Coach Digest - History of sent digests
+model CoachDigest {
+  id                String       @id @default(cuid())
+  coachId           String
+  periodStart       DateTime     // Start of digest period
+  periodEnd         DateTime     // End of digest period
+  digestType        DigestType
+  status            DigestStatus @default(PENDING)
+  content           Json?        // Generated digest content
+  htmlContent       String?      // Rendered HTML for email
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  errorMessage      String?
+  athleteCount      Int?         // Number of athletes included
+  highlightsCount   Int?         // Number of highlights/insights
+  alertsCount       Int?         // Number of alerts during period
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([coachId, periodStart])
+  @@index([status])
+}
+
+enum DigestType {
+  WEEKLY
+  DAILY
+  MONTHLY
+  ADHOC     // Manually triggered
+}
+
+enum DigestStatus {
+  PENDING     // Being generated
+  READY       // Generated, ready to send
+  SENT        // Email sent
+  DELIVERED   // Confirmed delivered
+  FAILED      // Failed to send
+  SKIPPED     // Skipped (no data, opted out)
 }
 
 model ConversationInsight {
