@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import type { User } from '@supabase/supabase-js';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { useChatPersistence, useAthleteActivity } from '@/hooks/useChatPersistence';
 import { VoiceButton, AudioVisualizer } from '@/components/shared/voice/VoiceButton';
 import { ActionPlanWidget } from '@/components/shared/chat/ActionPlanWidget';
 import { MetricTrackerWidget } from '@/components/shared/chat/MetricTrackerWidget';
@@ -108,6 +109,18 @@ export function ChatInterface() {
   const [currentMetadata, setCurrentMetadata] = useState<StructuredMetadata | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Chat state persistence - remembers session across page refreshes
+  const {
+    state: persistedState,
+    isHydrated,
+    setSessionId: persistSessionId,
+    setDraftMessage,
+    recordActivity,
+  } = useChatPersistence(user?.id);
+
+  // Track activity for coach visibility (privacy-respecting: only status, no content)
+  useAthleteActivity(user?.id, sessionId, messages.length > 0 && !isLoading);
+
   // Get user on mount and subscribe to auth changes
   useEffect(() => {
     const getUser = async () => {
@@ -164,35 +177,61 @@ export function ChatInterface() {
     },
   });
 
-  // Initialize session ID - load most recent session or create new UUID
+  // Initialize session ID - use persisted session, load most recent, or create new UUID
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !isHydrated) return;
 
     const initializeSession = async () => {
       try {
+        // First, check if we have a persisted session ID
+        if (persistedState.sessionId) {
+          setSessionId(persistedState.sessionId);
+          return;
+        }
+
         // Try to load the most recent chat session
         const response = await fetch('/api/chat?limit=1');
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data?.length > 0) {
             // Use the most recent session
-            setSessionId(data.data[0].id);
+            const recentSessionId = data.data[0].id;
+            setSessionId(recentSessionId);
+            persistSessionId(recentSessionId);
             return;
           }
         }
 
         // No existing session - generate a new UUID
         // The session will be created when the user sends their first message
-        setSessionId(crypto.randomUUID());
+        const newSessionId = crypto.randomUUID();
+        setSessionId(newSessionId);
+        persistSessionId(newSessionId);
       } catch (error) {
         console.error('Failed to initialize session:', error);
         // Fallback to new UUID
-        setSessionId(crypto.randomUUID());
+        const newSessionId = crypto.randomUUID();
+        setSessionId(newSessionId);
+        persistSessionId(newSessionId);
       }
     };
 
     initializeSession();
-  }, [user?.id]);
+  }, [user?.id, isHydrated, persistedState.sessionId, persistSessionId]);
+
+  // Restore draft message from persistence
+  useEffect(() => {
+    if (isHydrated && persistedState.draftMessage && !inputValue) {
+      setInputValue(persistedState.draftMessage);
+    }
+  }, [isHydrated, persistedState.draftMessage]);
+
+  // Save draft message on change (debounced via state)
+  useEffect(() => {
+    if (isHydrated && inputValue !== persistedState.draftMessage) {
+      setDraftMessage(inputValue);
+    }
+  }, [inputValue, isHydrated]);
 
   // Load message history when session ID is set
   useEffect(() => {
@@ -243,8 +282,10 @@ export function ChatInterface() {
     const userInput = inputValue;
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
+    setDraftMessage(''); // Clear persisted draft
     setIsLoading(true);
     setCrisisAlert(null);
+    recordActivity(); // Track for coach visibility
 
     try {
       // Create assistant message placeholder for streaming

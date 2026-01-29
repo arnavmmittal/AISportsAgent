@@ -13,6 +13,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Users, TrendingUp, AlertTriangle, Activity, Key, Copy, ChevronRight, Loader2, Brain, Sparkles, FlaskConical } from 'lucide-react';
+import { AthleteActivityMonitor } from '@/components/coach/activity';
 import Link from 'next/link';
 import { Button } from '@/components/shared/ui/button';
 import { cn } from '@/lib/utils';
@@ -450,6 +451,9 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             </div>
           </div>
         </Link>
+
+        {/* Live Athlete Activity - shows who's chatting now */}
+        <AthleteActivityMonitor demo={demoMode} compact />
 
         {/* Overview Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
