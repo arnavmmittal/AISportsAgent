@@ -2,7 +2,7 @@
  * Athlete Activity API
  *
  * Tracks real-time athlete chat activity for coach visibility.
- * Uses in-memory storage for real-time tracking (production would use Redis).
+ * Uses Redis/KV when configured (staging/production), falls back to in-memory for dev.
  *
  * POST /api/athlete/activity - Report activity status
  * GET  /api/athlete/activity - Get activity for coach's athletes
@@ -12,31 +12,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireCoach } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { cookies } from 'next/headers';
+import { kvSet, kvGet, kvKeys, kvDelete, isRedisConfigured } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-// In-memory activity store (production: use Redis)
-// Key: athleteId, Value: activity state
-const activityStore = new Map<string, {
+// Activity entry structure
+interface ActivityEntry {
   sessionId: string;
   status: 'active' | 'inactive';
-  lastHeartbeat: Date;
-  chatStartedAt: Date;
-}>();
-
-// Clean up stale entries (older than 2 minutes)
-const STALE_THRESHOLD_MS = 2 * 60 * 1000;
-
-function cleanupStaleEntries() {
-  const now = Date.now();
-  for (const [athleteId, activity] of activityStore.entries()) {
-    if (now - activity.lastHeartbeat.getTime() > STALE_THRESHOLD_MS) {
-      activityStore.delete(athleteId);
-    }
-  }
+  lastHeartbeat: string; // ISO string
+  chatStartedAt: string; // ISO string
 }
+
+// Key prefix for activity entries
+const ACTIVITY_PREFIX = 'activity:athlete:';
+
+// TTL for activity entries (2 minutes for stale cleanup)
+const ACTIVITY_TTL_SECONDS = 2 * 60;
 
 // Validation schema
 const ActivityReportSchema = z.object({
@@ -59,29 +52,33 @@ export async function POST(request: NextRequest) {
     }
 
     const { athleteId, sessionId, status } = validation.data;
+    const key = `${ACTIVITY_PREFIX}${athleteId}`;
+    const now = new Date().toISOString();
 
     if (status === 'active') {
-      const existing = activityStore.get(athleteId);
-      activityStore.set(athleteId, {
+      // Get existing to preserve chatStartedAt
+      const existing = await kvGet<ActivityEntry>(key);
+
+      const entry: ActivityEntry = {
         sessionId,
         status: 'active',
-        lastHeartbeat: new Date(),
-        chatStartedAt: existing?.chatStartedAt || new Date(),
-      });
+        lastHeartbeat: now,
+        chatStartedAt: existing?.chatStartedAt || now,
+      };
+
+      await kvSet(key, entry, ACTIVITY_TTL_SECONDS);
     } else {
-      // Mark as inactive but don't remove immediately
-      const existing = activityStore.get(athleteId);
+      // Mark as inactive but keep for a bit (so coaches see "recently active")
+      const existing = await kvGet<ActivityEntry>(key);
       if (existing) {
-        activityStore.set(athleteId, {
+        const entry: ActivityEntry = {
           ...existing,
           status: 'inactive',
-          lastHeartbeat: new Date(),
-        });
+          lastHeartbeat: now,
+        };
+        await kvSet(key, entry, ACTIVITY_TTL_SECONDS);
       }
     }
-
-    // Periodic cleanup
-    cleanupStaleEntries();
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -102,9 +99,6 @@ export async function GET(request: NextRequest) {
       return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Clean up stale entries first
-    cleanupStaleEntries();
-
     // Get coach's athlete IDs
     const relations = await prisma.coachAthleteRelation.findMany({
       where: {
@@ -120,8 +114,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const athleteIds = new Set(relations.map((r) => r.athleteId));
-
     // Get activity status for each athlete
     const activities: Array<{
       athleteId: string;
@@ -133,16 +125,18 @@ export async function GET(request: NextRequest) {
     }> = [];
 
     for (const relation of relations) {
-      const activity = activityStore.get(relation.athleteId);
+      const key = `${ACTIVITY_PREFIX}${relation.athleteId}`;
+      const activity = await kvGet<ActivityEntry>(key);
 
       if (activity && activity.status === 'active') {
-        const durationMs = Date.now() - activity.chatStartedAt.getTime();
+        const chatStartedAt = new Date(activity.chatStartedAt);
+        const durationMs = Date.now() - chatStartedAt.getTime();
         activities.push({
           athleteId: relation.athleteId,
           athleteName: relation.Athlete?.User?.name || 'Unknown',
           status: 'active',
           sessionId: activity.sessionId,
-          lastHeartbeat: activity.lastHeartbeat.toISOString(),
+          lastHeartbeat: activity.lastHeartbeat,
           chatDuration: Math.floor(durationMs / 60000),
         });
       } else if (activity && activity.status === 'inactive') {
@@ -150,7 +144,7 @@ export async function GET(request: NextRequest) {
           athleteId: relation.athleteId,
           athleteName: relation.Athlete?.User?.name || 'Unknown',
           status: 'inactive',
-          lastHeartbeat: activity.lastHeartbeat.toISOString(),
+          lastHeartbeat: activity.lastHeartbeat,
         });
       }
       // Don't include athletes with no activity record (offline)
@@ -169,6 +163,9 @@ export async function GET(request: NextRequest) {
         totalAthletes: relations.length,
         activeNow: activities.filter((a) => a.status === 'active').length,
         recentlyActive: activities.filter((a) => a.status === 'inactive').length,
+      },
+      _meta: {
+        store: isRedisConfigured() ? 'redis' : 'memory',
       },
     });
   } catch (error) {
