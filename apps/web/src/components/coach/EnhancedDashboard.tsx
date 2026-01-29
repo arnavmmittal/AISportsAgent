@@ -12,7 +12,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Users, TrendingUp, AlertTriangle, Activity, Key, Copy, ChevronRight, Loader2 } from 'lucide-react';
+import { Users, TrendingUp, AlertTriangle, Activity, Key, Copy, ChevronRight, Loader2, Brain, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/shared/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -309,6 +310,35 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
             </select>
           </div>
         </div>
+
+        {/* AI Insights Banner */}
+        <Link href="/coach/ai-insights" className="block">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-600/20 via-blue-600/20 to-cyan-600/20 border border-purple-500/30 p-5 hover:border-purple-500/50 transition-all group cursor-pointer">
+            <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 opacity-10">
+              <Brain className="w-full h-full" />
+            </div>
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-purple-500/20">
+                  <Brain className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-white">AI-Powered Insights</h3>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/30 text-purple-300 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      New
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-300 mt-0.5">
+                    Discover correlations, predictions, and what works for each athlete
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            </div>
+          </div>
+        </Link>
 
         {/* Overview Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Upload, Download, AlertCircle, CheckCircle2, FileText } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Upload, Download, AlertCircle, CheckCircle2, FileText, RefreshCw, Zap } from 'lucide-react';
 
 export default function ImportPerformancePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -15,7 +15,85 @@ export default function ImportPerformancePage() {
     message?: string;
   } | null>(null);
 
+  // ESPN sync state
+  const [espnSyncing, setEspnSyncing] = useState(false);
+  const [espnDaysBack, setEspnDaysBack] = useState(30);
+  const [espnSport, setEspnSport] = useState<string>('');
+  const [availableSports, setAvailableSports] = useState<string[]>([]);
+  const [espnResult, setEspnResult] = useState<{
+    success: boolean;
+    summary?: {
+      imported: number;
+      skipped: number;
+      errors: number;
+      games: Array<{
+        athleteName: string;
+        opponent: string;
+        date: string;
+        gameResult: string;
+        alreadyExists: boolean;
+      }>;
+    };
+    error?: string;
+  } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch available sports on mount
+  useEffect(() => {
+    async function fetchSports() {
+      try {
+        const response = await fetch('/api/coach/import-games');
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableSports(data.sports || []);
+          if (data.sports?.length > 0) {
+            setEspnSport(data.sports[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching sports:', error);
+      }
+    }
+    fetchSports();
+  }, []);
+
+  // ESPN sync handler
+  const handleEspnSync = async () => {
+    setEspnSyncing(true);
+    setEspnResult(null);
+
+    try {
+      const response = await fetch('/api/coach/import-games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'espn',
+          daysBack: espnDaysBack,
+          sport: espnSport || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'ESPN sync failed');
+      }
+
+      setEspnResult({
+        success: true,
+        summary: data.summary,
+      });
+    } catch (error) {
+      console.error('ESPN sync error:', error);
+      setEspnResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'ESPN sync failed',
+      });
+    } finally {
+      setEspnSyncing(false);
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -147,6 +225,148 @@ Sarah Johnson,2024-12-18,Long Jump,,6.85,2,LOSS`,
               <strong>💡 Tip:</strong> Make sure athlete names exactly match the names in your system. The import will
               automatically link game stats with mood logs from the same date to calculate correlations.
             </p>
+          </div>
+        </div>
+
+        {/* ESPN Auto-Sync Section */}
+        <div className="card-elevated p-6 mb-6 border-2 border-primary/20">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-primary" />
+            Auto-Import from ESPN
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+              Recommended
+            </span>
+          </h2>
+
+          <p className="text-sm text-muted-foreground mb-4">
+            Automatically fetch game results and player stats from ESPN for your athletes. Works best for major college sports
+            (Football, Basketball, Baseball).
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Sport Selection */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Sport
+              </label>
+              <select
+                value={espnSport}
+                onChange={(e) => setEspnSport(e.target.value)}
+                className="w-full p-3 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="">All Sports</option>
+                {availableSports.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+                {/* Common ESPN sports if not in list */}
+                {!availableSports.includes('Basketball') && (
+                  <option value="Basketball">Basketball</option>
+                )}
+                {!availableSports.includes('Football') && (
+                  <option value="Football">Football</option>
+                )}
+                {!availableSports.includes('Baseball') && (
+                  <option value="Baseball">Baseball</option>
+                )}
+              </select>
+            </div>
+
+            {/* Days Back */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Import games from last
+              </label>
+              <select
+                value={espnDaysBack}
+                onChange={(e) => setEspnDaysBack(Number(e.target.value))}
+                className="w-full p-3 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value={7}>7 days</option>
+                <option value={14}>14 days</option>
+                <option value={30}>30 days</option>
+                <option value={60}>60 days</option>
+                <option value={90}>Season (90 days)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Sync Button */}
+          <button
+            onClick={handleEspnSync}
+            disabled={espnSyncing}
+            className={`w-full py-3 px-6 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors ${
+              espnSyncing
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90'
+            }`}
+          >
+            <RefreshCw className={`w-5 h-5 ${espnSyncing ? 'animate-spin' : ''}`} />
+            {espnSyncing ? 'Syncing from ESPN...' : 'Sync Games from ESPN'}
+          </button>
+
+          {/* ESPN Results */}
+          {espnResult && (
+            <div className={`mt-4 rounded-lg p-4 border ${
+              espnResult.success
+                ? 'bg-risk-green/5 border-risk-green/20'
+                : 'bg-risk-red/5 border-risk-red/20'
+            }`}>
+              <div className="flex items-start gap-3">
+                {espnResult.success ? (
+                  <CheckCircle2 className="w-5 h-5 text-risk-green flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-risk-red flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  {espnResult.success && espnResult.summary ? (
+                    <>
+                      <h4 className="font-semibold text-risk-green mb-2">ESPN Sync Complete</h4>
+                      <div className="text-sm space-y-1">
+                        <p className="text-risk-green">✓ {espnResult.summary.imported} new games imported</p>
+                        {espnResult.summary.skipped > 0 && (
+                          <p className="text-muted-foreground">↳ {espnResult.summary.skipped} games already existed</p>
+                        )}
+                        {espnResult.summary.errors > 0 && (
+                          <p className="text-warning">⚠ {espnResult.summary.errors} errors</p>
+                        )}
+                      </div>
+                      {espnResult.summary.games.length > 0 && (
+                        <div className="mt-3 max-h-32 overflow-y-auto">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Recent imports:</p>
+                          {espnResult.summary.games.slice(0, 5).filter(g => !g.alreadyExists).map((game, idx) => (
+                            <div key={idx} className="text-xs text-muted-foreground">
+                              {game.athleteName} vs {game.opponent} - {game.gameResult}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="font-semibold text-risk-red mb-1">ESPN Sync Failed</h4>
+                      <p className="text-sm text-risk-red/80">{espnResult.error}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              <strong>How it works:</strong> ESPN sync searches for your school's games, fetches box scores, and attempts to match
+              player names to your athletes. Pre-game mood logs (within 24h) are automatically linked for correlation analysis.
+            </p>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-background px-4 text-muted-foreground">or import manually via CSV</span>
           </div>
         </div>
 

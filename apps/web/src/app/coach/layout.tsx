@@ -5,46 +5,24 @@ export const dynamic = 'force-dynamic';
 
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
-import {
-  LayoutDashboard,
-  Users,
-  ClipboardList,
-  Settings,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Activity,
-  Brain,
-  BarChart3,
-} from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight, Brain, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { COACH_NAV } from '@/config/navigation';
 
 /**
- * Coach Portal Layout - Further Consolidated Navigation (v2.2)
+ * Coach Portal Layout - Unified Navigation (v3.0)
  *
- * Streamlined to 6 primary navigation items (from 8):
- * - Dashboard (main overview)
- * - Team (merged Athletes + Performance with tabs)
- * - Readiness (merged Readiness + Alerts with tabs)
- * - Assignments (coach assignments)
- * - Insights (merged Analytics + Reports)
- * - Settings
+ * Uses centralized navigation config for consistency.
  *
- * Consolidated features:
- * - Athletes + Performance → Team page with Roster/Performance tabs
- * - Readiness + Alerts → Readiness page with Team Readiness/Alerts tabs
- * - Analytics + Reports → Insights page (from v2.1)
+ * 6 primary navigation items with clear purposes:
+ * 1. Dashboard - "What's happening RIGHT NOW?"
+ * 2. AI Insights - "What should I KNOW and DO?" (THE SHOWCASE)
+ * 3. Athletes - "Deep dive on INDIVIDUALS"
+ * 4. Readiness - "Who's READY today?"
+ * 5. Data Hub - "Manage my DATA"
+ * 6. Settings - "Configure my ACCOUNT"
  */
-
-const navItems = [
-  { href: '/coach/team-overview', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/coach/team', label: 'Team', icon: Users },
-  { href: '/coach/readiness', label: 'Readiness', icon: Activity, badge: true },
-  { href: '/coach/assignments', label: 'Assignments', icon: ClipboardList },
-  { href: '/coach/insights', label: 'Insights', icon: BarChart3 },
-  { href: '/coach/settings', label: 'Settings', icon: Settings },
-];
 
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -118,12 +96,13 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
           {/* Navigation */}
           <nav className="flex-1 p-4 overflow-y-auto">
             <ul className="space-y-1">
-              {navItems.map((item) => {
+              {COACH_NAV.map((item) => {
                 const Icon = item.icon;
-                // Special handling for Dashboard: highlight when at /coach, /coach/dashboard, or /coach/team-overview
-                const isActive = item.href === '/coach/team-overview'
-                  ? pathname === '/coach' || pathname === '/coach/dashboard' || pathname === '/coach/team-overview' || pathname?.startsWith('/coach/team-overview/')
-                  : pathname === item.href || pathname?.startsWith(item.href + '/');
+                const isActive =
+                  pathname === item.href ||
+                  pathname?.startsWith(item.href + '/') ||
+                  // Handle /coach root path
+                  (item.href === '/coach/dashboard' && pathname === '/coach');
 
                 return (
                   <li key={item.href}>
@@ -134,18 +113,21 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
                         router.push(item.href);
                       }}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap',
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap group',
                         isActive
                           ? 'bg-primary text-primary-foreground shadow-sm'
-                          : item.badge
-                          ? 'text-warning hover:bg-warning/10'
+                          : item.highlight
+                          ? 'text-purple-400 hover:bg-purple-500/10 hover:text-purple-300'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       )}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
-                      <span className="text-sm">{item.label}</span>
+                      <span className="text-sm flex-1">{item.label}</span>
                       {item.badge && !isActive && (
-                        <span className="ml-auto w-2 h-2 rounded-full bg-warning animate-pulse" />
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-500/20 text-purple-300">
+                          <Sparkles className="w-3 h-3" />
+                          {item.badge}
+                        </span>
                       )}
                     </a>
                   </li>
