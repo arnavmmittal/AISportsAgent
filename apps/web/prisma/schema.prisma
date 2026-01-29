@@ -93,6 +93,7 @@ model Athlete {
   AthleteModel         AthleteModel?
   PredictionLog        PredictionLog[]
   GeneratedAlert       GeneratedAlert[]
+  CoachTouchpoint      CoachTouchpoint[]
 
   @@index([riskLevel])
   @@index([sport])
@@ -250,6 +251,7 @@ model Coach {
   CoachAthletes   CoachAthleteRelation[]
   CoachNote       CoachNote[]
   ChatSummary     ChatSummary[]
+  CoachTouchpoint CoachTouchpoint[]
   AlertRule       AlertRule[]
   GeneratedAlert  GeneratedAlert[]
 
@@ -286,6 +288,41 @@ model CoachNote {
 
   @@index([athleteId])
   @@index([coachId])
+}
+
+// Coach Touchpoint - For quick check-ins and scheduled follow-ups
+model CoachTouchpoint {
+  id           String           @id @default(cuid())
+  coachId      String
+  athleteId    String
+  type         TouchpointType
+  status       TouchpointStatus @default(PENDING)
+  message      String?
+  scheduledFor DateTime?
+  completedAt  DateTime?
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  Coach        Coach            @relation(fields: [coachId], references: [userId])
+  Athlete      Athlete          @relation(fields: [athleteId], references: [userId])
+
+  @@index([coachId, status])
+  @@index([athleteId])
+  @@index([scheduledFor])
+}
+
+enum TouchpointType {
+  QUICK_CHECKIN    // One-click check-in
+  SCHEDULED_FOLLOW_UP  // Scheduled for future date
+  ENCOURAGEMENT    // Quick encouragement message
+  CONCERN_FOLLOW_UP    // Following up on a concern
+}
+
+enum TouchpointStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+  OVERDUE
 }
 
 model ConversationInsight {

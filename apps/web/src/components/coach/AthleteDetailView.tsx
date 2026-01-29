@@ -47,6 +47,7 @@ import { Button } from '@/components/shared/ui/button';
 import { ReadinessGauge, ReadinessGaugeMini, type ReadinessLevel } from '@/components/shared/athlete';
 import { RiskBadge, RiskIndicator, getRiskLevelFromScore, type RiskLevel } from '@/components/shared/athlete';
 import WeeklySummaryDrawer from './weekly-summary/WeeklySummaryDrawer';
+import { QuickTouchpointActions } from './touchpoints';
 
 interface AthleteData {
   consentGranted: boolean;
@@ -535,6 +536,17 @@ export default function AthleteDetailView({ athleteId }: { athleteId: string }) 
             />
           </div>
         )}
+
+        {/* ─────────────────────────────────────────────────────────────────
+            QUICK TOUCHPOINT ACTIONS
+        ───────────────────────────────────────────────────────────────── */}
+        <section className="card-elevated p-6">
+          <QuickTouchpointActions
+            athleteId={athleteId}
+            athleteName={athlete.name}
+            onTouchpointSent={fetchAthleteData}
+          />
+        </section>
 
         {/* ─────────────────────────────────────────────────────────────────
             14-DAY HEATMAP + 7-DAY FORECAST
