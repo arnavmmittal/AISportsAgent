@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
 import { ReadinessGauge, type ReadinessLevel } from '@/components/shared/athlete/ReadinessGauge';
+import { PreGameCard } from '@/components/student/pre-game';
 import { useAuth } from '@/hooks/useAuth';
 import { isDemoMode, generateDemoAthleteDashboard } from '@/lib/demo-data';
 
@@ -428,6 +429,11 @@ function StudentHomePageContent() {
             </section>
           </Link>
         )}
+
+        {/* ─────────────────────────────────────────────────────────────────
+            PRE-GAME QUICK SESSION (if upcoming game)
+        ───────────────────────────────────────────────────────────────── */}
+        <PreGameCard className="animate-slide-up" />
 
         {/* ─────────────────────────────────────────────────────────────────
             TODAY'S FOCUS

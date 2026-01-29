@@ -94,6 +94,8 @@ model Athlete {
   PredictionLog        PredictionLog[]
   GeneratedAlert       GeneratedAlert[]
   CoachTouchpoint      CoachTouchpoint[]
+  GameSchedule         GameSchedule[]
+  PreGameSession       PreGameSession[]
 
   @@index([riskLevel])
   @@index([sport])
@@ -868,6 +870,100 @@ model PerformanceOutcome {
 
   @@index([athleteId, date])
   @@index([outcomeType])
+}
+
+// ============================================
+// GAME SCHEDULE (Upcoming Games)
+// ============================================
+
+model GameSchedule {
+  id            String   @id @default(cuid())
+  athleteId     String
+
+  // Game details
+  gameDate      DateTime
+  opponent      String
+  location      String?
+  homeAway      HomeAway      @default(HOME)
+  sport         String
+  stakes        StakesLevel   @default(MEDIUM)
+
+  // Additional context
+  competitionName   String?       // "Conference Championship", "Regular Season"
+  espnEventId       String?       // For syncing with ESPN
+  notes             String?
+
+  // Pre-game prep tracking
+  preGameSessionId  String?       // Link to PreGameSession if completed
+  reminderSent      Boolean       @default(false)
+  reminderSentAt    DateTime?
+
+  // Metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  Athlete       Athlete         @relation(fields: [athleteId], references: [userId], onDelete: Cascade)
+  PreGameSession PreGameSession?
+
+  @@index([athleteId, gameDate])
+  @@index([gameDate])
+  @@index([espnEventId])
+}
+
+// ============================================
+// PRE-GAME QUICK SESSIONS
+// ============================================
+
+model PreGameSession {
+  id              String   @id @default(cuid())
+  athleteId       String
+  gameScheduleId  String?  @unique
+
+  // Session timing
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  durationSeconds Int?
+
+  // Pre-game mental state (captured during session)
+  moodScore       Float?          // 1-10
+  confidenceScore Float?          // 1-10
+  anxietyScore    Float?          // 1-10 (higher = more anxious)
+  focusScore      Float?          // 1-10
+  energyLevel     Float?          // 1-10
+  sleepQuality    Float?          // 1-10 (last night)
+
+  // Session content
+  sessionType     PreGameSessionType @default(QUICK_CHECKIN)
+  interventionsUsed   String[]      // Array of intervention types used
+  keyInsights         String?       // AI-generated summary
+  athleteGoal         String?       // "I want to score 20+ points"
+  focusCue            String?       // "Breathe and shoot"
+
+  // Chat session link (if used AI chat)
+  chatSessionId   String?
+
+  // Post-game follow-up
+  postGameNotes   String?
+  postGameMood    Float?
+  goalAchieved    Boolean?
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  Athlete         Athlete       @relation(fields: [athleteId], references: [userId], onDelete: Cascade)
+  GameSchedule    GameSchedule? @relation(fields: [gameScheduleId], references: [id])
+
+  @@index([athleteId, startedAt])
+  @@index([gameScheduleId])
+}
+
+enum PreGameSessionType {
+  QUICK_CHECKIN       // 2-3 min - mood + confidence only
+  MENTAL_PREP         // 5-10 min - full mental preparation
+  VISUALIZATION       // Guided visualization session
+  ANXIETY_MANAGEMENT  // Focus on managing pre-game nerves
+  FOCUS_ROUTINE       // Building pre-game focus routine
 }
 
 // ============================================

@@ -12,13 +12,15 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase-client';
 
 const navItems = [
   { href: '/student/home', label: 'Home', icon: LayoutDashboard },
+  { href: '/student/schedule', label: 'My Schedule', icon: Calendar },
   { href: '/student/assignments', label: 'My Assignments', icon: ClipboardList },
   { href: '/student/ai-coach', label: 'AI Wellness Coach', icon: MessageSquare },
   { href: '/student/progress', label: 'My Progress', icon: Target },
