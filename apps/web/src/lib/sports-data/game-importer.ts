@@ -39,6 +39,48 @@ interface ImportSummary {
 }
 
 /**
+ * Check if team name matches school name (handles various naming conventions)
+ */
+function teamNameMatches(teamName: string, schoolName: string): boolean {
+  const teamLower = teamName.toLowerCase();
+  const schoolLower = schoolName.toLowerCase();
+
+  // Direct containment check both ways
+  if (teamLower.includes(schoolLower) || schoolLower.includes(teamLower)) {
+    return true;
+  }
+
+  // Extract core name by removing common prefixes/suffixes
+  const prefixes = ['university of ', 'the university of ', 'university '];
+  const suffixes = [' university', ' state university', ' state', ' college'];
+
+  let coreSchool = schoolLower;
+
+  // Strip prefix
+  for (const prefix of prefixes) {
+    if (coreSchool.startsWith(prefix)) {
+      coreSchool = coreSchool.slice(prefix.length);
+      break;
+    }
+  }
+
+  // Strip suffix
+  for (const suffix of suffixes) {
+    if (coreSchool.endsWith(suffix)) {
+      coreSchool = coreSchool.slice(0, -suffix.length);
+      break;
+    }
+  }
+
+  // Check if core name matches
+  if (coreSchool && (teamLower.includes(coreSchool) || coreSchool.includes(teamLower))) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Import games from ESPN for all athletes in a school
  */
 export async function importGamesFromESPN(
@@ -118,15 +160,14 @@ export async function importGamesFromESPN(
         // Get box score for player-level stats
         const boxScore = await getGameBoxScore(espnMapping.sport, espnMapping.league, game.id);
 
-        // Determine which team is ours
+        // Determine which team is ours (using improved name matching)
         const competition = game.competitions[0];
         const ourTeam = competition.competitors.find((c) =>
-          c.team.displayName.toLowerCase().includes(school.name.toLowerCase()) ||
-          school.name.toLowerCase().includes(c.team.displayName.toLowerCase())
+          teamNameMatches(c.team.displayName, school.name)
         );
 
         if (!ourTeam) {
-          console.log(`Could not match team for ${school.name} in game ${game.id}`);
+          console.log(`Could not match team for ${school.name} in game ${game.id}. Competitors: ${competition.competitors.map(c => c.team.displayName).join(', ')}`);
           continue;
         }
 

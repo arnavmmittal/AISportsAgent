@@ -161,7 +161,62 @@ export async function getTeam(
 }
 
 /**
+ * Normalize school name for ESPN team search
+ * Extracts the core name from various university naming conventions
+ */
+function normalizeSchoolName(schoolName: string): string[] {
+  const variations: string[] = [schoolName];
+
+  // Common patterns to strip
+  const prefixes = [
+    'University of ',
+    'The University of ',
+    'University ',
+    'The ',
+  ];
+  const suffixes = [
+    ' University',
+    ' College',
+    ' State University',
+    ' State',
+  ];
+
+  let coreName = schoolName;
+
+  // Try stripping prefixes
+  for (const prefix of prefixes) {
+    if (coreName.toLowerCase().startsWith(prefix.toLowerCase())) {
+      const stripped = coreName.slice(prefix.length);
+      if (stripped && !variations.includes(stripped)) {
+        variations.push(stripped);
+      }
+      coreName = stripped;
+      break;
+    }
+  }
+
+  // Try stripping suffixes
+  for (const suffix of suffixes) {
+    if (coreName.toLowerCase().endsWith(suffix.toLowerCase())) {
+      const stripped = coreName.slice(0, -suffix.length);
+      if (stripped && !variations.includes(stripped)) {
+        variations.push(stripped);
+      }
+      break;
+    }
+  }
+
+  // Add the core name if it's different
+  if (!variations.includes(coreName)) {
+    variations.push(coreName);
+  }
+
+  return variations;
+}
+
+/**
  * Search for a team by name
+ * Tries multiple name variations to improve matching
  */
 export async function searchTeams(
   sport: ESPNSport,
@@ -176,13 +231,30 @@ export async function searchTeams(
 
     const allTeams = data.sports?.[0]?.leagues?.[0]?.teams?.map((t) => t.team) || [];
 
-    const queryLower = query.toLowerCase();
-    return allTeams.filter(
-      (team) =>
-        team.displayName.toLowerCase().includes(queryLower) ||
-        team.abbreviation.toLowerCase().includes(queryLower) ||
-        team.shortDisplayName?.toLowerCase().includes(queryLower)
-    );
+    // Try multiple name variations
+    const queryVariations = normalizeSchoolName(query);
+
+    for (const variation of queryVariations) {
+      const queryLower = variation.toLowerCase();
+      const matches = allTeams.filter(
+        (team) =>
+          team.displayName.toLowerCase().includes(queryLower) ||
+          queryLower.includes(team.displayName.toLowerCase()) ||
+          team.abbreviation.toLowerCase().includes(queryLower) ||
+          team.shortDisplayName?.toLowerCase().includes(queryLower) ||
+          queryLower.includes(team.shortDisplayName?.toLowerCase() || '')
+      );
+
+      if (matches.length > 0) {
+        // Log which variation worked for debugging
+        if (variation !== query) {
+          console.log(`ESPN team search: "${query}" matched as "${variation}"`);
+        }
+        return matches;
+      }
+    }
+
+    return [];
   } catch (error) {
     console.error('Error searching teams:', error);
     return [];
