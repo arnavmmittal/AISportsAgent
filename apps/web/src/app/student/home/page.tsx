@@ -16,6 +16,7 @@ import {
   Activity,
   Loader2,
   AlertCircle,
+  Brain,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -341,6 +342,12 @@ export default function StudentHomePage() {
                   <span className="text-muted-foreground">Stable from yesterday</span>
                 )}
               </div>
+
+              {/* AI-calculated note */}
+              <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                <Brain size={10} className="text-purple-400" />
+                Calculated from your daily check-ins
+              </p>
             </div>
           </div>
         </section>
@@ -354,9 +361,15 @@ export default function StudentHomePage() {
               <MessageSquare size={24} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-foreground">Continue Chat</div>
+              <div className="font-medium text-foreground flex items-center gap-2">
+                Talk to AI Coach
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-500">
+                  <Brain size={10} />
+                  AI
+                </span>
+              </div>
               <p className="text-sm text-muted-foreground truncate">
-                {stats.lastChatTopic ? `Last topic: ${stats.lastChatTopic}...` : 'Start a new conversation'}
+                {stats.lastChatTopic ? `Last topic: ${stats.lastChatTopic}...` : '24/7 mental performance support'}
               </p>
             </div>
             <ChevronRight size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
@@ -444,7 +457,7 @@ export default function StudentHomePage() {
         </section>
 
         {/* ─────────────────────────────────────────────────────────────────
-            INSIGHT CARD - ML-generated
+            INSIGHT CARD - AI-generated
         ───────────────────────────────────────────────────────────────── */}
         <section className={cn(
           'p-5 rounded-lg border animate-slide-up',
@@ -466,8 +479,14 @@ export default function StudentHomePage() {
               )} />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-foreground mb-1">
-                {insight.type === 'celebration' ? 'Congratulations!' : 'Insight'}
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-medium text-foreground">
+                  {insight.type === 'celebration' ? 'Congratulations!' : 'AI Insight'}
+                </span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-500">
+                  <Brain size={10} />
+                  AI
+                </span>
               </div>
               <p className="text-sm text-muted-foreground">{insight.text}</p>
               {insight.actionUrl && (

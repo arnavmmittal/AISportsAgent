@@ -300,7 +300,7 @@ export default function AIInsightsPage() {
                 {activeFilter === 'all' && (
                   <div className="mt-6 flex justify-center gap-4">
                     <a
-                      href="/coach/performance/import"
+                      href="/coach/data?tab=import"
                       className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
                     >
                       Import Game Data
