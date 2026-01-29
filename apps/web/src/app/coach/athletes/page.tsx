@@ -12,10 +12,12 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
+  FlaskConical,
 } from 'lucide-react';
 import Link from 'next/link';
 import { SportFilter } from '@/components/SportFilter';
 import { cn } from '@/lib/utils';
+import { isDemoMode, generateDemoAthletes } from '@/lib/demo-data';
 
 /**
  * Athletes Page (v3.0 Navigation Consolidation)
@@ -52,6 +54,8 @@ interface Athlete {
 
 function AthletesPageContent() {
   const searchParams = useSearchParams();
+  const demoMode = isDemoMode(searchParams);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | RiskLevel>('all');
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
@@ -60,8 +64,26 @@ function AthletesPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadAthletes();
-  }, [selectedSports]);
+    if (demoMode) {
+      loadDemoAthletes();
+    } else {
+      loadAthletes();
+    }
+  }, [selectedSports, demoMode]);
+
+  const loadDemoAthletes = () => {
+    setIsLoading(true);
+    // Simulate loading delay
+    setTimeout(() => {
+      const demoData = generateDemoAthletes(30);
+      // Filter by selected sports if any
+      const filtered = selectedSports.length > 0
+        ? demoData.filter(a => selectedSports.includes(a.sport))
+        : demoData;
+      setAthletes(filtered);
+      setIsLoading(false);
+    }, 500);
+  };
 
   const loadAthletes = async () => {
     try {
@@ -164,6 +186,19 @@ function AthletesPageContent() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
+            <FlaskConical className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-amber-200 font-medium">Demo Mode Active</p>
+              <p className="text-amber-300/70 text-sm">
+                Viewing sample athletes. Remove <code className="bg-amber-500/20 px-1 rounded">?demo=true</code> from URL to see real data.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <header className="animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">

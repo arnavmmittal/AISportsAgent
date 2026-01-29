@@ -26,7 +26,7 @@ interface InsightMetric {
 }
 
 interface InsightCardProps {
-  category: 'correlation' | 'prediction' | 'intervention' | 'pattern' | 'alert';
+  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert';
   priority: 'high' | 'medium' | 'low';
   headline: string;
   detail: string;
@@ -57,9 +57,9 @@ const CATEGORY_CONFIG = {
     iconColor: 'text-purple-400',
     badge: 'bg-purple-500/20 text-purple-300',
   },
-  intervention: {
+  'effective-technique': {
     icon: Target,
-    label: 'What Works',
+    label: 'Effective Technique',
     gradient: 'from-green-500/20 to-emerald-500/20',
     border: 'border-green-500/30',
     iconBg: 'bg-green-500/20',
@@ -294,12 +294,12 @@ export function InsightSummaryBar({
   correlationsFound,
   athletesAnalyzed,
   atRiskCount,
-  interventionsTracked,
+  effectiveTechniques,
 }: {
   correlationsFound: number;
   athletesAnalyzed: number;
   atRiskCount: number;
-  interventionsTracked: number;
+  effectiveTechniques: number;
 }) {
   return (
     <div className="flex flex-wrap gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -326,7 +326,7 @@ export function InsightSummaryBar({
       <div className="flex items-center gap-2">
         <Target className="w-4 h-4 text-green-400" />
         <span className="text-sm text-slate-300">
-          <strong className="text-white">{interventionsTracked}</strong> interventions tracked
+          <strong className="text-white">{effectiveTechniques}</strong> effective techniques
         </span>
       </div>
     </div>

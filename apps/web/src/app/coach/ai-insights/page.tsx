@@ -3,11 +3,14 @@
  *
  * The showcase page for all advanced analytics, ML models, and algorithms.
  * Designed to clearly communicate the value of the platform's intelligence.
+ *
+ * Demo Mode: Add ?demo=true to URL to see the page with sample data.
  */
 
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   InsightCard,
   FeaturedInsightCard,
@@ -23,8 +26,16 @@ import {
   TrendingUp,
   Zap,
   ChevronRight,
+  FlaskConical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  isDemoMode,
+  generateDemoInsights,
+  generateDemoTeamSummary,
+  type DemoInsight,
+  type DemoTeamSummary,
+} from '@/lib/demo-data';
 
 interface InsightMetric {
   value: number | string;
@@ -34,7 +45,7 @@ interface InsightMetric {
 
 interface Insight {
   id: string;
-  category: 'correlation' | 'prediction' | 'intervention' | 'pattern' | 'alert';
+  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert';
   priority: 'high' | 'medium' | 'low';
   headline: string;
   detail: string;
@@ -58,6 +69,9 @@ interface TeamSummary {
 }
 
 export default function AIInsightsPage() {
+  const searchParams = useSearchParams();
+  const demoMode = isDemoMode(searchParams);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -66,8 +80,30 @@ export default function AIInsightsPage() {
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchInsights();
-  }, []);
+    if (demoMode) {
+      loadDemoData();
+    } else {
+      fetchInsights();
+    }
+  }, [demoMode]);
+
+  function loadDemoData() {
+    setLoading(true);
+    // Simulate loading delay for realistic feel
+    setTimeout(() => {
+      const demoInsights = generateDemoInsights();
+      const demoSummary = generateDemoTeamSummary();
+
+      // Map demo insights to the page's Insight type
+      setInsights(demoInsights.map(i => ({
+        ...i,
+        category: i.category as Insight['category'],
+      })));
+      setTeamSummary(demoSummary);
+      setGeneratedAt(new Date().toISOString());
+      setLoading(false);
+    }, 800);
+  }
 
   async function fetchInsights() {
     setLoading(true);
@@ -108,7 +144,7 @@ export default function AIInsightsPage() {
     all: insights.length,
     correlation: insights.filter(i => i.category === 'correlation').length,
     prediction: insights.filter(i => i.category === 'prediction').length,
-    intervention: insights.filter(i => i.category === 'intervention').length,
+    'effective-technique': insights.filter(i => i.category === 'effective-technique').length,
     pattern: insights.filter(i => i.category === 'pattern').length,
     alert: insights.filter(i => i.category === 'alert').length,
   };
@@ -116,7 +152,7 @@ export default function AIInsightsPage() {
   const filterOptions = [
     { key: 'all', label: 'All Insights', icon: Sparkles },
     { key: 'correlation', label: 'Correlations', icon: BarChart3 },
-    { key: 'intervention', label: 'What Works', icon: Target },
+    { key: 'effective-technique', label: 'Effective Techniques', icon: Target },
     { key: 'pattern', label: 'Patterns', icon: TrendingUp },
     { key: 'alert', label: 'Alerts', icon: AlertCircle },
   ];
@@ -124,6 +160,19 @@ export default function AIInsightsPage() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3">
+            <FlaskConical className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-amber-200 font-medium">Demo Mode Active</p>
+              <p className="text-amber-300/70 text-sm">
+                Viewing sample data. Remove <code className="bg-amber-500/20 px-1 rounded">?demo=true</code> from URL to see real data.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Hero Header */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-8">
           <div className="absolute top-0 right-0 w-96 h-96 -mr-48 -mt-48 opacity-10">
@@ -215,7 +264,7 @@ export default function AIInsightsPage() {
                 correlationsFound={insights.filter(i => i.category === 'correlation').length}
                 athletesAnalyzed={teamSummary.athletesWithData}
                 atRiskCount={teamSummary.atRiskCount}
-                interventionsTracked={insights.filter(i => i.category === 'intervention').length}
+                effectiveTechniques={insights.filter(i => i.category === 'effective-technique').length}
               />
             )}
 
