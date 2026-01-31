@@ -23,7 +23,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:rls": "vitest run tests/rls",
-    "test:features": "tsx scripts/test-production-features.ts"
+    "test:features": "tsx scripts/test-production-features.ts",
+    "seed:friends": "tsx scripts/seed-friends-testing.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
