@@ -197,6 +197,17 @@ export default function LoginScreen() {
         </View>
 
         <TouchableOpacity
+          style={styles.forgotPassword}
+          onPress={() => {
+            router.push('/(auth)/forgot-password');
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }}
+          disabled={isLoading}
+        >
+          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={handleLogin}
           disabled={isLoading}
           activeOpacity={0.8}
@@ -408,6 +419,16 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     color: Colors.error,
+    fontSize: Typography.sm,
+    fontWeight: Typography.medium,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: Spacing.md,
+    marginTop: -Spacing.sm,
+  },
+  forgotPasswordText: {
+    color: Colors.primary,
     fontSize: Typography.sm,
     fontWeight: Typography.medium,
   },

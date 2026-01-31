@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/escalation",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/generate-weekly-summaries",
       "schedule": "59 23 * * 0"
     },

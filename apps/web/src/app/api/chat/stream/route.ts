@@ -21,6 +21,7 @@ import {
   validateAthleteAccess,
 } from '@/lib/validation';
 import { logChatMessageCreation } from '@/lib/audit';
+import { sendCrisisAlertToCoaches } from '@/lib/push-notifications';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -266,10 +267,12 @@ export async function POST(req: NextRequest) {
           if (result.crisisDetection?.isCrisis) {
             console.warn(`[Chat Agent] CRISIS DETECTED - Severity: ${result.crisisDetection.severity}`);
 
+            const alertId = `alert_${Date.now()}`;
+
             // Create crisis alert in database
             await prisma.crisisAlert.create({
               data: {
-                id: `alert_${Date.now()}`,
+                id: alertId,
                 athleteId: athlete_id,
                 sessionId: session.id,
                 messageId: assistantMessageId,
@@ -278,6 +281,28 @@ export async function POST(req: NextRequest) {
                 reviewed: false,
               },
             });
+
+            // Send push notification to coaches for HIGH/CRITICAL alerts
+            if (result.crisisDetection.severity === 'CRITICAL' || result.crisisDetection.severity === 'HIGH') {
+              try {
+                // Get athlete name for notification
+                const athlete = await prisma.user.findUnique({
+                  where: { id: athlete_id },
+                  select: { name: true },
+                });
+                const athleteName = athlete?.name || 'An athlete';
+
+                await sendCrisisAlertToCoaches(
+                  athleteName,
+                  result.crisisDetection.severity,
+                  alertId
+                );
+                console.log(`[Chat Agent] Crisis push notification sent for alert ${alertId}`);
+              } catch (pushError) {
+                // Don't throw - alert was created, push notification is best-effort
+                console.error('[Chat Agent] Failed to send crisis push notification:', pushError);
+              }
+            }
 
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({

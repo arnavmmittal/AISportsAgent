@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ViewStyle, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Colors, BorderRadius, Shadows } from '../../constants/theme';
+import { Colors, BorderRadius, Shadows } from '../../../constants/theme';
 
 interface GradientCardProps {
   colors?: readonly [string, string, ...string[]];

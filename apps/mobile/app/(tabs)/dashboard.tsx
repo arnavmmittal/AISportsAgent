@@ -22,6 +22,7 @@ import { Card, LoadingScreen, GradientCard } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
 import { BiometricOverview } from '../../components/biometrics/BiometricOverview';
 import { HRVChart } from '../../components/biometrics/HRVChart';
+import { PreGameCard } from '../../components/student';
 
 const { width } = Dimensions.get('window');
 
@@ -311,6 +312,48 @@ export default function DashboardScreen() {
             </LinearGradient>
           </Animated.View>
         )}
+
+        {/* Pre-Game Card */}
+        <Animated.View
+          style={[
+            styles.preGameSection,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <Text style={styles.sectionTitleLight}>Upcoming Game</Text>
+          <PreGameCard onSessionComplete={() => loadDashboardData(true)} />
+
+          {/* View Full Schedule */}
+          <TouchableOpacity
+            style={styles.scheduleButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/schedule');
+            }}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['rgba(99, 102, 241, 0.15)', 'rgba(139, 92, 246, 0.1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.scheduleButtonGradient}
+            >
+              <View style={styles.scheduleButtonLeft}>
+                <View style={styles.scheduleIconContainer}>
+                  <Ionicons name="calendar" size={20} color="#6366f1" />
+                </View>
+                <View>
+                  <Text style={styles.scheduleButtonTitle}>Game Schedule</Text>
+                  <Text style={styles.scheduleButtonSubtitle}>View & manage all games</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#6366f1" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Vibrant Stat Cards with Triadic Colors */}
         <Text style={styles.sectionTitleLight}>Your Stats</Text>
@@ -738,6 +781,48 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: Spacing.lg,
     marginTop: Spacing.md,
+  },
+  // Pre-Game Section
+  preGameSection: {
+    marginBottom: Spacing.lg,
+  },
+  // Schedule Button
+  scheduleButton: {
+    marginTop: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  scheduleButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.3)',
+    borderRadius: BorderRadius.lg,
+  },
+  scheduleButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  scheduleIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scheduleButtonTitle: {
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  scheduleButtonSubtitle: {
+    fontSize: Typography.xs,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 1,
   },
   // Vibrant Stat Cards
   statsGrid: {

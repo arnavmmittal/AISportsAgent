@@ -22,7 +22,8 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:rls": "vitest run tests/rls"
+    "test:rls": "vitest run tests/rls",
+    "test:features": "tsx scripts/test-production-features.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -40,6 +41,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@sentry/nextjs": "^10.38.0",
     "@sports-agent/api-client": "workspace:*",
     "@sports-agent/types": "workspace:*",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
@@ -73,6 +75,7 @@
     "recharts": "^3.5.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
+    "twilio": "^5.12.0",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
     "zod": "^3.24.0",
