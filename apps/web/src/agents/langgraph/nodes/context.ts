@@ -80,12 +80,12 @@ export function buildContextPromptSection(state: ConversationState): string {
   sections.push(`- **Trend**: ${ctx.readiness.trend}`);
 
   if (ctx.readiness.comparedToBaseline) {
-    const baseline = ctx.readiness.comparedToBaseline;
-    if (baseline.mood_delta !== 0) {
-      sections.push(`- Mood is ${baseline.mood_delta > 0 ? 'above' : 'below'} baseline by ${Math.abs(baseline.mood_delta).toFixed(1)} points`);
+    const baseline = ctx.readiness.comparedToBaseline as Record<string, number>;
+    if (baseline.mood && baseline.mood !== 0) {
+      sections.push(`- Mood is ${baseline.mood > 0 ? 'above' : 'below'} baseline by ${Math.abs(baseline.mood).toFixed(1)} points`);
     }
-    if (baseline.stress_delta !== 0) {
-      sections.push(`- Stress is ${baseline.stress_delta > 0 ? 'higher' : 'lower'} than baseline by ${Math.abs(baseline.stress_delta).toFixed(1)} points`);
+    if (baseline.stress && baseline.stress !== 0) {
+      sections.push(`- Stress is ${baseline.stress > 0 ? 'higher' : 'lower'} than baseline by ${Math.abs(baseline.stress).toFixed(1)} points`);
     }
   }
 
@@ -125,8 +125,10 @@ export function buildContextPromptSection(state: ConversationState): string {
     if (profile.effectiveInterventions && profile.effectiveInterventions.length > 0) {
       sections.push('');
       sections.push('## What Works for This Athlete');
-      profile.effectiveInterventions.slice(0, 3).forEach((intervention: { protocol: string; effectiveness: number }) => {
-        sections.push(`- ${intervention.protocol} (${intervention.effectiveness}/10 effectiveness)`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      profile.effectiveInterventions.slice(0, 3).forEach((intervention: any) => {
+        const effectScore = intervention.effectivenessScore || intervention.effectiveness || 'N/A';
+        sections.push(`- ${intervention.protocol} (${effectScore}/10 effectiveness)`);
       });
     }
 

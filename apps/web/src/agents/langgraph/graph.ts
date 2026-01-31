@@ -120,7 +120,8 @@ function buildConversationGraph() {
 const checkpointer = new MemorySaver();
 
 // Compiled graph (singleton)
-let compiledGraph: ReturnType<typeof buildConversationGraph>['prototype']['compile'] | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let compiledGraph: any = null;
 
 /**
  * Get the compiled conversation graph

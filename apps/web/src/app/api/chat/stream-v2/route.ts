@@ -90,7 +90,9 @@ export async function POST(req: NextRequest) {
       return createSSEResponse(formatSSE('error', 'Invalid request'), 400);
     }
 
-    const { session_id, message, athlete_id } = validatedData;
+    const { message, athlete_id } = validatedData;
+    // Generate session_id if not provided (matches v1 behavior)
+    const session_id = validatedData.session_id || crypto.randomUUID();
 
     // Only check cost limits and permissions for regular user requests
     if (!isVoiceService && user) {
@@ -146,8 +148,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Save user message to database
+    // Note: Message requires explicit id (not auto-generated in schema)
     const userMessage = await prisma.message.create({
       data: {
+        id: crypto.randomUUID(),
         sessionId: session_id,
         role: 'user',
         content: message,
@@ -155,7 +159,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Log message creation for audit
-    logChatMessageCreation(session_id, athlete_id, 'user');
+    logChatMessageCreation(athlete_id, session_id, userMessage.id);
 
     // Get athlete's sport for context
     const sport = session.Athlete?.sport || null;
@@ -207,11 +211,11 @@ export async function POST(req: NextRequest) {
           if (crisisData && (crisisData.severity === 'CRITICAL' || crisisData.severity === 'HIGH')) {
             try {
               const athleteName = session?.Athlete?.User?.name || 'Unknown Athlete';
+              // Note: alertId is session_id since actual alert is created in persist node
               await sendCrisisAlertToCoaches(
-                athlete_id,
                 athleteName,
                 crisisData.severity,
-                crisisData.indicators?.join(', ') || 'Crisis detected'
+                session_id
               );
             } catch (notifError) {
               console.error('[CRISIS_NOTIFICATION] Failed to send:', notifError);

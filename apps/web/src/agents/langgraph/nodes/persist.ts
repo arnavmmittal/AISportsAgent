@@ -35,8 +35,10 @@ export async function persistStateNode(
     const content = lastMessage.content as string;
 
     // Save assistant message to database
+    // Note: Message requires explicit id (not auto-generated in schema)
     await prisma.message.create({
       data: {
+        id: crypto.randomUUID(),
         sessionId: state.sessionId,
         role: 'assistant',
         content,
@@ -105,32 +107,27 @@ async function createCrisisAlert(state: ConversationState): Promise<void> {
   if (!state.crisisDetection) return;
 
   try {
-    // Get the athlete's coach relationships
+    // Get the athlete info
     const athlete = await prisma.athlete.findUnique({
       where: { userId: state.athleteId },
-      include: {
-        User: true,
-        CoachRelations: {
-          where: { consentGranted: true },
-          include: {
-            Coach: {
-              include: { User: true },
-            },
-          },
-        },
-      },
     });
 
     if (!athlete) return;
 
-    // Create crisis alert
+    // Get the last message ID from the session
+    const lastMessage = await prisma.message.findFirst({
+      where: { sessionId: state.sessionId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Create crisis alert using schema-compatible fields
     await prisma.crisisAlert.create({
       data: {
         athleteId: state.athleteId,
         sessionId: state.sessionId,
+        messageId: lastMessage?.id || 'unknown',
         severity: state.crisisDetection.severity,
-        indicators: state.crisisDetection.indicators.join(', '),
-        aiSummary: state.crisisDetection.message,
+        notes: state.crisisDetection.message,
         escalated: state.crisisDetection.severity === 'CRITICAL',
       },
     });
@@ -138,10 +135,8 @@ async function createCrisisAlert(state: ConversationState): Promise<void> {
     // Log for audit
     console.log('[CRISIS_ALERT]', {
       athleteId: state.athleteId,
-      athleteName: athlete.User?.name,
       severity: state.crisisDetection.severity,
       indicators: state.crisisDetection.indicators,
-      coachCount: athlete.CoachRelations.length,
     });
 
     // TODO: Send push notification to coaches

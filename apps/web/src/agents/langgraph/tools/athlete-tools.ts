@@ -318,39 +318,31 @@ export const updateGoalProgressTool = tool(
  * Log an intervention/technique outcome
  */
 export const logInterventionOutcomeTool = tool(
-  async ({ athleteId, sessionId, interventionType, protocol, context, effectiveness, situation }) => {
+  async ({ athleteId, sessionId, interventionType, protocol, context, situation }) => {
+    // Create the intervention record
+    // Note: Outcomes are tracked separately via mood logs and follow-up comparisons
     const intervention = await prisma.intervention.create({
       data: {
         athleteId,
-        sessionId: sessionId ?? null,
+        suggestedInSessionId: sessionId ?? null,
         type: interventionType,
         protocol,
         context,
         situation: situation ?? null,
         source: 'AI_SUGGESTED',
         performedAt: new Date(),
-        Outcome: effectiveness ? {
-          create: {
-            effectiveness,
-            measuredAt: new Date(),
-          },
-        } : undefined,
-      },
-      include: {
-        Outcome: true,
       },
     });
 
     return {
       success: true,
       interventionId: intervention.id,
-      message: `Logged ${protocol} intervention (${context.toLowerCase().replace('_', ' ')}). ${effectiveness ? `Effectiveness: ${effectiveness}/10.` : ''}`,
+      message: `Logged ${protocol} intervention (${context.toLowerCase().replace('_', ' ')}).`,
       intervention: {
         id: intervention.id,
         type: interventionType,
         protocol,
         context,
-        effectiveness,
       },
     };
   },
@@ -380,9 +372,7 @@ export const logInterventionOutcomeTool = tool(
         'POST_GAME',
         'POST_LOSS',
         'RECOVERY',
-        'GENERAL',
       ]).describe('Context when the intervention is used'),
-      effectiveness: z.number().min(1).max(10).optional().describe('How effective was it (1-10)'),
       situation: z.string().optional().describe('Freeform situation description'),
     }),
   }
