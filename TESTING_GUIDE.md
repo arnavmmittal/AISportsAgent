@@ -6,18 +6,20 @@ Thanks for helping test AI Sports Agent! This guide will walk you through testin
 
 ### Test Accounts
 
-**Password for all accounts:** `TestPass123!`
+| Role | Email | Password |
+|------|-------|----------|
+| Coach | coach@uw.edu | Coach2024! |
+| Athlete | athlete1@uw.edu | Athlete2024! |
+| Athlete | athlete2@uw.edu | Athlete2024! |
+| Athlete | athlete3@uw.edu | Athlete2024! |
+| Athlete | athlete4@uw.edu | Athlete2024! |
+| Athlete | athlete5@uw.edu | Athlete2024! |
 
-| Role | Email | Name |
-|------|-------|------|
-| Coach | coach@test.aisportsagent.com | Test Coach |
-| Athlete | athlete1@test.aisportsagent.com | Alex Johnson |
-| Athlete | athlete2@test.aisportsagent.com | Jordan Smith |
-| Athlete | athlete3@test.aisportsagent.com | Taylor Williams |
-| Athlete | athlete4@test.aisportsagent.com | Morgan Brown |
-| Athlete | athlete5@test.aisportsagent.com | Casey Davis |
+*There are 50 athlete accounts total (athlete1@uw.edu through athlete50@uw.edu) - all use the same password.*
 
-**Invite Code (for new signups):** `TEST-INVITE-2024`
+**School:** University of Washington (demo)
+
+**Note:** These accounts have 30 days of mood logs, chat history, and rich data already seeded.
 
 ### Staging URL
 ```

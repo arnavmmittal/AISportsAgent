@@ -70,16 +70,17 @@ cd apps/web
 # Set DATABASE_URL to staging
 export DATABASE_URL="postgresql://..."
 
-# Run seed script
-pnpm seed:friends
+# Run the main seed script (includes comprehensive test data)
+pnpm prisma:seed
 ```
 
 This creates:
-- 1 coach account
-- 5 athlete accounts
-- Sample mood logs (7 days)
-- Sample goals
-- Coach-athlete relationships with consent
+- 1 coach account (coach@uw.edu / Coach2024!)
+- 50 athlete accounts (athlete1-50@uw.edu / Athlete2024!)
+- 30 days of mood logs per athlete
+- Chat sessions with psychological insights
+- Goals, interventions, and predictions
+- Full demo data for testing all features
 
 ---
 
