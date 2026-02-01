@@ -18,7 +18,7 @@ import { ToolNode } from '@langchain/langgraph/prebuilt';
 import { HumanMessage } from '@langchain/core/messages';
 
 import { ConversationStateAnnotation, createInitialState, type ConversationState } from './state';
-import { athleteTools } from './tools';
+import { allTools } from './tools';
 import {
   safetyCheckNode,
   routeAfterSafetyCheck,
@@ -29,8 +29,9 @@ import {
   persistStateNode,
 } from './nodes';
 
-// Create the tool node with all athlete tools
-const toolNode = new ToolNode(athleteTools);
+// Create the tool node with all tools (athlete + analytics)
+// Total: 14 tools (8 athlete + 6 analytics)
+const toolNode = new ToolNode(allTools);
 
 /**
  * Build the conversation graph

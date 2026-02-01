@@ -6,12 +6,18 @@
  * - ML predictions (risk, slump detection)
  * - Athlete's personal model (baselines, effective interventions)
  * - Recent patterns and themes
+ * - 7-day readiness forecasting (NEW)
+ * - 30-day burnout prediction (NEW)
+ * - Pattern detection (anomalies, cycles, correlations) (NEW)
  *
  * This enables proactive, personalized conversations where the agent
  * can anticipate needs rather than just react.
  */
 
 import { prisma } from '@/lib/prisma';
+import { forecastReadinessTrend, type ReadinessForecast } from '@/lib/analytics/forecasting';
+import { predictBurnout, type BurnoutPrediction, type BurnoutHistoricalData } from '@/lib/algorithms/burnout';
+import { detectPatterns, type PatternDetectionResults, type PatternDetectionData } from '@/lib/algorithms/patterns';
 
 // Types for the enriched context
 export interface AthleteInsight {
@@ -83,6 +89,33 @@ export interface AthleteProfile {
   communicationStyle: string;
 }
 
+// NEW: Forecasting data for proactive agent
+export interface ForecastData {
+  trend: 'improving' | 'declining' | 'stable';
+  next7Days: Array<{ date: string; score: number; confidence: 'high' | 'medium' | 'low' }>;
+  riskFlags: string[];
+  recommendations: string[];
+  currentScore: number;
+}
+
+// NEW: Burnout prediction data
+export interface BurnoutData {
+  stage: 'healthy' | 'early-warning' | 'developing' | 'advanced' | 'critical';
+  probability: number;
+  daysUntilRisk: number;
+  warningNow: Array<{ indicator: string; severity: string; description: string }>;
+  preventionStrategies: string[];
+}
+
+// NEW: Pattern detection data
+export interface PatternData {
+  anomalies: Array<{ date: string; metric: string; severity: string; context: string }>;
+  trends: Array<{ metric: string; direction: string; strength: string; description: string }>;
+  cycles: Array<{ metric: string; period: string; peakDays?: string[]; lowDays?: string[] }>;
+  correlations: Array<{ metric1: string; metric2: string; correlation: number; insights: string[] }>;
+  summary: string;
+}
+
 export interface EnrichedAthleteContext {
   athleteId: string;
   athleteName: string;
@@ -110,6 +143,15 @@ export interface EnrichedAthleteContext {
   lastSessionTopics: string[];
   daysSinceLastChat: number | null;
 
+  // NEW: 7-day readiness forecast
+  forecast: ForecastData | null;
+
+  // NEW: 30-day burnout prediction
+  burnout: BurnoutData | null;
+
+  // NEW: Behavioral pattern detection
+  patterns: PatternData | null;
+
   // Timestamp
   generatedAt: Date;
 }
@@ -130,6 +172,7 @@ class AthleteContextService {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Fetch all data in parallel for performance
     const [
@@ -141,6 +184,9 @@ class AthleteContextService {
       recentChatSessions,
       recentInsights,
       goals,
+      // NEW: Additional data for ML algorithms
+      readinessScores,
+      extendedMoodLogs,
     ] = await Promise.all([
       // Athlete profile with user data
       prisma.athlete.findUnique({
@@ -218,6 +264,25 @@ class AthleteContextService {
         },
         take: 5,
       }),
+
+      // NEW: Readiness scores for forecasting (need 14+ days)
+      prisma.readinessScore.findMany({
+        where: {
+          athleteId,
+          calculatedAt: { gte: thirtyDaysAgo },
+        },
+        orderBy: { calculatedAt: 'asc' },
+      }),
+
+      // NEW: Extended mood logs for burnout/patterns (30 days)
+      prisma.moodLog.findMany({
+        where: {
+          athleteId,
+          createdAt: { gte: thirtyDaysAgo },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 60, // Up to 2 per day for 30 days
+      }),
     ]);
 
     if (!athleteData) {
@@ -257,6 +322,15 @@ class AthleteContextService {
       ? Math.floor((now.getTime() - new Date(recentChatSessions[0].updatedAt).getTime()) / (24 * 60 * 60 * 1000))
       : null;
 
+    // NEW: Get 7-day readiness forecast (requires 14+ days of data)
+    const forecast = await this.getForecast(athleteId, readinessScores);
+
+    // NEW: Get burnout prediction (requires sufficient mood log data)
+    const burnout = await this.getBurnoutPrediction(extendedMoodLogs, readinessScores);
+
+    // NEW: Get pattern detection (anomalies, trends, cycles, correlations)
+    const patterns = this.getPatterns(extendedMoodLogs, readinessScores);
+
     return {
       athleteId,
       athleteName: athleteData.User.name,
@@ -274,6 +348,9 @@ class AthleteContextService {
         .filter((t): t is string => t !== null)
         .slice(0, 3),
       daysSinceLastChat,
+      forecast,
+      burnout,
+      patterns,
       generatedAt: now,
     };
   }
@@ -796,6 +873,175 @@ class AthleteContextService {
       hasGameSoon: daysUntilWeekend <= 2,
       daysUntilNextGame: daysUntilWeekend,
     };
+  }
+
+  /**
+   * Get 7-day readiness forecast using double exponential smoothing
+   * Requires at least 14 days of historical readiness scores
+   */
+  private async getForecast(
+    athleteId: string,
+    readinessScores: Array<{ score: number; calculatedAt: Date }>
+  ): Promise<ForecastData | null> {
+    // Need at least 14 data points for reliable forecasting
+    if (readinessScores.length < 14) {
+      return null;
+    }
+
+    try {
+      const result: ReadinessForecast = await forecastReadinessTrend(athleteId, 30);
+
+      return {
+        trend: result.trend,
+        next7Days: result.forecast.map(f => ({
+          date: f.date,
+          score: f.predictedScore,
+          confidence: f.confidence,
+        })),
+        riskFlags: result.riskFlags,
+        recommendations: result.recommendations,
+        currentScore: result.currentScore,
+      };
+    } catch (error) {
+      // Forecasting requires data - gracefully return null if insufficient
+      console.warn('[AthleteContext] Forecasting failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get 30-day burnout prediction using multi-factor analysis
+   * Analyzes progressive decline, chronic stress, recovery capacity, emotional exhaustion
+   */
+  private async getBurnoutPrediction(
+    moodLogs: Array<{
+      mood: number;
+      confidence: number;
+      stress: number;
+      energy: number | null;
+      sleep: number | null;
+      createdAt: Date;
+    }>,
+    readinessScores: Array<{ score: number; calculatedAt: Date }>
+  ): Promise<BurnoutData | null> {
+    // Need sufficient data for burnout prediction
+    if (moodLogs.length < 7 || readinessScores.length < 7) {
+      return null;
+    }
+
+    try {
+      // Assemble burnout historical data from mood logs and readiness scores
+      const burnoutData: BurnoutHistoricalData = {
+        readinessHistory: readinessScores.map(s => ({
+          date: s.calculatedAt.toISOString().split('T')[0],
+          score: s.score,
+        })),
+        psychologicalHistory: moodLogs.map(log => ({
+          date: log.createdAt.toISOString().split('T')[0],
+          mood: log.mood,
+          confidence: log.confidence,
+          stress: log.stress,
+          anxiety: log.stress, // Use stress as proxy for anxiety if not available
+        })),
+        physicalHistory: moodLogs
+          .filter(log => log.sleep !== null)
+          .map(log => ({
+            date: log.createdAt.toISOString().split('T')[0],
+            sleepHours: log.sleep || 7,
+            sleepQuality: log.sleep || 5,
+            fatigue: 10 - (log.energy || 5), // Invert energy to fatigue
+            soreness: 5, // Default if not available
+          })),
+      };
+
+      const result: BurnoutPrediction = predictBurnout(burnoutData);
+
+      return {
+        stage: result.currentStage,
+        probability: result.probability,
+        daysUntilRisk: result.daysUntilRisk,
+        warningNow: result.warningNow.slice(0, 3).map(w => ({
+          indicator: w.indicator,
+          severity: w.severity,
+          description: w.description,
+        })),
+        preventionStrategies: result.preventionStrategies.slice(0, 3),
+      };
+    } catch (error) {
+      console.warn('[AthleteContext] Burnout prediction failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Detect behavioral patterns: anomalies, trends, cycles, correlations
+   * Uses statistical methods (Z-score, Mann-Kendall, autocorrelation, Pearson)
+   */
+  private getPatterns(
+    moodLogs: Array<{
+      mood: number;
+      confidence: number;
+      stress: number;
+      energy: number | null;
+      sleep: number | null;
+      createdAt: Date;
+    }>,
+    readinessScores: Array<{ score: number; calculatedAt: Date }>
+  ): PatternData | null {
+    // Need sufficient data for pattern detection
+    if (moodLogs.length < 7) {
+      return null;
+    }
+
+    try {
+      // Assemble pattern detection data
+      const patternData: PatternDetectionData = {
+        timeSeries: moodLogs.map(log => ({
+          date: log.createdAt.toISOString().split('T')[0],
+          readiness: readinessScores.find(
+            r => r.calculatedAt.toISOString().split('T')[0] === log.createdAt.toISOString().split('T')[0]
+          )?.score || 70,
+          mood: log.mood,
+          confidence: log.confidence,
+          stress: log.stress,
+          anxiety: log.stress, // Use stress as proxy
+          sleep: log.sleep || 7,
+        })),
+      };
+
+      const result: PatternDetectionResults = detectPatterns(patternData);
+
+      return {
+        anomalies: result.anomalies.slice(0, 3).map(a => ({
+          date: a.date,
+          metric: a.metric,
+          severity: a.severity,
+          context: a.context,
+        })),
+        trends: result.trends.slice(0, 3).map(t => ({
+          metric: t.metric,
+          direction: t.direction,
+          strength: t.strength,
+          description: t.description,
+        })),
+        cycles: result.cycles.slice(0, 2).map(c => ({
+          metric: c.metric,
+          period: c.period,
+          peakDays: c.peakDays,
+          lowDays: c.lowDays,
+        })),
+        correlations: result.correlations.slice(0, 3).map(c => ({
+          metric1: c.metric1,
+          metric2: c.metric2,
+          correlation: c.correlation,
+          insights: c.insights,
+        })),
+        summary: result.summary,
+      };
+    } catch (error) {
+      console.warn('[AthleteContext] Pattern detection failed:', error);
+      return null;
+    }
   }
 
   /**

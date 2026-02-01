@@ -9,7 +9,7 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { SystemMessage, AIMessage } from '@langchain/core/messages';
 import type { ConversationState, ProtocolPhase } from '../state';
-import { athleteTools } from '../tools';
+import { allTools } from '../tools';
 import { buildContextPromptSection } from './context';
 
 // System prompt for the 5-step Discovery-First protocol
@@ -152,7 +152,8 @@ function getModelWithTools(): ChatOpenAI {
       streaming: true,
     });
 
-    modelWithToolsInstance = model.bindTools(athleteTools) as ChatOpenAI;
+    // Bind all tools (athlete + analytics) = 14 tools total
+    modelWithToolsInstance = model.bindTools(allTools) as ChatOpenAI;
   }
   return modelWithToolsInstance;
 }

@@ -8,6 +8,7 @@
 import { Annotation, messagesStateReducer } from '@langchain/langgraph';
 import { BaseMessage } from '@langchain/core/messages';
 import type { EnrichedAthleteContext } from '@/services/AthleteContextService';
+import type { ChatAnalysisResult } from '@/lib/chat-analysis';
 
 // Protocol phases from the 5-step Discovery-First approach
 export type ProtocolPhase =
@@ -140,6 +141,13 @@ export const ConversationStateAnnotation = Annotation.Root({
     default: () => null,
   }),
 
+  // Session analysis from chat-analysis (for feedback loop)
+  // Stores analysis from current session for same-turn reference
+  sessionAnalysis: Annotation<ChatAnalysisResult | null>({
+    reducer: (_, y) => y,
+    default: () => null,
+  }),
+
   // Conversation state flags
   isComplete: Annotation<boolean>({
     reducer: (_, y) => y,
@@ -175,6 +183,7 @@ export function createInitialState(
     knowledgeContext: null,
     toolResults: [],
     responseMetadata: null,
+    sessionAnalysis: null,
     isComplete: false,
     error: null,
   };

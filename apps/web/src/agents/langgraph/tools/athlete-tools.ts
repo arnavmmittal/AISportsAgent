@@ -378,6 +378,192 @@ export const logInterventionOutcomeTool = tool(
   }
 );
 
+/**
+ * Record intervention follow-up outcome
+ * Completes the feedback loop for intervention effectiveness
+ */
+export const recordInterventionFollowUpTool = tool(
+  async ({ interventionId, moodBefore, moodAfter, helpfulnessRating, notes }) => {
+    try {
+      // Get the original intervention
+      const intervention = await prisma.intervention.findUnique({
+        where: { id: interventionId },
+      });
+
+      if (!intervention) {
+        return {
+          success: false,
+          error: `Intervention ${interventionId} not found`,
+        };
+      }
+
+      // Calculate mood change and effectiveness score
+      const moodChange = moodAfter - moodBefore;
+      const normalizedImprovement = Math.max(0, Math.min(10, 5 + moodChange)); // Center at 5
+      const effectivenessScore = Math.round(
+        (normalizedImprovement * 0.6) + (helpfulnessRating * 2 * 0.4)
+      );
+
+      // Create an InterventionOutcome record
+      await prisma.interventionOutcome.create({
+        data: {
+          interventionId,
+          moodChange,
+          measuredAt: new Date(),
+          notes: notes ?? null,
+        },
+      });
+
+      // Update the intervention with calculated effectiveness and mark as completed
+      await prisma.intervention.update({
+        where: { id: interventionId },
+        data: {
+          completed: true,
+          athleteRating: helpfulnessRating,
+          athleteNotes: notes ?? null,
+          effectivenessScore,
+        },
+      });
+
+      // Determine effectiveness category
+      const effectivenessCategory =
+        effectivenessScore >= 8 ? 'highly effective' :
+        effectivenessScore >= 6 ? 'effective' :
+        effectivenessScore >= 4 ? 'somewhat effective' :
+        'needs adjustment';
+
+      const wouldUseAgain = effectivenessScore >= 5 && moodChange >= 0;
+
+      return {
+        success: true,
+        interventionId,
+        outcome: {
+          moodChange,
+          effectivenessScore,
+          effectivenessCategory,
+          helpfulnessRating,
+          wouldUseAgain,
+        },
+        message: `Recorded outcome for ${intervention.protocol}: ${effectivenessCategory} (${effectivenessScore}/10). ${
+          wouldUseAgain
+            ? 'Athlete would likely use this technique again.'
+            : 'Consider alternative techniques.'
+        }`,
+        learningNote: moodChange > 0
+          ? `Great! ${intervention.protocol} improved mood by ${moodChange} points.`
+          : moodChange === 0
+            ? `${intervention.protocol} maintained current state. May need different approach next time.`
+            : `${intervention.protocol} didn't help this time. Consider alternatives for future.`,
+      };
+    } catch (error) {
+      console.error('[INTERVENTION_FOLLOWUP] Failed to record outcome:', error);
+      return {
+        success: false,
+        error: 'Failed to record intervention outcome',
+      };
+    }
+  },
+  {
+    name: 'record_intervention_follow_up',
+    description: 'Record outcome after athlete tries a suggested technique. Creates feedback loop to learn what works. Use in follow-up conversations when asking "How did that breathing exercise work?"',
+    schema: z.object({
+      interventionId: z.string().describe('The intervention ID from log_intervention_outcome'),
+      moodBefore: z.number().min(1).max(10).describe('Mood level before trying the technique (1-10)'),
+      moodAfter: z.number().min(1).max(10).describe('Mood level after trying the technique (1-10)'),
+      helpfulnessRating: z.number().min(1).max(5).describe('How helpful was this technique? (1=not helpful, 5=very helpful)'),
+      notes: z.string().optional().describe('Additional notes about the experience'),
+    }),
+  }
+);
+
+/**
+ * Get effective interventions for an athlete
+ * Retrieves techniques that have worked well in the past
+ */
+export const getEffectiveInterventionsTool = tool(
+  async ({ athleteId, context, minEffectiveness }) => {
+    const where: Record<string, unknown> = {
+      athleteId,
+      effectivenessScore: { gte: minEffectiveness },
+    };
+
+    if (context) {
+      where.context = context;
+    }
+
+    const interventions = await prisma.intervention.findMany({
+      where,
+      orderBy: { effectivenessScore: 'desc' },
+      take: 5,
+    });
+
+    if (interventions.length === 0) {
+      return {
+        success: true,
+        hasData: false,
+        message: 'No effective interventions recorded yet. Try suggesting a technique and following up on its effectiveness.',
+      };
+    }
+
+    // Group by protocol to get unique techniques with average effectiveness
+    const byProtocol = interventions.reduce((acc, int) => {
+      if (!acc[int.protocol]) {
+        acc[int.protocol] = {
+          protocol: int.protocol,
+          type: int.type,
+          scores: [],
+          contexts: new Set<string>(),
+        };
+      }
+      if (int.effectivenessScore) acc[int.protocol].scores.push(int.effectivenessScore);
+      if (int.context) acc[int.protocol].contexts.add(int.context);
+      return acc;
+    }, {} as Record<string, { protocol: string; type: string; scores: number[]; contexts: Set<string> }>);
+
+    const techniques = Object.values(byProtocol).map(p => ({
+      protocol: p.protocol,
+      type: p.type,
+      avgEffectiveness: p.scores.reduce((a, b) => a + b, 0) / p.scores.length,
+      timesUsed: p.scores.length,
+      contexts: Array.from(p.contexts),
+    }));
+
+    return {
+      success: true,
+      hasData: true,
+      count: techniques.length,
+      techniques: techniques.map(t => ({
+        ...t,
+        avgEffectiveness: Number(t.avgEffectiveness.toFixed(1)),
+        recommendation: t.avgEffectiveness >= 8
+          ? 'Highly recommended for this athlete'
+          : t.avgEffectiveness >= 6
+            ? 'Works well, consider using'
+            : 'Has helped before',
+      })),
+      summary: `Found ${techniques.length} effective techniques. Top: ${techniques[0]?.protocol} (${techniques[0]?.avgEffectiveness.toFixed(1)}/10)`,
+    };
+  },
+  {
+    name: 'get_effective_interventions',
+    description: 'Get techniques that have worked well for this athlete in the past. Use to personalize recommendations based on proven effectiveness.',
+    schema: z.object({
+      athleteId: z.string().describe('The athlete user ID'),
+      context: z.enum([
+        'PRE_GAME',
+        'PRE_PRACTICE',
+        'DURING_COMPETITION',
+        'HALFTIME',
+        'POST_ERROR',
+        'POST_GAME',
+        'POST_LOSS',
+        'RECOVERY',
+      ]).optional().describe('Filter by situation context'),
+      minEffectiveness: z.number().min(1).max(10).default(6).describe('Minimum effectiveness score (default 6/10)'),
+    }),
+  }
+);
+
 // ============================================================================
 // KNOWLEDGE TOOLS - Search sports psychology knowledge base
 // ============================================================================
@@ -447,11 +633,13 @@ export const athleteTools = [
   getMoodHistoryTool,
   getGoalsTool,
   getUpcomingGamesTool,
+  getEffectiveInterventionsTool,
   // Write tools
   logMoodTool,
   createGoalTool,
   updateGoalProgressTool,
   logInterventionOutcomeTool,
+  recordInterventionFollowUpTool,
   // Knowledge tools
   searchKnowledgeBaseTool,
 ];

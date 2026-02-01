@@ -5,14 +5,19 @@
  * - Assistant message to the database
  * - Crisis alerts if detected
  * - Session metadata updates
+ * - Chat analysis for feedback loop (NEW)
  *
- * Also triggers async analysis for coach insights.
+ * The chat analysis creates a feedback loop where:
+ * 1. This turn's analysis is stored in state
+ * 2. Next turn can reference insights from earlier in the session
+ * 3. Future sessions load recent ChatInsights in context
  */
 
 import { AIMessage } from '@langchain/core/messages';
 import type { ConversationState } from '../state';
 import { prisma } from '@/lib/prisma';
 import { shouldAdvancePhase } from '../state';
+import { analyzeAndStore, type ChatAnalysisResult } from '@/lib/chat-analysis';
 
 /**
  * Persist state node - saves conversation to database
@@ -53,6 +58,17 @@ export async function persistStateNode(
     // Update session metadata
     await updateSessionMetadata(state);
 
+    // Trigger chat analysis for feedback loop
+    // This creates a ChatInsight that can be referenced in same-session follow-ups
+    // and loaded into context for future sessions
+    let sessionAnalysis: ChatAnalysisResult | null = null;
+    try {
+      sessionAnalysis = await triggerChatAnalysis(state.sessionId);
+    } catch (analysisError) {
+      // Non-blocking - log but don't fail persist
+      console.error('[LANGGRAPH:PERSIST] Chat analysis failed:', analysisError);
+    }
+
     // Determine if phase should advance
     const hasFrameworkApplied =
       state.responseMetadata?.framework !== undefined ||
@@ -75,6 +91,8 @@ export async function persistStateNode(
         hasCrisis: state.crisisDetection?.isCrisis,
         phaseAdvanced: newPhase !== state.protocolPhase,
         newPhase,
+        hasAnalysis: sessionAnalysis !== null,
+        analysisTopics: sessionAnalysis?.topics?.slice(0, 3),
         duration: `${duration}ms`,
       });
     }
@@ -86,6 +104,7 @@ export async function persistStateNode(
       isComplete: true,
       protocolPhase: newPhase,
       turnCountInPhase,
+      sessionAnalysis,
     };
   } catch (error) {
     console.error('[LANGGRAPH:PERSIST] Failed to persist state:', error);
@@ -181,6 +200,52 @@ async function updateSessionMetadata(state: ConversationState): Promise<void> {
   } catch (error) {
     // Non-critical - log but don't throw
     console.error('[PERSIST] Failed to update session metadata:', error);
+  }
+}
+
+/**
+ * Trigger chat analysis and store as ChatInsight
+ *
+ * This creates a feedback loop:
+ * 1. Current turn's analysis is stored in state (sessionAnalysis)
+ * 2. AI can reference insights from earlier in the same session
+ * 3. Future sessions load recent ChatInsights into context
+ *
+ * The analysis extracts:
+ * - Sentiment and emotional tone
+ * - Topics discussed
+ * - Stress indicators
+ * - Coping strategies used
+ * - Pre-game context if applicable
+ */
+async function triggerChatAnalysis(sessionId: string): Promise<ChatAnalysisResult | null> {
+  try {
+    // Get message count to determine if analysis is worthwhile
+    const messageCount = await prisma.message.count({
+      where: { sessionId },
+    });
+
+    // Only analyze if we have at least 2 messages (user + assistant)
+    if (messageCount < 2) {
+      return null;
+    }
+
+    // Run the analysis - this also saves a ChatInsight to the database
+    const analysis = await analyzeAndStore(sessionId);
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CHAT_ANALYSIS] Created insight:', {
+        sessionId,
+        sentiment: analysis.overallSentiment,
+        tone: analysis.emotionalTone,
+        topics: analysis.topics,
+      });
+    }
+
+    return analysis;
+  } catch (error) {
+    console.error('[CHAT_ANALYSIS] Failed to analyze session:', error);
+    return null;
   }
 }
 
