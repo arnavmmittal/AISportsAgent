@@ -17,6 +17,9 @@ import {
   ChevronRight,
   Sparkles,
   BarChart3,
+  Flame,
+  Calendar,
+  Lightbulb,
 } from 'lucide-react';
 
 interface InsightMetric {
@@ -26,8 +29,8 @@ interface InsightMetric {
 }
 
 interface InsightCardProps {
-  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert';
-  priority: 'high' | 'medium' | 'low';
+  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'intervention' | 'deep_insight';
+  priority: 'high' | 'medium' | 'low' | 'critical';
   headline: string;
   detail: string;
   metric?: InsightMetric;
@@ -84,9 +87,46 @@ const CATEGORY_CONFIG = {
     iconColor: 'text-red-400',
     badge: 'bg-red-500/20 text-red-300',
   },
+  burnout: {
+    icon: Flame,
+    label: 'Burnout Risk',
+    gradient: 'from-orange-500/20 to-red-500/20',
+    border: 'border-orange-500/30',
+    iconBg: 'bg-orange-500/20',
+    iconColor: 'text-orange-400',
+    badge: 'bg-orange-500/20 text-orange-300',
+  },
+  forecast: {
+    icon: Calendar,
+    label: 'Readiness Forecast',
+    gradient: 'from-sky-500/20 to-indigo-500/20',
+    border: 'border-sky-500/30',
+    iconBg: 'bg-sky-500/20',
+    iconColor: 'text-sky-400',
+    badge: 'bg-sky-500/20 text-sky-300',
+  },
+  intervention: {
+    icon: Lightbulb,
+    label: 'Intervention',
+    gradient: 'from-yellow-500/20 to-amber-500/20',
+    border: 'border-yellow-500/30',
+    iconBg: 'bg-yellow-500/20',
+    iconColor: 'text-yellow-400',
+    badge: 'bg-yellow-500/20 text-yellow-300',
+  },
+  deep_insight: {
+    icon: Sparkles,
+    label: 'Deep Insight',
+    gradient: 'from-violet-500/20 to-fuchsia-500/20',
+    border: 'border-violet-500/30',
+    iconBg: 'bg-violet-500/20',
+    iconColor: 'text-violet-400',
+    badge: 'bg-violet-500/20 text-violet-300',
+  },
 };
 
 const PRIORITY_STYLES = {
+  critical: 'ring-2 ring-red-500/50 animate-pulse',
   high: 'ring-2 ring-primary/30',
   medium: '',
   low: 'opacity-90',

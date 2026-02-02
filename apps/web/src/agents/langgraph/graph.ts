@@ -18,7 +18,7 @@ import { ToolNode } from '@langchain/langgraph/prebuilt';
 import { HumanMessage } from '@langchain/core/messages';
 
 import { ConversationStateAnnotation, createInitialState, type ConversationState } from './state';
-import { allTools } from './tools';
+import { allTools, structuredOutputToolNames } from './tools';
 import {
   safetyCheckNode,
   routeAfterSafetyCheck,
@@ -239,13 +239,39 @@ export async function* streamConversationGraph(
       };
     } else if (event.event === 'on_tool_end') {
       // Tool execution completed
+      const toolName = event.name;
+      const toolOutput = event.data?.output;
+
       yield {
         type: 'tool_result',
         data: {
-          tool: event.name,
-          output: event.data?.output,
+          tool: toolName,
+          output: toolOutput,
         },
       };
+
+      // Check if this is a structured output tool (widget generation)
+      if (structuredOutputToolNames.includes(toolName) && toolOutput) {
+        try {
+          // Parse the widget metadata from the tool output
+          const widgetData = typeof toolOutput === 'string'
+            ? JSON.parse(toolOutput)
+            : toolOutput;
+
+          if (widgetData.widgetType && widgetData.data) {
+            yield {
+              type: 'widget',
+              data: {
+                widgetType: widgetData.widgetType,
+                payload: widgetData.data,
+              },
+            };
+          }
+        } catch {
+          // Failed to parse widget data, skip emitting widget event
+          console.warn(`[LANGGRAPH:STREAM] Failed to parse widget output from ${toolName}`);
+        }
+      }
     } else if (event.event === 'on_chain_end' && event.name === 'safety_check') {
       // Safety check completed
       const output = event.data?.output;
@@ -267,6 +293,7 @@ export async function* streamConversationGraph(
       sessionId,
       protocolPhase: finalState.values?.protocolPhase,
       hasCrisis: finalState.values?.crisisDetection?.isCrisis || false,
+      widgets: finalState.values?.widgetMetadata || [],
     },
   };
 }

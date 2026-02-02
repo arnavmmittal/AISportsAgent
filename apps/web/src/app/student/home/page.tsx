@@ -25,6 +25,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
 import { ReadinessGauge, type ReadinessLevel } from '@/components/shared/athlete/ReadinessGauge';
 import { PreGameCard } from '@/components/student/pre-game';
+import { ForecastWidget } from '@/components/athlete/ForecastWidget';
+import { EnergyStatusCard } from '@/components/athlete/EnergyStatusCard';
 import { useAuth } from '@/hooks/useAuth';
 import { isDemoMode, generateDemoAthleteDashboard } from '@/lib/demo-data';
 
@@ -77,6 +79,20 @@ interface DashboardData {
     dueDate: string;
     estimatedTime: string | null;
   }[];
+  // NEW: 7-day readiness forecast
+  forecast: {
+    trend: 'improving' | 'declining' | 'stable';
+    currentScore: number;
+    next7Days: { date: string; score: number; confidence: string }[];
+    lowDays: { date: string; score: number }[];
+    recommendation: string;
+  } | null;
+  // NEW: Burnout stage (athlete-safe - no probability)
+  burnout: {
+    stage: 'healthy' | 'early-warning' | 'developing' | 'advanced' | 'critical';
+    message: string;
+    strategies: string[];
+  } | null;
 }
 
 // Local storage keys for routine completion tracking (resets daily)
@@ -261,7 +277,7 @@ function StudentHomePageContent() {
     );
   }
 
-  const { readiness, stats, insight, focusItems, hasGameTomorrow, upcomingAssignments, user } = data;
+  const { readiness, stats, insight, focusItems, hasGameTomorrow, upcomingAssignments, user, forecast, burnout } = data;
   const level = getReadinessLevel(readiness.score);
 
   // Merge focus items with local routine completions
@@ -434,6 +450,16 @@ function StudentHomePageContent() {
             PRE-GAME QUICK SESSION (if upcoming game)
         ───────────────────────────────────────────────────────────────── */}
         <PreGameCard className="animate-slide-up" />
+
+        {/* ─────────────────────────────────────────────────────────────────
+            ENERGY STATUS (Burnout Warning - only shows if not healthy)
+        ───────────────────────────────────────────────────────────────── */}
+        <EnergyStatusCard burnout={burnout} />
+
+        {/* ─────────────────────────────────────────────────────────────────
+            7-DAY READINESS FORECAST
+        ───────────────────────────────────────────────────────────────── */}
+        <ForecastWidget forecast={forecast} />
 
         {/* ─────────────────────────────────────────────────────────────────
             TODAY'S FOCUS

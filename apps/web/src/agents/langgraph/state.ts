@@ -9,6 +9,7 @@ import { Annotation, messagesStateReducer } from '@langchain/langgraph';
 import { BaseMessage } from '@langchain/core/messages';
 import type { EnrichedAthleteContext } from '@/services/AthleteContextService';
 import type { ChatAnalysisResult } from '@/lib/chat-analysis';
+import type { WidgetMetadata } from './tools/structured-output-tools';
 
 // Protocol phases from the 5-step Discovery-First approach
 export type ProtocolPhase =
@@ -141,6 +142,13 @@ export const ConversationStateAnnotation = Annotation.Root({
     default: () => null,
   }),
 
+  // Widget metadata for chat widgets (action plans, drills, routines)
+  // Accumulated from structured output tools called during the turn
+  widgetMetadata: Annotation<WidgetMetadata[]>({
+    reducer: (x, y) => [...(x || []), ...(y || [])],
+    default: () => [],
+  }),
+
   // Session analysis from chat-analysis (for feedback loop)
   // Stores analysis from current session for same-turn reference
   sessionAnalysis: Annotation<ChatAnalysisResult | null>({
@@ -183,6 +191,7 @@ export function createInitialState(
     knowledgeContext: null,
     toolResults: [],
     responseMetadata: null,
+    widgetMetadata: [],
     sessionAnalysis: null,
     isComplete: false,
     error: null,

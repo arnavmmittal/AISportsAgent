@@ -24,10 +24,13 @@ import {
   BarChart3,
   Target,
   TrendingUp,
+  TrendingDown,
   Zap,
   ChevronRight,
   FlaskConical,
   MessageSquare,
+  Flame,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -35,9 +38,11 @@ import {
   generateDemoInsights,
   generateDemoTeamSummary,
   generateDemoChatInsights,
+  generateDemoTeamForecast,
   type DemoInsight,
   type DemoTeamSummary,
   type DemoChatInsightsResponse,
+  type DemoTeamForecast,
 } from '@/lib/demo-data';
 import { ChatInsightsPanel } from '@/components/coach/insights/ChatInsightsPanel';
 
@@ -49,7 +54,7 @@ interface InsightMetric {
 
 interface Insight {
   id: string;
-  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert';
+  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'intervention';
   priority: 'high' | 'medium' | 'low';
   headline: string;
   detail: string;
@@ -59,6 +64,13 @@ interface Insight {
   actionable?: string;
   confidence: number;
   evidence: string;
+}
+
+interface TeamForecast {
+  avgPredictedScore: number;
+  trend: 'improving' | 'declining' | 'stable';
+  atRiskDays: { date: string; athleteCount: number }[];
+  athletesWithDecline: { id: string; name: string; predictedLow: number; dayOfWeek: string }[];
 }
 
 interface TeamSummary {
@@ -120,6 +132,7 @@ function AIInsightsPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [teamSummary, setTeamSummary] = useState<TeamSummary | null>(null);
+  const [teamForecast, setTeamForecast] = useState<TeamForecast | null>(null);
   const [chatInsights, setChatInsights] = useState<ChatInsightsData | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -139,6 +152,7 @@ function AIInsightsPageContent() {
       const demoInsights = generateDemoInsights();
       const demoSummary = generateDemoTeamSummary();
       const demoChatInsights = generateDemoChatInsights();
+      const demoForecast = generateDemoTeamForecast();
 
       // Map demo insights to the page's Insight type
       setInsights(demoInsights.map(i => ({
@@ -146,6 +160,7 @@ function AIInsightsPageContent() {
         category: i.category as Insight['category'],
       })));
       setTeamSummary(demoSummary);
+      setTeamForecast(demoForecast);
       setChatInsights(demoChatInsights);
       setGeneratedAt(new Date().toISOString());
       setLoading(false);
@@ -172,6 +187,7 @@ function AIInsightsPageContent() {
 
       setInsights(insightsData.insights || []);
       setTeamSummary(insightsData.teamSummary || null);
+      setTeamForecast(insightsData.teamForecast || null);
       setGeneratedAt(insightsData.generatedAt || null);
 
       // Chat insights are optional - don't fail if they're not available
@@ -201,18 +217,22 @@ function AIInsightsPageContent() {
   const categoryCounts = {
     all: insights.length,
     conversation: chatInsights?.stats.totalSessions || 0,
+    burnout: insights.filter(i => i.category === 'burnout').length,
+    forecast: insights.filter(i => i.category === 'forecast').length,
     correlation: insights.filter(i => i.category === 'correlation').length,
     prediction: insights.filter(i => i.category === 'prediction').length,
-    'effective-technique': insights.filter(i => i.category === 'effective-technique').length,
+    'effective-technique': insights.filter(i => i.category === 'effective-technique' || i.category === 'intervention').length,
     pattern: insights.filter(i => i.category === 'pattern').length,
     alert: insights.filter(i => i.category === 'alert').length,
   };
 
   const filterOptions = [
     { key: 'all', label: 'All Insights', icon: Sparkles },
+    { key: 'burnout', label: 'Burnout Risk', icon: Flame },
+    { key: 'forecast', label: 'Forecasts', icon: Calendar },
     { key: 'conversation', label: 'Conversations', icon: MessageSquare },
     { key: 'correlation', label: 'Correlations', icon: BarChart3 },
-    { key: 'effective-technique', label: 'Effective Techniques', icon: Target },
+    { key: 'effective-technique', label: 'Techniques', icon: Target },
     { key: 'pattern', label: 'Patterns', icon: TrendingUp },
     { key: 'alert', label: 'Alerts', icon: AlertCircle },
   ];
@@ -326,6 +346,81 @@ function AIInsightsPageContent() {
                 atRiskCount={teamSummary.atRiskCount}
                 effectiveTechniques={insights.filter(i => i.category === 'effective-technique').length}
               />
+            )}
+
+            {/* Team Forecast Overview */}
+            {teamForecast && teamForecast.athletesWithDecline.length > 0 && (
+              <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-500/20">
+                      <Calendar className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">7-Day Team Forecast</h3>
+                      <p className="text-sm text-slate-400">Predicted readiness trends</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {teamForecast.trend === 'declining' ? (
+                      <TrendingDown className="w-5 h-5 text-red-400" />
+                    ) : teamForecast.trend === 'improving' ? (
+                      <TrendingUp className="w-5 h-5 text-green-400" />
+                    ) : null}
+                    <span className={cn(
+                      'text-sm font-medium',
+                      teamForecast.trend === 'declining' ? 'text-red-400' :
+                      teamForecast.trend === 'improving' ? 'text-green-400' : 'text-slate-400'
+                    )}>
+                      {teamForecast.trend === 'declining' ? 'Team declining' :
+                       teamForecast.trend === 'improving' ? 'Team improving' : 'Stable'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Athletes with predicted decline */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-400" />
+                    Athletes with predicted dips this week
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {teamForecast.athletesWithDecline.map((athlete) => (
+                      <div
+                        key={athlete.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700"
+                      >
+                        <div>
+                          <span className="text-sm font-medium text-white">{athlete.name}</span>
+                          <p className="text-xs text-slate-400">{athlete.dayOfWeek} low</p>
+                        </div>
+                        <span className={cn(
+                          'text-lg font-bold tabular-nums',
+                          athlete.predictedLow < 50 ? 'text-red-400' :
+                          athlete.predictedLow < 60 ? 'text-amber-400' : 'text-yellow-400'
+                        )}>
+                          {athlete.predictedLow}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* At-risk days summary */}
+                {teamForecast.atRiskDays.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-700">
+                    <p className="text-sm text-slate-400">
+                      <span className="text-white font-medium">Watch days:</span>{' '}
+                      {teamForecast.atRiskDays.map((d, i) => (
+                        <span key={d.date}>
+                          {new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' })} ({d.athleteCount} at-risk)
+                          {i < teamForecast.atRiskDays.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Featured Insight */}

@@ -389,6 +389,37 @@ export function ChatInterface() {
                 // Store structured metadata for widgets
                 setCurrentMetadata(parsed.data as StructuredMetadata);
                 console.log('Received structured metadata:', parsed.data);
+              } else if (parsed.type === 'widget') {
+                // Handle widget events from LangGraph structured output tools
+                const widgetType = parsed.data?.widgetType;
+                const widgetPayload = parsed.data?.payload;
+
+                if (widgetType && widgetPayload) {
+                  setCurrentMetadata((prev) => {
+                    // Create minimal default metadata if none exists (LangGraph widgets may arrive independently)
+                    const base: StructuredMetadata = prev || {
+                      session_stage: 'action',
+                      detected_issue_tags: [],
+                      sport_context: { sport: '', setting: '' },
+                      key_hypotheses: [],
+                      action_plan: { today: [], this_week: [], next_competition: [] },
+                      tracking: { metrics: [], adherence_check: '', one_word_debrief: '' },
+                      next_prompt: '',
+                      kb_citations: [],
+                      human_response: '',
+                    };
+                    const updated = { ...base };
+                    if (widgetType === 'action_plan') {
+                      updated.action_plan = widgetPayload;
+                    } else if (widgetType === 'practice_drill') {
+                      updated.practice_drill = widgetPayload;
+                    } else if (widgetType === 'routine') {
+                      updated.pre_performance_routine = widgetPayload;
+                    }
+                    return updated;
+                  });
+                  console.log('Received widget:', widgetType, widgetPayload);
+                }
               } else if (parsed.type === 'done') {
                 // Streaming complete
                 console.log('Streaming completed');

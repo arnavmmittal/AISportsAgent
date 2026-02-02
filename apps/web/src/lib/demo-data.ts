@@ -34,7 +34,7 @@ export interface DemoAthlete {
 
 export interface DemoInsight {
   id: string;
-  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert';
+  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'intervention';
   priority: 'high' | 'medium' | 'low';
   headline: string;
   detail: string;
@@ -48,6 +48,13 @@ export interface DemoInsight {
   actionable?: string;
   confidence: number;
   evidence: string;
+}
+
+export interface DemoTeamForecast {
+  avgPredictedScore: number;
+  trend: 'improving' | 'declining' | 'stable';
+  atRiskDays: { date: string; athleteCount: number }[];
+  athletesWithDecline: { id: string; name: string; predictedLow: number; dayOfWeek: string }[];
 }
 
 export interface DemoTeamSummary {
@@ -315,6 +322,45 @@ export function generateDemoInsights(): DemoInsight[] {
       confidence: 71,
       evidence: 'Analysis of check-in timing vs engagement metrics',
       actionable: 'Encourage morning check-in routine'
+    },
+    // NEW: Burnout prediction
+    {
+      id: generateId(),
+      category: 'burnout',
+      priority: 'high',
+      headline: 'Sarah Johnson: Early burnout warning signs',
+      detail: 'Key indicators: Chronic high stress, declining confidence',
+      athleteId: 'demo-athlete-1',
+      athleteName: 'Sarah Johnson',
+      metric: { value: 68, label: 'Risk', unit: '%' },
+      confidence: 85,
+      evidence: 'Based on 14 mood logs over 30 days',
+      actionable: 'Schedule 1:1 check-in this week and consider reduced training load'
+    },
+    // NEW: Burnout developing
+    {
+      id: generateId(),
+      category: 'burnout',
+      priority: 'medium',
+      headline: 'Mike Chen: Developing burnout indicators',
+      detail: 'Key indicators: Sleep disruption, elevated stress for 5+ days',
+      athleteId: 'demo-athlete-2',
+      athleteName: 'Mike Chen',
+      metric: { value: 52, label: 'Risk', unit: '%' },
+      confidence: 78,
+      evidence: 'Based on 21 mood logs over 30 days',
+      actionable: 'Recommend taking a complete rest day and practicing relaxation techniques'
+    },
+    // NEW: Team forecast alert
+    {
+      id: generateId(),
+      category: 'forecast',
+      priority: 'high',
+      headline: '4 athletes predicted to decline this week',
+      detail: 'Sarah J. (Wed: 54), Mike C. (Thu: 58), Emma W. (Wed: 51), James G. (Fri: 49)',
+      confidence: 80,
+      evidence: 'Based on 7-day readiness forecasts using Holt\'s exponential smoothing',
+      actionable: 'Consider proactive check-ins before predicted low days'
     }
   ];
 }
@@ -329,6 +375,30 @@ export function generateDemoTeamSummary(): DemoTeamSummary {
     atRiskCount: 5,
     improvingCount: 18,
     decliningCount: 7
+  };
+}
+
+export function generateDemoTeamForecast(): DemoTeamForecast {
+  const today = new Date();
+  return {
+    avgPredictedScore: 71,
+    trend: 'stable',
+    atRiskDays: [
+      {
+        date: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        athleteCount: 4,
+      },
+      {
+        date: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        athleteCount: 3,
+      },
+    ],
+    athletesWithDecline: [
+      { id: 'demo-athlete-1', name: 'Sarah Johnson', predictedLow: 54, dayOfWeek: 'Wed' },
+      { id: 'demo-athlete-2', name: 'Mike Chen', predictedLow: 58, dayOfWeek: 'Thu' },
+      { id: 'demo-athlete-3', name: 'Emma Williams', predictedLow: 51, dayOfWeek: 'Wed' },
+      { id: 'demo-athlete-4', name: 'James Garcia', predictedLow: 49, dayOfWeek: 'Fri' },
+    ],
   };
 }
 
@@ -455,6 +525,20 @@ export interface DemoAthleteDashboard {
     dueDate: string;
     estimatedTime: string | null;
   }[];
+  // NEW: 7-day readiness forecast (requires 14+ days of data)
+  forecast: {
+    trend: 'improving' | 'declining' | 'stable';
+    currentScore: number;
+    next7Days: { date: string; score: number; confidence: string }[];
+    lowDays: { date: string; score: number }[];
+    recommendation: string;
+  } | null;
+  // NEW: Burnout status (athlete-safe - no probability shown)
+  burnout: {
+    stage: 'healthy' | 'early-warning' | 'developing' | 'advanced' | 'critical';
+    message: string;
+    strategies: string[];
+  } | null;
 }
 
 export interface DemoMoodLog {
@@ -510,6 +594,27 @@ export function generateDemoAthleteDashboard(): DemoAthleteDashboard {
     },
   ];
 
+  // Generate 7-day forecast with realistic patterns
+  const today = new Date();
+  const next7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    // Simulate a dip mid-week (game day stress) then recovery
+    const baseScore = 78;
+    const dayOffset = i === 2 ? -12 : i === 3 ? -8 : i >= 5 ? 5 : 0;
+    const score = Math.max(40, Math.min(95, baseScore + dayOffset + randomInt(-3, 3)));
+    return {
+      date: date.toISOString().split('T')[0],
+      score,
+      confidence: i <= 2 ? 'high' : i <= 4 ? 'medium' : 'low',
+    };
+  });
+
+  // Find low days (score < 60)
+  const lowDays = next7Days
+    .filter((d) => d.score < 60)
+    .map((d) => ({ date: d.date, score: d.score }));
+
   return {
     user: {
       name: 'Alex Johnson',
@@ -555,6 +660,27 @@ export function generateDemoAthleteDashboard(): DemoAthleteDashboard {
         estimatedTime: '15 min',
       },
     ],
+    // Demo forecast data (shows 7-day prediction)
+    forecast: {
+      trend: 'stable',
+      currentScore: 78,
+      next7Days,
+      lowDays,
+      recommendation: lowDays.length > 0
+        ? 'Consider extra rest before Wednesday to maintain energy levels for the game.'
+        : 'Your forecast looks stable. Keep up your current routines!',
+    },
+    // Demo burnout data - showing early-warning to demonstrate the UI
+    // In production, 'healthy' athletes won't see this card at all
+    burnout: {
+      stage: 'early-warning',
+      message: 'Your stress levels have been slightly elevated this week. Small adjustments can help.',
+      strategies: [
+        'Take a 10-minute break between classes',
+        'Try the 4-7-8 breathing technique before bed',
+        'Consider a lighter workout today',
+      ],
+    },
   };
 }
 

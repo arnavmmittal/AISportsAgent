@@ -248,13 +248,13 @@ export async function GET(request: NextRequest) {
     const performanceOutcomes = await prisma.performanceOutcome.findMany({
       where: {
         athleteId: { in: allAthletes.map((a) => a.userId) },
-        eventDate: { gte: thirtyDaysAgo },
+        date: { gte: thirtyDaysAgo },
       },
       select: {
         athleteId: true,
-        outcome: true,
-        performanceRating: true,
-        eventDate: true,
+        gameResult: true,
+        overallRating: true,
+        date: true,
       },
     })
 
@@ -269,17 +269,17 @@ export async function GET(request: NextRequest) {
       const gameMood = moodLogs.find(
         (l) =>
           l.athleteId === outcome.athleteId &&
-          Math.abs(new Date(l.createdAt).getTime() - new Date(outcome.eventDate).getTime()) <
+          Math.abs(new Date(l.createdAt).getTime() - new Date(outcome.date).getTime()) <
             24 * 60 * 60 * 1000
       )
 
       if (gameMood && gameMood.mood) {
         if (gameMood.mood >= 7) {
           highMoodGames++
-          if (outcome.outcome === "WIN") highMoodWins++
+          if (outcome.gameResult === "WIN") highMoodWins++
         } else if (gameMood.mood <= 5) {
           lowMoodGames++
-          if (outcome.outcome === "WIN") lowMoodWins++
+          if (outcome.gameResult === "WIN") lowMoodWins++
         }
       }
     }
@@ -294,17 +294,17 @@ export async function GET(request: NextRequest) {
     const crisisAlerts = await prisma.crisisAlert.findMany({
       where: {
         athleteId: { in: allAthletes.map((a) => a.userId) },
-        createdAt: { gte: thirtyDaysAgo },
+        detectedAt: { gte: thirtyDaysAgo },
       },
       select: {
         severity: true,
+        reviewed: true,
         reviewedAt: true,
-        resolvedAt: true,
       },
     })
 
     const crisisAlertsDetected = crisisAlerts.length
-    const crisisAlertsResolved = crisisAlerts.filter((a) => a.resolvedAt).length
+    const crisisAlertsResolved = crisisAlerts.filter((a) => a.reviewed).length
 
     const atRiskAthletes = await prisma.athlete.count({
       where: {
