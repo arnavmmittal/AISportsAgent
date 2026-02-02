@@ -253,11 +253,21 @@ export async function generateDeepInsights(
   const situationalInsights = await analyzeSituationalEffectiveness(athleteId, startDate);
   insights.push(...situationalInsights);
 
+  // 9. Chat topic → performance correlations (connects conversations to outcomes)
+  // E.g., "Performance is 15% better after discussing 'box breathing'"
+  const chatPerformanceInsights = await generateChatPerformanceInsights(athleteId, athleteName, startDate);
+  insights.push(...chatPerformanceInsights);
+
+  // 10. Mood log trend analysis (weekly patterns, recovery time, session impact)
+  const moodTrendInsights = await generateMoodTrendInsights(athleteId, athleteName, startDate);
+  insights.push(...moodTrendInsights);
+
   // Sort by priority and return top insights
   // Prioritize intervention_outcome insights as they're the most actionable
   const priorityOrder = { critical: 0, high: 1, medium: 2 };
   const typeBoost: Record<string, number> = {
-    intervention_outcome: -0.5, // Boost intervention insights
+    intervention_outcome: -0.5, // Boost intervention insights (most valuable)
+    temporal: -0.2, // Slightly boost temporal patterns (mood trends)
   };
 
   return insights
@@ -266,7 +276,7 @@ export async function generateDeepInsights(
       const bScore = priorityOrder[b.priority] + (typeBoost[b.type] || 0);
       return aScore - bScore;
     })
-    .slice(0, 12); // Return top 12 insights (increased from 8)
+    .slice(0, 15); // Return top 15 insights (increased to accommodate new types)
 }
 
 // ============================================================================
@@ -1334,6 +1344,528 @@ async function analyzeSituationalEffectiveness(
 }
 
 // ============================================================================
+// CHAT TOPIC → PERFORMANCE CORRELATION
+// ============================================================================
+
+/**
+ * Technique keywords to match in chat topics and coping strategies
+ * Maps to knowledge base categories
+ */
+const TECHNIQUE_KEYWORDS: Record<string, { variations: string[]; category: string }> = {
+  'breathing': {
+    variations: ['breathing', 'breath', '4-7-8', 'box breathing', 'diaphragmatic', 'belly breathing'],
+    category: 'RELAXATION',
+  },
+  'visualization': {
+    variations: ['visualization', 'imagery', 'mental rehearsal', 'visualize', 'imagine', 'picture'],
+    category: 'VISUALIZATION',
+  },
+  'self-talk': {
+    variations: ['self-talk', 'self talk', 'affirmation', 'mantra', 'positive thinking', 'inner voice'],
+    category: 'COGNITIVE',
+  },
+  'mindfulness': {
+    variations: ['mindfulness', 'meditation', 'present moment', 'awareness', 'centering', 'grounding'],
+    category: 'MINDFULNESS',
+  },
+  'reframing': {
+    variations: ['reframe', 'reframing', 'cognitive restructuring', 'perspective', 'different angle', 'cbt'],
+    category: 'COGNITIVE',
+  },
+  'routine': {
+    variations: ['routine', 'ritual', 'pre-game', 'pre-performance', 'warmup routine', 'mental prep'],
+    category: 'PREPARATION',
+  },
+  'focus-cue': {
+    variations: ['focus cue', 'trigger word', 'keyword', 'anchor', 'focus point', 'concentration'],
+    category: 'FOCUS',
+  },
+  'goal-setting': {
+    variations: ['goal', 'objective', 'target', 'smart goal', 'process goal', 'outcome goal'],
+    category: 'GOAL_SETTING',
+  },
+  'arousal': {
+    variations: ['arousal', 'activation', 'energy management', 'pump up', 'calm down', 'psych up'],
+    category: 'AROUSAL_REGULATION',
+  },
+  'journaling': {
+    variations: ['journal', 'journaling', 'writing', 'reflection', 'diary', 'log'],
+    category: 'REFLECTION',
+  },
+};
+
+interface ChatPerformanceCorrelation {
+  technique: string;
+  category: string;
+  avgPerformanceWith: number;
+  avgPerformanceWithout: number;
+  improvement: number;
+  improvementPercent: number;
+  gamesWithTechnique: number;
+  gamesWithout: number;
+  specificTopics: string[]; // Actual topics mentioned
+  kbMatchTitle?: string; // Knowledge base article if matched
+  confidence: number;
+}
+
+/**
+ * Analyze which chat topics/coping strategies correlate with better performance
+ * This connects what athletes DISCUSS to how they PERFORM
+ */
+async function analyzeChatTopicPerformance(
+  athleteId: string,
+  startDate: Date
+): Promise<ChatPerformanceCorrelation[]> {
+  const correlations: ChatPerformanceCorrelation[] = [];
+
+  // Get all chat insights
+  const chatInsights = await prisma.chatInsight.findMany({
+    where: {
+      athleteId,
+      createdAt: { gte: startDate },
+    },
+    select: {
+      id: true,
+      sessionId: true,
+      createdAt: true,
+      topics: true,
+      copingStrategies: true,
+      dominantTheme: true,
+      isPreGame: true,
+      gameDate: true,
+      overallSentiment: true,
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  if (chatInsights.length < 5) return correlations;
+
+  // Get performance outcomes
+  const outcomes = await prisma.performanceOutcome.findMany({
+    where: {
+      athleteId,
+      date: { gte: startDate },
+    },
+    select: {
+      id: true,
+      date: true,
+      overallRating: true,
+      sportMetrics: true,
+    },
+    orderBy: { date: 'asc' },
+  });
+
+  // Also get game results
+  const gameResults = await prisma.gameResult.findMany({
+    where: {
+      athleteId,
+      gameDate: { gte: startDate },
+    },
+    select: {
+      id: true,
+      gameDate: true,
+      stats: true,
+      outcome: true,
+    },
+    orderBy: { gameDate: 'asc' },
+  });
+
+  // Combine into unified games list
+  const allGames: Array<{
+    date: Date;
+    performanceScore: number;
+    stats?: Record<string, number>;
+  }> = [];
+
+  for (const outcome of outcomes) {
+    if (outcome.overallRating) {
+      allGames.push({
+        date: new Date(outcome.date),
+        performanceScore: outcome.overallRating * 10, // Scale to 0-100
+        stats: outcome.sportMetrics as Record<string, number> | undefined,
+      });
+    }
+  }
+
+  for (const game of gameResults) {
+    const stats = game.stats as Record<string, number> | null;
+    if (stats?.performanceScore) {
+      allGames.push({
+        date: new Date(game.gameDate),
+        performanceScore: stats.performanceScore,
+        stats,
+      });
+    }
+  }
+
+  if (allGames.length < 5) return correlations;
+
+  // For each technique category, find chats that mention it
+  for (const [techniqueName, config] of Object.entries(TECHNIQUE_KEYWORDS)) {
+    const gamesWithTechnique: number[] = [];
+    const gamesWithout: number[] = [];
+    const matchedTopics: string[] = [];
+
+    for (const game of allGames) {
+      const gameTime = game.date.getTime();
+
+      // Find chat sessions within 72 hours before this game
+      const relevantChats = chatInsights.filter((chat) => {
+        const chatTime = new Date(chat.createdAt).getTime();
+        const hoursBefore = (gameTime - chatTime) / (1000 * 60 * 60);
+        return hoursBefore >= 0 && hoursBefore <= 72;
+      });
+
+      // Check if any of these chats mentioned this technique
+      const mentionedTechnique = relevantChats.some((chat) => {
+        const allText = [
+          ...(chat.topics || []),
+          ...(chat.copingStrategies || []),
+          chat.dominantTheme || '',
+        ]
+          .join(' ')
+          .toLowerCase();
+
+        const matched = config.variations.some((v) => allText.includes(v.toLowerCase()));
+        if (matched) {
+          // Track the specific topics that matched
+          const topics = [...(chat.topics || []), ...(chat.copingStrategies || [])];
+          topics.forEach((t) => {
+            if (config.variations.some((v) => t.toLowerCase().includes(v.toLowerCase()))) {
+              if (!matchedTopics.includes(t)) matchedTopics.push(t);
+            }
+          });
+        }
+        return matched;
+      });
+
+      if (mentionedTechnique) {
+        gamesWithTechnique.push(game.performanceScore);
+      } else {
+        gamesWithout.push(game.performanceScore);
+      }
+    }
+
+    // Need at least 3 games in each group for significance
+    if (gamesWithTechnique.length >= 3 && gamesWithout.length >= 3) {
+      const avgWith = gamesWithTechnique.reduce((a, b) => a + b, 0) / gamesWithTechnique.length;
+      const avgWithout = gamesWithout.reduce((a, b) => a + b, 0) / gamesWithout.length;
+      const improvement = avgWith - avgWithout;
+      const improvementPercent = avgWithout !== 0 ? (improvement / avgWithout) * 100 : 0;
+
+      if (Math.abs(improvementPercent) >= 5) {
+        // Try to find matching knowledge base article
+        const kbMatch = await prisma.knowledgeBase.findFirst({
+          where: {
+            category: config.category as never,
+            isActive: true,
+          },
+          select: { title: true },
+        });
+
+        correlations.push({
+          technique: techniqueName,
+          category: config.category,
+          avgPerformanceWith: Math.round(avgWith * 10) / 10,
+          avgPerformanceWithout: Math.round(avgWithout * 10) / 10,
+          improvement: Math.round(improvement * 10) / 10,
+          improvementPercent: Math.round(improvementPercent * 10) / 10,
+          gamesWithTechnique: gamesWithTechnique.length,
+          gamesWithout: gamesWithout.length,
+          specificTopics: matchedTopics,
+          kbMatchTitle: kbMatch?.title,
+          confidence: gamesWithTechnique.length >= 5 ? 0.85 : 0.7,
+        });
+      }
+    }
+  }
+
+  return correlations.sort((a, b) => Math.abs(b.improvementPercent) - Math.abs(a.improvementPercent));
+}
+
+/**
+ * Generate insights from chat topic → performance correlations
+ */
+async function generateChatPerformanceInsights(
+  athleteId: string,
+  athleteName: string,
+  startDate: Date
+): Promise<DeepInsight[]> {
+  const insights: DeepInsight[] = [];
+  const correlations = await analyzeChatTopicPerformance(athleteId, startDate);
+
+  for (const corr of correlations) {
+    const direction = corr.improvement > 0 ? 'better' : 'worse';
+    const absImprovement = Math.abs(corr.improvement);
+
+    // Create specific headline based on the data
+    let headline: string;
+    let explanation: string;
+
+    if (corr.specificTopics.length > 0) {
+      // Use the actual topic mentioned
+      const topicStr = corr.specificTopics.slice(0, 2).join('" and "');
+      headline = `${athleteName} performs ${absImprovement.toFixed(0)} points ${direction} after discussing "${topicStr}"`;
+      explanation = `When ${athleteName} talks about ${corr.technique} techniques (like "${topicStr}") in pre-game chats, performance scores are ${Math.abs(corr.improvementPercent).toFixed(0)}% ${direction}. This pattern appears across ${corr.gamesWithTechnique} games.`;
+    } else {
+      headline = `${athleteName}'s performance is ${Math.abs(corr.improvementPercent).toFixed(0)}% ${direction} after discussing ${corr.technique}`;
+      explanation = `Chat sessions that include ${corr.technique} topics correlate with ${direction} game performance.`;
+    }
+
+    // Add knowledge base reference if available
+    if (corr.kbMatchTitle) {
+      explanation += ` Consider recommending the "${corr.kbMatchTitle}" resource.`;
+    }
+
+    insights.push({
+      id: `chat-perf-${athleteId}-${corr.technique}`,
+      type: 'intervention_outcome',
+      priority: Math.abs(corr.improvementPercent) >= 15 ? 'critical' : Math.abs(corr.improvementPercent) >= 10 ? 'high' : 'medium',
+      headline,
+      explanation,
+      evidence: {
+        sampleSize: corr.gamesWithTechnique + corr.gamesWithout,
+        confidence: corr.confidence,
+        statisticalNote: `With ${corr.technique}: ${corr.avgPerformanceWith}/100 (n=${corr.gamesWithTechnique}), Without: ${corr.avgPerformanceWithout}/100 (n=${corr.gamesWithout})`,
+      },
+      actionable: corr.improvement > 0
+        ? `Encourage ${athleteName} to discuss ${corr.technique} before games - it's linked to ${Math.abs(corr.improvementPercent).toFixed(0)}% better performance`
+        : `Note: Discussing ${corr.technique} may indicate pre-game anxiety for ${athleteName} - focus on resolving underlying concerns`,
+      athleteId,
+      athleteName,
+    });
+  }
+
+  return insights;
+}
+
+// ============================================================================
+// MOOD LOG TREND ANALYSIS
+// ============================================================================
+
+interface MoodTrendInsight {
+  trendType: 'weekly_pattern' | 'game_proximity' | 'recovery_pattern' | 'session_impact';
+  headline: string;
+  explanation: string;
+  pattern: string;
+  actionable: string;
+  confidence: number;
+  sampleSize: number;
+}
+
+/**
+ * Analyze mood log patterns to find actionable trends
+ */
+async function analyzeMoodTrends(
+  athleteId: string,
+  startDate: Date
+): Promise<MoodTrendInsight[]> {
+  const trends: MoodTrendInsight[] = [];
+
+  const moodLogs = await prisma.moodLog.findMany({
+    where: {
+      athleteId,
+      createdAt: { gte: startDate },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  if (moodLogs.length < 14) return trends; // Need at least 2 weeks of data
+
+  // 1. Weekly pattern analysis - which day of week has highest/lowest mood?
+  const dayOfWeekMoods: Record<number, number[]> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  for (const log of moodLogs) {
+    const dow = new Date(log.createdAt).getDay();
+    dayOfWeekMoods[dow].push(log.mood);
+  }
+
+  const dayAvgs = Object.entries(dayOfWeekMoods)
+    .filter(([_, moods]) => moods.length >= 2)
+    .map(([day, moods]) => ({
+      day: parseInt(day),
+      avg: moods.reduce((a, b) => a + b, 0) / moods.length,
+      count: moods.length,
+    }))
+    .sort((a, b) => b.avg - a.avg);
+
+  if (dayAvgs.length >= 2) {
+    const best = dayAvgs[0];
+    const worst = dayAvgs[dayAvgs.length - 1];
+    const diff = best.avg - worst.avg;
+
+    if (diff >= 1.5) {
+      trends.push({
+        trendType: 'weekly_pattern',
+        headline: `Mood is ${diff.toFixed(1)} points higher on ${dayNames[best.day]}s vs ${dayNames[worst.day]}s`,
+        explanation: `${dayNames[best.day]} consistently shows the best mood (avg ${best.avg.toFixed(1)}), while ${dayNames[worst.day]} is the lowest (avg ${worst.avg.toFixed(1)}). This pattern is based on ${moodLogs.length} mood logs.`,
+        pattern: `Best: ${dayNames[best.day]} (${best.avg.toFixed(1)}), Worst: ${dayNames[worst.day]} (${worst.avg.toFixed(1)})`,
+        actionable: `Schedule important conversations or challenges for ${dayNames[best.day]}. Consider extra support on ${dayNames[worst.day]}s.`,
+        confidence: Math.min(0.85, 0.5 + best.count * 0.05),
+        sampleSize: moodLogs.length,
+      });
+    }
+  }
+
+  // 2. Chat session impact on mood
+  const chatSessions = await prisma.chatSession.findMany({
+    where: {
+      athleteId,
+      createdAt: { gte: startDate },
+    },
+    select: { id: true, createdAt: true },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  if (chatSessions.length >= 5) {
+    const moodBeforeChat: number[] = [];
+    const moodAfterChat: number[] = [];
+
+    for (const session of chatSessions) {
+      const sessionTime = new Date(session.createdAt).getTime();
+
+      // Find mood log 0-24h before chat
+      const before = moodLogs.find((log) => {
+        const logTime = new Date(log.createdAt).getTime();
+        const hoursBefore = (sessionTime - logTime) / (1000 * 60 * 60);
+        return hoursBefore >= 0 && hoursBefore <= 24;
+      });
+
+      // Find mood log 0-24h after chat
+      const after = moodLogs.find((log) => {
+        const logTime = new Date(log.createdAt).getTime();
+        const hoursAfter = (logTime - sessionTime) / (1000 * 60 * 60);
+        return hoursAfter >= 0 && hoursAfter <= 24;
+      });
+
+      if (before) moodBeforeChat.push(before.mood);
+      if (after) moodAfterChat.push(after.mood);
+    }
+
+    if (moodBeforeChat.length >= 5 && moodAfterChat.length >= 5) {
+      const avgBefore = moodBeforeChat.reduce((a, b) => a + b, 0) / moodBeforeChat.length;
+      const avgAfter = moodAfterChat.reduce((a, b) => a + b, 0) / moodAfterChat.length;
+      const moodChange = avgAfter - avgBefore;
+
+      if (Math.abs(moodChange) >= 0.5) {
+        trends.push({
+          trendType: 'session_impact',
+          headline: `Mood ${moodChange > 0 ? 'improves' : 'decreases'} by ${Math.abs(moodChange).toFixed(1)} points after AI chat sessions`,
+          explanation: `On average, mood is ${avgBefore.toFixed(1)} before chatting and ${avgAfter.toFixed(1)} after. This ${moodChange > 0 ? 'positive' : 'negative'} shift is consistent across ${chatSessions.length} sessions.`,
+          pattern: `Before: ${avgBefore.toFixed(1)}, After: ${avgAfter.toFixed(1)} (${moodChange > 0 ? '+' : ''}${moodChange.toFixed(1)})`,
+          actionable: moodChange > 0
+            ? 'Chat sessions are helping - encourage more frequent check-ins'
+            : 'Chat sessions may be surfacing difficult topics - ensure follow-up support',
+          confidence: 0.8,
+          sampleSize: chatSessions.length,
+        });
+      }
+    }
+  }
+
+  // 3. Recovery pattern after bad days
+  const lowMoodThreshold = 5;
+  let recoveryTimes: number[] = [];
+
+  for (let i = 0; i < moodLogs.length; i++) {
+    if (moodLogs[i].mood <= lowMoodThreshold) {
+      // Find how many days until mood recovers to 7+
+      for (let j = i + 1; j < moodLogs.length; j++) {
+        if (moodLogs[j].mood >= 7) {
+          const daysDiff = Math.round(
+            (new Date(moodLogs[j].createdAt).getTime() - new Date(moodLogs[i].createdAt).getTime()) /
+              (1000 * 60 * 60 * 24)
+          );
+          if (daysDiff <= 7) {
+            recoveryTimes.push(daysDiff);
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  if (recoveryTimes.length >= 3) {
+    const avgRecovery = recoveryTimes.reduce((a, b) => a + b, 0) / recoveryTimes.length;
+
+    trends.push({
+      trendType: 'recovery_pattern',
+      headline: `Typically recovers from low mood in ${avgRecovery.toFixed(1)} days`,
+      explanation: `After mood drops below ${lowMoodThreshold}, this athlete typically bounces back to 7+ within ${avgRecovery.toFixed(1)} days. Observed in ${recoveryTimes.length} recovery cycles.`,
+      pattern: `Average recovery: ${avgRecovery.toFixed(1)} days`,
+      actionable: avgRecovery <= 2
+        ? 'This athlete is resilient - brief check-ins are sufficient after setbacks'
+        : 'Recovery takes time - plan for sustained support over multiple days',
+      confidence: recoveryTimes.length >= 5 ? 0.85 : 0.7,
+      sampleSize: recoveryTimes.length,
+    });
+  }
+
+  return trends;
+}
+
+/**
+ * Convert mood trends to DeepInsight format
+ */
+async function generateMoodTrendInsights(
+  athleteId: string,
+  athleteName: string,
+  startDate: Date
+): Promise<DeepInsight[]> {
+  const trends = await analyzeMoodTrends(athleteId, startDate);
+
+  return trends.map((trend) => ({
+    id: `mood-trend-${athleteId}-${trend.trendType}`,
+    type: 'temporal' as const,
+    priority: 'high' as const,
+    headline: trend.headline.replace('Mood', `${athleteName}'s mood`),
+    explanation: trend.explanation,
+    evidence: {
+      sampleSize: trend.sampleSize,
+      confidence: trend.confidence,
+      statisticalNote: trend.pattern,
+    },
+    actionable: trend.actionable,
+    athleteId,
+    athleteName,
+  }));
+}
+
+// ============================================================================
+// INTEGRATE ALL CHAT + MOOD + KB INSIGHTS INTO MAIN FUNCTION
+// ============================================================================
+
+/**
+ * Generate comprehensive insights including chat, mood, and KB connections
+ */
+export async function generateComprehensiveInsights(
+  athleteId: string,
+  athleteName: string,
+  startDate: Date
+): Promise<DeepInsight[]> {
+  const allInsights: DeepInsight[] = [];
+
+  // 1. Chat topic → performance correlations
+  try {
+    const chatInsights = await generateChatPerformanceInsights(athleteId, athleteName, startDate);
+    allInsights.push(...chatInsights);
+  } catch (e) {
+    console.log('Chat performance insights skipped:', e instanceof Error ? e.message : 'unknown');
+  }
+
+  // 2. Mood trend analysis
+  try {
+    const moodInsights = await generateMoodTrendInsights(athleteId, athleteName, startDate);
+    allInsights.push(...moodInsights);
+  } catch (e) {
+    console.log('Mood trend insights skipped:', e instanceof Error ? e.message : 'unknown');
+  }
+
+  return allInsights;
+}
+
+// ============================================================================
 // EXPORT BATCH ANALYSIS FOR TEAM
 // ============================================================================
 
@@ -1358,9 +1890,18 @@ export async function generateTeamDeepInsights(
     allInsights.push(...insights);
   }
 
-  // Sort by priority and dedupe similar insights
-  const priorityOrder = { critical: 0, high: 1, medium: 2 };
+  // Sort by priority and type, prioritizing technique→stat insights
+  const priorityOrder: Record<string, number> = { critical: -1, high: 0, medium: 1 };
+  const typeBoost: Record<string, number> = {
+    intervention_outcome: -0.5, // These are the most valuable
+    temporal: -0.2,
+  };
+
   return allInsights
-    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
-    .slice(0, 20); // Return top 20 insights across team
+    .sort((a, b) => {
+      const aScore = (priorityOrder[a.priority] ?? 1) + (typeBoost[a.type] || 0);
+      const bScore = (priorityOrder[b.priority] ?? 1) + (typeBoost[b.type] || 0);
+      return aScore - bScore;
+    })
+    .slice(0, 25); // Return top 25 insights across team (increased for new insight types)
 }

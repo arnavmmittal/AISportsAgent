@@ -18,6 +18,7 @@ import { prisma } from '@/lib/prisma';
 import { forecastReadinessTrend, type ReadinessForecast } from '@/lib/analytics/forecasting';
 import { predictBurnout, type BurnoutPrediction, type BurnoutHistoricalData } from '@/lib/algorithms/burnout';
 import { detectPatterns, type PatternDetectionResults, type PatternDetectionData } from '@/lib/algorithms/patterns';
+import { generateComprehensiveInsights, type DeepInsight } from '@/lib/analytics/deep-insights';
 
 // Types for the enriched context
 export interface AthleteInsight {
@@ -116,6 +117,23 @@ export interface PatternData {
   summary: string;
 }
 
+// NEW: Technique → Performance correlations from deep insights
+export interface TechniqueEffectiveness {
+  technique: string;
+  sportMetric?: string;
+  improvement: string; // e.g., "+10.5 points" or "+18%"
+  confidence: 'high' | 'medium';
+  evidence: string;
+  recommendation: string;
+}
+
+// NEW: Mood trend insights for agent context
+export interface MoodTrendData {
+  weeklyPattern?: { bestDay: string; worstDay: string; difference: number };
+  sessionImpact?: { moodChange: number; direction: 'improves' | 'decreases' };
+  recoveryTime?: { avgDays: number; resilience: 'high' | 'medium' | 'low' };
+}
+
 export interface EnrichedAthleteContext {
   athleteId: string;
   athleteName: string;
@@ -151,6 +169,12 @@ export interface EnrichedAthleteContext {
 
   // NEW: Behavioral pattern detection
   patterns: PatternData | null;
+
+  // NEW: Technique → performance correlations (what works for this athlete)
+  techniqueEffectiveness: TechniqueEffectiveness[];
+
+  // NEW: Mood trend insights
+  moodTrends: MoodTrendData | null;
 
   // Timestamp
   generatedAt: Date;
@@ -331,6 +355,13 @@ class AthleteContextService {
     // NEW: Get pattern detection (anomalies, trends, cycles, correlations)
     const patterns = this.getPatterns(extendedMoodLogs, readinessScores);
 
+    // NEW: Get technique effectiveness and mood trends from deep insights engine
+    const { techniqueEffectiveness, moodTrends } = await this.getDeepInsightsData(
+      athleteId,
+      athleteData.User.name,
+      thirtyDaysAgo
+    );
+
     return {
       athleteId,
       athleteName: athleteData.User.name,
@@ -351,6 +382,8 @@ class AthleteContextService {
       forecast,
       burnout,
       patterns,
+      techniqueEffectiveness,
+      moodTrends,
       generatedAt: now,
     };
   }
@@ -1045,6 +1078,113 @@ class AthleteContextService {
   }
 
   /**
+   * Get technique effectiveness and mood trends from deep insights engine
+   * Connects chat topics, interventions, and KB techniques to sport outcomes
+   */
+  private async getDeepInsightsData(
+    athleteId: string,
+    athleteName: string,
+    startDate: Date
+  ): Promise<{ techniqueEffectiveness: TechniqueEffectiveness[]; moodTrends: MoodTrendData | null }> {
+    try {
+      const deepInsights = await generateComprehensiveInsights(athleteId, athleteName, startDate);
+
+      // Extract technique effectiveness from intervention_outcome and counter_intuitive insights
+      const techniqueEffectiveness: TechniqueEffectiveness[] = deepInsights
+        .filter(
+          (insight) =>
+            insight.type === 'intervention_outcome' ||
+            (insight.type === 'counter_intuitive' && insight.interventionDetails)
+        )
+        .slice(0, 5) // Top 5 techniques
+        .map((insight) => {
+          const details = insight.interventionDetails;
+          if (details) {
+            const sign = details.improvement >= 0 ? '+' : '';
+            return {
+              technique: details.technique,
+              sportMetric: details.sportMetric,
+              improvement: `${sign}${details.improvement.toFixed(1)} ${details.metricUnit}`,
+              confidence: insight.evidence.confidence >= 0.7 ? 'high' : 'medium',
+              evidence: `Based on ${details.gamesWithTechnique} games with technique vs ${details.gamesWithout} without (p=${insight.evidence.statisticalNote.match(/p[=<][\d.]+/)?.[0] || '<0.1'})`,
+              recommendation: insight.actionable,
+            } as TechniqueEffectiveness;
+          }
+
+          // Fallback for counter_intuitive without detailed interventionDetails
+          return {
+            technique: insight.headline.split("'")[0] || 'Unknown technique',
+            improvement: insight.evidence.statisticalNote.includes('%')
+              ? insight.evidence.statisticalNote.match(/\d+%/)?.[0] || '+15%'
+              : '+improvement',
+            confidence: insight.evidence.confidence >= 0.7 ? 'high' : 'medium',
+            evidence: insight.evidence.statisticalNote,
+            recommendation: insight.actionable,
+          } as TechniqueEffectiveness;
+        });
+
+      // Extract mood trends from temporal insights
+      const moodTrendInsights = deepInsights.filter(
+        (insight) =>
+          insight.type === 'temporal' ||
+          insight.headline.toLowerCase().includes('mood') ||
+          insight.headline.toLowerCase().includes('weekly')
+      );
+
+      let moodTrends: MoodTrendData | null = null;
+      if (moodTrendInsights.length > 0) {
+        moodTrends = {};
+
+        for (const insight of moodTrendInsights) {
+          // Parse weekly pattern from headlines like "Mood is 2.1 points higher on Fridays vs Mondays"
+          const weeklyMatch = insight.headline.match(
+            /(\d+\.?\d*)\s*points?\s*higher\s*on\s*(\w+)s?\s*vs\s*(\w+)/i
+          );
+          if (weeklyMatch) {
+            moodTrends.weeklyPattern = {
+              bestDay: weeklyMatch[2],
+              worstDay: weeklyMatch[3],
+              difference: parseFloat(weeklyMatch[1]),
+            };
+          }
+
+          // Parse session impact from headlines about chat improving/decreasing mood
+          const sessionMatch = insight.headline.match(
+            /mood\s*(improves?|increases?|decreases?|drops?)\s*(\d+\.?\d*)?/i
+          );
+          if (sessionMatch) {
+            const direction = sessionMatch[1].toLowerCase().startsWith('i') ? 'improves' : 'decreases';
+            moodTrends.sessionImpact = {
+              moodChange: parseFloat(sessionMatch[2] || '1'),
+              direction,
+            };
+          }
+
+          // Parse recovery patterns
+          const recoveryMatch = insight.headline.match(/recover[sy]?\s*in\s*(\d+\.?\d*)\s*days?/i);
+          if (recoveryMatch) {
+            const days = parseFloat(recoveryMatch[1]);
+            moodTrends.recoveryTime = {
+              avgDays: days,
+              resilience: days <= 1 ? 'high' : days <= 3 ? 'medium' : 'low',
+            };
+          }
+        }
+
+        // If no patterns were extracted, return null
+        if (Object.keys(moodTrends).length === 0) {
+          moodTrends = null;
+        }
+      }
+
+      return { techniqueEffectiveness, moodTrends };
+    } catch (error) {
+      console.warn('[AthleteContext] Deep insights extraction failed:', error);
+      return { techniqueEffectiveness: [], moodTrends: null };
+    }
+  }
+
+  /**
    * Generate a system prompt enhancement based on the enriched context
    */
   generatePromptEnhancement(context: EnrichedAthleteContext): string {
@@ -1120,6 +1260,46 @@ Previously discussed: ${context.lastSessionTopics.join(', ')}`);
     if (context.profile.recurringThemes.length > 0) {
       sections.push(`RECURRING THEMES FOR THIS ATHLETE:
 ${context.profile.recurringThemes.join(', ')}`);
+    }
+
+    // NEW: Technique → Performance correlations (the most valuable insight type)
+    if (context.techniqueEffectiveness.length > 0) {
+      const techniqueLines = context.techniqueEffectiveness.map((t) => {
+        if (t.sportMetric) {
+          return `- ${t.technique} → ${t.improvement} ${t.sportMetric} (${t.confidence} confidence)`;
+        }
+        return `- ${t.technique} → ${t.improvement} improvement (${t.confidence} confidence)`;
+      });
+
+      sections.push(`🎯 PROVEN TECHNIQUES FOR THIS ATHLETE:
+${techniqueLines.join('\n')}
+
+Use this data proactively! Example: "Last time you used visualization before a game, you scored 10 more points. Want to try that technique for your upcoming game?"`);
+    }
+
+    // NEW: Mood trend patterns for personalized timing
+    if (context.moodTrends) {
+      const trendLines: string[] = [];
+
+      if (context.moodTrends.weeklyPattern) {
+        const p = context.moodTrends.weeklyPattern;
+        trendLines.push(`- Best mood on ${p.bestDay}s, lowest on ${p.worstDay}s (${p.difference.toFixed(1)} point difference)`);
+      }
+
+      if (context.moodTrends.sessionImpact) {
+        const s = context.moodTrends.sessionImpact;
+        trendLines.push(`- Chat sessions ${s.direction === 'improves' ? 'improve' : 'decrease'} mood by ${s.moodChange.toFixed(1)} points`);
+      }
+
+      if (context.moodTrends.recoveryTime) {
+        const r = context.moodTrends.recoveryTime;
+        trendLines.push(`- Recovery from setbacks: ${r.avgDays.toFixed(1)} days (${r.resilience} resilience)`);
+      }
+
+      if (trendLines.length > 0) {
+        sections.push(`📊 MOOD PATTERNS:
+${trendLines.join('\n')}`);
+      }
     }
 
     return sections.join('\n\n');

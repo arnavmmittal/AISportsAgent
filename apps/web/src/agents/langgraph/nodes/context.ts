@@ -47,7 +47,7 @@ export async function loadContextNode(
         slumpDetected: enrichedContext.prediction?.slumpDetected,
         insightsCount: enrichedContext.insights.length,
         hasGameSoon: enrichedContext.hasGameSoon,
-        // NEW: Forecast, burnout, patterns
+        // Forecast, burnout, patterns
         forecastTrend: enrichedContext.forecast?.trend ?? 'unavailable',
         burnoutStage: enrichedContext.burnout?.stage ?? 'unavailable',
         patternsDetected: enrichedContext.patterns ? {
@@ -55,6 +55,9 @@ export async function loadContextNode(
           trends: enrichedContext.patterns.trends.length,
           cycles: enrichedContext.patterns.cycles.length,
         } : 'unavailable',
+        // NEW: Technique effectiveness + mood trends
+        techniquesFound: enrichedContext.techniqueEffectiveness?.length ?? 0,
+        moodTrendsAvailable: !!enrichedContext.moodTrends,
         duration: `${duration}ms`,
       });
     }
@@ -283,6 +286,52 @@ export function buildContextPromptSection(state: ConversationState): string {
 
     if (ctx.patterns.summary) {
       sections.push(`- Summary: ${ctx.patterns.summary}`);
+    }
+  }
+
+  // NEW: Technique → Performance Correlations (MOST VALUABLE)
+  if (ctx.techniqueEffectiveness && ctx.techniqueEffectiveness.length > 0) {
+    sections.push('');
+    sections.push('## 🎯 PROVEN TECHNIQUES FOR THIS ATHLETE');
+    sections.push('Use these proactively in conversation!');
+
+    ctx.techniqueEffectiveness.slice(0, 5).forEach(t => {
+      if (t.sportMetric) {
+        sections.push(`- **${t.technique}** → ${t.improvement} ${t.sportMetric}`);
+      } else {
+        sections.push(`- **${t.technique}** → ${t.improvement}`);
+      }
+      sections.push(`  - Confidence: ${t.confidence} | ${t.evidence}`);
+      if (t.recommendation) {
+        sections.push(`  - Suggestion: ${t.recommendation}`);
+      }
+    });
+
+    sections.push('');
+    sections.push('Example usage: "Last time you used visualization before games, your scoring improved significantly. Want to try that approach for the upcoming game?"');
+  }
+
+  // NEW: Mood Trend Patterns
+  if (ctx.moodTrends) {
+    sections.push('');
+    sections.push('## 📊 Mood & Recovery Patterns');
+
+    if (ctx.moodTrends.weeklyPattern) {
+      const p = ctx.moodTrends.weeklyPattern;
+      sections.push(`- **Weekly pattern**: Best on ${p.bestDay}s, lowest on ${p.worstDay}s (${p.difference.toFixed(1)} point difference)`);
+      sections.push(`  - Consider scheduling important discussions on ${p.bestDay}s`);
+    }
+
+    if (ctx.moodTrends.sessionImpact) {
+      const s = ctx.moodTrends.sessionImpact;
+      const emoji = s.direction === 'improves' ? '✅' : '⚠️';
+      sections.push(`- **Chat impact**: ${emoji} Sessions ${s.direction === 'improves' ? 'improve' : 'decrease'} mood by ${s.moodChange.toFixed(1)} points`);
+    }
+
+    if (ctx.moodTrends.recoveryTime) {
+      const r = ctx.moodTrends.recoveryTime;
+      const emoji = r.resilience === 'high' ? '💪' : r.resilience === 'medium' ? '👍' : '⚠️';
+      sections.push(`- **Resilience**: ${emoji} ${r.resilience} - recovers from setbacks in ~${r.avgDays.toFixed(1)} days`);
     }
   }
 
