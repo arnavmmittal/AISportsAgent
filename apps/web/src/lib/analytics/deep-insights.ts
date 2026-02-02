@@ -30,7 +30,8 @@ export interface DeepInsight {
     | 'counter_intuitive'
     | 'temporal'
     | 'interaction'
-    | 'timing_window';
+    | 'timing_window'
+    | 'intervention_outcome'; // NEW: Specific technique → specific stat
   priority: 'critical' | 'high' | 'medium';
   headline: string; // The non-obvious finding
   explanation: string; // Why this matters
@@ -46,6 +47,16 @@ export interface DeepInsight {
     athleteValue: number;
     teamAverage: number;
     percentileDifference: number;
+  };
+  // NEW: For intervention_outcome type
+  interventionDetails?: {
+    technique: string;
+    protocol: string;
+    sportMetric: string;
+    metricUnit: string;
+    improvement: number;
+    gamesWithTechnique: number;
+    gamesWithout: number;
   };
 }
 
@@ -233,11 +244,29 @@ export async function generateDeepInsights(
     }
   }
 
+  // 7. Find intervention → sport metric correlations (THE KEY INSIGHT TYPE)
+  // E.g., "10 more points per game when using visualization"
+  const interventionInsights = await generateInterventionInsights(athleteId, athleteName, startDate);
+  insights.push(...interventionInsights);
+
+  // 8. Find situational technique effectiveness
+  const situationalInsights = await analyzeSituationalEffectiveness(athleteId, startDate);
+  insights.push(...situationalInsights);
+
   // Sort by priority and return top insights
+  // Prioritize intervention_outcome insights as they're the most actionable
   const priorityOrder = { critical: 0, high: 1, medium: 2 };
+  const typeBoost: Record<string, number> = {
+    intervention_outcome: -0.5, // Boost intervention insights
+  };
+
   return insights
-    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
-    .slice(0, 8); // Return top 8 most important insights
+    .sort((a, b) => {
+      const aScore = priorityOrder[a.priority] + (typeBoost[a.type] || 0);
+      const bScore = priorityOrder[b.priority] + (typeBoost[b.type] || 0);
+      return aScore - bScore;
+    })
+    .slice(0, 12); // Return top 12 insights (increased from 8)
 }
 
 // ============================================================================
@@ -824,6 +853,484 @@ function findInteractionEffects(data: DataPoint[]): InteractionEffect[] {
   // More interaction patterns can be added here...
 
   return interactions;
+}
+
+// ============================================================================
+// INTERVENTION → SPORT METRIC ANALYSIS
+// ============================================================================
+
+/**
+ * SPORT METRIC CONFIGURATIONS
+ * Maps sport types to their key metrics and units
+ */
+const SPORT_METRICS: Record<string, Array<{ key: string; label: string; unit: string; higherIsBetter: boolean }>> = {
+  basketball: [
+    { key: 'points', label: 'points', unit: 'pts', higherIsBetter: true },
+    { key: 'assists', label: 'assists', unit: 'ast', higherIsBetter: true },
+    { key: 'rebounds', label: 'rebounds', unit: 'reb', higherIsBetter: true },
+    { key: 'steals', label: 'steals', unit: 'stl', higherIsBetter: true },
+    { key: 'blocks', label: 'blocks', unit: 'blk', higherIsBetter: true },
+    { key: 'fgPercent', label: 'field goal %', unit: '%', higherIsBetter: true },
+    { key: 'ftPercent', label: 'free throw %', unit: '%', higherIsBetter: true },
+    { key: 'threePercent', label: '3-point %', unit: '%', higherIsBetter: true },
+    { key: 'turnovers', label: 'turnovers', unit: 'TO', higherIsBetter: false },
+    { key: 'plusMinus', label: 'plus/minus', unit: '+/-', higherIsBetter: true },
+  ],
+  football: [
+    { key: 'passingYards', label: 'passing yards', unit: 'yds', higherIsBetter: true },
+    { key: 'rushingYards', label: 'rushing yards', unit: 'yds', higherIsBetter: true },
+    { key: 'receivingYards', label: 'receiving yards', unit: 'yds', higherIsBetter: true },
+    { key: 'touchdowns', label: 'touchdowns', unit: 'TD', higherIsBetter: true },
+    { key: 'completionPercent', label: 'completion %', unit: '%', higherIsBetter: true },
+    { key: 'tackles', label: 'tackles', unit: 'tkl', higherIsBetter: true },
+    { key: 'sacks', label: 'sacks', unit: 'sck', higherIsBetter: true },
+    { key: 'interceptions', label: 'interceptions', unit: 'INT', higherIsBetter: true },
+  ],
+  soccer: [
+    { key: 'goals', label: 'goals', unit: 'G', higherIsBetter: true },
+    { key: 'assists', label: 'assists', unit: 'A', higherIsBetter: true },
+    { key: 'shots', label: 'shots', unit: 'SOG', higherIsBetter: true },
+    { key: 'passAccuracy', label: 'pass accuracy', unit: '%', higherIsBetter: true },
+    { key: 'tackles', label: 'tackles won', unit: 'tkl', higherIsBetter: true },
+    { key: 'saves', label: 'saves', unit: 'SV', higherIsBetter: true },
+    { key: 'cleanSheets', label: 'clean sheets', unit: 'CS', higherIsBetter: true },
+  ],
+  baseball: [
+    { key: 'battingAvg', label: 'batting avg', unit: 'AVG', higherIsBetter: true },
+    { key: 'hits', label: 'hits', unit: 'H', higherIsBetter: true },
+    { key: 'rbi', label: 'RBIs', unit: 'RBI', higherIsBetter: true },
+    { key: 'homeRuns', label: 'home runs', unit: 'HR', higherIsBetter: true },
+    { key: 'stolenBases', label: 'stolen bases', unit: 'SB', higherIsBetter: true },
+    { key: 'era', label: 'ERA', unit: 'ERA', higherIsBetter: false },
+    { key: 'strikeouts', label: 'strikeouts', unit: 'K', higherIsBetter: true },
+    { key: 'whip', label: 'WHIP', unit: 'WHIP', higherIsBetter: false },
+  ],
+  volleyball: [
+    { key: 'kills', label: 'kills', unit: 'K', higherIsBetter: true },
+    { key: 'aces', label: 'aces', unit: 'A', higherIsBetter: true },
+    { key: 'blocks', label: 'blocks', unit: 'B', higherIsBetter: true },
+    { key: 'digs', label: 'digs', unit: 'D', higherIsBetter: true },
+    { key: 'assists', label: 'assists', unit: 'AST', higherIsBetter: true },
+    { key: 'hitPercent', label: 'hitting %', unit: '%', higherIsBetter: true },
+  ],
+  tennis: [
+    { key: 'aces', label: 'aces', unit: 'A', higherIsBetter: true },
+    { key: 'firstServePercent', label: '1st serve %', unit: '%', higherIsBetter: true },
+    { key: 'breakPointsSaved', label: 'break pts saved', unit: '%', higherIsBetter: true },
+    { key: 'winners', label: 'winners', unit: 'W', higherIsBetter: true },
+    { key: 'unforcedErrors', label: 'unforced errors', unit: 'UE', higherIsBetter: false },
+  ],
+  swimming: [
+    { key: 'time', label: 'time', unit: 'sec', higherIsBetter: false },
+    { key: 'splits', label: 'split times', unit: 'sec', higherIsBetter: false },
+    { key: 'placement', label: 'placement', unit: 'place', higherIsBetter: false },
+  ],
+  track: [
+    { key: 'time', label: 'time', unit: 'sec', higherIsBetter: false },
+    { key: 'distance', label: 'distance', unit: 'm', higherIsBetter: true },
+    { key: 'height', label: 'height', unit: 'm', higherIsBetter: true },
+    { key: 'placement', label: 'placement', unit: 'place', higherIsBetter: false },
+  ],
+  golf: [
+    { key: 'score', label: 'score', unit: 'strokes', higherIsBetter: false },
+    { key: 'putts', label: 'putts', unit: 'putts', higherIsBetter: false },
+    { key: 'fairwaysHit', label: 'fairways hit', unit: '%', higherIsBetter: true },
+    { key: 'greensInReg', label: 'greens in reg', unit: '%', higherIsBetter: true },
+  ],
+};
+
+/**
+ * Human-readable intervention type names
+ */
+const INTERVENTION_LABELS: Record<string, string> = {
+  BREATHING: 'breathing exercises',
+  VISUALIZATION: 'visualization/imagery',
+  SELF_TALK: 'positive self-talk',
+  ROUTINE: 'pre-performance routine',
+  FOCUS_CUE: 'focus cues',
+  AROUSAL_REGULATION: 'arousal regulation',
+  GOAL_SETTING: 'goal setting',
+  COGNITIVE_REFRAME: 'cognitive reframing (CBT)',
+  MINDFULNESS: 'mindfulness meditation',
+  JOURNALING: 'journaling',
+  PHYSICAL_WARMUP: 'mental + physical warmup',
+  OTHER: 'other technique',
+};
+
+interface InterventionStatCorrelation {
+  interventionType: string;
+  protocol: string;
+  sport: string;
+  metric: string;
+  metricLabel: string;
+  metricUnit: string;
+  higherIsBetter: boolean;
+  avgWithIntervention: number;
+  avgWithout: number;
+  improvement: number; // Absolute difference
+  improvementPercent: number;
+  gamesWithIntervention: number;
+  gamesWithout: number;
+  isSignificant: boolean;
+  pValue: number;
+}
+
+/**
+ * Analyzes how specific interventions affect specific sport metrics
+ */
+async function analyzeInterventionOutcomes(
+  athleteId: string,
+  startDate: Date
+): Promise<InterventionStatCorrelation[]> {
+  const correlations: InterventionStatCorrelation[] = [];
+
+  // Get athlete's sport
+  const athlete = await prisma.athlete.findUnique({
+    where: { userId: athleteId },
+    select: { sport: true },
+  });
+
+  if (!athlete?.sport) return correlations;
+
+  const sportLower = athlete.sport.toLowerCase();
+  const sportMetrics = SPORT_METRICS[sportLower] || SPORT_METRICS['basketball']; // Fallback
+
+  // Get all interventions for this athlete
+  const interventions = await prisma.intervention.findMany({
+    where: {
+      athleteId,
+      performedAt: { gte: startDate },
+      completed: true,
+    },
+    select: {
+      id: true,
+      type: true,
+      protocol: true,
+      performedAt: true,
+      context: true,
+    },
+    orderBy: { performedAt: 'asc' },
+  });
+
+  if (interventions.length < 3) return correlations;
+
+  // Get all performance outcomes (games)
+  const outcomes = await prisma.performanceOutcome.findMany({
+    where: {
+      athleteId,
+      date: { gte: startDate },
+    },
+    select: {
+      id: true,
+      date: true,
+      sportMetrics: true,
+      overallRating: true,
+    },
+    orderBy: { date: 'asc' },
+  });
+
+  // Also get GameResult for additional stats
+  const gameResults = await prisma.gameResult.findMany({
+    where: {
+      athleteId,
+      gameDate: { gte: startDate },
+    },
+    select: {
+      id: true,
+      gameDate: true,
+      stats: true,
+      outcome: true,
+    },
+    orderBy: { gameDate: 'asc' },
+  });
+
+  if (outcomes.length + gameResults.length < 5) return correlations;
+
+  // Combine outcomes with game results
+  const allGames: Array<{
+    date: Date;
+    stats: Record<string, number>;
+  }> = [];
+
+  for (const outcome of outcomes) {
+    if (outcome.sportMetrics) {
+      allGames.push({
+        date: new Date(outcome.date),
+        stats: outcome.sportMetrics as Record<string, number>,
+      });
+    }
+  }
+
+  for (const game of gameResults) {
+    if (game.stats) {
+      allGames.push({
+        date: new Date(game.gameDate),
+        stats: game.stats as Record<string, number>,
+      });
+    }
+  }
+
+  // For each intervention type, compare games with vs without
+  const interventionTypes = [...new Set(interventions.map((i) => i.type))];
+
+  for (const type of interventionTypes) {
+    const typeInterventions = interventions.filter((i) => i.type === type);
+    const protocols = [...new Set(typeInterventions.map((i) => i.protocol))];
+
+    // Analyze by specific protocol (more granular)
+    for (const protocol of protocols) {
+      const protocolInterventions = typeInterventions.filter((i) => i.protocol === protocol);
+
+      // Find games within 48 hours of intervention
+      const gamesWithIntervention: Array<{ date: Date; stats: Record<string, number> }> = [];
+      const gamesWithout: Array<{ date: Date; stats: Record<string, number> }> = [];
+
+      for (const game of allGames) {
+        const gameTime = game.date.getTime();
+        const hadIntervention = protocolInterventions.some((i) => {
+          const interventionTime = new Date(i.performedAt).getTime();
+          const hoursAfter = (gameTime - interventionTime) / (1000 * 60 * 60);
+          // Intervention was 0-48 hours before game
+          return hoursAfter >= 0 && hoursAfter <= 48;
+        });
+
+        if (hadIntervention) {
+          gamesWithIntervention.push(game);
+        } else {
+          gamesWithout.push(game);
+        }
+      }
+
+      // Need at least 3 games in each group
+      if (gamesWithIntervention.length < 3 || gamesWithout.length < 3) continue;
+
+      // Analyze each sport metric
+      for (const metricConfig of sportMetrics) {
+        const withValues = gamesWithIntervention
+          .map((g) => g.stats[metricConfig.key])
+          .filter((v) => v !== undefined && !isNaN(v));
+        const withoutValues = gamesWithout
+          .map((g) => g.stats[metricConfig.key])
+          .filter((v) => v !== undefined && !isNaN(v));
+
+        if (withValues.length < 3 || withoutValues.length < 3) continue;
+
+        const avgWith = withValues.reduce((a, b) => a + b, 0) / withValues.length;
+        const avgWithout = withoutValues.reduce((a, b) => a + b, 0) / withoutValues.length;
+
+        // Calculate improvement
+        let improvement = avgWith - avgWithout;
+        let improvementPercent = avgWithout !== 0 ? (improvement / avgWithout) * 100 : 0;
+
+        // Flip sign if lower is better (e.g., turnovers, ERA)
+        if (!metricConfig.higherIsBetter) {
+          improvement = -improvement;
+          improvementPercent = -improvementPercent;
+        }
+
+        // Simple t-test approximation for significance
+        const pValue = calculateApproxPValue(withValues, withoutValues);
+        const isSignificant = pValue < 0.1 && Math.abs(improvementPercent) >= 5;
+
+        if (isSignificant) {
+          correlations.push({
+            interventionType: type,
+            protocol,
+            sport: athlete.sport,
+            metric: metricConfig.key,
+            metricLabel: metricConfig.label,
+            metricUnit: metricConfig.unit,
+            higherIsBetter: metricConfig.higherIsBetter,
+            avgWithIntervention: Math.round(avgWith * 100) / 100,
+            avgWithout: Math.round(avgWithout * 100) / 100,
+            improvement: Math.round(improvement * 100) / 100,
+            improvementPercent: Math.round(improvementPercent * 10) / 10,
+            gamesWithIntervention: withValues.length,
+            gamesWithout: withoutValues.length,
+            isSignificant,
+            pValue,
+          });
+        }
+      }
+    }
+  }
+
+  // Sort by improvement magnitude and return top findings
+  return correlations
+    .sort((a, b) => Math.abs(b.improvementPercent) - Math.abs(a.improvementPercent))
+    .slice(0, 10);
+}
+
+/**
+ * Simple approximation of t-test p-value
+ */
+function calculateApproxPValue(group1: number[], group2: number[]): number {
+  const mean1 = group1.reduce((a, b) => a + b, 0) / group1.length;
+  const mean2 = group2.reduce((a, b) => a + b, 0) / group2.length;
+
+  const var1 = group1.reduce((sum, x) => sum + Math.pow(x - mean1, 2), 0) / (group1.length - 1);
+  const var2 = group2.reduce((sum, x) => sum + Math.pow(x - mean2, 2), 0) / (group2.length - 1);
+
+  const pooledSE = Math.sqrt(var1 / group1.length + var2 / group2.length);
+
+  if (pooledSE === 0) return 1;
+
+  const t = Math.abs(mean1 - mean2) / pooledSE;
+  const df = group1.length + group2.length - 2;
+
+  // Rough approximation: convert t to p-value
+  // Using simple lookup for common values
+  if (t >= 3.5) return 0.001;
+  if (t >= 2.5) return 0.02;
+  if (t >= 2.0) return 0.05;
+  if (t >= 1.7) return 0.1;
+  if (t >= 1.3) return 0.2;
+  return 0.5;
+}
+
+/**
+ * Converts intervention analysis into actionable DeepInsights
+ */
+async function generateInterventionInsights(
+  athleteId: string,
+  athleteName: string,
+  startDate: Date
+): Promise<DeepInsight[]> {
+  const insights: DeepInsight[] = [];
+  const correlations = await analyzeInterventionOutcomes(athleteId, startDate);
+
+  for (const corr of correlations) {
+    const techniqueLabel = INTERVENTION_LABELS[corr.interventionType] || corr.interventionType;
+    const direction = corr.improvement > 0 ? 'more' : 'fewer';
+    const absImprovement = Math.abs(corr.improvement);
+    const verb = corr.higherIsBetter ? (corr.improvement > 0 ? 'gains' : 'loses') : (corr.improvement > 0 ? 'reduces' : 'increases');
+
+    // Create the headline in the format: "Athlete X has Y more [stat] per game when using [technique]"
+    const headline = `${athleteName} averages ${absImprovement.toFixed(1)} ${direction} ${corr.metricLabel} per game after ${techniqueLabel}`;
+
+    insights.push({
+      id: `intervention-${athleteId}-${corr.interventionType}-${corr.metric}`,
+      type: 'intervention_outcome',
+      priority: Math.abs(corr.improvementPercent) >= 15 ? 'critical' : Math.abs(corr.improvementPercent) >= 10 ? 'high' : 'medium',
+      headline,
+      explanation: `When ${athleteName} uses ${corr.protocol || techniqueLabel} within 48 hours of competition, ${corr.metricLabel} ${corr.improvement > 0 ? 'increases' : 'decreases'} by ${Math.abs(corr.improvementPercent).toFixed(1)}%. This pattern is consistent across ${corr.gamesWithIntervention} games with the technique vs ${corr.gamesWithout} without.`,
+      evidence: {
+        sampleSize: corr.gamesWithIntervention + corr.gamesWithout,
+        confidence: corr.pValue < 0.05 ? 0.9 : corr.pValue < 0.1 ? 0.8 : 0.7,
+        statisticalNote: `With technique: ${corr.avgWithIntervention} ${corr.metricUnit}, Without: ${corr.avgWithout} ${corr.metricUnit} (p=${corr.pValue.toFixed(3)})`,
+      },
+      actionable: `Recommend ${athleteName} use ${techniqueLabel} before every game - it's directly linked to ${Math.abs(corr.improvementPercent).toFixed(0)}% ${corr.improvement > 0 ? 'better' : 'improvement in'} ${corr.metricLabel}`,
+      athleteId,
+      athleteName,
+      interventionDetails: {
+        technique: techniqueLabel,
+        protocol: corr.protocol,
+        sportMetric: corr.metricLabel,
+        metricUnit: corr.metricUnit,
+        improvement: corr.improvement,
+        gamesWithTechnique: corr.gamesWithIntervention,
+        gamesWithout: corr.gamesWithout,
+      },
+    });
+  }
+
+  return insights;
+}
+
+/**
+ * Find which technique works best for specific situations
+ * E.g., "Breathing exercises before clutch moments → 23% better free throw %"
+ */
+async function analyzeSituationalEffectiveness(
+  athleteId: string,
+  startDate: Date
+): Promise<DeepInsight[]> {
+  const insights: DeepInsight[] = [];
+
+  const athlete = await prisma.athlete.findUnique({
+    where: { userId: athleteId },
+    include: { User: { select: { name: true } } },
+  });
+
+  if (!athlete) return insights;
+
+  const athleteName = athlete.User.name || 'This athlete';
+
+  // Get interventions by context (PRE_GAME, PRE_PRACTICE, etc.)
+  const interventions = await prisma.intervention.findMany({
+    where: {
+      athleteId,
+      performedAt: { gte: startDate },
+      completed: true,
+      athleteRating: { gte: 3 }, // Only look at ones athlete found helpful
+    },
+    include: {
+      Outcomes: {
+        include: {
+          PerformanceOutcome: true,
+        },
+      },
+    },
+  });
+
+  // Group by context and type
+  const contextGroups: Record<string, Record<string, { count: number; avgRating: number; avgPerformanceChange: number }>> = {};
+
+  for (const intervention of interventions) {
+    const context = intervention.context;
+    const type = intervention.type;
+
+    if (!contextGroups[context]) contextGroups[context] = {};
+    if (!contextGroups[context][type]) {
+      contextGroups[context][type] = { count: 0, avgRating: 0, avgPerformanceChange: 0 };
+    }
+
+    const group = contextGroups[context][type];
+    group.count++;
+    group.avgRating = (group.avgRating * (group.count - 1) + (intervention.athleteRating || 3)) / group.count;
+
+    // Calculate performance change from outcomes
+    for (const outcome of intervention.Outcomes) {
+      if (outcome.performanceChange) {
+        group.avgPerformanceChange = (group.avgPerformanceChange * (group.count - 1) + outcome.performanceChange) / group.count;
+      }
+    }
+  }
+
+  // Find best technique for each context
+  for (const [context, types] of Object.entries(contextGroups)) {
+    const sortedTypes = Object.entries(types)
+      .filter(([_, data]) => data.count >= 3)
+      .sort((a, b) => b[1].avgPerformanceChange - a[1].avgPerformanceChange);
+
+    if (sortedTypes.length >= 2) {
+      const [bestType, bestData] = sortedTypes[0];
+      const [secondType, secondData] = sortedTypes[1];
+
+      if (bestData.avgPerformanceChange > secondData.avgPerformanceChange + 5) {
+        const contextLabel = context.replace('_', ' ').toLowerCase();
+        const techniqueLabel = INTERVENTION_LABELS[bestType] || bestType;
+
+        insights.push({
+          id: `situational-${athleteId}-${context}-${bestType}`,
+          type: 'intervention_outcome',
+          priority: bestData.avgPerformanceChange >= 15 ? 'high' : 'medium',
+          headline: `${techniqueLabel} works ${Math.round((bestData.avgPerformanceChange / (secondData.avgPerformanceChange || 1) - 1) * 100)}% better than other techniques ${contextLabel}`,
+          explanation: `For ${athleteName}, ${techniqueLabel} is significantly more effective than alternatives when used ${contextLabel}. Performance improvement of ${bestData.avgPerformanceChange.toFixed(1)}% compared to ${secondData.avgPerformanceChange.toFixed(1)}% for ${INTERVENTION_LABELS[secondType] || secondType}.`,
+          evidence: {
+            sampleSize: bestData.count + secondData.count,
+            confidence: bestData.count >= 5 ? 0.85 : 0.7,
+            statisticalNote: `${bestType}: +${bestData.avgPerformanceChange.toFixed(1)}% (n=${bestData.count}), ${secondType}: +${secondData.avgPerformanceChange.toFixed(1)}% (n=${secondData.count})`,
+          },
+          actionable: `Always use ${techniqueLabel} when ${contextLabel} - it's ${athleteName}'s most effective technique for this situation`,
+          athleteId,
+          athleteName,
+        });
+      }
+    }
+  }
+
+  return insights;
 }
 
 // ============================================================================

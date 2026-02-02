@@ -27,7 +27,7 @@ export const runtime = 'nodejs';
 
 interface PlainEnglishInsight {
   id: string;
-  category: 'correlation' | 'prediction' | 'intervention' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'deep_insight';
+  category: 'correlation' | 'prediction' | 'intervention' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'deep_insight' | 'intervention_outcome';
   priority: 'high' | 'medium' | 'low' | 'critical';
   headline: string; // Main insight in plain English
   detail: string; // Supporting detail
@@ -104,20 +104,36 @@ export async function GET(req: NextRequest) {
 
       // Convert DeepInsight to PlainEnglishInsight format
       for (const deep of deepInsights) {
+        // Use intervention_outcome category for technique→stat insights
+        // Use deep_insight for other advanced analytics
+        const category = deep.type === 'intervention_outcome' ? 'intervention_outcome' : 'deep_insight';
+
+        // For intervention_outcome, create a richer metric display
+        let metric: PlainEnglishInsight['metric'] = undefined;
+        if (deep.interventionDetails) {
+          // Show the actual stat improvement: "+10.5 pts"
+          const sign = deep.interventionDetails.improvement > 0 ? '+' : '';
+          metric = {
+            value: `${sign}${deep.interventionDetails.improvement.toFixed(1)}`,
+            label: deep.interventionDetails.sportMetric,
+            unit: deep.interventionDetails.metricUnit,
+          };
+        } else if (deep.comparisonToNorm) {
+          metric = {
+            value: `${deep.comparisonToNorm.percentileDifference > 0 ? '+' : ''}${deep.comparisonToNorm.percentileDifference}%`,
+            label: 'vs Team Avg',
+          };
+        }
+
         insights.push({
           id: deep.id,
-          category: 'deep_insight',
+          category,
           priority: deep.priority === 'critical' ? 'critical' : deep.priority,
           headline: deep.headline,
           detail: deep.explanation,
           athleteId: deep.athleteId,
           athleteName: deep.athleteName,
-          metric: deep.comparisonToNorm
-            ? {
-                value: `${deep.comparisonToNorm.percentileDifference > 0 ? '+' : ''}${deep.comparisonToNorm.percentileDifference}%`,
-                label: 'vs Team Avg',
-              }
-            : undefined,
+          metric,
           confidence: deep.evidence.confidence,
           evidence: deep.evidence.statisticalNote,
           actionable: deep.actionable,
@@ -541,9 +557,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Sort insights by priority
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    insights.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    // Sort insights by priority (critical first, then high, medium, low)
+    const priorityOrder: Record<string, number> = { critical: -1, high: 0, medium: 1, low: 2 };
+    insights.sort((a, b) => (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2));
 
     return NextResponse.json({
       success: true,

@@ -20,6 +20,7 @@ import {
   Flame,
   Calendar,
   Lightbulb,
+  Activity,
 } from 'lucide-react';
 
 interface InsightMetric {
@@ -29,7 +30,7 @@ interface InsightMetric {
 }
 
 interface InsightCardProps {
-  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'intervention' | 'deep_insight';
+  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'intervention' | 'deep_insight' | 'intervention_outcome';
   priority: 'high' | 'medium' | 'low' | 'critical';
   headline: string;
   detail: string;
@@ -122,6 +123,15 @@ const CATEGORY_CONFIG = {
     iconBg: 'bg-violet-500/20',
     iconColor: 'text-violet-400',
     badge: 'bg-violet-500/20 text-violet-300',
+  },
+  intervention_outcome: {
+    icon: Activity,
+    label: 'Technique → Stats',
+    gradient: 'from-emerald-500/20 to-teal-500/20',
+    border: 'border-emerald-500/40',
+    iconBg: 'bg-emerald-500/20',
+    iconColor: 'text-emerald-400',
+    badge: 'bg-emerald-500/20 text-emerald-300',
   },
 };
 
