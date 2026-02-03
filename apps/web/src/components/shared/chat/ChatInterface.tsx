@@ -220,7 +220,8 @@ export function ChatInterface() {
               try {
                 const parsed = JSON.parse(data);
                 if (parsed.type === 'token') {
-                  fullResponse += parsed.data;
+                  // Token content is in parsed.data.content
+                  fullResponse += parsed.data.content || '';
                   setMessages((prev) => {
                     const updated = [...prev];
                     const lastIndex = updated.length - 1;

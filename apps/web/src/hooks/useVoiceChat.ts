@@ -75,8 +75,8 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       sampleRate: 16000,
       channelCount: 1,
       chunkDurationMs: 1000,
-      silenceThresholdMs: 1500, // 1.5 seconds of silence before triggering
-      silenceThreshold: 0.5,
+      silenceThresholdMs: 2000, // 2 seconds of silence before triggering
+      silenceThreshold: 0.02, // RMS volume threshold (0.01-0.05 is typical silence)
     });
 
     const vm = voiceManagerRef.current;
