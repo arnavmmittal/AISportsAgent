@@ -118,14 +118,23 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
         onTranscript?.(transcription.text, true);
 
         // Notify parent that audio is complete with transcript
+        // Parent will call speakResponse() which sets state to 'speaking'
+        // If no transcript or parent doesn't call speakResponse, reset to idle
         if (transcription.text && transcription.text.trim()) {
+          // Reset to idle - parent's onAudioComplete will handle the rest
+          // speakResponse() will set state to 'speaking' when called
+          setVoiceState('idle');
           onAudioComplete?.(transcription.text);
+        } else {
+          // No transcript, reset to idle
+          setVoiceState('idle');
         }
       } catch (err) {
         console.error('[VoiceChat] Transcription error:', err);
         const error = err instanceof Error ? err : new Error('Transcription failed');
         setError(error);
         onError?.(error);
+        setVoiceState('idle'); // Reset on error too
       } finally {
         isProcessingRef.current = false;
       }
