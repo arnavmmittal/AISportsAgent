@@ -140,7 +140,7 @@ export function ChatInterface() {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  // Voice integration - HTTP-based (no MCP server required)
+  // Voice integration - uses /api/voice/* endpoints
   const {
     voiceState,
     isListening,

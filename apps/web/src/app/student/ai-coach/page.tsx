@@ -31,7 +31,7 @@ import { useVoiceChat } from '@/hooks/useVoiceChat';
  *
  * Features:
  * - Streaming text responses with typewriter effect
- * - Voice input/output via WebSocket (Whisper + Cartesia TTS)
+ * - Voice input/output via HTTP (OpenAI Whisper STT + ElevenLabs TTS)
  * - Crisis detection and resources
  * - Quick prompts for common topics
  * - Privacy-first design with clear messaging

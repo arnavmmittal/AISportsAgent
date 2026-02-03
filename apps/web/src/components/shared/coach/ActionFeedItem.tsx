@@ -19,13 +19,13 @@ import { RiskBadge, type RiskLevel } from '../athlete/RiskBadge';
 /**
  * ActionFeedItem - Alert card for coach command center
  *
- * Alert types from the MCP server:
+ * Alert types:
  * - STRESS_SPIKE: Sudden stress increase
  * - ENGAGEMENT_DROP: Missed check-ins
  * - SLUMP_PREDICTION: ML prediction triggered
  * - BURNOUT_RISK: Pattern-based warning
  * - MOOD_DECLINE: Downward trend
- * - CRISIS_FLAG: Governance agent escalation
+ * - CRISIS_FLAG: Crisis detection escalation
  *
  * @example
  * <ActionFeedItem

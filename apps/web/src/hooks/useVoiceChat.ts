@@ -37,7 +37,7 @@ export interface UseVoiceChatReturn {
 /**
  * React hook for voice chat integration
  *
- * NEW ARCHITECTURE (Vercel-only, no MCP server):
+ * Voice Flow:
  * 1. User presses mic → startVoice() → VoiceManager records
  * 2. User stops speaking → silence detected → audio sent to /api/voice/transcribe
  * 3. Transcript returned → onAudioComplete(transcript) called

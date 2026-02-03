@@ -2,7 +2,7 @@
  * ElevenLabs Text-to-Speech Service
  *
  * Provides high-quality, natural-sounding voice synthesis for AI coach responses.
- * Direct API integration - no MCP server required.
+ * Called via /api/voice/synthesize endpoint.
  *
  * Configuration:
  * - Voice: Rachel (EXAVITQu4vr4xnSDxMaL) - warm, clear, professional

@@ -144,7 +144,7 @@ export interface EnrichedAthleteContext {
   hasCheckedInToday: boolean;
   checkInStreak: number;
 
-  // ML predictions (from MCP or calculated)
+  // ML predictions (rule-based calculation)
   prediction: MLPrediction | null;
 
   // Personal profile
@@ -181,11 +181,8 @@ export interface EnrichedAthleteContext {
 }
 
 class AthleteContextService {
-  private mcpServerUrl: string;
-  private mcpAvailable: boolean = true;
-
   constructor() {
-    this.mcpServerUrl = process.env.MCP_SERVER_URL || 'http://localhost:8000';
+    // No external dependencies - all calculations done locally
   }
 
   /**
@@ -319,7 +316,7 @@ class AthleteContextService {
     // Calculate streak
     const checkInStreak = this.calculateStreak(recentMoodLogs);
 
-    // Get ML predictions (try MCP server first, fallback to local calculation)
+    // Get ML predictions (local rule-based calculation)
     let prediction: MLPrediction | null = null;
     if (recentMoodLogs.length >= 3) {
       prediction = await this.getMLPredictions(athleteId, recentMoodLogs);
@@ -512,7 +509,7 @@ class AthleteContextService {
   }
 
   /**
-   * Get ML predictions from MCP server or calculate locally
+   * Get ML predictions using local rule-based calculation
    */
   private async getMLPredictions(
     athleteId: string,
@@ -525,60 +522,12 @@ class AthleteContextService {
       createdAt: Date;
     }>
   ): Promise<MLPrediction | null> {
-    // Try MCP server first (if available and enabled)
-    if (this.mcpAvailable && process.env.USE_MCP_SERVER === 'true') {
-      try {
-        const response = await fetch(`${this.mcpServerUrl}/api/predictions/athlete/${athleteId}?days=14`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${process.env.MCP_SERVICE_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          signal: AbortSignal.timeout(3000), // 3 second timeout
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          return this.normalizeMCPPrediction(data);
-        }
-      } catch (error) {
-        console.warn('[AthleteContext] MCP prediction failed, using local calculation:', error);
-        this.mcpAvailable = false;
-        // Re-enable after 5 minutes
-        setTimeout(() => { this.mcpAvailable = true; }, 5 * 60 * 1000);
-      }
-    }
-
-    // Fallback: Local rule-based calculation
+    // Use local rule-based calculation
     return this.calculateLocalPrediction(moodLogs);
   }
 
   /**
-   * Normalize MCP server prediction response
-   */
-  private normalizeMCPPrediction(data: Record<string, unknown>): MLPrediction {
-    const prediction = data.prediction as Record<string, unknown> || {};
-    const slump = data.slump_analysis as Record<string, unknown> || {};
-
-    return {
-      riskScore: (prediction.risk_score as number) || 50,
-      riskLevel: (prediction.risk_level as MLPrediction['riskLevel']) || 'medium',
-      confidence: (prediction.confidence as number) || 70,
-      topFactors: ((prediction.factors as Array<Record<string, unknown>>) || []).map(f => ({
-        factor: (f.feature as string) || 'unknown',
-        impact: (f.impact as number) || 0,
-        direction: ((f.direction as string) === 'increases' ? 'negative' : 'positive') as 'positive' | 'negative',
-        description: (f.description as string) || '',
-      })),
-      slumpDetected: (slump.slump_detected as boolean) || false,
-      slumpProbability: (slump.slump_probability as number) || 0,
-      slumpIndicators: (slump.indicators as string[]) || [],
-      recommendations: (prediction.recommendations as string[]) || [],
-    };
-  }
-
-  /**
-   * Local rule-based prediction when MCP unavailable
+   * Local rule-based prediction calculation
    */
   private calculateLocalPrediction(
     moodLogs: Array<{

@@ -2,9 +2,10 @@
  * Voice Client
  *
  * Client-side utilities for voice features (TTS and STT).
- * Calls local Next.js API routes which handle ElevenLabs and Whisper.
- *
- * This replaces the MCP server voice integration.
+ * Calls local Next.js API routes:
+ * - /api/voice/synthesize - ElevenLabs TTS
+ * - /api/voice/transcribe - OpenAI Whisper STT
+ * - /api/voice/voices - Available voices and presets
  */
 
 export interface VoiceSynthesizeRequest {

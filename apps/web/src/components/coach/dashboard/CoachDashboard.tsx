@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { apiClient, type TeamAnalytics, type Recommendation } from '@/lib/api-client';
+import { type TeamAnalytics, type Recommendation } from '@/lib/api-client';
 
 export function CoachDashboard() {
   const { user } = useAuth();
@@ -29,13 +29,35 @@ export function CoachDashboard() {
     setError(null);
 
     try {
-      const [analyticsData, recsData] = await Promise.all([
-        apiClient.getTeamAnalytics(user.id, selectedPeriod),
-        apiClient.getRecommendations(user.id),
-      ]);
+      // Use local API endpoint
+      const response = await fetch(`/api/coach/dashboard?days=${selectedPeriod}`);
 
-      setAnalytics(analyticsData);
-      setRecommendations(recsData);
+      if (!response.ok) {
+        throw new Error('Failed to load dashboard');
+      }
+
+      const data = await response.json();
+
+      // Transform response to expected format
+      setAnalytics({
+        period_days: selectedPeriod,
+        team_size: data.summary?.totalAthletes || 0,
+        total_mood_logs: 0,
+        averages: {
+          mood: data.summary?.averageMood || 0,
+          confidence: data.summary?.averageConfidence || 0,
+          stress: data.summary?.averageStress || 0,
+        },
+        trends: {},
+        at_risk_athletes: data.atRiskAthletes || [],
+        engagement: {
+          athletes_using_platform: data.summary?.activeAthletes || 0,
+          engagement_rate: 0,
+          total_chat_sessions: 0,
+        },
+        sport: '',
+      });
+      setRecommendations(data.recommendations || []);
     } catch (err) {
       setError('Failed to load dashboard data');
       console.error(err);

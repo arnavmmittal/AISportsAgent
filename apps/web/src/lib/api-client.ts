@@ -1,8 +1,12 @@
 /**
- * API Client for communicating with Python FastAPI backend
+ * API Client for communicating with backend APIs
+ *
+ * Note: This client now uses local Next.js API routes (/api/*) instead of
+ * the deprecated Python MCP server. Some methods may need updates to work
+ * with the new API structure.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export interface ChatMessage {
   session_id: string;

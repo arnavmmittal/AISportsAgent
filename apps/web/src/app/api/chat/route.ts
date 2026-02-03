@@ -57,6 +57,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * POST /api/chat - Non-streaming chat (deprecated, use /api/chat/stream instead)
+ *
+ * This endpoint returns a simple acknowledgment response.
+ * For full AI chat functionality, use the streaming endpoint at /api/chat/stream.
+ */
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
@@ -71,44 +77,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid message' }, { status: 400 });
     }
 
-    // Check if MCP server is enabled
-    const useMCPServer = process.env.USE_MCP_SERVER === 'true';
-    const mcpServerUrl = process.env.MCP_SERVER_URL;
-
-    if (!useMCPServer || !mcpServerUrl) {
-      // Fallback to simple response if MCP not configured
-      return NextResponse.json({
-        message: "Thank you for sharing. I'm here to help you work through this. Can you tell me more about what's been on your mind?",
-      });
-    }
-
-    // Call MCP server with real user ID and proper UUID session
-    const mcpResponse = await fetch(`${mcpServerUrl}/api/chat/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        session_id: crypto.randomUUID(),
-        message: message,
-        athlete_id: user.id,
-        stream: false,
-      }),
-    });
-
-    if (!mcpResponse.ok) {
-      const errorText = await mcpResponse.text();
-      console.error('MCP server error:', errorText);
-      return NextResponse.json(
-        { error: 'MCP server error', details: errorText },
-        { status: 500 }
-      );
-    }
-
-    const data = await mcpResponse.json();
-
+    // Return acknowledgment - clients should use /api/chat/stream for full AI responses
     return NextResponse.json({
-      message: data.message || data.content || 'Sorry, I encountered an error processing your request.',
+      message: "Thank you for sharing. I'm here to help you work through this. For the best experience, please use the streaming chat interface.",
+      hint: "Use /api/chat/stream for full AI-powered responses",
     });
   } catch (error) {
     console.error('Chat API error:', error);
@@ -116,7 +88,6 @@ export async function POST(request: NextRequest) {
       {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : String(error),
-        mcpUrl: process.env.MCP_SERVER_URL
       },
       { status: 500 }
     );

@@ -3,15 +3,16 @@
  *
  * Features:
  * - Browser MediaRecorder for audio capture
- * - Voice Activity Detection (VAD)
- * - WebSocket streaming to backend
+ * - Voice Activity Detection (VAD) with silence detection
+ * - HTTP-based API calls (no WebSocket)
  * - Audio playback from TTS responses
  *
  * Flow:
  * 1. User clicks mic button → startRecording()
- * 2. Audio chunks sent to backend via WebSocket
- * 3. Backend: Whisper transcription → AthleteAgent → Cartesia TTS
- * 4. Audio chunks streamed back → playAudioStream()
+ * 2. Silence detected → audio sent to /api/voice/transcribe (OpenAI Whisper)
+ * 3. Transcript returned → parent sends to chat API
+ * 4. Parent calls speakResponse() → /api/voice/synthesize (ElevenLabs TTS)
+ * 5. Audio played via playAudioStream()
  */
 
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking' | 'error';
