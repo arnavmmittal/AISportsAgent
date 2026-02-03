@@ -144,11 +144,17 @@ export async function POST(request: NextRequest) {
 
     const { athletes, sendInvites } = validation.data;
 
-    // Get coach info
+    // Get coach info with school
     const coach = await prisma.coach.findUnique({
       where: { userId: user.id },
-      select: { sport: true, inviteCode: true },
+      select: { sport: true, inviteCode: true, User: { select: { schoolId: true } } },
     });
+
+    if (!coach?.User?.schoolId) {
+      return NextResponse.json({ error: 'Coach school not found' }, { status: 404 });
+    }
+
+    const schoolId = coach.User.schoolId;
 
     const results: {
       created: Array<{ name: string; email: string; status: string }>;
@@ -237,6 +243,7 @@ export async function POST(request: NextRequest) {
               email: athlete.email,
               name: athlete.name,
               role: 'ATHLETE',
+              schoolId,
             },
           });
 

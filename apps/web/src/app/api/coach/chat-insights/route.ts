@@ -91,15 +91,17 @@ export async function GET(request: NextRequest) {
       return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get coach info
+    // Get coach info with school
     const coach = await prisma.coach.findUnique({
       where: { userId: user.id },
-      select: { id: true, schoolId: true },
+      include: { User: { select: { schoolId: true } } },
     });
 
-    if (!coach) {
+    if (!coach || !coach.User.schoolId) {
       return NextResponse.json({ error: 'Coach not found' }, { status: 404 });
     }
+
+    const schoolId = coach.User.schoolId;
 
     // Get date ranges
     const now = new Date();
@@ -107,19 +109,20 @@ export async function GET(request: NextRequest) {
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Get all athletes under this coach with consent
-    const athletes = await prisma.athlete.findMany({
+    // Get all athletes under this coach with consent (via CoachAthleteRelation)
+    const coachAthleteRelations = await prisma.coachAthleteRelation.findMany({
       where: {
-        schoolId: coach.schoolId,
-        coachConsent: true,
+        coachId: coach.userId,
+        consentGranted: true,
       },
-      select: {
-        userId: true,
-        User: { select: { name: true } },
-        sport: true,
+      include: {
+        Athlete: {
+          include: { User: { select: { name: true } } },
+        },
       },
     });
 
+    const athletes = coachAthleteRelations.map(r => r.Athlete);
     const athleteIds = athletes.map(a => a.userId);
     const athleteMap = new Map(athletes.map(a => [a.userId, {
       name: a.User.name || 'Unknown',

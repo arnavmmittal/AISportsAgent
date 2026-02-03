@@ -20,6 +20,7 @@ import {
   sendPushToSchool,
   NotificationChannel,
   NotificationPriority,
+  type PushNotificationOptions,
 } from '@/lib/push-notifications';
 
 // Force dynamic rendering
@@ -92,10 +93,12 @@ export async function POST(request: NextRequest) {
     } = validationResult.data;
 
     // Build notification options
-    const options = {
+    // Ensure data.type is always a string (validation may return {} for optional type)
+    const dataType = data?.type && typeof data.type === 'string' ? data.type : 'custom';
+    const options: PushNotificationOptions = {
       title,
       body: notificationBody,
-      data: data ? { ...data, type: data.type || 'custom' } : { type: 'custom' },
+      data: data ? { ...data, type: dataType } : { type: 'custom' },
       channel: channel ? (channel as NotificationChannel) : NotificationChannel.DEFAULT,
       priority: priority === 'high' ? NotificationPriority.HIGH : NotificationPriority.DEFAULT,
     };

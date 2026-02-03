@@ -17,6 +17,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import type { AlertRule, Severity, AlertTriggerType } from '@prisma/client';
 
 interface RuleEvaluationResult {
@@ -400,7 +401,7 @@ async function createAlertFromResult(
       title: rule.name,
       message: result.message,
       severity: result.severity,
-      metadata: result.metadata,
+      metadata: (result.metadata ?? Prisma.JsonNull) as Prisma.InputJsonValue,
     },
   });
 }

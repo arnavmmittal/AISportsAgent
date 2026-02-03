@@ -40,8 +40,8 @@ vi.mock('@/agents/knowledge/KnowledgeAgent', () => ({
 
 describe('Athlete Tools', () => {
   describe('Tool definitions', () => {
-    it('exports 8 athlete tools', () => {
-      expect(athleteTools).toHaveLength(8);
+    it('exports 10 athlete tools', () => {
+      expect(athleteTools).toHaveLength(10);
     });
 
     it('has all expected tool names', () => {
@@ -49,15 +49,17 @@ describe('Athlete Tools', () => {
         'get_mood_history',
         'get_goals',
         'get_upcoming_games',
+        'get_effective_interventions',
         'log_mood',
         'create_goal',
         'update_goal_progress',
         'log_intervention_outcome',
+        'record_intervention_follow_up',
         'search_knowledge_base',
       ];
 
       expect(athleteToolNames).toEqual(expect.arrayContaining(expectedNames));
-      expect(athleteToolNames).toHaveLength(8);
+      expect(athleteToolNames).toHaveLength(10);
     });
 
     it('all tools have name, description, and schema', () => {

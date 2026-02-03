@@ -1,35 +1,41 @@
 /**
- * PostgreSQL Checkpointer for LangGraph
+ * LangGraph Checkpointer with Graceful Fallback
  *
- * Replaces in-memory MemorySaver with persistent PostgreSQL storage.
+ * Attempts PostgreSQL persistence for production, falls back to in-memory for development.
  *
- * Benefits:
+ * Production (PostgresSaver):
  * - Conversations persist across server restarts
  * - Horizontal scaling (multiple pods share state)
  * - Resume conversations days/weeks later
  * - Full conversation history for debugging
  *
- * The checkpointer automatically creates required tables on first use.
+ * Development Fallback (MemorySaver):
+ * - Works without database connection
+ * - Conversations lost on restart
+ * - Good for local testing
  *
  * IMPORTANT: Supabase PgBouncer Compatibility
  * - Port 6543 (transaction mode) breaks prepared statements
  * - Port 5432 (session mode) works with prepared statements
- * - We use DIRECT_DATABASE_URL or modify connection string for compatibility
+ * - DIRECT_DATABASE_URL bypasses pooler entirely (recommended for production)
  */
 
 import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
+import { MemorySaver } from '@langchain/langgraph';
+import type { BaseCheckpointSaver } from '@langchain/langgraph';
 
-// Singleton instance
-let checkpointerInstance: PostgresSaver | null = null;
-let initPromise: Promise<PostgresSaver> | null = null;
+// Singleton instance (can be either PostgresSaver or MemorySaver)
+let checkpointerInstance: BaseCheckpointSaver | null = null;
+let initPromise: Promise<BaseCheckpointSaver> | null = null;
+let checkpointerType: 'postgres' | 'memory' | null = null;
 
 /**
- * Get the PostgreSQL checkpointer instance
+ * Get the checkpointer instance
  *
  * Uses singleton pattern with lazy initialization.
- * The checkpointer will create tables if they don't exist.
+ * Attempts PostgresSaver first, falls back to MemorySaver on connection failure.
  */
-export async function getCheckpointer(): Promise<PostgresSaver> {
+export async function getCheckpointer(): Promise<BaseCheckpointSaver> {
   // Return existing instance if available
   if (checkpointerInstance) {
     return checkpointerInstance;
@@ -83,7 +89,8 @@ function getCompatibleDatabaseUrl(): string {
   return databaseUrl;
 }
 
-async function initializeCheckpointer(): Promise<PostgresSaver> {
+async function initializeCheckpointer(): Promise<BaseCheckpointSaver> {
+  // First, try PostgresSaver for persistent storage
   try {
     const connectionUrl = getCompatibleDatabaseUrl();
 
@@ -97,18 +104,38 @@ async function initializeCheckpointer(): Promise<PostgresSaver> {
     await checkpointer.setup();
 
     checkpointerInstance = checkpointer;
+    checkpointerType = 'postgres';
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[LANGGRAPH:CHECKPOINTER] PostgreSQL checkpointer initialized');
-    }
+    console.log('[LANGGRAPH:CHECKPOINTER] PostgreSQL checkpointer initialized (persistent storage)');
 
     return checkpointer;
-  } catch (error) {
-    // Reset promise so next call can retry
-    initPromise = null;
+  } catch (postgresError) {
+    // PostgresSaver failed - fall back to MemorySaver
+    console.warn('[LANGGRAPH:CHECKPOINTER] PostgreSQL connection failed, falling back to MemorySaver');
+    console.warn('[LANGGRAPH:CHECKPOINTER] Reason:', postgresError instanceof Error ? postgresError.message : String(postgresError));
 
-    console.error('[LANGGRAPH:CHECKPOINTER] Failed to initialize:', error);
-    throw error;
+    // Show helpful hints based on error type
+    if (postgresError instanceof Error) {
+      if (postgresError.message.includes('ETIMEDOUT')) {
+        console.warn('[LANGGRAPH:CHECKPOINTER] 💡 Hint: Database connection timed out.');
+        console.warn('   - Set DIRECT_DATABASE_URL for direct connection (bypasses pooler)');
+        console.warn('   - Or check if Supabase session mode (port 5432) is accessible');
+      } else if (postgresError.message.includes('ECONNREFUSED')) {
+        console.warn('[LANGGRAPH:CHECKPOINTER] 💡 Hint: Database connection refused.');
+        console.warn('   - Check if DATABASE_URL is correct');
+        console.warn('   - Ensure database is running');
+      }
+    }
+
+    // Create MemorySaver as fallback
+    const memorySaver = new MemorySaver();
+    checkpointerInstance = memorySaver;
+    checkpointerType = 'memory';
+
+    console.log('[LANGGRAPH:CHECKPOINTER] MemorySaver initialized (in-memory, non-persistent)');
+    console.log('[LANGGRAPH:CHECKPOINTER] ⚠️  Conversations will NOT persist across restarts');
+
+    return memorySaver;
   }
 }
 
@@ -122,10 +149,9 @@ export async function closeCheckpointer(): Promise<void> {
     // but we clear the reference for cleanup
     checkpointerInstance = null;
     initPromise = null;
+    checkpointerType = null;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[LANGGRAPH:CHECKPOINTER] Checkpointer connection closed');
-    }
+    console.log('[LANGGRAPH:CHECKPOINTER] Checkpointer connection closed');
   }
 }
 
@@ -134,4 +160,19 @@ export async function closeCheckpointer(): Promise<void> {
  */
 export function isCheckpointerReady(): boolean {
   return checkpointerInstance !== null;
+}
+
+/**
+ * Get the type of checkpointer currently in use
+ * @returns 'postgres' for persistent storage, 'memory' for in-memory, null if not initialized
+ */
+export function getCheckpointerType(): 'postgres' | 'memory' | null {
+  return checkpointerType;
+}
+
+/**
+ * Check if using persistent storage (PostgresSaver)
+ */
+export function isPersistentStorage(): boolean {
+  return checkpointerType === 'postgres';
 }

@@ -143,7 +143,7 @@ export async function generateDigestData(
     prisma.chatSession.findMany({
       where: {
         athleteId: { in: athleteIds },
-        startedAt: { gte: periodStart, lte: periodEnd },
+        createdAt: { gte: periodStart, lte: periodEnd },
       },
       include: {
         Athlete: {
@@ -354,16 +354,16 @@ function calculateChatActivity(
   sessions: Array<{
     id: string;
     athleteId: string;
-    Message: Array<{ role: string }>;
-    ConversationInsight: Array<{ themes: unknown; sentiment: number }>;
+    Message?: Array<{ role: string }>;
+    ConversationInsight?: Array<{ themes: unknown; sentiment: number }>;
   }>
 ): ChatActivitySummary {
   const totalSessions = sessions.length;
-  const totalMessages = sessions.reduce((acc, s) => acc + s.Message.length, 0);
+  const totalMessages = sessions.reduce((acc, s) => acc + (s.Message?.length || 0), 0);
   const averageSessionLength = totalSessions > 0 ? Math.round(totalMessages / totalSessions) : 0;
 
   // Aggregate sentiment
-  const insights = sessions.flatMap((s) => s.ConversationInsight);
+  const insights = sessions.flatMap((s) => s.ConversationInsight || []);
   const sentimentOverview = {
     positive: insights.filter((i) => i.sentiment > 0.3).length,
     neutral: insights.filter((i) => i.sentiment >= -0.3 && i.sentiment <= 0.3).length,
@@ -490,8 +490,8 @@ function identifyAthletesNeedingAttention(
     };
   }>,
   moodLogs: Array<{ athleteId: string; mood: number; createdAt: Date }>,
-  sessions: Array<{ athleteId: string; startedAt: Date }>,
-  readinessScores: Array<{ athleteId: string; overallScore: number }>,
+  sessions: Array<{ athleteId: string; createdAt: Date }>,
+  readinessScores: Array<{ athleteId: string; overallScore?: number; Athlete?: { User: { name: string } } }>,
   periodStart: Date
 ): AthleteAttentionItem[] {
   const attentionItems: AthleteAttentionItem[] = [];
@@ -523,7 +523,7 @@ function identifyAthletesNeedingAttention(
     // Check readiness scores
     const athleteReadiness = readinessScores.filter((r) => r.athleteId === relation.athleteId);
     if (athleteReadiness.length > 0) {
-      const avgReadiness = athleteReadiness.reduce((a, r) => a + r.overallScore, 0) / athleteReadiness.length;
+      const avgReadiness = athleteReadiness.reduce((a, r) => a + (r.overallScore || 0), 0) / athleteReadiness.length;
       if (avgReadiness < 50) {
         reasons.push('Low readiness scores');
         priority = priority === 'urgent' ? 'urgent' : 'high';
@@ -533,7 +533,7 @@ function identifyAthletesNeedingAttention(
     // Check last activity
     const athleteSessions = sessions.filter((s) => s.athleteId === relation.athleteId);
     const lastActivity = athleteSessions.length > 0
-      ? new Date(Math.max(...athleteSessions.map((s) => s.startedAt.getTime())))
+      ? new Date(Math.max(...athleteSessions.map((s) => s.createdAt.getTime())))
       : null;
 
     if (reasons.length > 0) {
@@ -562,7 +562,7 @@ function identifyTopPerformers(
     };
   }>,
   moodLogs: Array<{ athleteId: string; mood: number }>,
-  readinessScores: Array<{ athleteId: string; overallScore: number }>
+  readinessScores: Array<{ athleteId: string; overallScore?: number; Athlete?: { User: { name: string } } }>
 ): AthletePerformanceItem[] {
   const performers: AthletePerformanceItem[] = [];
 
@@ -572,7 +572,7 @@ function identifyTopPerformers(
 
     if (athleteMoods.length >= 3 && athleteReadiness.length >= 3) {
       const avgMood = athleteMoods.reduce((a, m) => a + m.mood, 0) / athleteMoods.length;
-      const avgReadiness = athleteReadiness.reduce((a, r) => a + r.overallScore, 0) / athleteReadiness.length;
+      const avgReadiness = athleteReadiness.reduce((a, r) => a + (r.overallScore || 0), 0) / athleteReadiness.length;
 
       if (avgMood >= 4 && avgReadiness >= 75) {
         performers.push({

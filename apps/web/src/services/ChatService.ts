@@ -217,6 +217,7 @@ export class ChatService {
         include: {
           Athlete: {
             include: {
+              User: { select: { name: true } },
               CoachAthlete: {
                 where: { consentGranted: true },
                 select: { coachId: true },
