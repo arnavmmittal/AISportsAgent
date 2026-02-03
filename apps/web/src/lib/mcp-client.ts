@@ -1,9 +1,21 @@
 /**
  * MCP Server Client
  *
- * Handles communication between Next.js and the Python MCP Server.
- * The MCP server runs separately and provides AI agent orchestration,
- * knowledge retrieval, ML predictions, and voice processing.
+ * DEPRECATION NOTICE:
+ * The Python MCP server has been deprecated in favor of Vercel-only deployment.
+ * - Voice functions now use local Next.js API routes (/api/voice/*)
+ * - Chat uses LangGraph agents directly in Next.js
+ * - Analytics use TypeScript algorithms in /lib/analytics
+ *
+ * MCP server code is archived in services/_deprecated/mcp-server
+ *
+ * Functions that still require MCP_SERVER_URL:
+ * - orchestratorChat, classifyIntent, getSessionContext (use LangGraph instead)
+ * - queryKnowledge, getFrameworks (use KnowledgeAgent instead)
+ * - predictRisk, detectSlump, computeCorrelations (use /lib/analytics instead)
+ *
+ * Functions that work without MCP server:
+ * - synthesizeSpeech, transcribeAudio, getVoices, getVoiceStatus (use local routes)
  */
 
 // ===== Chat Types =====
@@ -587,16 +599,17 @@ export async function getPredictionStatus(): Promise<{
 // ==========================================
 // VOICE API
 // ==========================================
+// Voice functions now use local API routes instead of MCP server.
+// Import from '@/lib/voice' for full voice functionality.
 
 /**
  * Synthesize text to speech
+ * Uses local /api/voice/synthesize route (ElevenLabs)
  */
 export async function synthesizeSpeech(
   request: VoiceSynthesizeRequest
 ): Promise<Blob> {
-  const url = getMCPServerURL();
-
-  const response = await fetch(`${url}/api/voice/synthesize`, {
+  const response = await fetch('/api/voice/synthesize', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
@@ -611,6 +624,7 @@ export async function synthesizeSpeech(
 
 /**
  * Transcribe audio to text
+ * Uses local /api/voice/transcribe route (OpenAI Whisper)
  */
 export async function transcribeAudio(
   audio: Blob,
@@ -624,13 +638,11 @@ export async function transcribeAudio(
     confidence: number;
   };
 }> {
-  const url = getMCPServerURL();
-
   const formData = new FormData();
   formData.append('file', audio, 'audio.webm');
   formData.append('detect_emotion', String(detectEmotion));
 
-  const response = await fetch(`${url}/api/voice/transcribe`, {
+  const response = await fetch('/api/voice/transcribe', {
     method: 'POST',
     body: formData,
   });
@@ -644,6 +656,7 @@ export async function transcribeAudio(
 
 /**
  * Get available voices
+ * Uses local /api/voice/voices route
  */
 export async function getVoices(): Promise<{
   voices: Array<{
@@ -653,9 +666,7 @@ export async function getVoices(): Promise<{
     preview_url?: string;
   }>;
 }> {
-  const url = getMCPServerURL();
-
-  const response = await fetch(`${url}/api/voice/voices`);
+  const response = await fetch('/api/voice/voices');
 
   if (!response.ok) {
     throw new Error(`Get voices error: ${response.status}`);
@@ -666,6 +677,7 @@ export async function getVoices(): Promise<{
 
 /**
  * Get voice service status
+ * Uses local /api/voice/status route
  */
 export async function getVoiceStatus(): Promise<{
   status: string;
@@ -674,13 +686,19 @@ export async function getVoiceStatus(): Promise<{
   elevenlabs_available: boolean;
   deepgram_available: boolean;
 }> {
-  const url = getMCPServerURL();
-
-  const response = await fetch(`${url}/api/voice/status`);
+  const response = await fetch('/api/voice/status');
 
   if (!response.ok) {
     throw new Error(`Voice status error: ${response.status}`);
   }
 
-  return response.json();
+  // Transform response to match expected interface
+  const data = await response.json();
+  return {
+    status: data.status,
+    tts_provider: data.tts?.provider || 'elevenlabs',
+    stt_provider: data.stt?.provider || 'openai-whisper',
+    elevenlabs_available: data.tts?.available || false,
+    deepgram_available: false, // We use Whisper now, not Deepgram
+  };
 }

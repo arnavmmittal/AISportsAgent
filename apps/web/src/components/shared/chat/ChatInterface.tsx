@@ -140,7 +140,7 @@ export function ChatInterface() {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  // Voice integration
+  // Voice integration - HTTP-based (no MCP server required)
   const {
     voiceState,
     isListening,
@@ -148,30 +148,107 @@ export function ChatInterface() {
     transcript,
     error: voiceError,
     toggleVoice,
+    speakResponse,
   } = useVoiceChat({
     sessionId,
     athleteId: user?.id || '',
     onTranscript: (text, isFinal) => {
-      if (isFinal) {
-        // Voice transcript is final - add as user message
-        const userMessage: Message = {
-          id: `msg_${Date.now()}`,
-          role: 'user',
-          content: text,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, userMessage]);
+      // Show transcript in input while speaking
+      if (!isFinal) {
+        setInputValue(text);
       }
     },
-    onResponse: (text) => {
-      // AI response from voice - add as assistant message
-      const assistantMessage: Message = {
-        id: `msg_${Date.now()}_assistant`,
-        role: 'assistant',
-        content: text,
+    onAudioComplete: async (transcribedText) => {
+      // Voice transcript is complete - send to chat API
+      if (!transcribedText.trim() || !user?.id) return;
+
+      const userMessage: Message = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
+        content: transcribedText,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, userMessage]);
+      setInputValue('');
+      setIsLoading(true);
+      recordActivity();
+
+      try {
+        // Send to chat API and collect full response for TTS
+        const response = await fetch('/api/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message: transcribedText,
+            athlete_id: user.id,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to get response');
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) throw new Error('No response body');
+
+        // Add placeholder for assistant message
+        const assistantId = `msg_${Date.now()}_assistant`;
+        setMessages((prev) => [
+          ...prev,
+          { id: assistantId, role: 'assistant', content: '', timestamp: new Date() },
+        ]);
+
+        let fullResponse = '';
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') break;
+              if (!data) continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.type === 'token') {
+                  fullResponse += parsed.data;
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const lastIndex = updated.length - 1;
+                    if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
+                      updated[lastIndex] = { ...updated[lastIndex], content: fullResponse };
+                    }
+                    return updated;
+                  });
+                } else if (parsed.type === 'crisis_alert' || parsed.type === 'crisis_check') {
+                  setCrisisAlert({
+                    final_risk_level: parsed.data.severity || parsed.data.final_risk_level || 'HIGH',
+                    message: 'Professional support is available 24/7 at 988',
+                  });
+                }
+              } catch {}
+            }
+          }
+        }
+
+        // Speak the full response using TTS
+        if (fullResponse.trim()) {
+          await speakResponse(fullResponse);
+        }
+      } catch (error) {
+        console.error('Voice chat error:', error);
+      } finally {
+        setIsLoading(false);
+      }
     },
     onError: (error) => {
       console.error('Voice error:', error);
