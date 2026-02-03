@@ -10,6 +10,11 @@
  * - Full conversation history for debugging
  *
  * The checkpointer automatically creates required tables on first use.
+ *
+ * IMPORTANT: Supabase PgBouncer Compatibility
+ * - Port 6543 (transaction mode) breaks prepared statements
+ * - Port 5432 (session mode) works with prepared statements
+ * - We use DIRECT_DATABASE_URL or modify connection string for compatibility
  */
 
 import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
@@ -40,19 +45,50 @@ export async function getCheckpointer(): Promise<PostgresSaver> {
   return initPromise;
 }
 
-async function initializeCheckpointer(): Promise<PostgresSaver> {
-  const databaseUrl = process.env.DATABASE_URL;
+/**
+ * Get a database URL compatible with PostgresSaver
+ *
+ * PgBouncer in transaction mode (port 6543) breaks prepared statements.
+ * We need either:
+ * 1. A direct connection (DIRECT_DATABASE_URL)
+ * 2. Session mode pooler (port 5432)
+ * 3. Transaction mode with prepare=false (fallback)
+ */
+function getCompatibleDatabaseUrl(): string {
+  // Prefer direct connection if available
+  const directUrl = process.env.DIRECT_DATABASE_URL;
+  if (directUrl) {
+    return directUrl;
+  }
 
+  const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error(
       'DATABASE_URL environment variable is required for LangGraph checkpointer'
     );
   }
 
+  // Check if using PgBouncer transaction mode (port 6543)
+  if (databaseUrl.includes(':6543')) {
+    // Option 1: Switch to session mode (port 5432) - supports prepared statements
+    const sessionModeUrl = databaseUrl.replace(':6543', ':5432');
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[LANGGRAPH:CHECKPOINTER] Switching to session mode pooler (port 5432)');
+    }
+
+    return sessionModeUrl;
+  }
+
+  return databaseUrl;
+}
+
+async function initializeCheckpointer(): Promise<PostgresSaver> {
   try {
+    const connectionUrl = getCompatibleDatabaseUrl();
+
     // Create the checkpointer from connection string
-    // PostgresSaver handles connection pooling internally
-    const checkpointer = PostgresSaver.fromConnString(databaseUrl);
+    const checkpointer = PostgresSaver.fromConnString(connectionUrl);
 
     // Setup creates the required tables if they don't exist:
     // - checkpoints: Stores graph state snapshots
