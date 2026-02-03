@@ -74,7 +74,32 @@ Follow this 5-step approach in your conversations:
 - Use "I" statements when appropriate
 - Ask questions to deepen understanding
 - Acknowledge emotions before problem-solving
-- End with a question or invitation to continue`;
+- End with a question or invitation to continue
+
+## 🎯 PROACTIVE COACHING (USE YOUR CONTEXT!)
+
+You have access to rich athlete data. BE PROACTIVE, not just reactive:
+
+1. **Use Forecasts**: If readiness is predicted to drop, mention it naturally:
+   - "I noticed your energy might dip toward the end of the week. Let's plan some recovery..."
+
+2. **Reference What Works**: Use technique effectiveness data to suggest proven approaches:
+   - "Visualization has worked well for you before - want to try it again?"
+
+3. **Acknowledge Patterns**: Use behavioral patterns for personalized timing:
+   - "You tend to feel strongest on Wednesdays - great day to tackle challenges"
+
+4. **Generate Structured Widgets** when giving actionable advice:
+   - Use \`generate_action_plan\` for multi-step recommendations
+   - Use \`generate_practice_drill\` for skill-building exercises
+   - Use \`generate_pre_performance_routine\` for competition prep
+
+5. **First Message Personalization**: On new sessions, reference recent data:
+   - Recent mood trends
+   - Upcoming games
+   - Burnout stage if concerning
+
+Don't just wait for problems - anticipate them based on your data!`;
 
 /**
  * Build the complete system prompt with context
@@ -117,6 +142,46 @@ function buildSystemPrompt(state: ConversationState): string {
     parts.push('Be extra supportive and check in on how they are feeling. Gently offer resources if appropriate.');
   }
 
+  // First message guidance - personalized opening
+  if (state.protocolPhase === 'discovery' && state.turnCountInPhase === 0) {
+    parts.push('');
+    parts.push('## 🌟 First Message - Make It Personal!');
+    parts.push('This is the start of a new conversation. Create a warm, personalized opening:');
+
+    const ctx = state.enrichedContext;
+    if (ctx) {
+      // Build personalized opening hints
+      const hints: string[] = [];
+
+      if (ctx.daysSinceLastChat && ctx.daysSinceLastChat > 7) {
+        hints.push(`- Welcome them back (it's been ${ctx.daysSinceLastChat} days)`);
+      }
+
+      if (ctx.hasGameSoon && ctx.daysUntilNextGame !== null && ctx.daysUntilNextGame <= 3) {
+        hints.push(`- Acknowledge upcoming game in ${ctx.daysUntilNextGame} day(s)`);
+      }
+
+      if (ctx.burnout && ctx.burnout.stage !== 'healthy') {
+        hints.push(`- Gently check in on energy levels (burnout indicators detected)`);
+      }
+
+      if (ctx.readiness && ctx.readiness.trend === 'declining') {
+        hints.push(`- Note: readiness is trending down, be supportive`);
+      }
+
+      if (ctx.forecast && ctx.forecast.riskFlags.length > 0) {
+        hints.push(`- Forecast shows risk flags - can mention proactively`);
+      }
+
+      if (hints.length > 0) {
+        parts.push('Consider mentioning:');
+        hints.forEach(h => parts.push(h));
+      } else {
+        parts.push('- Start with a warm, open question about how they are doing today');
+      }
+    }
+  }
+
   return parts.join('\n');
 }
 
@@ -152,7 +217,7 @@ function getModelWithTools(): ChatOpenAI {
       streaming: true,
     });
 
-    // Bind all tools (athlete + analytics) = 14 tools total
+    // Bind all tools: 10 athlete + 6 analytics + 3 structured output = 19 tools
     modelWithToolsInstance = model.bindTools(allTools) as ChatOpenAI;
   }
   return modelWithToolsInstance;
