@@ -287,6 +287,11 @@ export async function* streamConversationGraph(
   });
 
   for await (const event of stream) {
+    // Debug: Log all events in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[LANGGRAPH:STREAM_EVENT]', event.event, event.name || '');
+    }
+
     // Yield different event types
     if (event.event === 'on_llm_stream') {
       // Token streaming from the model
@@ -295,6 +300,16 @@ export async function* streamConversationGraph(
         yield {
           type: 'token',
           data: { content: chunk.content },
+        };
+      }
+    } else if (event.event === 'on_chat_model_stream') {
+      // Alternative event name for chat model streaming
+      const chunk = event.data?.chunk;
+      const content = chunk?.content || chunk?.text || '';
+      if (content) {
+        yield {
+          type: 'token',
+          data: { content },
         };
       }
     } else if (event.event === 'on_tool_start') {
