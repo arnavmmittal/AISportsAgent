@@ -7,7 +7,15 @@ export interface UseVoiceChatOptions {
   onTranscript?: (text: string, isFinal: boolean) => void;
   onResponse?: (text: string) => void;
   onError?: (error: Error) => void;
-  /** Called when the AI finishes speaking - use this to trigger chat API */
+  /** Called when transcription completes - use this to send to chat API */
+  onAudioComplete?: (transcript: string) => void;
+}
+
+// Type for callback refs
+interface CallbackRefs {
+  onTranscript?: (text: string, isFinal: boolean) => void;
+  onResponse?: (text: string) => void;
+  onError?: (error: Error) => void;
   onAudioComplete?: (transcript: string) => void;
 }
 
@@ -69,6 +77,19 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
   const voiceManagerRef = useRef<VoiceManager | null>(null);
   const isProcessingRef = useRef<boolean>(false);
 
+  // Use refs for callbacks to avoid stale closure issues
+  const callbacksRef = useRef<CallbackRefs>({});
+
+  // Keep refs updated with latest callbacks
+  useEffect(() => {
+    callbacksRef.current = {
+      onTranscript,
+      onResponse,
+      onError,
+      onAudioComplete,
+    };
+  }, [onTranscript, onResponse, onError, onAudioComplete]);
+
   // Initialize VoiceManager
   useEffect(() => {
     voiceManagerRef.current = new VoiceManager({
@@ -94,7 +115,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
     vm.on('error', (err) => {
       console.error('[VoiceChat] Error:', err);
       setError(err);
-      onError?.(err);
+      callbacksRef.current.onError?.(err);
       isProcessingRef.current = false;
     });
 
@@ -115,7 +136,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
 
         console.log('[VoiceChat] Transcription:', transcription.text);
         setTranscript(transcription.text);
-        onTranscript?.(transcription.text, true);
+        callbacksRef.current.onTranscript?.(transcription.text, true);
 
         // Notify parent that audio is complete with transcript
         // Parent will call speakResponse() which sets state to 'speaking'
@@ -124,7 +145,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
           // Reset to idle - parent's onAudioComplete will handle the rest
           // speakResponse() will set state to 'speaking' when called
           setVoiceState('idle');
-          onAudioComplete?.(transcription.text);
+          callbacksRef.current.onAudioComplete?.(transcription.text);
         } else {
           // No transcript, reset to idle
           setVoiceState('idle');
@@ -133,7 +154,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
         console.error('[VoiceChat] Transcription error:', err);
         const error = err instanceof Error ? err : new Error('Transcription failed');
         setError(error);
-        onError?.(error);
+        callbacksRef.current.onError?.(error);
         setVoiceState('idle'); // Reset on error too
       } finally {
         isProcessingRef.current = false;
