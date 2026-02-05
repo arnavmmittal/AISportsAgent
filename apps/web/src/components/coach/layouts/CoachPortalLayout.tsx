@@ -44,7 +44,7 @@ export default function CoachPortalLayout({
               </div>
               <div>
                 <h1 className="text-sm font-bold text-white">Coach Portal</h1>
-                <p className="text-xs text-slate-400">AI Sports Agent</p>
+                <p className="text-xs text-slate-400">Flow Sports Coach</p>
               </div>
             </div>
           )}

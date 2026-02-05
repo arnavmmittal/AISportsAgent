@@ -86,7 +86,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
               </div>
               <div>
                 <h1 className="text-lg font-bold text-foreground whitespace-nowrap">
-                  AI Sports Agent
+                  Flow Sports Coach
                 </h1>
                 <p className="text-xs text-muted-foreground whitespace-nowrap">Coach Portal</p>
               </div>

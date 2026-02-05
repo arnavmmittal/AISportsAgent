@@ -1,6 +1,6 @@
-# AI Sports Agent - Project Context
+# Flow Sports Coach - Project Context
 
-This file provides Claude with essential context about the AI Sports Agent project.
+This file provides Claude with essential context about the Flow Sports Coach project.
 
 ## 📋 IMPORTANT: Documentation Structure
 
@@ -24,7 +24,7 @@ The project uses a **streamlined 3-file documentation system**:
 
 ## Project Overview
 
-AI Sports Agent is an evidence-based virtual sports psychology assistant for collegiate athletes. The platform provides 24/7 mental performance support through AI-powered conversations, mood tracking, and goal management.
+Flow Sports Coach is an evidence-based virtual sports psychology assistant for collegiate athletes. The platform provides 24/7 mental performance support through AI-powered conversations, mood tracking, and goal management.
 
 ### PRIMARY USE CASE - Critical Context
 
@@ -48,12 +48,12 @@ AI Sports Agent is an evidence-based virtual sports psychology assistant for col
 
 ```
 SportsAgent/
-├── ai-sports-agent/        # Next.js frontend application
+├── flow-sports-coach/        # Next.js frontend application
 ├── services/mcp-server/          # Python MCP server with agent orchestration
 └── GETTING_STARTED.md      # Setup guide
 ```
 
-## ai-sports-agent (Next.js Application)
+## flow-sports-coach (Next.js Application)
 
 ### Tech Stack
 - **Framework**: Next.js 16 (App Router)
@@ -222,13 +222,13 @@ GET    /v1/sessions          # Session history
 **Branch Roles:**
 
 1. **`main`** = Production (live users, paying universities)
-   - Vercel: `app.aisportsagent.com`
+   - Vercel: `app.flowsportscoach.com`
    - Railway: `mcp-production.railway.app`
    - **Only merge after thorough staging testing**
    - Protected branch: requires PR review
 
 2. **`staging`** = Pre-production testing environment
-   - Vercel: `staging.aisportsagent.com` (or preview URL)
+   - Vercel: `staging.flowsportscoach.com` (or preview URL)
    - Railway: `mcp-staging.railway.app`
    - **Test ALL changes here first**
    - Merge feature branches here for integration testing
@@ -281,7 +281,7 @@ GET    /v1/sessions          # Session history
 
 ### Environment Variables
 
-**ai-sports-agent** (.env.local):
+**flow-sports-coach** (.env.local):
 ```
 DATABASE_URL="postgresql://..."
 NEXTAUTH_SECRET="..."
@@ -408,7 +408,7 @@ REDIS_URL="redis://..."
 ## Important Context
 
 ### Node.js Version Issue
-The current system has Node.js v18.16.0, but the project requires >= 20.9.0. This must be upgraded before npm install will work in ai-sports-agent.
+The current system has Node.js v18.16.0, but the project requires >= 20.9.0. This must be upgraded before npm install will work in flow-sports-coach.
 
 ### Phase-Based Development
 The project is planned in phases:
@@ -418,14 +418,14 @@ The project is planned in phases:
 
 ### Two Architecture Options
 The project has TWO separate implementations:
-1. **ai-sports-agent**: Simpler Next.js-only approach (good for MVP)
+1. **flow-sports-coach**: Simpler Next.js-only approach (good for MVP)
 2. **services/mcp-server**: Advanced MCP agent platform (full-featured)
 
 Choose which to develop based on requirements. They can coexist or one can be selected.
 
 ## Git Repository
 
-- **Remote**: https://github.com/arnavmmittal/AISportsAgent.git
+- **Remote**: https://github.com/arnavmmittal/FlowSportsCoach.git
 - **Current Branch**: setup
 - **Status**: Initial codebase pushed to setup branch
 
@@ -468,7 +468,7 @@ Choose which to develop based on requirements. They can coexist or one can be se
 ## Resources
 
 - **Main Docs**: `GETTING_STARTED.md`, `README.md` files in each directory
-- **Setup Guide**: `ai-sports-agent/SETUP.md`
+- **Setup Guide**: `flow-sports-coach/SETUP.md`
 - **Architecture**: `services/mcp-server/ARCHITECTURE.md`
 - **Implementation**: `services/mcp-server/IMPLEMENTATION_GUIDE.md`
 

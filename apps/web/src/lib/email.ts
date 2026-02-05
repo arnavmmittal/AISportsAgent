@@ -29,7 +29,7 @@ export async function sendEmail(options: EmailOptions): Promise<SendGridResponse
     subject,
     html,
     text,
-    from = process.env.EMAIL_FROM || 'AI Sports Agent <noreply@aisportsagent.com>',
+    from = process.env.EMAIL_FROM || 'Flow Sports Coach <noreply@flowsportscoach.com>',
     replyTo = process.env.EMAIL_REPLY_TO,
   } = options;
 
@@ -160,7 +160,7 @@ export async function sendTemplatedEmail(
             <!-- Logo/Brand -->
             <div style="text-align: center; margin-bottom: 30px;">
               <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 12px 24px; border-radius: 8px;">
-                <span style="color: white; font-weight: bold; font-size: 18px;">AI Sports Agent</span>
+                <span style="color: white; font-weight: bold; font-size: 18px;">Flow Sports Coach</span>
               </div>
             </div>
 
@@ -201,8 +201,8 @@ export async function sendTemplatedEmail(
 
           <!-- Email Footer -->
           <div style="text-align: center; margin-top: 30px; color: #a1a1aa; font-size: 12px;">
-            <p style="margin: 0;">AI Sports Agent - Mental Performance Support for Athletes</p>
-            <p style="margin: 8px 0 0;">© ${new Date().getFullYear()} AI Sports Agent. All rights reserved.</p>
+            <p style="margin: 0;">Flow Sports Coach - Mental Performance Support for Athletes</p>
+            <p style="margin: 8px 0 0;">© ${new Date().getFullYear()} Flow Sports Coach. All rights reserved.</p>
           </div>
         </div>
       </body>

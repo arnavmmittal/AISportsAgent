@@ -1,4 +1,4 @@
-# AI Sports Agent - Component Status & Roadmap
+# Flow Sports Coach - Component Status & Roadmap
 
 Complete breakdown of every major component, its current stage, and what's needed for staging/production.
 

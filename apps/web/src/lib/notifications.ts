@@ -139,7 +139,7 @@ async function sendEmailNotification(params: {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     await resend.emails.send({
-      from: 'Crisis Alerts <alerts@aisportsagent.com>',
+      from: 'Crisis Alerts <alerts@flowsportscoach.com>',
       to: params.to,
       subject: params.subject,
       html: params.body,
@@ -213,7 +213,7 @@ function formatEmailBody(notification: CrisisNotification): string {
     </p>
 
     <p>
-      <a href="${process.env.NEXTAUTH_URL || 'https://app.aisportsagent.com'}/coach/dashboard"
+      <a href="${process.env.NEXTAUTH_URL || 'https://app.flowsportscoach.com'}/coach/dashboard"
          style="background: #DC2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
         View Dashboard
       </a>
@@ -221,7 +221,7 @@ function formatEmailBody(notification: CrisisNotification): string {
 
     <hr />
     <p style="font-size: 12px; color: #666;">
-      This is an automated alert from AI Sports Agent. If you believe this is a false positive, please review the alert in the dashboard.
+      This is an automated alert from Flow Sports Coach. If you believe this is a false positive, please review the alert in the dashboard.
     </p>
   `;
 }

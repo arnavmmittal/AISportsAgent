@@ -285,9 +285,9 @@ async function sendDigestEmail(
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       await resend.emails.send({
-        from: 'Weekly Digest <digest@aisportsagent.com>',
+        from: 'Weekly Digest <digest@flowsportscoach.com>',
         to: coach.email,
-        subject: `Your Weekly Team Digest - AI Sports Agent`,
+        subject: `Your Weekly Team Digest - Flow Sports Coach`,
         html: htmlContent,
       });
       */

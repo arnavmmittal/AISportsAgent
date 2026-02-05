@@ -29,7 +29,7 @@
         "versionCode": 1
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://staging-aisportsagent.vercel.app",
+        "EXPO_PUBLIC_API_URL": "https://staging.flowsportscoach.com",
         "EXPO_PUBLIC_ENV": "staging"
       }
     },
@@ -46,7 +46,7 @@
         "versionCode": 1
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://app.aisportsagent.com",
+        "EXPO_PUBLIC_API_URL": "https://app.flowsportscoach.com",
         "EXPO_PUBLIC_ENV": "production"
       }
     },

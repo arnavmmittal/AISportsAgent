@@ -6,8 +6,8 @@
  * Usage: pnpm tsx scripts/seed-friends-testing.ts
  *
  * Created accounts:
- * - Coach: coach@test.aisportsagent.com / TestPass123!
- * - Athletes: athlete1@test.aisportsagent.com, athlete2@test.aisportsagent.com, etc.
+ * - Coach: coach@test.flowsportscoach.com / TestPass123!
+ * - Athletes: athlete1@test.flowsportscoach.com, athlete2@test.flowsportscoach.com, etc.
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -32,7 +32,7 @@ const testUsers: TestUser[] = [
   // Coach
   {
     id: 'test-coach-1',
-    email: 'coach@test.aisportsagent.com',
+    email: 'coach@test.flowsportscoach.com',
     name: 'Test Coach',
     role: 'COACH',
     sport: 'Basketball',
@@ -40,7 +40,7 @@ const testUsers: TestUser[] = [
   // Athletes
   {
     id: 'test-athlete-1',
-    email: 'athlete1@test.aisportsagent.com',
+    email: 'athlete1@test.flowsportscoach.com',
     name: 'Alex Johnson',
     role: 'ATHLETE',
     sport: 'Basketball',
@@ -48,7 +48,7 @@ const testUsers: TestUser[] = [
   },
   {
     id: 'test-athlete-2',
-    email: 'athlete2@test.aisportsagent.com',
+    email: 'athlete2@test.flowsportscoach.com',
     name: 'Jordan Smith',
     role: 'ATHLETE',
     sport: 'Basketball',
@@ -56,7 +56,7 @@ const testUsers: TestUser[] = [
   },
   {
     id: 'test-athlete-3',
-    email: 'athlete3@test.aisportsagent.com',
+    email: 'athlete3@test.flowsportscoach.com',
     name: 'Taylor Williams',
     role: 'ATHLETE',
     sport: 'Soccer',
@@ -64,7 +64,7 @@ const testUsers: TestUser[] = [
   },
   {
     id: 'test-athlete-4',
-    email: 'athlete4@test.aisportsagent.com',
+    email: 'athlete4@test.flowsportscoach.com',
     name: 'Morgan Brown',
     role: 'ATHLETE',
     sport: 'Soccer',
@@ -72,7 +72,7 @@ const testUsers: TestUser[] = [
   },
   {
     id: 'test-athlete-5',
-    email: 'athlete5@test.aisportsagent.com',
+    email: 'athlete5@test.flowsportscoach.com',
     name: 'Casey Davis',
     role: 'ATHLETE',
     sport: 'Swimming',
@@ -234,7 +234,7 @@ async function main() {
   console.log(`   Password for all accounts: ${TEST_PASSWORD}`);
   console.log('');
   console.log('   COACH:');
-  console.log(`   • coach@test.aisportsagent.com`);
+  console.log(`   • coach@test.flowsportscoach.com`);
   console.log('');
   console.log('   ATHLETES:');
   for (const athlete of athletes) {
@@ -244,7 +244,7 @@ async function main() {
   console.log('   INVITE CODE: TEST-INVITE-2024');
   console.log('');
   console.log('─'.repeat(50));
-  console.log('\n🌐 Staging URL: https://staging.aisportsagent.com');
+  console.log('\n🌐 Staging URL: https://staging.flowsportscoach.com');
   console.log('   (or your Vercel preview URL)\n');
 }
 

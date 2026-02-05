@@ -1,4 +1,4 @@
-# 🎯 Complete AI Sports Agent Frontend - Lovable Prompt
+# 🎯 Complete Flow Sports Coach Frontend - Lovable Prompt
 
 Build a complete mental performance coaching web application frontend with athlete and coach dashboards. This is a FULL multi-page React application with routing, authentication UI, and role-based dashboards.
 
@@ -138,8 +138,8 @@ Create a modern web app for collegiate athletes and sports psychology coaches. A
 
 ### Footer
 - Links: About, Privacy Policy, Terms of Service
-- Contact: support@aisportsagent.com
-- © 2025 AI Sports Agent
+- Contact: support@flowsportscoach.com
+- © 2025 Flow Sports Coach
 
 ---
 

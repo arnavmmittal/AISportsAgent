@@ -1,8 +1,8 @@
-# AI Sports Agent: Technical Architecture & Algorithm Breakdown
+# Flow Sports Coach: Technical Architecture & Algorithm Breakdown
 
 ## Executive Summary
 
-The AI Sports Agent is a sophisticated multi-layered platform combining **advanced statistical algorithms**, **machine learning models**, and **agent-based architecture** to provide evidence-based sports psychology support for collegiate athletes. The system integrates **6 custom algorithms**, **3 OpenAI models**, RAG-enhanced knowledge retrieval, and a TypeScript/Python agent orchestration framework.
+The Flow Sports Coach is a sophisticated multi-layered platform combining **advanced statistical algorithms**, **machine learning models**, and **agent-based architecture** to provide evidence-based sports psychology support for collegiate athletes. The system integrates **6 custom algorithms**, **3 OpenAI models**, RAG-enhanced knowledge retrieval, and a TypeScript/Python agent orchestration framework.
 
 **Technical Stats**:
 - 38+ TypeScript library files

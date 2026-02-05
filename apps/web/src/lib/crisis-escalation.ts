@@ -406,7 +406,7 @@ async function sendEscalationEmail(
         </div>
 
         <div style="background: #1f2937; color: #9ca3af; padding: 16px; border-radius: 0 0 8px 8px; font-size: 12px; text-align: center;">
-          <p style="margin: 0;">AI Sports Agent Crisis Escalation System</p>
+          <p style="margin: 0;">Flow Sports Coach Crisis Escalation System</p>
           <p style="margin: 8px 0 0;">This is an automated alert. Do not reply to this email.</p>
         </div>
       </div>

@@ -63,7 +63,7 @@ function VerifyEmailContent() {
           <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
             <Brain className="w-7 h-7 text-primary-foreground" />
           </div>
-          <span className="text-2xl font-bold text-foreground">AI Sports Agent</span>
+          <span className="text-2xl font-bold text-foreground">Flow Sports Coach</span>
         </div>
 
         <div className="bg-card rounded-xl border border-border p-8 shadow-sm">

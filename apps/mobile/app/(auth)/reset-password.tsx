@@ -10,7 +10,7 @@ import { config } from '../../config';
 /**
  * Reset Password Screen
  * Allows users to set a new password using the token from their email
- * Accessed via deep link: aisportsagent://reset-password?token=xxx&email=xxx
+ * Accessed via deep link: flowsportscoach://reset-password?token=xxx&email=xxx
  */
 export default function ResetPasswordScreen() {
   const router = useRouter();

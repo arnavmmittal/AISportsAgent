@@ -730,7 +730,7 @@ export function generateDigestHtml(data: DigestData, coachName: string): string 
 
     <!-- CTA -->
     <div style="padding: 0 24px 24px; text-align: center;">
-      <a href="${process.env.NEXTAUTH_URL || 'https://app.aisportsagent.com'}/coach/dashboard"
+      <a href="${process.env.NEXTAUTH_URL || 'https://app.flowsportscoach.com'}/coach/dashboard"
          style="display: inline-block; background: #3B82F6; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
         View Full Dashboard
       </a>
@@ -738,9 +738,9 @@ export function generateDigestHtml(data: DigestData, coachName: string): string 
 
     <!-- Footer -->
     <div style="background: #f9fafb; padding: 16px 24px; text-align: center; font-size: 12px; color: #6b7280;">
-      <p style="margin: 0 0 8px 0;">AI Sports Agent - Supporting Student-Athlete Mental Performance</p>
+      <p style="margin: 0 0 8px 0;">Flow Sports Coach - Supporting Student-Athlete Mental Performance</p>
       <p style="margin: 0;">
-        <a href="${process.env.NEXTAUTH_URL || 'https://app.aisportsagent.com'}/coach/settings" style="color: #3B82F6; text-decoration: none;">Manage email preferences</a>
+        <a href="${process.env.NEXTAUTH_URL || 'https://app.flowsportscoach.com'}/coach/settings" style="color: #3B82F6; text-decoration: none;">Manage email preferences</a>
       </p>
     </div>
   </div>

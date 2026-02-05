@@ -61,7 +61,7 @@ export function Header() {
                 className="flex-shrink-0 flex items-center group"
               >
                 <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
-                  AI Sports Agent
+                  Flow Sports Coach
                 </span>
               </button>
               <div className="hidden md:ml-8 md:flex md:space-x-1">
@@ -211,7 +211,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center group">
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
-              AI Sports Agent
+              Flow Sports Coach
             </span>
           </Link>
 

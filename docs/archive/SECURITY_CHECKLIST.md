@@ -1,4 +1,4 @@
-# Security Checklist - AI Sports Agent
+# Security Checklist - Flow Sports Coach
 
 ## Pre-Production Launch
 
@@ -241,7 +241,7 @@ npx prisma migrate deploy
 npm run prisma:seed
 
 # 7. Test staging
-# Visit: https://staging.aisportsagent.com
+# Visit: https://staging.flowsportscoach.com
 ```
 
 ---
@@ -267,7 +267,7 @@ gh pr merge --merge
 # Monitor: https://vercel.com/dashboard
 
 # 6. Verify production health
-curl https://app.aisportsagent.com/api/health
+curl https://app.flowsportscoach.com/api/health
 
 # 7. Monitor for 4 hours
 # Check Sentry, cost dashboard, uptime monitoring

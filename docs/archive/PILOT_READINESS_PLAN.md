@@ -357,7 +357,7 @@ NEXT_PUBLIC_SENTRY_DSN=https://...
 # Visit /api/test-error → verify appears in Sentry
 
 # Step 8: Set up Betterstack uptime
-# Monitor: https://app.aisportsagent.com/api/health
+# Monitor: https://app.flowsportscoach.com/api/health
 ```
 
 **Acceptance Criteria:**

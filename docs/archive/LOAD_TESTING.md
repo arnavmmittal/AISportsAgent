@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers load testing procedures and performance optimization strategies for AI Sports Agent in production.
+This guide covers load testing procedures and performance optimization strategies for Flow Sports Coach in production.
 
 **Testing Tools:**
 1. **k6** - Modern load testing tool (recommended)
@@ -105,7 +105,7 @@ Run baseline test to establish current performance:
 
 ```bash
 # Run load test against staging
-BASE_URL=https://staging.aisportsagent.com k6 run apps/web/tests/load/k6-load-test.js
+BASE_URL=https://staging.flowsportscoach.com k6 run apps/web/tests/load/k6-load-test.js
 
 # Save results
 k6 run apps/web/tests/load/k6-load-test.js --out json=baseline.json
@@ -423,7 +423,7 @@ Run this checklist before production deployment:
 
 ```bash
 # Test against staging with realistic load
-BASE_URL=https://staging.aisportsagent.com k6 run apps/web/tests/load/k6-load-test.js
+BASE_URL=https://staging.flowsportscoach.com k6 run apps/web/tests/load/k6-load-test.js
 
 # Verify results:
 # - p95 latency < 2000ms ✓
@@ -460,7 +460,7 @@ LIMIT 10;
 ```bash
 # Send 100 concurrent requests
 for i in {1..100}; do
-  curl -X POST https://staging.aisportsagent.com/api/chat/stream \
+  curl -X POST https://staging.flowsportscoach.com/api/chat/stream \
     -H "Authorization: Bearer $TEST_TOKEN" \
     -d '{"message":"test"}' &
 done
@@ -595,7 +595,7 @@ After each load test, document results:
 - Tool: k6
 - Duration: 20 minutes
 - Max VUs: 100
-- Target: https://staging.aisportsagent.com
+- Target: https://staging.flowsportscoach.com
 
 ### Results Summary
 

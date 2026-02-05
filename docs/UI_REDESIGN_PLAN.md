@@ -1,4 +1,4 @@
-# AI Sports Agent - Comprehensive UI/UX Redesign Plan
+# Flow Sports Coach - Comprehensive UI/UX Redesign Plan
 
 **Version**: 1.0
 **Date**: January 2026

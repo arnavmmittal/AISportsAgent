@@ -121,7 +121,7 @@ export default function LoginScreen() {
           <View style={styles.logoContainer}>
             <Ionicons name="trophy" size={48} color="#fff" />
           </View>
-          <Text style={styles.title}>AI Sports Agent</Text>
+          <Text style={styles.title}>Flow Sports Coach</Text>
           <Text style={styles.subtitle}>Your mental performance coach</Text>
         </Animated.View>
       </LinearGradient>

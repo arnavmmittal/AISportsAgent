@@ -191,19 +191,19 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: email,
-      subject: 'Verify Your Email - AI Sports Agent',
+      subject: 'Verify Your Email - Flow Sports Coach',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 30px;">
             <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 12px 24px; border-radius: 8px;">
-              <span style="color: white; font-weight: bold; font-size: 18px;">AI Sports Agent</span>
+              <span style="color: white; font-weight: bold; font-size: 18px;">Flow Sports Coach</span>
             </div>
           </div>
 
           <h2 style="color: #18181b; text-align: center;">Welcome, ${name}!</h2>
 
           <p style="color: #52525b; line-height: 1.6;">
-            Thanks for signing up for AI Sports Agent. Please verify your email address to get started with your mental performance journey.
+            Thanks for signing up for Flow Sports Coach. Please verify your email address to get started with your mental performance journey.
           </p>
 
           <div style="text-align: center; margin: 30px 0;">
@@ -235,11 +235,11 @@ export async function POST(request: NextRequest) {
           </p>
 
           <p style="color: #a1a1aa; font-size: 12px; text-align: center;">
-            AI Sports Agent - Mental Performance Support for Athletes
+            Flow Sports Coach - Mental Performance Support for Athletes
           </p>
         </div>
       `,
-      text: `Welcome to AI Sports Agent, ${name}!\n\nPlease verify your email address by visiting:\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create an account, you can safely ignore this email.`,
+      text: `Welcome to Flow Sports Coach, ${name}!\n\nPlease verify your email address by visiting:\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create an account, you can safely ignore this email.`,
     });
 
     console.log(`[Signup] User created: ${user.email} (${user.role}), verification email sent`);

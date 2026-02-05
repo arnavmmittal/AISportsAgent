@@ -1,6 +1,6 @@
 # Friends Testing Guide
 
-Thanks for helping test AI Sports Agent! This guide will walk you through testing all the key features.
+Thanks for helping test Flow Sports Coach! This guide will walk you through testing all the key features.
 
 ## Getting Started
 
@@ -39,7 +39,7 @@ https://[your-vercel-preview-url]
 
 ### 2. Athlete Experience (15 min)
 
-Login as an **athlete** (athlete1@test.aisportsagent.com)
+Login as an **athlete** (athlete1@test.flowsportscoach.com)
 
 #### AI Chat
 - [ ] Go to `/student/ai-coach`
@@ -67,7 +67,7 @@ Login as an **athlete** (athlete1@test.aisportsagent.com)
 
 ### 3. Coach Experience (15 min)
 
-Login as the **coach** (coach@test.aisportsagent.com)
+Login as the **coach** (coach@test.flowsportscoach.com)
 
 #### Dashboard
 - [ ] Go to `/coach/dashboard`

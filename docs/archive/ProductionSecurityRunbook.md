@@ -1,8 +1,8 @@
-# Production Security & Architecture Runbook: AI Sports Agent
+# Production Security & Architecture Runbook: Flow Sports Coach
 
 ## Executive Summary
 
-**Objective:** Transform AI Sports Agent from MVP prototype to production-ready SaaS platform with enterprise-grade security, supporting multiple universities at $200K/year pricing.
+**Objective:** Transform Flow Sports Coach from MVP prototype to production-ready SaaS platform with enterprise-grade security, supporting multiple universities at $200K/year pricing.
 
 **Current State:** 55/100 production readiness
 - ✅ Excellent database schema (40 tables, RLS policies)
@@ -940,7 +940,7 @@ feature/* (PR required)
 ```
 PR merged to staging
   ↓
-Vercel auto-deploys to staging.aisportsagent.com
+Vercel auto-deploys to staging.flowsportscoach.com
   ↓
 QA testing (manual)
   ↓
@@ -972,7 +972,7 @@ Blue-green deployment (zero downtime)
 
 **Web App:**
 ```bash
-vercel rollback app.aisportsagent.com
+vercel rollback app.flowsportscoach.com
 ```
 
 **MCP Server:**

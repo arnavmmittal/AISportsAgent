@@ -1,4 +1,4 @@
-# Business Setup Checklist - AI Sports Agent
+# Business Setup Checklist - Flow Sports Coach
 
 **Goal**: Form legal entity and get insurance BEFORE signing $100K university contract
 
@@ -14,7 +14,7 @@
 - [ ] **Choose Business Name** (10 min)
   - Check availability: https://ccfs.sos.wa.gov/
   - Suggested names:
-    - [ ] AI Sports Agent LLC
+    - [ ] Flow Sports Coach LLC
     - [ ] Mittal Sports Technology LLC
     - [ ] [Your Name] Mental Performance Solutions LLC
   - **Rule**: Must end with "LLC" and not be taken
@@ -339,7 +339,7 @@
   - **Why**: Keep personal number private, look professional
 
 - [ ] **Get Business Email** ($6/month)
-  - **Google Workspace**: arnav@aisportsagent.com
+  - **Google Workspace**: arnav@flowsportscoach.com
   - **Microsoft 365**: Same
   - **Why**: Don't use @gmail.com for $100K contracts
 
@@ -470,7 +470,7 @@ When university sends you contract:
   Date: [Today's date]
   Due: [30 days from today]
 
-  From: AI Sports Agent LLC
+  From: Flow Sports Coach LLC
   [Your business address]
   EIN: [Your EIN]
 

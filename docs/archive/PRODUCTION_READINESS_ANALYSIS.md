@@ -132,14 +132,14 @@ COST_LIMIT_MONTHLY=10000                  # Monitor closely
 
 **Create TWO Supabase projects:**
 
-**Dev Project: `ai-sports-agent-dev`**
+**Dev Project: `flow-sports-coach-dev`**
 - Purpose: Development and testing
 - Data: Can be wiped/reset anytime
 - Auth: Allow demo accounts
 - RLS: Can be relaxed for debugging
 - Cost: Free tier ($0)
 
-**Prod Project: `ai-sports-agent-prod`**
+**Prod Project: `flow-sports-coach-prod`**
 - Purpose: Real users ONLY
 - Data: Persistent, daily backups
 - Auth: Real users with invite-only

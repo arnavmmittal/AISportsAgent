@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
       await sendEmail({
         to: email,
-        subject: 'Reset Your Password - AI Sports Agent',
+        subject: 'Reset Your Password - Flow Sports Coach',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #6366f1;">Reset Your Password</h2>
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
             </p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
             <p style="color: #999; font-size: 12px;">
-              AI Sports Agent - Mental Performance Support for Athletes
+              Flow Sports Coach - Mental Performance Support for Athletes
             </p>
           </div>
         `,
@@ -208,7 +208,7 @@ export async function PUT(request: NextRequest) {
     // Send confirmation email
     await sendEmail({
       to: user.email,
-      subject: 'Password Changed - AI Sports Agent',
+      subject: 'Password Changed - Flow Sports Coach',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #10b981;">Password Changed Successfully</h2>
@@ -217,7 +217,7 @@ export async function PUT(request: NextRequest) {
           <p>If you didn't make this change, please contact support immediately.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
           <p style="color: #999; font-size: 12px;">
-            AI Sports Agent - Mental Performance Support for Athletes
+            Flow Sports Coach - Mental Performance Support for Athletes
           </p>
         </div>
       `,

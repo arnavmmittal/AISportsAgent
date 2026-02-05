@@ -1,5 +1,5 @@
 {
-  "name": "@sports-agent/web",
+  "name": "@flow-sports-coach/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -47,8 +47,8 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/nextjs": "^10.38.0",
-    "@sports-agent/api-client": "workspace:*",
-    "@sports-agent/types": "workspace:*",
+    "@flow-sports-coach/api-client": "workspace:*",
+    "@flow-sports-coach/types": "workspace:*",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.88.0",

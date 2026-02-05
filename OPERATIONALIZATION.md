@@ -1,8 +1,8 @@
-# AI Sports Agent - Operationalization Guide
+# Flow Sports Coach - Operationalization Guide
 
 ## Overview
 
-This guide covers three critical areas for taking the AI Sports Agent from staging to production:
+This guide covers three critical areas for taking the Flow Sports Coach from staging to production:
 
 1. **Knowledge Base Population** - How to ingest sports psychology content
 2. **ML Training Data Acquisition** - How to calibrate ML models with real data
@@ -212,7 +212,7 @@ Collect real data during pilot phase before relying on ML predictions.
 
 ### Pilot Overview
 
-**Goal:** Validate the AI Sports Agent with real collegiate athletes before broader deployment.
+**Goal:** Validate the Flow Sports Coach with real collegiate athletes before broader deployment.
 
 **Timeline:** 10-12 weeks minimum
 

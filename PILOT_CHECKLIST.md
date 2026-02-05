@@ -1,4 +1,4 @@
-# AI Sports Agent - Pilot Validation Checklist
+# Flow Sports Coach - Pilot Validation Checklist
 
 ## Quick Reference
 

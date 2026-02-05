@@ -78,7 +78,7 @@ This creates:
 SENTRY_DSN="https://YOUR_DSN_HERE@o123456.ingest.sentry.io/123456"
 NEXT_PUBLIC_SENTRY_DSN="https://YOUR_DSN_HERE@o123456.ingest.sentry.io/123456"
 SENTRY_ORG="your-org-slug"
-SENTRY_PROJECT="aisportsagent"
+SENTRY_PROJECT="flowsportscoach"
 SENTRY_AUTH_TOKEN="sntrys_YOUR_AUTH_TOKEN" # For source maps
 
 # Optional: Environment tag
@@ -305,7 +305,7 @@ Alert Name: "Error Rate Spike - P0"
 Condition: Error count > 50 in 1 minute
 Environment: production
 Action:
-  - Send email to: team@aisportsagent.com
+  - Send email to: team@flowsportscoach.com
   - Send SMS to: on-call engineer
   - Create PagerDuty incident
 ```
@@ -383,7 +383,7 @@ Action:
    - Environment: production
    - Conditions: (see above)
    - Actions:
-     - Email: team@aisportsagent.com
+     - Email: team@flowsportscoach.com
      - Slack: #alerts channel
      - PagerDuty: engineering-oncall
 4. Save
@@ -406,7 +406,7 @@ Action:
 
 **1. Homepage**
 ```yaml
-URL: https://app.aisportsagent.com
+URL: https://app.flowsportscoach.com
 Frequency: Every 1 minute
 Alert if:
   - 5xx status code
@@ -416,7 +416,7 @@ Alert if:
 
 **2. API Health Check**
 ```yaml
-URL: https://app.aisportsagent.com/api/health
+URL: https://app.flowsportscoach.com/api/health
 Frequency: Every 1 minute
 Expected Response: {"status": "healthy"}
 Alert if: Status not "healthy"
@@ -424,14 +424,14 @@ Alert if: Status not "healthy"
 
 **3. Authentication**
 ```yaml
-URL: https://app.aisportsagent.com/api/auth/session
+URL: https://app.flowsportscoach.com/api/auth/session
 Frequency: Every 5 minutes
 Alert if: 5xx errors or timeouts
 ```
 
 **4. Database Connectivity**
 ```yaml
-URL: https://app.aisportsagent.com/api/health/db
+URL: https://app.flowsportscoach.com/api/health/db
 Frequency: Every 2 minutes
 Expected Response: {"database": "connected"}
 Alert if: Not connected
@@ -440,7 +440,7 @@ Alert if: Not connected
 #### Alert Channels
 
 ```yaml
-Email: team@aisportsagent.com
+Email: team@flowsportscoach.com
 SMS: +1-XXX-XXX-XXXX (on-call phone)
 Slack: #uptime-alerts
 PagerDuty: engineering-oncall (for P0 only)
@@ -804,7 +804,7 @@ export async function GET() {
   throw new Error('Test error - monitoring verification');
 }
 
-// Visit: https://app.aisportsagent.com/api/test-error
+// Visit: https://app.flowsportscoach.com/api/test-error
 // Check: Sentry dashboard should show error within 30 seconds
 ```
 

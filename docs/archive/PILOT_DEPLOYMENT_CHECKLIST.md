@@ -153,7 +153,7 @@ NEXT_PUBLIC_SENTRY_DSN=https://...
 ```bash
 # 1. Create staging Supabase project
 # Go to: https://supabase.com/dashboard
-# Create project: "aisportsagent-staging"
+# Create project: "flowsportscoach-staging"
 
 # 2. Run Prisma migrations
 DATABASE_URL="postgresql://staging..." pnpm prisma db push

@@ -67,7 +67,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Brain className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg text-foreground">AI Sports Agent</span>
+              <span className="font-bold text-lg text-foreground">Flow Sports Coach</span>
             </div>
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -510,7 +510,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Brain className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg text-foreground">AI Sports Agent</span>
+              <span className="font-bold text-lg text-foreground">Flow Sports Coach</span>
             </div>
 
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -520,7 +520,7 @@ export default function LandingPage() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} AI Sports Agent. All rights reserved.
+              &copy; {new Date().getFullYear()} Flow Sports Coach. All rights reserved.
             </p>
           </div>
         </div>

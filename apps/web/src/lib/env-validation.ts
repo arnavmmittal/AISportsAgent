@@ -155,7 +155,7 @@ function validateDevelopmentConfig(env: z.infer<typeof envSchema>) {
   const warnings: string[] = [];
 
   // Warn if using production-like URLs in development
-  if (env.NEXTAUTH_URL.includes('aisportsagent.com')) {
+  if (env.NEXTAUTH_URL.includes('flowsportscoach.com')) {
     warnings.push(
       '⚠️  WARNING: NEXTAUTH_URL appears to be a production URL in development environment. ' +
       'This may cause issues. Use http://localhost:3000 for local development.'

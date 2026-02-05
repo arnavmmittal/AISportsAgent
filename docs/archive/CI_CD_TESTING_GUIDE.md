@@ -345,7 +345,7 @@ jobs:
           # Use dummy env vars for build
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
           NEXTAUTH_SECRET: dummy-secret-for-build
-          NEXTAUTH_URL: https://app.aisportsagent.com
+          NEXTAUTH_URL: https://app.flowsportscoach.com
           OPENAI_API_KEY: sk-dummy
 
       - name: Check build output size

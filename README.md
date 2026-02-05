@@ -1,4 +1,4 @@
-# AI Sports Agent - Performance Analytics Platform
+# Flow Sports Coach - Performance Analytics Platform
 
 **Performance optimization platform for collegiate athletics** that correlates mental readiness with game performance, providing predictive analytics and 24/7 athlete support to give programs a competitive edge.
 
@@ -71,7 +71,7 @@ This design means a psychologist can effectively monitor their entire caseload i
 
 ### Monorepo Structure
 ```
-AISportsAgent/
+FlowSportsCoach/
 ├── apps/
 │   ├── web/          # Next.js (web app for athletes + coaches)
 │   └── mobile/       # React Native Expo (iOS + Android)

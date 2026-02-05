@@ -73,7 +73,7 @@ export default function SignupScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join AI Sports Agent</Text>
+          <Text style={styles.subtitle}>Join Flow Sports Coach</Text>
 
           <View style={styles.roleContainer}>
             <TouchableOpacity

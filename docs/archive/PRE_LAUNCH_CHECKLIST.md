@@ -2,7 +2,7 @@
 
 ## Overview
 
-This checklist must be completed before launching AI Sports Agent to production. Each item is marked with priority and estimated time.
+This checklist must be completed before launching Flow Sports Coach to production. Each item is marked with priority and estimated time.
 
 **Legend:**
 - 🔴 **CRITICAL** - Must be completed (blocking)
@@ -38,7 +38,7 @@ This checklist must be completed before launching AI Sports Agent to production.
 
 ### 1.2 Authentication & Authorization
 - [ ] 🔴 **JWT validation on all protected routes**
-  - Test: `curl -X GET https://app.aisportsagent.com/api/athletes`
+  - Test: `curl -X GET https://app.flowsportscoach.com/api/athletes`
   - Expected: 401 Unauthorized
   - Time: 10 minutes
 
@@ -151,15 +151,15 @@ This checklist must be completed before launching AI Sports Agent to production.
   - Time: 30 minutes
 
 - [ ] 🟡 **Test error sent to Sentry**
-  - Test: `curl https://app.aisportsagent.com/api/test-sentry`
+  - Test: `curl https://app.flowsportscoach.com/api/test-sentry`
   - Expected: Error appears in Sentry dashboard
   - Time: 5 minutes
 
 ### 3.2 Uptime Monitoring
 - [ ] 🔴 **UptimeRobot monitors created**
-  - [ ] Main application (https://app.aisportsagent.com)
-  - [ ] API health (https://app.aisportsagent.com/api/health)
-  - [ ] Database health (https://app.aisportsagent.com/api/health/db)
+  - [ ] Main application (https://app.flowsportscoach.com)
+  - [ ] API health (https://app.flowsportscoach.com/api/health)
+  - [ ] Database health (https://app.flowsportscoach.com/api/health/db)
   - Time: 15 minutes
 
 - [ ] 🟡 **Test downtime alert**
@@ -304,12 +304,12 @@ This checklist must be completed before launching AI Sports Agent to production.
 
 ### 7.1 Vercel Deployment
 - [ ] 🔴 **Production domain configured**
-  - Domain: `app.aisportsagent.com`
+  - Domain: `app.flowsportscoach.com`
   - SSL certificate: Auto-provisioned by Vercel
   - Time: 15 minutes
 
 - [ ] 🔴 **Staging deployment working**
-  - URL: `staging.aisportsagent.com`
+  - URL: `staging.flowsportscoach.com`
   - Auto-deploys on push to `staging` branch
   - Time: 10 minutes
 
@@ -337,7 +337,7 @@ This checklist must be completed before launching AI Sports Agent to production.
 
 ### 7.3 Rollback Plan
 - [ ] 🔴 **Rollback tested in staging**
-  - Test: `vercel rollback staging.aisportsagent.com`
+  - Test: `vercel rollback staging.flowsportscoach.com`
   - Expected: Reverts to previous deployment
   - Time: 10 minutes
 

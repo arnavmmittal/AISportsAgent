@@ -144,7 +144,7 @@ railway up
 1. **Go to Railway Dashboard**: https://railway.app/dashboard
 2. **Create New Project**: Click "New Project"
 3. **Select Source**: Choose "Deploy from GitHub repo"
-4. **Select Repository**: Choose your AISportsAgent repository
+4. **Select Repository**: Choose your FlowSportsCoach repository
 5. **Configure Root Directory**:
    - Set root directory to: `ai-sports-mcp/server`
 6. **Add Environment Variables**:

@@ -12,7 +12,7 @@
 
 1. Go to https://railway.app/new
 2. Click "Deploy from GitHub repo"
-3. Select your repository: `arnavmmittal/AISportsAgent`
+3. Select your repository: `arnavmmittal/FlowSportsCoach`
 4. Railway will automatically detect the `railway.json` configuration
 
 ### Option B: Railway CLI

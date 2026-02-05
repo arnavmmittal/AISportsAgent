@@ -173,7 +173,7 @@ export async function POST(
       doc.setFontSize(8);
       doc.setTextColor(128, 128, 128);
       doc.text(
-        `AI Sports Agent - Generated on ${new Date().toLocaleDateString()}`,
+        `Flow Sports Coach - Generated on ${new Date().toLocaleDateString()}`,
         15,
         290
       );

@@ -1,4 +1,4 @@
-# AI Sports Agent: Vision Architecture
+# Flow Sports Coach: Vision Architecture
 
 ## The Core Insight
 

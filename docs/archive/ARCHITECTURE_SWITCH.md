@@ -269,7 +269,7 @@ Target metrics (from LOAD_TESTING.md):
 
 ---
 
-**Decision made by:** AI Sports Agent Team
+**Decision made by:** Flow Sports Coach Team
 **Approved by:** Solo Founder
 **Implementation:** Complete ✅
 **Status:** Ready for Railway deployment

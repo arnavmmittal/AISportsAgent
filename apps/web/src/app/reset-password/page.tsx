@@ -116,7 +116,7 @@ function ResetPasswordForm() {
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
               <Brain className="w-7 h-7 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold text-foreground">AI Sports Agent</span>
+            <span className="text-2xl font-bold text-foreground">Flow Sports Coach</span>
           </div>
 
           <h1 className="text-3xl font-bold text-foreground mb-4">
@@ -149,7 +149,7 @@ function ResetPasswordForm() {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <Brain className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">AI Sports Agent</span>
+            <span className="text-xl font-bold text-foreground">Flow Sports Coach</span>
           </div>
 
           {success ? (

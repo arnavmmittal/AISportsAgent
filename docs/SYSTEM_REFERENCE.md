@@ -1,4 +1,4 @@
-# AI Sports Agent - System Reference
+# Flow Sports Coach - System Reference
 
 > **Last Updated**: 2026-01-27
 > **Purpose**: Quick reference for Claude Code sessions to understand the full system
@@ -341,6 +341,6 @@ git push origin staging  # Auto-deploys to Vercel
 
 ## Contact & Resources
 
-- **Repo**: https://github.com/arnavmmittal/AISportsAgent
+- **Repo**: https://github.com/arnavmmittal/FlowSportsCoach
 - **Docs**: `/docs/` folder
 - **MVP Status**: `/docs/archive/MVP_STATUS.md`

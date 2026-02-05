@@ -11,7 +11,7 @@
 ```bash
 # 1. Go to https://sentry.io/signup/
 # 2. Sign up with GitHub or email
-# 3. Create organization: "AI Sports Agent"
+# 3. Create organization: "Flow Sports Coach"
 # 4. Create project: "Web App" (Next.js)
 # 5. Copy DSN (looks like: https://abc123@o123456.ingest.sentry.io/123456)
 ```

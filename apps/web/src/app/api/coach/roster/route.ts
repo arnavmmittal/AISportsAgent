@@ -320,7 +320,7 @@ async function sendAthleteInvite(
     !!process.env.RESEND_API_KEY &&
     process.env.ENABLE_INVITE_EMAILS === 'true';
 
-  const inviteUrl = `${process.env.NEXTAUTH_URL || 'https://app.aisportsagent.com'}/auth/signup?code=${inviteCode}`;
+  const inviteUrl = `${process.env.NEXTAUTH_URL || 'https://app.flowsportscoach.com'}/auth/signup?code=${inviteCode}`;
 
   if (isProductionEmailEnabled) {
     try {
@@ -330,12 +330,12 @@ async function sendAthleteInvite(
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       await resend.emails.send({
-        from: 'AI Sports Agent <invites@aisportsagent.com>',
+        from: 'Flow Sports Coach <invites@flowsportscoach.com>',
         to: email,
-        subject: `You're invited to AI Sports Agent`,
+        subject: `You're invited to Flow Sports Coach`,
         html: `
           <h2>Hi ${name}!</h2>
-          <p>Your coach has invited you to join AI Sports Agent - your 24/7 AI mental performance partner.</p>
+          <p>Your coach has invited you to join Flow Sports Coach - your 24/7 AI mental performance partner.</p>
           <p>
             <a href="${inviteUrl}" style="background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
               Accept Invitation

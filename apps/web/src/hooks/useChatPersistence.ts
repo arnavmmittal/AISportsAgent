@@ -14,8 +14,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'aisportsagent_chat_state';
-const ACTIVITY_KEY = 'aisportsagent_chat_activity';
+const STORAGE_KEY = 'flowsportscoach_chat_state';
+const ACTIVITY_KEY = 'flowsportscoach_chat_activity';
 
 interface ChatPersistenceState {
   sessionId: string | null;
