@@ -4,26 +4,18 @@
  * Centralized monitoring functions for error tracking, performance monitoring,
  * and custom metrics using Sentry.
  *
+ * Requirements:
+ * - Set NEXT_PUBLIC_SENTRY_DSN environment variable for Sentry to be enabled
+ * - Sentry SDK is configured in sentry.client.config.ts and sentry.server.config.ts
+ *
  * Usage:
  *   import { logError, trackMetric, trackPerformance } from '@/lib/monitoring';
  */
 
-// import * as Sentry from '@sentry/nextjs'; // Disabled for MVP - will re-enable post-launch
+import * as Sentry from '@sentry/nextjs';
 
-// Mock Sentry for MVP (will be replaced with real Sentry post-launch)
-const Sentry = {
-  withScope: (callback: (scope: any) => void) => {
-    const scope = { setContext: () => {}, setTags: () => {} };
-    callback(scope);
-  },
-  setUser: (user: any) => {},
-  captureException: (error: Error) => console.error('[Monitoring]', error),
-  captureMessage: (msg: string, options?: any) => console.log('[Monitoring]', msg, options),
-  metrics: {
-    distribution: (name: string, value: number, tags?: any) => {},
-    increment: (name: string, tags?: any) => {},
-  },
-};
+// Check if Sentry is initialized (DSN is set)
+const isSentryEnabled = !!process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 /**
  * Log error to Sentry with context
@@ -44,22 +36,27 @@ const Sentry = {
  * ```
  */
 export function logError(error: Error, context?: Record<string, any>) {
-  // Don't send to Sentry in development (just console.error)
+  // Always log to console in development
   if (process.env.NODE_ENV === 'development') {
     console.error('[Error]', error, context);
-    return;
   }
 
-  Sentry.withScope((scope) => {
-    if (context) {
-      // Sanitize context before adding
-      const sanitizedContext = sanitizeObject(context);
-      Object.keys(sanitizedContext).forEach((key) => {
-        scope.setExtra(key, sanitizedContext[key]);
-      });
-    }
-    Sentry.captureException(error);
-  });
+  // Send to Sentry if enabled
+  if (isSentryEnabled) {
+    Sentry.withScope((scope) => {
+      if (context) {
+        // Sanitize context before adding
+        const sanitizedContext = sanitizeObject(context);
+        Object.keys(sanitizedContext).forEach((key) => {
+          scope.setExtra(key, sanitizedContext[key]);
+        });
+      }
+      Sentry.captureException(error);
+    });
+  } else if (process.env.NODE_ENV !== 'development') {
+    // In production without Sentry, still log to console
+    console.error('[Error]', error.message, context);
+  }
 }
 
 /**
@@ -84,12 +81,13 @@ export function trackMetric(
 ) {
   if (process.env.NODE_ENV === 'development') {
     console.log('[Metric]', metricName, value, tags);
-    return;
   }
 
-  Sentry.metrics.distribution(metricName, value, {
-    tags,
-  });
+  if (isSentryEnabled) {
+    Sentry.metrics.distribution(metricName, value, {
+      attributes: tags,
+    });
+  }
 }
 
 /**
@@ -109,13 +107,14 @@ export function trackMetric(
 export function trackEvent(eventName: string, data?: Record<string, any>) {
   if (process.env.NODE_ENV === 'development') {
     console.log('[Event]', eventName, data);
-    return;
   }
 
-  Sentry.captureMessage(eventName, {
-    level: 'info',
-    extra: data ? sanitizeObject(data) : undefined,
-  });
+  if (isSentryEnabled) {
+    Sentry.captureMessage(eventName, {
+      level: 'info',
+      extra: data ? sanitizeObject(data) : undefined,
+    });
+  }
 }
 
 /**
@@ -133,9 +132,9 @@ export function trackEvent(eventName: string, data?: Record<string, any>) {
  */
 export function trackLoginFailure(email: string, reason: string) {
   // Increment metric for alerting
-  if (process.env.NODE_ENV !== 'development') {
-    Sentry.metrics.increment('login_failure_count', {
-      tags: {
+  if (isSentryEnabled) {
+    Sentry.metrics.count('login_failure_count', 1, {
+      attributes: {
         reason,
       },
     });
@@ -168,33 +167,37 @@ export function trackOpenAICost(
   model: string,
   tokens: number
 ) {
-  if (process.env.NODE_ENV !== 'development') {
+  if (isSentryEnabled) {
     Sentry.metrics.distribution('openai_cost_usd', costUSD, {
-      tags: {
+      attributes: {
         school_id: schoolId,
         model,
       },
     });
 
     Sentry.metrics.distribution('openai_tokens_used', tokens, {
-      tags: {
+      attributes: {
         school_id: schoolId,
         model,
       },
     });
+
+    // If cost spike (> $10 for single request), alert
+    if (costUSD > 10) {
+      Sentry.captureMessage('OpenAI cost spike detected', {
+        level: 'warning',
+        extra: {
+          costUSD,
+          schoolId,
+          model,
+          tokens,
+        },
+      });
+    }
   }
 
-  // If cost spike (> $10 for single request), alert
-  if (costUSD > 10) {
-    Sentry.captureMessage('OpenAI cost spike detected', {
-      level: 'warning',
-      extra: {
-        costUSD,
-        schoolId,
-        model,
-        tokens,
-      },
-    });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Cost]', { costUSD, schoolId, model, tokens });
   }
 }
 
@@ -217,36 +220,39 @@ export function trackCrisisDetection(
   sessionId: string,
   indicators: string[]
 ) {
-  // Increment metric
-  if (process.env.NODE_ENV !== 'development') {
-    Sentry.metrics.increment('crisis_detection_count', {
-      tags: {
+  // Always log crisis detections
+  console.warn('[Crisis]', { severity, athleteId, sessionId, indicators });
+
+  if (isSentryEnabled) {
+    // Increment metric
+    Sentry.metrics.count('crisis_detection_count', 1, {
+      attributes: {
         severity,
       },
     });
+
+    // If CRITICAL, send immediate alert
+    if (severity === 'CRITICAL') {
+      Sentry.captureMessage('🚨 CRITICAL crisis detected', {
+        level: 'fatal', // Highest priority
+        extra: {
+          athleteId,
+          sessionId,
+          severity,
+          indicators,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
   }
 
-  // If CRITICAL, send immediate alert
-  if (severity === 'CRITICAL') {
-    Sentry.captureMessage('🚨 CRITICAL crisis detected', {
-      level: 'fatal', // Highest priority
-      extra: {
-        athleteId,
-        sessionId,
-        severity,
-        indicators,
-        timestamp: new Date().toISOString(),
-      },
-    });
-  } else {
-    // Non-critical, just track
-    trackEvent('crisis_detected', {
-      severity,
-      athleteId,
-      sessionId,
-      indicators,
-    });
-  }
+  // Track event regardless of severity
+  trackEvent('crisis_detected', {
+    severity,
+    athleteId,
+    sessionId,
+    indicators,
+  });
 }
 
 /**
@@ -272,25 +278,29 @@ export function trackPerformance(
   durationMs: number,
   success: boolean
 ) {
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Perf]', transactionName, `${durationMs}ms`, success ? '✓' : '✗');
+  }
+
+  if (isSentryEnabled) {
     Sentry.metrics.distribution('transaction_duration_ms', durationMs, {
-      tags: {
+      attributes: {
         transaction: transactionName,
         success: success.toString(),
       },
     });
-  }
 
-  // Alert if transaction took > 5 seconds
-  if (durationMs > 5000) {
-    Sentry.captureMessage('Slow transaction detected', {
-      level: 'warning',
-      extra: {
-        transactionName,
-        durationMs,
-        success,
-      },
-    });
+    // Alert if transaction took > 5 seconds
+    if (durationMs > 5000) {
+      Sentry.captureMessage('Slow transaction detected', {
+        level: 'warning',
+        extra: {
+          transactionName,
+          durationMs,
+          success,
+        },
+      });
+    }
   }
 }
 

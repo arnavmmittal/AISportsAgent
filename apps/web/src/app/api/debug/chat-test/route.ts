@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { z } from 'zod';
+import { requireAuth } from '@/lib/auth-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,8 +9,18 @@ export const dynamic = 'force-dynamic';
  * POST /api/debug/chat-test
  *
  * Send the same payload as /api/chat/stream to see exactly what's failing
+ *
+ * SECURITY: Requires authentication and is disabled in production by default
  */
 export async function POST(req: NextRequest) {
+  // Block in production unless explicitly enabled
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEBUG_ROUTES !== 'true') {
+    return NextResponse.json({ error: 'Debug routes disabled in production' }, { status: 404 });
+  }
+
+  // Require at least basic authentication
+  const { authorized, response } = await requireAuth(req);
+  if (!authorized) return response!;
   const errors: string[] = [];
   const results: {
     timestamp: string;

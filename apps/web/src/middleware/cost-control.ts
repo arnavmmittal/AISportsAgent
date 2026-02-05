@@ -5,7 +5,7 @@
  *
  * Features:
  * - Per-tenant daily budget limits ($500/day default)
- * - Token usage tracking in Redis
+ * - Token usage tracking in Redis (shared across instances)
  * - Circuit breakers when limits exceeded
  * - Warning alerts at 80% threshold
  * - Multi-tenant isolation
@@ -14,6 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { kvGet, kvSet, kvDelete } from '@/lib/redis';
 
 // Configuration
 const COST_PER_TOKEN = 0.000002; // $2 per 1M tokens (GPT-4 Turbo rough estimate)
@@ -21,9 +22,9 @@ const DAILY_LIMIT_USD = parseFloat(process.env.COST_LIMIT_DAILY || '500');
 const MONTHLY_LIMIT_USD = parseFloat(process.env.COST_LIMIT_MONTHLY || '10000');
 const WARNING_THRESHOLD = 0.8; // 80% of limit
 
-// Redis client (would be initialized from environment)
-// For now, using in-memory Map as fallback
-const memoryStore = new Map<string, { count: number; expiresAt: number }>();
+// Cache prefixes
+const USAGE_PREFIX = 'cost:usage:';
+const CIRCUIT_BREAKER_PREFIX = 'cost:breaker:';
 
 interface TokenUsage {
   tokens: number;
@@ -40,74 +41,75 @@ interface CostCheckResult {
 
 /**
  * Get current token usage for a school on a given date
+ * Uses Redis for shared state across serverless instances
  */
 async function getTokenUsage(schoolId: string, date: string): Promise<TokenUsage> {
-  // In production, this would use Redis
-  // For now, using in-memory store
-  const key = `usage:${schoolId}:${date}`;
-  const tokens = memoryStore.get(key)?.count || 0;
+  const key = `${USAGE_PREFIX}${schoolId}:${date}`;
 
-  return {
-    tokens,
-    cost: tokens * COST_PER_TOKEN,
-  };
+  try {
+    const data = await kvGet<{ count: number }>(key);
+    const tokens = data?.count || 0;
+    return {
+      tokens,
+      cost: tokens * COST_PER_TOKEN,
+    };
+  } catch (error) {
+    console.error('[CostControl] Error getting token usage:', error);
+    return { tokens: 0, cost: 0 };
+  }
 }
 
 /**
  * Increment token usage for a school
+ * Uses Redis for shared state across serverless instances
  */
 export async function incrementTokenUsage(
   schoolId: string,
   tokens: number
 ): Promise<void> {
   const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-  const key = `usage:${schoolId}:${date}`;
+  const key = `${USAGE_PREFIX}${schoolId}:${date}`;
 
-  const current = memoryStore.get(key)?.count || 0;
-  const expiresAt = Date.now() + 86400000 * 2; // 48 hours (keep for 2 days)
-
-  memoryStore.set(key, {
-    count: current + tokens,
-    expiresAt,
-  });
-
-  // Cleanup expired entries
-  for (const [k, data] of memoryStore.entries()) {
-    if (data.expiresAt < Date.now()) {
-      memoryStore.delete(k);
-    }
+  try {
+    const current = await kvGet<{ count: number }>(key);
+    const newCount = (current?.count || 0) + tokens;
+    // Set with 48-hour TTL (auto-cleanup)
+    await kvSet(key, { count: newCount }, 172800);
+  } catch (error) {
+    console.error('[CostControl] Error incrementing token usage:', error);
   }
 }
 
 /**
  * Check if circuit breaker is open for a school
+ * Uses Redis for shared state across serverless instances
  */
 async function isCircuitBreakerOpen(schoolId: string): Promise<boolean> {
-  const key = `circuit_breaker:${schoolId}`;
-  const breaker = memoryStore.get(key);
+  const key = `${CIRCUIT_BREAKER_PREFIX}${schoolId}`;
 
-  if (!breaker) return false;
-  if (breaker.expiresAt < Date.now()) {
-    memoryStore.delete(key);
+  try {
+    const breaker = await kvGet<{ active: boolean }>(key);
+    return breaker?.active === true;
+  } catch (error) {
+    console.error('[CostControl] Error checking circuit breaker:', error);
     return false;
   }
-
-  return true;
 }
 
 /**
  * Trigger circuit breaker for a school
+ * Uses Redis for shared state across serverless instances
  */
 async function triggerCircuitBreaker(schoolId: string): Promise<void> {
-  const key = `circuit_breaker:${schoolId}`;
-  const expiresAt = Date.now() + 86400000; // 24 hours
+  const key = `${CIRCUIT_BREAKER_PREFIX}${schoolId}`;
 
-  memoryStore.set(key, {
-    count: 1,
-    expiresAt,
-  });
-
-  console.error(`🚨 CIRCUIT BREAKER ACTIVATED for school ${schoolId}`);
+  try {
+    // Set circuit breaker with 24-hour TTL
+    await kvSet(key, { active: true, triggeredAt: Date.now() }, 86400);
+    console.error(`🚨 CIRCUIT BREAKER ACTIVATED for school ${schoolId}`);
+  } catch (error) {
+    console.error('[CostControl] Error triggering circuit breaker:', error);
+  }
 }
 
 /**

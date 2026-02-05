@@ -78,17 +78,15 @@ export function ReadinessDashboard({
       }
 
       const responseData = await response.json();
-      // Transform dashboard data to readiness format
+      // Transform dashboard data to readiness format (matching TeamReadinessResponse interface)
       setData({
-        team_summary: responseData.summary || {
-          total_athletes: 0,
-          green_count: 0,
-          yellow_count: 0,
-          red_count: 0,
-          average_readiness: 0,
-        },
+        sport: sport,
+        gameDate: gameDate,
+        totalAthletes: responseData.summary?.total_athletes || 0,
+        greenCount: responseData.summary?.green_count || 0,
+        yellowCount: responseData.summary?.yellow_count || 0,
+        redCount: responseData.summary?.red_count || 0,
         athletes: responseData.athletes || [],
-        game_date: gameDate,
       });
       setLastUpdated(new Date());
     } catch (err) {

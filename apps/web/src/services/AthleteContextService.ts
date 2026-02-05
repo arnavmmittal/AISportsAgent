@@ -187,8 +187,22 @@ class AthleteContextService {
 
   /**
    * Get comprehensive enriched context for an athlete
+   * @param athleteId - Athlete ID
+   * @param options - Optional settings
+   * @param options.forceRefresh - Bypass cache and fetch fresh data
    */
-  async getEnrichedContext(athleteId: string): Promise<EnrichedAthleteContext> {
+  async getEnrichedContext(
+    athleteId: string,
+    options?: { forceRefresh?: boolean }
+  ): Promise<EnrichedAthleteContext> {
+    // Check Redis cache first (unless force refresh requested)
+    if (!options?.forceRefresh) {
+      const cached = await getCachedContext(athleteId);
+      if (cached) {
+        return cached;
+      }
+    }
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -359,7 +373,7 @@ class AthleteContextService {
       thirtyDaysAgo
     );
 
-    return {
+    const enrichedContext: EnrichedAthleteContext = {
       athleteId,
       athleteName: athleteData.User.name,
       sport: athleteData.sport,
@@ -383,6 +397,11 @@ class AthleteContextService {
       moodTrends,
       generatedAt: now,
     };
+
+    // Cache the result in Redis for subsequent requests
+    await setCachedContext(athleteId, enrichedContext);
+
+    return enrichedContext;
   }
 
   /**
@@ -1253,6 +1272,63 @@ ${trendLines.join('\n')}`);
 
     return sections.join('\n\n');
   }
+}
+
+// =============================================
+// Context Caching Layer (Redis-backed)
+// =============================================
+
+import { kvGet, kvSet, kvDelete } from '@/lib/redis';
+
+const CONTEXT_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
+const CONTEXT_CACHE_PREFIX = 'athlete:context:';
+
+/**
+ * Get cached context or null if expired/missing
+ */
+async function getCachedContext(athleteId: string): Promise<EnrichedAthleteContext | null> {
+  try {
+    const cached = await kvGet<EnrichedAthleteContext>(`${CONTEXT_CACHE_PREFIX}${athleteId}`);
+    if (cached) {
+      // Restore Date object (JSON serialization converts to string)
+      cached.generatedAt = new Date(cached.generatedAt);
+    }
+    return cached;
+  } catch (error) {
+    console.warn('[AthleteContext] Cache get error:', error);
+    return null;
+  }
+}
+
+/**
+ * Cache context with TTL
+ */
+async function setCachedContext(athleteId: string, context: EnrichedAthleteContext): Promise<void> {
+  try {
+    await kvSet(`${CONTEXT_CACHE_PREFIX}${athleteId}`, context, CONTEXT_CACHE_TTL_SECONDS);
+  } catch (error) {
+    console.warn('[AthleteContext] Cache set error:', error);
+  }
+}
+
+/**
+ * Invalidate cached context for an athlete
+ * Call this when mood log is submitted, goals updated, etc.
+ */
+export async function invalidateAthleteContextCache(athleteId: string): Promise<void> {
+  try {
+    await kvDelete(`${CONTEXT_CACHE_PREFIX}${athleteId}`);
+  } catch (error) {
+    console.warn('[AthleteContext] Cache invalidate error:', error);
+  }
+}
+
+/**
+ * Clear entire context cache
+ * Note: Caches expire naturally after 5 minutes
+ */
+export async function clearAthleteContextCache(): Promise<void> {
+  console.warn('[AthleteContext] clearAthleteContextCache called - caches will expire naturally');
 }
 
 // Export singleton instance

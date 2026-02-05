@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,8 +8,19 @@ export const dynamic = 'force-dynamic';
  * Debug endpoint to test database connectivity
  * GET /api/debug/db - Basic connectivity test
  * GET /api/debug/db?test=dashboard&userId=xxx - Test dashboard queries for a specific user
+ *
+ * SECURITY: Requires admin auth and is disabled in production by default
  */
 export async function GET(req: NextRequest) {
+  // Block in production unless explicitly enabled
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEBUG_ROUTES !== 'true') {
+    return NextResponse.json({ error: 'Debug routes disabled in production' }, { status: 404 });
+  }
+
+  // Require admin authentication
+  const { authorized, response } = await requireAdmin(req);
+  if (!authorized) return response!;
+
   const { searchParams } = new URL(req.url);
   const testType = searchParams.get('test');
   const userId = searchParams.get('userId');

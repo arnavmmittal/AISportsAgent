@@ -1,14 +1,25 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase-server';
+import { requireAuth } from '@/lib/auth-helpers';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Debug endpoint to check auth state
  * GET /api/debug/auth - Check if current Supabase user exists in Prisma
+ *
+ * SECURITY: Requires authentication and is disabled in production by default
  */
 export async function GET(req: NextRequest) {
+  // Block in production unless explicitly enabled
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEBUG_ROUTES !== 'true') {
+    return NextResponse.json({ error: 'Debug routes disabled in production' }, { status: 404 });
+  }
+
+  // Require at least basic authentication
+  const { authorized, response } = await requireAuth(req);
+  if (!authorized) return response!;
   const results: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     supabaseUser: null,

@@ -86,12 +86,16 @@ export async function POST(request: NextRequest) {
     const mentalState = nearestMoodLog
       ? {
           mentalMoodScore: nearestMoodLog.mood,
+          mentalConfidenceScore: nearestMoodLog.confidence,
+          mentalEnergyScore: nearestMoodLog.energy,
           mentalStressScore: nearestMoodLog.stress,
           mentalSleepHours: nearestMoodLog.sleep,
           mentalHRVScore: null, // Will be populated from wearable data later
         }
       : {
           mentalMoodScore: null,
+          mentalConfidenceScore: null,
+          mentalEnergyScore: null,
           mentalStressScore: null,
           mentalSleepHours: null,
           mentalHRVScore: null,

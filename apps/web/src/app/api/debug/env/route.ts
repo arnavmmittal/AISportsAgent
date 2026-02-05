@@ -1,6 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/auth-helpers';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  // Block in production unless explicitly enabled
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEBUG_ROUTES !== 'true') {
+    return NextResponse.json({ error: 'Debug routes disabled in production' }, { status: 404 });
+  }
+
+  // Require admin authentication
+  const { authorized, response } = await requireAdmin(request);
+  if (!authorized) return response!;
+
   // Check which environment variables are set (without exposing the actual values)
   return NextResponse.json({
     // Core

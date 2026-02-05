@@ -24,17 +24,22 @@ export default function Error({
         digest: error.digest,
       },
     });
+
+    // Log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[GlobalError]', error);
+    }
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="text-center">
             {/* Error Icon */}
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
               <svg
-                className="h-6 w-6 text-red-600"
+                className="h-6 w-6 text-red-600 dark:text-red-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -48,23 +53,23 @@ export default function Error({
               </svg>
             </div>
 
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Something went wrong
             </h2>
 
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
               We encountered an unexpected error. Our team has been notified and is
               working on a fix.
             </p>
 
             {/* Error details for development */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="mb-6 p-3 bg-gray-100 rounded-md text-left">
-                <p className="text-xs font-mono text-red-600 break-all">
+              <div className="mb-6 p-3 bg-gray-100 dark:bg-gray-700 rounded-md text-left">
+                <p className="text-xs font-mono text-red-600 dark:text-red-400 break-all">
                   {error.message}
                 </p>
                 {error.digest && (
-                  <p className="text-xs font-mono text-gray-500 mt-1">
+                  <p className="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">
                     Digest: {error.digest}
                   </p>
                 )}
@@ -74,14 +79,14 @@ export default function Error({
             <div className="space-y-3">
               <button
                 onClick={reset}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
               >
                 Try again
               </button>
 
               <button
                 onClick={() => (window.location.href = '/')}
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
               >
                 Go to homepage
               </button>
