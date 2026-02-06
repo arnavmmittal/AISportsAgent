@@ -1,15 +1,40 @@
 /**
-
  * Email Verification API
- * Sends verification codes to coach emails
+ *
+ * POST - Send verification code to email (for coach signup flow)
+ * PUT - Verify code or token
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { z } from 'zod';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+// Lazy init Supabase Admin client
+let supabaseAdminInstance: ReturnType<typeof createClient> | null = null;
+function getSupabaseAdmin() {
+  if (!supabaseAdminInstance) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing Supabase environment variables');
+    }
+    supabaseAdminInstance = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+  }
+  return supabaseAdminInstance;
+}
 
 // In-memory store for verification codes (use Redis in production)
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
@@ -90,21 +115,39 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Validation schemas
+const verifyCodeSchema = z.object({
+  email: z.string().email(),
+  code: z.string().min(6).max(6),
+});
+
+const verifyTokenSchema = z.object({
+  token: z.string().min(1),
+});
+
 /**
  * PUT /api/auth/verify-email
- * Verify code
+ * Verify code (for login flow) or token (for signup flow)
  */
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, code } = body;
 
-    if (!email || !code) {
+    // Check if this is a token-based verification (from signup email link)
+    if (body.token && !body.code) {
+      return verifyToken(body.token);
+    }
+
+    // Otherwise, verify code (existing flow)
+    const validationResult = verifyCodeSchema.safeParse(body);
+    if (!validationResult.success) {
       return NextResponse.json(
         { error: 'Email and code are required' },
         { status: 400 }
       );
     }
+
+    const { email, code } = validationResult.data;
 
     const stored = verificationCodes.get(email);
 
@@ -141,6 +184,95 @@ export async function PUT(request: NextRequest) {
     console.error('Code verification error:', error);
     return NextResponse.json(
       { error: 'Failed to verify code' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Verify email using token from signup email
+ */
+async function verifyToken(token: string): Promise<NextResponse> {
+  try {
+    // Find the verification token
+    const verificationToken = await prisma.verificationToken.findUnique({
+      where: { token },
+    });
+
+    if (!verificationToken) {
+      return NextResponse.json(
+        { error: 'Invalid or expired verification token' },
+        { status: 400 }
+      );
+    }
+
+    // Check if token is expired
+    if (verificationToken.expires < new Date()) {
+      // Delete expired token
+      await prisma.verificationToken.delete({
+        where: { token },
+      });
+      return NextResponse.json(
+        { error: 'Verification link has expired. Please sign up again.' },
+        { status: 410 }
+      );
+    }
+
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: verificationToken.identifier },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      // Delete the token
+      await prisma.verificationToken.delete({
+        where: { token },
+      });
+      return NextResponse.json({
+        success: true,
+        message: 'Email already verified. You can sign in.',
+        alreadyVerified: true,
+      });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Update user and confirm email in Supabase
+    await Promise.all([
+      // Update user in database
+      prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      }),
+      // Confirm email in Supabase
+      supabaseAdmin.auth.admin.updateUserById(user.id, {
+        email_confirm: true,
+      }),
+      // Delete verification token
+      prisma.verificationToken.delete({
+        where: { token },
+      }),
+    ]);
+
+    console.log(`[Verify Email] Email verified for user: ${user.email}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Email verified successfully! You can now sign in.',
+    });
+
+  } catch (error) {
+    console.error('[Verify Email Token] Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to verify email. Please try again.' },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-# Setup Guide - AI Sports Agent
+# Setup Guide - Flow Sports Coach
 
 Complete setup instructions for development environment.
 
@@ -14,7 +14,7 @@ Complete setup instructions for development environment.
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/arnavmmittal/AISportsAgent.git
+git clone https://github.com/arnavmmittal/FlowSportsCoach.git
 cd SportsAgent
 ```
 

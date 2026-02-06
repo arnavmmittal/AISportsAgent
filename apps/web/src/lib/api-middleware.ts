@@ -4,6 +4,7 @@
  * Reusable middleware for API routes:
  * - Request validation
  * - Authentication checks
+ * - CSRF protection (auto-enabled for mutations)
  * - Rate limiting
  * - Cost control
  * - Error handling
@@ -13,11 +14,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth-helpers';
 import { z } from 'zod';
 import { validateRequest, ValidationError } from './api-validation';
 import { checkRateLimit } from '@/middleware/rate-limit';
 import { checkCostLimit } from '@/middleware/cost-control';
+import { csrfProtection } from './csrf';
+import {
+  ErrorCode,
+  errorResponse as standardErrorResponse,
+  successResponse as standardSuccessResponse,
+  handleError,
+  ApiError,
+} from './api-errors';
+import { logger, setLogContext, clearLogContext } from './logger';
 
 /**
  * API handler context
@@ -58,6 +68,9 @@ export interface ApiMiddlewareOptions<T = any> {
   /** Enable rate limiting (default: true) */
   rateLimit?: boolean;
 
+  /** Enable CSRF protection (default: true for mutations, auto-skips GET/HEAD/OPTIONS) */
+  csrfProtection?: boolean;
+
   /** Enable cost control (default: false, only for LLM endpoints) */
   costControl?: boolean;
 
@@ -90,30 +103,49 @@ export function withApiMiddleware<T = any>(
   handler: ApiHandler<T>
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
+    const startTime = Date.now();
+    const requestId = `req_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
+    const { pathname } = new URL(request.url);
+
+    // Set request context for all logs during this request
+    setLogContext({ requestId, path: pathname, method: request.method });
+
     try {
       // 1. AUTHENTICATION CHECK
       let user: ApiContext['user'] | null = null;
 
       if (options.requireAuth !== false) {
-        const session = await auth();
+        const { authorized, user: authUser, response } = await requireAuth(request);
 
-        if (!session?.user) {
-          return NextResponse.json(
+        if (!authorized || !authUser) {
+          return response || NextResponse.json(
             { error: 'Unauthorized', message: 'Authentication required' },
             { status: 401 }
           );
         }
 
         user = {
-          id: session.user.id,
-          email: session.user.email || '',
-          role: session.user.role as 'ATHLETE' | 'COACH' | 'ADMIN',
-          schoolId: session.user.schoolId,
-          name: session.user.name || undefined,
+          id: authUser.id,
+          email: authUser.email || '',
+          role: authUser.role as 'ATHLETE' | 'COACH' | 'ADMIN',
+          schoolId: authUser.schoolId,
+          name: undefined, // authUser doesn't have name
         };
+
+        // Add user context to all logs for this request
+        setLogContext({ userId: user.id, userRole: user.role, schoolId: user.schoolId });
       }
 
-      // 2. ROLE-BASED ACCESS CONTROL
+      // 2. CSRF PROTECTION (for mutation methods)
+      // Auto-skips GET/HEAD/OPTIONS and JWT-only auth
+      if (options.csrfProtection !== false) {
+        const csrfResult = csrfProtection(request);
+        if (csrfResult) {
+          return csrfResult;
+        }
+      }
+
+      // 3. ROLE-BASED ACCESS CONTROL
       if (options.requireRole && user) {
         if (!options.requireRole.includes(user.role)) {
           return NextResponse.json(
@@ -126,7 +158,7 @@ export function withApiMiddleware<T = any>(
         }
       }
 
-      // 3. RATE LIMITING
+      // 4. RATE LIMITING
       if (options.rateLimit !== false && user) {
         const rateLimitResult = await checkRateLimit(
           user.id,
@@ -154,7 +186,7 @@ export function withApiMiddleware<T = any>(
         }
       }
 
-      // 4. COST CONTROL (for LLM endpoints)
+      // 5. COST CONTROL (for LLM endpoints)
       if (options.costControl && user) {
         const costResult = await checkCostLimit(user.schoolId);
 
@@ -170,7 +202,7 @@ export function withApiMiddleware<T = any>(
         }
       }
 
-      // 5. REQUEST VALIDATION
+      // 6. REQUEST VALIDATION
       let validatedData: T | undefined;
 
       if (options.schema) {
@@ -212,7 +244,7 @@ export function withApiMiddleware<T = any>(
         }
       }
 
-      // 6. EXECUTE HANDLER
+      // 7. EXECUTE HANDLER
       const context: ApiContext = {
         user: user || {
           id: '',
@@ -225,7 +257,7 @@ export function withApiMiddleware<T = any>(
 
       const response = await handler(context, validatedData);
 
-      // 7. AUDIT LOGGING (if enabled)
+      // 8. AUDIT LOGGING (if enabled)
       if (options.auditLog && user) {
         // TODO: Implement audit logging
         // await logAuditEvent({
@@ -237,46 +269,53 @@ export function withApiMiddleware<T = any>(
         // });
       }
 
+      // Log successful request completion
+      const durationMs = Date.now() - startTime;
+      logger.info(`${request.method} ${pathname} -> ${response.status}`, {
+        durationMs,
+        status: response.status,
+      });
+
+      // Clear request context
+      clearLogContext();
+
       return response;
     } catch (error) {
-      // GLOBAL ERROR HANDLER
-      console.error('API Error:', error);
+      // GLOBAL ERROR HANDLER - uses standardized error responses
+      const durationMs = Date.now() - startTime;
 
-      // Don't expose internal errors to client
+      // Log the error
+      logger.error(
+        `${request.method} ${pathname} failed`,
+        error instanceof Error ? error : new Error(String(error)),
+        { durationMs }
+      );
+
+      // Clear request context
+      clearLogContext();
+
+      // Handle ApiError (thrown intentionally)
+      if (error instanceof ApiError) {
+        return standardErrorResponse(error.code, error.message, error.details);
+      }
+
+      // Handle known error types from auth-helpers
       if (error instanceof Error) {
-        // Known error types
         if (error.name === 'UnauthorizedError') {
-          return NextResponse.json(
-            { error: 'Unauthorized', message: error.message },
-            { status: 401 }
-          );
+          return standardErrorResponse(ErrorCode.AUTHENTICATION_REQUIRED, error.message);
         }
 
         if (error.name === 'ForbiddenError') {
-          return NextResponse.json(
-            { error: 'Forbidden', message: error.message },
-            { status: 403 }
-          );
+          return standardErrorResponse(ErrorCode.FORBIDDEN, error.message);
         }
 
         if (error.name === 'NotFoundError') {
-          return NextResponse.json(
-            { error: 'Not found', message: error.message },
-            { status: 404 }
-          );
+          return standardErrorResponse(ErrorCode.NOT_FOUND, error.message);
         }
       }
 
-      // Generic internal server error
-      return NextResponse.json(
-        {
-          error: 'Internal server error',
-          message: process.env.NODE_ENV === 'development'
-            ? (error as Error).message
-            : 'An unexpected error occurred',
-        },
-        { status: 500 }
-      );
+      // Use handleError for unknown errors (logs and sanitizes)
+      return handleError(error, 'withApiMiddleware');
     }
   };
 }
@@ -347,36 +386,38 @@ export async function assertCoachConsent(
 
 /**
  * Helper: Create success response with standard format
+ * @deprecated Use standardSuccessResponse from api-errors.ts for new code
  */
 export function successResponse<T>(data: T, status = 200): NextResponse {
-  return NextResponse.json(
-    {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    },
-    { status }
-  );
+  return standardSuccessResponse(data, { status });
 }
 
 /**
  * Helper: Create error response with standard format
+ * @deprecated Use standardErrorResponse from api-errors.ts for new code
  */
 export function errorResponse(
   message: string,
   status = 400,
   details?: unknown
 ): NextResponse {
-  return NextResponse.json(
-    {
-      success: false,
-      error: message,
-      details,
-      timestamp: new Date().toISOString(),
-    },
-    { status }
-  );
+  // Map status codes to error codes for backwards compatibility
+  let code: ErrorCode;
+  switch (status) {
+    case 400: code = ErrorCode.INVALID_REQUEST; break;
+    case 401: code = ErrorCode.AUTHENTICATION_REQUIRED; break;
+    case 403: code = ErrorCode.FORBIDDEN; break;
+    case 404: code = ErrorCode.NOT_FOUND; break;
+    case 409: code = ErrorCode.CONFLICT; break;
+    case 429: code = ErrorCode.RATE_LIMITED; break;
+    case 500: code = ErrorCode.INTERNAL_ERROR; break;
+    default: code = ErrorCode.INTERNAL_ERROR;
+  }
+  return standardErrorResponse(code, message, details);
 }
+
+// Re-export new utilities for easy access
+export { ErrorCode, standardErrorResponse, standardSuccessResponse, handleError, ApiError };
 
 /**
  * Simplified wrapper for GET requests (no body validation)

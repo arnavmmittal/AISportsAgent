@@ -12,13 +12,15 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase-client';
 
 const navItems = [
   { href: '/student/home', label: 'Home', icon: LayoutDashboard },
+  { href: '/student/schedule', label: 'My Schedule', icon: Calendar },
   { href: '/student/assignments', label: 'My Assignments', icon: ClipboardList },
   { href: '/student/ai-coach', label: 'AI Wellness Coach', icon: MessageSquare },
   { href: '/student/progress', label: 'My Progress', icon: Target },
@@ -46,7 +48,7 @@ export function StudentNavigation() {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">AI</span>
             </div>
-            <span className="font-bold text-xl text-gray-900 hidden sm:inline">AI Sports Agent</span>
+            <span className="font-bold text-xl text-gray-900 hidden sm:inline">Flow Sports Coach</span>
             <span className="font-bold text-lg text-gray-900 sm:hidden">AI SA</span>
           </Link>
 

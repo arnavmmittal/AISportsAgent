@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "AI Sports Agent",
-    "slug": "ai-sports-agent",
+    "name": "Flow Sports Coach",
+    "slug": "flow-sports-coach",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "aisportsagent",
+    "scheme": "flowsportscoach",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "splash": {
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sportsagent.mobile",
+      "bundleIdentifier": "com.flowsportscoach.mobile",
       "buildNumber": "1",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Use Face ID to quickly and securely access your mental performance data.",
@@ -31,7 +31,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#2563eb"
       },
-      "package": "com.sportsagent.mobile",
+      "package": "com.flowsportscoach.mobile",
       "versionCode": 1,
       "permissions": [
         "USE_BIOMETRIC",
@@ -60,7 +60,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow AI Sports Agent to use Face ID for secure authentication."
+          "faceIDPermission": "Allow Flow Sports Coach to use Face ID for secure authentication."
         }
       ]
     ],

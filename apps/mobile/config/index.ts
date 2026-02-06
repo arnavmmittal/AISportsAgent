@@ -9,11 +9,12 @@
  * 2. Update EXPO_PUBLIC_API_URL with your current local IP
  * 3. To find your IP on Mac: `ipconfig getifaddr en0`
  * 4. On Windows: `ipconfig` and look for IPv4 Address
+ *
+ * Voice: Uses HTTP endpoints at /api/voice/* (OpenAI Whisper STT + ElevenLabs TTS)
  */
 
 // Environment variables are accessed via process.env in Expo
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
-const VOICE_URL = process.env.EXPO_PUBLIC_VOICE_URL || 'ws://localhost:8000';
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
@@ -39,9 +40,14 @@ const getLocalIP = (): string => {
 };
 
 export const config = {
-  // API configuration
+  // API configuration - all endpoints including voice are on the same host
   apiUrl: getLocalIP(),
-  voiceUrl: VOICE_URL || API_URL.replace('http', 'ws').replace('3000', '8000'),
+
+  // Voice API endpoints (HTTP-based, not WebSocket)
+  // - POST /api/voice/transcribe - Speech-to-text (OpenAI Whisper)
+  // - POST /api/voice/synthesize - Text-to-speech (ElevenLabs)
+  // - GET  /api/voice/voices - Available voices
+  // - GET  /api/voice/status - Voice service status
 
   // Supabase configuration
   supabase: {
@@ -70,7 +76,7 @@ if (__DEV__ && !process.env.EXPO_PUBLIC_API_URL) {
 if (__DEV__) {
   console.log('📱 Mobile App Configuration:');
   console.log('  API URL:', config.apiUrl);
-  console.log('  Voice URL:', config.voiceUrl);
+  console.log('  Voice API: HTTP endpoints at /api/voice/*');
   console.log('  Environment:', config.isDev ? 'Development' : 'Production');
 }
 

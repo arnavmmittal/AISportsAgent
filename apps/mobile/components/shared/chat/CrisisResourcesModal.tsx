@@ -15,7 +15,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+import { Colors, Spacing, Typography, BorderRadius } from '../../../constants/theme';
 
 interface CrisisAlert {
   final_risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';

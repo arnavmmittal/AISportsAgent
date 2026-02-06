@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
 import { Button } from '@/components/shared/ui/button';
@@ -66,7 +66,7 @@ const categoryConfig = {
 };
 
 export default function GoalsPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [showNewGoalForm, setShowNewGoalForm] = useState(false);
   const [newGoal, setNewGoal] = useState({
     title: '',
@@ -121,7 +121,7 @@ export default function GoalsPage() {
 
   const handleCreateGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     // TODO: Call API to create goal
     const newGoalData: Goal = {

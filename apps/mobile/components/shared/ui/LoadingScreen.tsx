@@ -4,7 +4,7 @@
  */
 
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { Colors, Spacing, Typography } from '../../constants/theme';
+import { Colors, Spacing, Typography } from '../../../constants/theme';
 
 interface LoadingScreenProps {
   message?: string;

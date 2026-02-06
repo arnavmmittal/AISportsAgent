@@ -1,5 +1,5 @@
 {
-  "name": "sports-agent-monorepo",
+  "name": "flow-sports-coach-monorepo",
   "version": "0.0.1",
   "private": true,
   "workspaces": [

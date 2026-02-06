@@ -1,4 +1,4 @@
-# AI Sports Agent - Complete App Structure Map
+# Flow Sports Coach - Complete App Structure Map
 
 **Last Updated**: 2026-01-01
 

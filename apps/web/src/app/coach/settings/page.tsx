@@ -1,30 +1,63 @@
 'use client';
 
-import { useState } from 'react';
-import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, Moon, Sun } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, Moon, Sun, Settings, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Button } from '@/components/shared/ui/button';
+import { Input } from '@/components/shared/ui/input';
+import { Label } from '@/components/shared/ui/label';
+import { Switch } from '@/components/shared/ui/switch';
+import { cn } from '@/lib/utils';
+import { WeeklyDigestPanel } from '@/components/coach/digest';
 
-// Force dynamic rendering for this page
+/**
+ * Coach Settings Page - Updated with Design System v2.0
+ *
+ * Features:
+ * - Profile information editing (fetched from API)
+ * - Notification preferences
+ * - Privacy & data settings
+ * - Team invite code management
+ * - Theme toggle
+ *
+ * Note: "Coach" refers to Sports Psychologist, not sport team coach.
+ * See README for terminology clarification.
+ */
+
 export const dynamic = 'force-dynamic';
 
-export default function CoachSettingsPage() {
-  const { theme, toggleTheme, isDarkMode } = useTheme();
+interface ProfileData {
+  name: string;
+  email: string;
+  sport: string;
+  teamName: string;
+}
 
-  const [profile, setProfile] = useState({
+interface InviteCodeData {
+  inviteCode: string;
+  coachName: string;
+  sport: string;
+  athleteCount: number;
+}
+
+export default function CoachSettingsPage() {
+  const { toggleTheme, isDarkMode } = useTheme();
+
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Profile data (fetched from API)
+  const [profile, setProfile] = useState<ProfileData>({
     name: '',
     email: '',
-    sport: 'Basketball',
-    teamName: 'Demo University Basketball',
+    sport: '',
+    teamName: '',
   });
 
-  const [notifications, setNotifications] = useState({
-    crisisAlerts: true,
-    dailySummary: true,
-    athleteCheckIns: false,
-    weeklyReports: true,
-  });
 
+  // Privacy settings
   const [privacy, setPrivacy] = useState({
     dataRetention: '90 days',
     shareMoodLogs: true,
@@ -32,13 +65,55 @@ export default function CoachSettingsPage() {
     shareChatSummaries: false,
   });
 
-  const [inviteCode] = useState('DEMO-COACH-2024');
-  const [isSaving, setIsSaving] = useState(false);
+  // Invite code data
+  const [inviteCodeData, setInviteCodeData] = useState<InviteCodeData | null>(null);
+  const [showInviteCode, setShowInviteCode] = useState(false);
+
+  // Fetch profile and settings on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch invite code (which includes coach info)
+        const inviteRes = await fetch('/api/coach/invite-code');
+        if (inviteRes.ok) {
+          const inviteJson = await inviteRes.json();
+          if (inviteJson.data) {
+            setInviteCodeData(inviteJson.data);
+            // Pre-populate profile from invite code data
+            setProfile(prev => ({
+              ...prev,
+              name: inviteJson.data.coachName || '',
+              sport: inviteJson.data.sport || '',
+            }));
+          }
+        }
+
+        // Note: Coach notification preferences API doesn't exist yet.
+        // The /api/coach/notifications endpoint returns crisis alerts, not preferences.
+        // Notification preferences are currently stored in local state only.
+        // TODO: Create /api/coach/notification-preferences endpoint when needed.
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // TODO: Implement profile update API
+      // const response = await fetch('/api/coach/profile', {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(profile),
+      // });
+      await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -48,397 +123,336 @@ export default function CoachSettingsPage() {
     }
   };
 
-  const handleSaveNotifications = async () => {
-    try {
-      toast.success('Notification preferences saved!');
-    } catch (error) {
-      console.error('Error saving notifications:', error);
-      toast.error('Failed to save preferences. Please try again.');
-    }
-  };
 
   const handleSavePrivacy = async () => {
-    try {
-      toast.success('Privacy settings saved!');
-    } catch (error) {
-      console.error('Error saving privacy settings:', error);
-      toast.error('Failed to save settings. Please try again.');
-    }
+    // Note: No API endpoint for coach privacy settings yet.
+    // These are stored locally for demonstration purposes only.
+    // TODO: Create /api/coach/privacy-settings endpoint for persistence
+    toast.info('Privacy settings updated locally (not persisted to server yet)');
   };
 
   const handleCopyInviteCode = () => {
-    navigator.clipboard.writeText(inviteCode);
-    toast.success('Invite code copied to clipboard!');
+    if (inviteCodeData?.inviteCode) {
+      navigator.clipboard.writeText(inviteCodeData.inviteCode);
+      toast.success('Invite code copied to clipboard!');
+    }
   };
 
-  const handleGenerateNewCode = () => {
-    toast.success('New invite code generated!');
+  const handleGenerateNewCode = async () => {
+    try {
+      const response = await fetch('/api/coach/invite-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data) {
+          setInviteCodeData(data.data);
+          toast.success('New invite code generated!');
+        }
+      } else {
+        throw new Error('Failed to generate new code');
+      }
+    } catch (error) {
+      console.error('Error generating invite code:', error);
+      toast.error('Failed to generate new code.');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <header className="animate-fade-in">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+            <Settings className="w-7 h-7 text-primary" />
             Settings
           </h1>
-          <p className="mt-3 text-muted-foreground text-lg">Manage your coach profile and preferences</p>
-        </div>
+          <p className="text-muted-foreground mt-1">Manage your profile and preferences</p>
+        </header>
 
         {/* Profile Information */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-xl flex items-center justify-center shadow-lg">
-                <User className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Profile Information</h2>
+        <section className="card-elevated overflow-hidden animate-slide-up">
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <User className="w-5 h-5 text-primary" />
             </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Update your personal and team information</p>
+            <div>
+              <h2 className="font-medium text-foreground">Profile Information</h2>
+              <p className="text-sm text-muted-foreground">Update your personal and team information</p>
+            </div>
           </div>
-          <div className="p-8 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-muted-foreground">
-                  Name
-                </label>
-                <input
-                  type="text"
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
                   value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, name: e.target.value })}
                   placeholder="Your name"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-medium"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-muted-foreground">
-                  Email
-                </label>
-                <input
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
                   type="email"
                   value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, email: e.target.value })}
                   placeholder="your.email@university.edu"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-medium"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-muted-foreground">
-                  Sport
-                </label>
+                <Label htmlFor="sport">Primary Sport</Label>
                 <select
+                  id="sport"
                   value={profile.sport}
                   onChange={(e) => setProfile({ ...profile, sport: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-medium"
+                  className="w-full h-10 px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
                 >
-                  <option>Basketball</option>
-                  <option>Football</option>
-                  <option>Soccer</option>
-                  <option>Baseball</option>
-                  <option>Volleyball</option>
-                  <option>Track & Field</option>
-                  <option>Swimming</option>
-                  <option>Tennis</option>
+                  <option value="">Select a sport</option>
+                  <option value="Basketball">Basketball</option>
+                  <option value="Football">Football</option>
+                  <option value="Soccer">Soccer</option>
+                  <option value="Baseball">Baseball</option>
+                  <option value="Volleyball">Volleyball</option>
+                  <option value="Track & Field">Track & Field</option>
+                  <option value="Swimming">Swimming</option>
+                  <option value="Tennis">Tennis</option>
+                  <option value="All Sports">All Sports</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-muted-foreground">
-                  Team Name
-                </label>
-                <input
-                  type="text"
+                <Label htmlFor="teamName">Organization</Label>
+                <Input
+                  id="teamName"
                   value={profile.teamName}
-                  onChange={(e) => setProfile({ ...profile, teamName: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent font-medium"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfile({ ...profile, teamName: e.target.value })}
+                  placeholder="University Name"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-violet-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
+            <div className="flex justify-end pt-2">
+              <Button onClick={handleSaveProfile} disabled={isSaving}>
                 {isSaving ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Saving...
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5" />
+                    <Save className="w-4 h-4 mr-2" />
                     Save Profile
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Notification Preferences */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Bell className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Notification Preferences</h2>
+        {/* Email Digest & Notifications */}
+        <section className="card-elevated overflow-hidden animate-slide-up">
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+              <Mail className="w-5 h-5 text-info" />
             </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Choose what updates you want to receive</p>
-          </div>
-          <div className="p-8 space-y-6">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
-                  <p className="text-base font-black text-foreground">Crisis Alerts</p>
-                  <p className="text-sm text-muted-foreground font-semibold mt-1">Get notified immediately when crisis situations are detected</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notifications.crisisAlerts}
-                    onChange={(e) => setNotifications({ ...notifications, crisisAlerts: e.target.checked })}
-                  />
-                  <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-600 peer-checked:to-blue-700 shadow-inner"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
-                  <p className="text-base font-black text-foreground">Daily Summary</p>
-                  <p className="text-sm text-muted-foreground font-semibold mt-1">Receive daily email summaries of team activity</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notifications.dailySummary}
-                    onChange={(e) => setNotifications({ ...notifications, dailySummary: e.target.checked })}
-                  />
-                  <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-600 peer-checked:to-blue-700 shadow-inner"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
-                  <p className="text-base font-black text-foreground">Athlete Check-ins</p>
-                  <p className="text-sm text-muted-foreground font-semibold mt-1">Notify when athletes complete mood logs or assignments</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notifications.athleteCheckIns}
-                    onChange={(e) => setNotifications({ ...notifications, athleteCheckIns: e.target.checked })}
-                  />
-                  <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-600 peer-checked:to-blue-700 shadow-inner"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <div>
-                  <p className="text-base font-black text-foreground">Weekly Reports</p>
-                  <p className="text-sm text-muted-foreground font-semibold mt-1">Get comprehensive weekly performance reports</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={notifications.weeklyReports}
-                    onChange={(e) => setNotifications({ ...notifications, weeklyReports: e.target.checked })}
-                  />
-                  <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-600 peer-checked:to-blue-700 shadow-inner"></div>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={handleSaveNotifications}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2"
-              >
-                <Save className="w-5 h-5" />
-                Save Preferences
-              </button>
+            <div>
+              <h2 className="font-medium text-foreground">Email Digest & Notifications</h2>
+              <p className="text-sm text-muted-foreground">Configure weekly summaries and alerts</p>
             </div>
           </div>
-        </div>
+          <div className="p-4">
+            <WeeklyDigestPanel />
+          </div>
+        </section>
 
         {/* Privacy & Data Access */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary rounded-xl flex items-center justify-center shadow-lg">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Privacy & Data Access</h2>
+        <section className="card-elevated overflow-hidden animate-slide-up">
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-success" />
             </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Control data retention and sharing settings</p>
+            <div>
+              <h2 className="font-medium text-foreground">Privacy & Data Access</h2>
+              <p className="text-sm text-muted-foreground">Control data retention and sharing settings</p>
+            </div>
           </div>
-          <div className="p-8 space-y-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-black text-foreground mb-2">Data Retention</h3>
-                <p className="text-sm text-muted-foreground font-semibold mb-3">
-                  How long to retain athlete data after they leave your team
-                </p>
-                <select
-                  value={privacy.dataRetention}
-                  onChange={(e) => setPrivacy({ ...privacy, dataRetention: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent font-medium"
-                >
-                  <option>30 days</option>
-                  <option>90 days</option>
-                  <option>1 year</option>
-                  <option>Forever (with consent)</option>
-                </select>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-foreground mb-2">Default Data Sharing</h3>
-                <p className="text-sm text-muted-foreground font-semibold mb-3">
-                  Data visible to other staff members in your organization
-                </p>
-                <div className="space-y-3">
-                  <label className="flex items-center p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={privacy.shareMoodLogs}
-                      onChange={(e) => setPrivacy({ ...privacy, shareMoodLogs: e.target.checked })}
-                      className="w-5 h-5 text-secondary rounded focus:ring-2 focus:ring-green-500 mr-3"
-                    />
-                    <span className="text-base font-bold">Mood logs summary</span>
-                  </label>
-                  <label className="flex items-center p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={privacy.shareGoalProgress}
-                      onChange={(e) => setPrivacy({ ...privacy, shareGoalProgress: e.target.checked })}
-                      className="w-5 h-5 text-secondary rounded focus:ring-2 focus:ring-green-500 mr-3"
-                    />
-                    <span className="text-base font-bold">Goal progress</span>
-                  </label>
-                  <label className="flex items-center p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={privacy.shareChatSummaries}
-                      onChange={(e) => setPrivacy({ ...privacy, shareChatSummaries: e.target.checked })}
-                      className="w-5 h-5 text-secondary rounded focus:ring-2 focus:ring-green-500 mr-3"
-                    />
-                    <span className="text-base font-bold">Chat session summaries</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={handleSavePrivacy}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2"
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="data-retention">Data Retention</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                How long to retain athlete data after they leave your team
+              </p>
+              <select
+                id="data-retention"
+                value={privacy.dataRetention}
+                onChange={(e) => setPrivacy({ ...privacy, dataRetention: e.target.value })}
+                className="w-full h-10 px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
               >
-                <Save className="w-5 h-5" />
+                <option>30 days</option>
+                <option>90 days</option>
+                <option>1 year</option>
+                <option>Forever (with consent)</option>
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Default Data Sharing</Label>
+              <p className="text-xs text-muted-foreground">Data visible to other staff members</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={privacy.shareMoodLogs}
+                    onChange={(e) => setPrivacy({ ...privacy, shareMoodLogs: e.target.checked })}
+                    className="w-4 h-4 text-primary focus:ring-primary border-border rounded"
+                  />
+                  <span className="text-sm font-medium text-foreground">Mood logs summary</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={privacy.shareGoalProgress}
+                    onChange={(e) => setPrivacy({ ...privacy, shareGoalProgress: e.target.checked })}
+                    className="w-4 h-4 text-primary focus:ring-primary border-border rounded"
+                  />
+                  <span className="text-sm font-medium text-foreground">Goal progress</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={privacy.shareChatSummaries}
+                    onChange={(e) => setPrivacy({ ...privacy, shareChatSummaries: e.target.checked })}
+                    className="w-4 h-4 text-primary focus:ring-primary border-border rounded"
+                  />
+                  <span className="text-sm font-medium text-foreground">Chat session summaries</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button variant="outline" onClick={handleSavePrivacy}>
+                <Save className="w-4 h-4 mr-2" />
                 Save Settings
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Team Invite Code */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Key className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Team Invite Code</h2>
+        <section className="card-elevated overflow-hidden animate-slide-up">
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+              <Key className="w-5 h-5 text-warning" />
             </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Share this code with athletes to join your team</p>
-          </div>
-          <div className="p-8">
-            <div className="bg-gradient-to-r from-amber-100 to-amber-50 border-2 border-muted rounded-2xl p-6 mb-6 shadow">
-              <div className="flex items-center gap-4">
-                <code className="flex-1 bg-white px-6 py-4 rounded-xl font-mono text-2xl font-black text-muted-foreground border-2 border-muted shadow-inner">
-                  {inviteCode}
-                </code>
-                <button
-                  onClick={handleCopyInviteCode}
-                  className="px-6 py-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform flex items-center gap-2"
-                >
-                  <Copy className="w-5 h-5" />
-                  Copy
-                </button>
-              </div>
+            <div>
+              <h2 className="font-medium text-foreground">Team Invite Code</h2>
+              <p className="text-sm text-muted-foreground">Share this code with athletes to join your team</p>
             </div>
-            <button
-              onClick={handleGenerateNewCode}
-              className="px-6 py-3 border-2 border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50 transition-all font-bold hover:scale-105 transform flex items-center gap-2"
-            >
-              <RefreshCw className="w-5 h-5" />
-              Generate New Code
-            </button>
           </div>
-        </div>
+          <div className="p-4 space-y-4">
+            {inviteCodeData ? (
+              <>
+                <div className="p-4 rounded-lg bg-warning/5 border border-warning/10">
+                  <div className="flex items-center gap-3">
+                    <code className="flex-1 px-4 py-3 rounded-lg bg-background border border-border font-mono text-lg font-bold text-foreground">
+                      {inviteCodeData.inviteCode}
+                    </code>
+                    <Button variant="outline" onClick={handleCopyInviteCode}>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
+                    <span>Sport: <strong className="text-foreground">{inviteCodeData.sport || 'All Sports'}</strong></span>
+                    <span>Connected: <strong className="text-foreground">{inviteCodeData.athleteCount} athletes</strong></span>
+                  </div>
+                </div>
+                <Button variant="outline" onClick={handleGenerateNewCode} className="w-full sm:w-auto">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Generate New Code
+                </Button>
+              </>
+            ) : (
+              <div className="p-6 text-center text-muted-foreground">
+                <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No invite code available. Contact support to get your team code.</p>
+              </div>
+            )}
+          </div>
+        </section>
 
-        {/* Appearance & Theme */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b-2 border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                {isDarkMode ? <Moon className="w-6 h-6 text-white" /> : <Sun className="w-6 h-6 text-white" />}
-              </div>
-              <h2 className="text-2xl font-black text-foreground">Appearance & Theme</h2>
+        {/* Appearance */}
+        <section className="card-elevated overflow-hidden animate-slide-up">
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+              {isDarkMode ? <Moon className="w-5 h-5 text-foreground" /> : <Sun className="w-5 h-5 text-foreground" />}
             </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Customize your visual experience</p>
+            <div>
+              <h2 className="font-medium text-foreground">Appearance</h2>
+              <p className="text-sm text-muted-foreground">Customize your visual experience</p>
+            </div>
           </div>
-          <div className="p-8">
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+          <div className="p-4">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
               <div>
-                <p className="text-base font-black text-foreground">Dark Mode</p>
-                <p className="text-sm text-muted-foreground font-semibold mt-1">
+                <p className="text-sm font-medium text-foreground">Dark Mode</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={isDarkMode}
-                  onChange={toggleTheme}
-                />
-                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-600 peer-checked:to-indigo-700 shadow-inner"></div>
-              </label>
+              <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Danger Zone */}
-        <div className="bg-card rounded-2xl shadow-xl border-2 border-muted-foreground">
-          <div className="p-8 border-b-2 border-muted-foreground/20">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-xl flex items-center justify-center shadow-lg">
-                <AlertTriangle className="w-6 h-6 text-white" />
+        <section className="card-elevated overflow-hidden animate-slide-up border-destructive/20">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
               </div>
-              <h2 className="text-2xl font-black text-muted-foreground">Danger Zone</h2>
+              <div>
+                <h2 className="font-medium text-foreground">Danger Zone</h2>
+                <p className="text-sm text-muted-foreground">Irreversible account actions</p>
+              </div>
             </div>
-            <p className="text-base text-muted-foreground font-semibold ml-15">Irreversible account actions</p>
           </div>
-          <div className="p-8 space-y-4">
-            <button className="w-full px-6 py-4 border-2 border-muted-foreground text-muted-foreground rounded-xl hover:bg-muted-foreground/10 transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2">
-              <RefreshCw className="w-5 h-5" />
+          <div className="p-4 space-y-3">
+            <Button
+              variant="outline"
+              className="w-full border-destructive/30 text-destructive hover:bg-destructive/5"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
               Reset All Settings
-            </button>
-            <button className="w-full px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:shadow-2xl transition-all font-bold text-lg hover:scale-105 transform flex items-center justify-center gap-2">
-              <Trash2 className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
               Delete Account
-            </button>
+            </Button>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

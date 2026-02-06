@@ -2,40 +2,28 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth, signOut } from '@/hooks/useAuth';
 import { usePathname } from 'next/navigation';
+import { Sparkles } from 'lucide-react';
+import { COACH_NAV, ATHLETE_NAV } from '@/config/navigation';
+import { cn } from '@/lib/utils';
 
+/**
+ * Shared Navigation Component
+ *
+ * Uses centralized navigation config for consistency.
+ * Renders appropriate nav items based on user role.
+ */
 export function Navigation() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/');
 
-  const athleteLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/chat', label: 'AI Coach', icon: '💬' },
-    { href: '/mood', label: 'Mood', icon: '❤️' },
-    { href: '/goals', label: 'Goals', icon: '🎯' },
-    { href: '/interventions', label: 'Techniques', icon: '🧠' },
-    { href: '/wearables', label: 'Wearables', icon: '⌚' },
-    { href: '/assignments', label: 'Tasks', icon: '📋' },
-  ];
+  const navItems = user?.role === 'COACH' || user?.role === 'ADMIN' ? COACH_NAV : ATHLETE_NAV;
 
-  const coachLinks = [
-    { href: '/coach/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/coach/athletes', label: 'Athletes', icon: '👥' },
-    { href: '/coach/predictions', label: 'Predictions', icon: '🔮' },
-    { href: '/coach/outcomes', label: 'Outcomes', icon: '🏆' },
-    { href: '/coach/analytics', label: 'Analytics', icon: '📈' },
-    { href: '/coach/readiness', label: 'Readiness', icon: '⚡' },
-    { href: '/coach/assignments', label: 'Assignments', icon: '📋' },
-    { href: '/coach/settings', label: 'Settings', icon: '⚙️' },
-  ];
-
-  const links = session?.user?.role === 'COACH' ? coachLinks : athleteLinks;
-
-  if (!session) return null;
+  if (!user) return null;
 
   return (
     <nav className="bg-card border-b border-gray-200 sticky top-0 z-50">
@@ -48,21 +36,35 @@ export function Navigation() {
                 AI Sports Coach
               </Link>
             </div>
-            <div className="hidden sm:ml-8 sm:flex sm:space-x-4">
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive(link.href)
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-muted'
-                  }`}
-                >
-                  <span className="mr-2">{link.icon}</span>
-                  {link.label}
-                </Link>
-              ))}
+            <div className="hidden sm:ml-8 sm:flex sm:space-x-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors gap-2',
+                      active
+                        ? 'bg-blue-100 text-blue-700'
+                        : item.highlight
+                        ? 'text-purple-600 hover:bg-purple-50'
+                        : 'text-gray-700 hover:bg-muted'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                    {item.badge && !active && (
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-600">
+                        <Sparkles className="w-3 h-3" />
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
@@ -70,11 +72,11 @@ export function Navigation() {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <div className="flex items-center gap-4">
               <div className="text-sm text-right">
-                <p className="font-medium text-gray-900">{session.user.name}</p>
-                <p className="text-gray-500 capitalize">{session.user.role?.toLowerCase()}</p>
+                <p className="font-medium text-gray-900">{user.name}</p>
+                <p className="text-gray-500 capitalize">{user.role?.toLowerCase()}</p>
               </div>
               <button
-                onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                onClick={() => signOut()}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
                 Sign Out
@@ -107,29 +109,43 @@ export function Navigation() {
       {isMobileMenuOpen && (
         <div className="sm:hidden border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActive(link.href)
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-700 hover:bg-muted'
-                }`}
-              >
-                <span className="mr-2">{link.icon}</span>
-                {link.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium',
+                    active
+                      ? 'bg-blue-100 text-blue-700'
+                      : item.highlight
+                      ? 'text-purple-600'
+                      : 'text-gray-700 hover:bg-muted'
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  {item.label}
+                  {item.badge && !active && (
+                    <span className="ml-auto flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-600">
+                      <Sparkles className="w-3 h-3" />
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="px-4 mb-3">
-              <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-              <p className="text-sm text-gray-500 capitalize">{session.user.role?.toLowerCase()}</p>
+              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <p className="text-sm text-gray-500 capitalize">{user.role?.toLowerCase()}</p>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+              onClick={() => signOut()}
               className="w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:bg-muted-foreground/10"
             >
               Sign Out

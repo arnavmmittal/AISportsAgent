@@ -1,4 +1,4 @@
-# 🎯 AI Sports Agent Mobile App - Lovable Prompt
+# 🎯 Flow Sports Coach Mobile App - Lovable Prompt
 
 Build a complete mental performance coaching mobile application with athlete and coach views. This is a FULL React Native app with navigation, authentication screens, and role-based interfaces optimized for iOS and Android.
 
@@ -134,7 +134,7 @@ Tab Navigator (Coach) - Bottom tabs
 
 ### Content
 - **App Logo/Icon** (large, centered)
-- **Title**: "AI Sports Agent"
+- **Title**: "Flow Sports Coach"
 - **Tagline**: "Mental performance coaching for athletes"
 - **Illustration**: Abstract athlete/brain graphic (blue and silver tones)
 - **CTA Buttons** (bottom):

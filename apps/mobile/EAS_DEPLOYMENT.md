@@ -1,6 +1,6 @@
 # Mobile App Deployment with EAS
 
-This guide covers deploying the AI Sports Agent mobile app to staging and production using Expo Application Services (EAS).
+This guide covers deploying the Flow Sports Coach mobile app to staging and production using Expo Application Services (EAS).
 
 ## Prerequisites
 
@@ -142,13 +142,13 @@ eas submit --profile production --platform android
 ### Staging
 - **Use**: Testing with real athletes/coaches before production
 - **Distribution**: TestFlight (iOS) / Internal Testing (Android)
-- **API**: `https://staging-aisportsagent.vercel.app`
+- **API**: `https://staging-flowsportscoach.vercel.app`
 - **Channel**: `staging` (for OTA updates)
 
 ### Production
 - **Use**: Live app in stores
 - **Distribution**: App Store / Play Store
-- **API**: `https://app.aisportsagent.com`
+- **API**: `https://app.flowsportscoach.com`
 - **Channel**: `production` (for OTA updates)
 - **Build Type**: AAB for Android (required by Play Store)
 
@@ -205,7 +205,7 @@ eas build:download [BUILD_ID]
 
 ### Via Dashboard
 
-Visit https://expo.dev/accounts/YOUR_USERNAME/projects/ai-sports-agent/builds
+Visit https://expo.dev/accounts/YOUR_USERNAME/projects/flow-sports-coach/builds
 
 ## Troubleshooting
 
@@ -242,8 +242,8 @@ Visit https://expo.dev/accounts/YOUR_USERNAME/projects/ai-sports-agent/builds
 | Environment | Web App URL | MCP Server URL |
 |-------------|-------------|----------------|
 | Local | http://localhost:3000 | http://localhost:8000 |
-| Staging | https://staging-aisportsagent.vercel.app | https://mcp-staging.railway.app |
-| Production | https://app.aisportsagent.com | https://mcp.railway.app |
+| Staging | https://staging-flowsportscoach.vercel.app | https://mcp-staging.railway.app |
+| Production | https://app.flowsportscoach.com | https://mcp.railway.app |
 
 ## Quick Reference Commands
 

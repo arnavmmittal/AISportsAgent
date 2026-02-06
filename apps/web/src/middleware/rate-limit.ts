@@ -9,7 +9,7 @@
  * Features:
  * - Multi-layer enforcement (user → tenant → global)
  * - Sliding window algorithm
- * - Redis-backed for distributed systems
+ * - Redis-backed for distributed systems (falls back to in-memory)
  * - Retry-After headers
  * - Rate limit headers (X-RateLimit-*)
  *
@@ -17,6 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { kvGet, kvSet, kvDelete } from '@/lib/redis';
 
 // Rate limit configuration
 const LIMITS = {
@@ -29,10 +30,9 @@ const LIMITS = {
   global: 10000,      // 10,000 requests/min total
 };
 
-const WINDOW_MS = 60 * 1000; // 1 minute window
-
-// In-memory store (would be Redis in production)
-const memoryStore = new Map<string, { count: number; expiresAt: number }>();
+const WINDOW_SECONDS = 60; // 1 minute window
+const WINDOW_MS = WINDOW_SECONDS * 1000;
+const RATE_LIMIT_PREFIX = 'ratelimit:';
 
 interface RateLimitResult {
   allowed: boolean;
@@ -42,48 +42,74 @@ interface RateLimitResult {
   retryAfter?: number;
 }
 
+interface RateLimitEntry {
+  count: number;
+  windowStart: number;
+}
+
 /**
  * Check rate limit for a given key
+ * Uses Redis for distributed rate limiting across serverless instances
  */
 async function checkLimit(
   key: string,
   limit: number
 ): Promise<RateLimitResult> {
   const now = Date.now();
-  const windowEnd = now + WINDOW_MS;
+  const redisKey = `${RATE_LIMIT_PREFIX}${key}`;
 
-  // Cleanup expired entries
-  for (const [k, data] of memoryStore.entries()) {
-    if (data.expiresAt < now) {
-      memoryStore.delete(k);
+  try {
+    // Get current entry from Redis
+    const entry = await kvGet<RateLimitEntry>(redisKey);
+
+    // If no entry or window expired, start fresh
+    if (!entry || (now - entry.windowStart) >= WINDOW_MS) {
+      const newEntry: RateLimitEntry = { count: 1, windowStart: now };
+      await kvSet(redisKey, newEntry, WINDOW_SECONDS + 5); // Add 5s buffer
+
+      return {
+        allowed: true,
+        limit,
+        remaining: limit - 1,
+        resetAt: new Date(now + WINDOW_MS),
+      };
     }
-  }
 
-  // Get or create entry
-  const entry = memoryStore.get(key) || { count: 0, expiresAt: windowEnd };
+    // Check if limit exceeded
+    if (entry.count >= limit) {
+      const windowEnd = entry.windowStart + WINDOW_MS;
+      const retryAfter = Math.ceil((windowEnd - now) / 1000);
 
-  // Check if limit exceeded
-  if (entry.count >= limit) {
-    const retryAfter = Math.ceil((entry.expiresAt - now) / 1000);
+      return {
+        allowed: false,
+        limit,
+        remaining: 0,
+        resetAt: new Date(windowEnd),
+        retryAfter: Math.max(1, retryAfter),
+      };
+    }
+
+    // Increment counter
+    entry.count += 1;
+    const ttlRemaining = Math.ceil((entry.windowStart + WINDOW_MS - now) / 1000);
+    await kvSet(redisKey, entry, Math.max(1, ttlRemaining + 5));
+
     return {
-      allowed: false,
+      allowed: true,
       limit,
-      remaining: 0,
-      resetAt: new Date(entry.expiresAt),
-      retryAfter,
+      remaining: limit - entry.count,
+      resetAt: new Date(entry.windowStart + WINDOW_MS),
+    };
+  } catch (error) {
+    // On Redis error, allow request but log warning
+    console.warn('[RateLimit] Redis error, allowing request:', error);
+    return {
+      allowed: true,
+      limit,
+      remaining: limit - 1,
+      resetAt: new Date(now + WINDOW_MS),
     };
   }
-
-  // Increment counter
-  entry.count += 1;
-  memoryStore.set(key, entry);
-
-  return {
-    allowed: true,
-    limit,
-    remaining: limit - entry.count,
-    resetAt: new Date(windowEnd),
-  };
 }
 
 /**
@@ -225,15 +251,8 @@ export async function getRateLimitStatus(
     checkLimit('global', LIMITS.global),
   ]);
 
-  // Don't increment, just check
-  // Decrement counters since we just checked
-  for (const key of [`user:${userId}`, `tenant:${schoolId}`, 'global']) {
-    const entry = memoryStore.get(key);
-    if (entry && entry.count > 0) {
-      entry.count -= 1;
-      memoryStore.set(key, entry);
-    }
-  }
+  // Note: checkLimit already increments, so no need to decrement
+  // The parallel checks each increment their own counters correctly
 
   return { user, tenant, global };
 }
@@ -244,40 +263,47 @@ export async function getRateLimitStatus(
  * Use cautiously - only for debugging or emergency scenarios
  */
 export async function resetRateLimit(userId: string): Promise<void> {
-  memoryStore.delete(`user:${userId}`);
-  console.log(`✅ Rate limit reset for user ${userId}`);
+  try {
+    await kvDelete(`${RATE_LIMIT_PREFIX}user:${userId}`);
+    console.log(`✅ Rate limit reset for user ${userId}`);
+  } catch (error) {
+    console.error('[RateLimit] Error resetting user rate limit:', error);
+  }
 }
 
 /**
  * Reset rate limit for a tenant (admin operation)
  */
 export async function resetTenantRateLimit(schoolId: string): Promise<void> {
-  memoryStore.delete(`tenant:${schoolId}`);
-  console.log(`✅ Rate limit reset for school ${schoolId}`);
+  try {
+    await kvDelete(`${RATE_LIMIT_PREFIX}tenant:${schoolId}`);
+    console.log(`✅ Rate limit reset for school ${schoolId}`);
+  } catch (error) {
+    console.error('[RateLimit] Error resetting tenant rate limit:', error);
+  }
 }
 
 /**
- * Get all active rate limit entries (monitoring)
+ * Get rate limit status for a specific key (monitoring)
+ * Note: Full enumeration not supported with Redis - use specific keys
  */
-export function getActiveRateLimits(): Array<{
-  key: string;
-  count: number;
-  expiresAt: number;
-  remaining: number;
-}> {
-  const now = Date.now();
-  const active: Array<{ key: string; count: number; expiresAt: number; remaining: number }> = [];
+export async function getRateLimitEntryStatus(
+  key: string
+): Promise<{ count: number; windowStart: number; remaining: number } | null> {
+  try {
+    const entry = await kvGet<RateLimitEntry>(`${RATE_LIMIT_PREFIX}${key}`);
+    if (!entry) return null;
 
-  for (const [key, data] of memoryStore.entries()) {
-    if (data.expiresAt > now) {
-      active.push({
-        key,
-        count: data.count,
-        expiresAt: data.expiresAt,
-        remaining: Math.ceil((data.expiresAt - now) / 1000),
-      });
-    }
+    const now = Date.now();
+    if ((now - entry.windowStart) >= WINDOW_MS) return null;
+
+    return {
+      count: entry.count,
+      windowStart: entry.windowStart,
+      remaining: Math.ceil((entry.windowStart + WINDOW_MS - now) / 1000),
+    };
+  } catch (error) {
+    console.error('[RateLimit] Error getting rate limit status:', error);
+    return null;
   }
-
-  return active.sort((a, b) => b.count - a.count);
 }

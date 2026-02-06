@@ -1,6 +1,6 @@
 /**
  * Centralized theme constants for consistent styling
- * AI Sports Agent - Premium Athletic Design System (Lovable)
+ * Flow Sports Coach - Premium Athletic Design System (Lovable)
  */
 
 // Dark theme colors (default)

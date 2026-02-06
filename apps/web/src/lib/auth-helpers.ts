@@ -5,16 +5,72 @@
  * role-based access control.
  *
  * Supports both Supabase Auth sessions (web) and JWT tokens (mobile)
+ *
+ * Performance: Uses Redis/KV cache (60s TTL) to reduce database hits.
+ * Falls back to in-memory when Redis isn't configured.
  */
 
 import { NextResponse, NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { getUser as getSupabaseUser } from './supabase-server';
 import { prisma } from './prisma';
+import { kvGet, kvSet, kvDelete } from './redis';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || 'test-secret-for-local-development-only-2024'
 );
+
+// =============================================
+// User Cache (Redis-backed, reduces database hits)
+// =============================================
+
+const USER_CACHE_TTL_SECONDS = 60; // 60 seconds
+const USER_CACHE_PREFIX = 'auth:user:';
+
+/**
+ * Get cached user or null if expired/missing
+ */
+async function getCachedUser(userId: string): Promise<AuthUser | null> {
+  try {
+    const cached = await kvGet<AuthUser>(`${USER_CACHE_PREFIX}${userId}`);
+    return cached;
+  } catch (error) {
+    console.error('[Auth] Cache get error:', error);
+    return null;
+  }
+}
+
+/**
+ * Cache user data with TTL
+ */
+async function setCachedUser(userId: string, user: AuthUser): Promise<void> {
+  try {
+    await kvSet(`${USER_CACHE_PREFIX}${userId}`, user, USER_CACHE_TTL_SECONDS);
+  } catch (error) {
+    console.error('[Auth] Cache set error:', error);
+  }
+}
+
+/**
+ * Invalidate cached user (call when user role/permissions change)
+ */
+export async function invalidateUserCache(userId: string): Promise<void> {
+  try {
+    await kvDelete(`${USER_CACHE_PREFIX}${userId}`);
+  } catch (error) {
+    console.error('[Auth] Cache invalidate error:', error);
+  }
+}
+
+/**
+ * Clear entire user cache (for testing or role bulk updates)
+ * Note: This only works fully with Redis KEYS command support
+ */
+export async function clearUserCache(): Promise<void> {
+  // For Redis, we'd need to use KEYS or SCAN - this is a no-op for now
+  // In production, user caches expire naturally after 60s
+  console.warn('[Auth] clearUserCache called - caches will expire naturally');
+}
 
 export interface AuthUser {
   id: string;
@@ -36,9 +92,15 @@ export interface AuthResult {
 
 /**
  * Get user data from Supabase auth user
- * Fetches full user profile from database
+ * Fetches full user profile from database with Redis caching
  */
 async function getUserFromSupabase(supabaseUserId: string): Promise<AuthUser | null> {
+  // Check cache first (Redis-backed)
+  const cached = await getCachedUser(supabaseUserId);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const dbUser = await prisma.user.findUnique({
       where: { id: supabaseUserId },
@@ -55,12 +117,17 @@ async function getUserFromSupabase(supabaseUserId: string): Promise<AuthUser | n
       return null;
     }
 
-    return {
+    const user: AuthUser = {
       id: dbUser.id,
       email: dbUser.email,
       role: dbUser.role,
       schoolId: dbUser.schoolId || '',
     };
+
+    // Cache the result in Redis
+    await setCachedUser(supabaseUserId, user);
+
+    return user;
   } catch (error) {
     console.error('Error fetching user from database:', error);
     return null;

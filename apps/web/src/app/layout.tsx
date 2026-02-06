@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI Sports Agent - Mental Performance Platform",
+  title: "Flow Sports Coach - Mental Performance Platform",
   description: "Evidence-based mental performance platform for collegiate athletics",
 };
 

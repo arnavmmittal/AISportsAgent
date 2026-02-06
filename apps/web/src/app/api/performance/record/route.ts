@@ -1,11 +1,10 @@
 /**
-
  * Performance Record API - Save game performance metrics
  *
  * POST /api/performance/record
  * - Validates input with Zod
  * - Links to nearest MoodLog (mental state snapshot)
- * - Calculates readiness score for that game
+ * - Calculates readiness score from mental state data
  * - Saves PerformanceMetric to database
  */
 
@@ -87,38 +86,36 @@ export async function POST(request: NextRequest) {
     const mentalState = nearestMoodLog
       ? {
           mentalMoodScore: nearestMoodLog.mood,
+          mentalConfidenceScore: nearestMoodLog.confidence,
+          mentalEnergyScore: nearestMoodLog.energy,
           mentalStressScore: nearestMoodLog.stress,
           mentalSleepHours: nearestMoodLog.sleep,
           mentalHRVScore: null, // Will be populated from wearable data later
         }
       : {
           mentalMoodScore: null,
+          mentalConfidenceScore: null,
+          mentalEnergyScore: null,
           mentalStressScore: null,
           mentalSleepHours: null,
           mentalHRVScore: null,
         };
 
-    // 8. Calculate readiness score by calling MCP backend
+    // 8. Calculate readiness score from mental state data
+    // Simple formula: average of available mental metrics, scaled to 0-100
     let readinessScore: number | null = null;
 
-    try {
-      const readinessResponse = await fetch(
-        `http://localhost:8000/api/analytics/readiness?athlete_id=${validatedData.athleteId}&game_date=${validatedData.gameDate}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+    if (mentalState.mentalMoodScore || mentalState.mentalConfidenceScore) {
+      const scores = [
+        mentalState.mentalMoodScore,
+        mentalState.mentalConfidenceScore,
+        mentalState.mentalEnergyScore,
+        mentalState.mentalStressScore ? (10 - mentalState.mentalStressScore) : null, // Invert stress
+      ].filter((s): s is number => s !== null);
 
-      if (readinessResponse.ok) {
-        const readinessData = await readinessResponse.json();
-        readinessScore = readinessData.score;
+      if (scores.length > 0) {
+        readinessScore = Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10);
       }
-    } catch (error) {
-      console.error('Failed to calculate readiness score:', error);
-      // Continue without readiness score
     }
 
     // 9. Get athlete's sport for PerformanceMetric

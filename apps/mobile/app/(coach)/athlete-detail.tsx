@@ -1049,6 +1049,10 @@ export default function AthleteDetailScreen() {
             {/* Crisis Alerts */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Crisis Alerts ({crisisAlerts.length})</Text>
+              {crisisAlerts.length > 0 ? (
+                crisisAlerts.map((alert) => (
+                  <View key={alert.id} style={styles.alertCard}>
+                    <LinearGradient
                       colors={
                         alert.severity === 'CRITICAL'
                           ? ['rgba(239, 68, 68, 0.2)', 'rgba(220, 38, 38, 0.1)']

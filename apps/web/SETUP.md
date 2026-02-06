@@ -1,4 +1,4 @@
-# AI Sports Agent - Setup Guide
+# Flow Sports Coach - Setup Guide
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ Once Node.js is updated, run these commands:
 
 ### 1. Install Dependencies
 ```bash
-cd ~/Desktop/SportsAgent/ai-sports-agent
+cd ~/Desktop/SportsAgent/flow-sports-coach
 
 # Install all dependencies
 npm install
@@ -122,7 +122,7 @@ createdb ai_sports_agent
 ## Project Structure
 
 ```
-ai-sports-agent/
+flow-sports-coach/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── (athlete)/          # Athlete-specific routes

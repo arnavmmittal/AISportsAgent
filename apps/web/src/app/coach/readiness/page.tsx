@@ -1,236 +1,889 @@
 'use client';
 
-import { useState } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  AlertTriangle,
+  Target,
+  ChevronRight,
+  Clock,
+  Calendar,
+  Bell,
+  AlertCircle,
+  CheckCircle2,
+  Shield,
+  Loader2,
+  RefreshCw,
+  Settings,
+} from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/shared/ui/button';
+import { cn } from '@/lib/utils';
+import AlertRulesPanel from '@/components/coach/alerts/AlertRulesPanel';
 
-interface ReadinessScore {
+/**
+ * Readiness Page (v2.1 Navigation Consolidation)
+ *
+ * Combines Team Readiness + Alerts into a unified view:
+ * - Readiness tab: Team metrics, intervention queue, heatmap
+ * - Alerts tab: Critical wellness alerts with severity levels
+ *
+ * Data is fetched from APIs - no mock data.
+ */
+
+interface HeatmapAthlete {
   athleteId: string;
   athleteName: string;
   sport: string;
-  scores: number[]; // Last 14 days, 0-100
+  readinessHistory: number[];
   trend: 'improving' | 'declining' | 'stable';
-  forecast: number[]; // Next 7 days prediction
+  forecast: number[];
 }
 
 interface Intervention {
+  id: string;
   athleteId: string;
   athleteName: string;
-  priority: 1 | 2 | 3;
+  priority: number;
   readiness: number;
   reason: string;
   recommendation: string;
+  status: string;
 }
 
-export default function ReadinessPage() {
-  const [athletes] = useState<ReadinessScore[]>([
-    {
-      athleteId: '1',
-      athleteName: 'Sarah Johnson',
-      sport: 'Basketball',
-      scores: [85, 87, 82, 88, 90, 89, 91, 88, 85, 82, 78, 75, 72, 70],
-      trend: 'declining',
-      forecast: [68, 65, 63, 62, 60, 58, 56],
-    },
-    {
-      athleteId: '2',
-      athleteName: 'Marcus Davis',
-      sport: 'Football',
-      scores: [72, 75, 78, 80, 82, 83, 85, 86, 87, 88, 89, 90, 91, 92],
-      trend: 'improving',
-      forecast: [93, 94, 95, 95, 96, 96, 97],
-    },
-    {
-      athleteId: '3',
-      athleteName: 'Alex Martinez',
-      sport: 'Soccer',
-      scores: [65, 64, 62, 60, 58, 55, 53, 50, 48, 45, 42, 40, 38, 35],
-      trend: 'declining',
-      forecast: [32, 30, 28, 25, 23, 20, 18],
-    },
-  ]);
+type AlertSeverity = 'critical' | 'high' | 'medium';
 
-  const [interventions] = useState<Intervention[]>([
-    {
-      athleteId: '3',
-      athleteName: 'Alex Martinez',
-      priority: 1,
-      readiness: 35,
-      reason: 'Readiness dropped 46% over 14 days (65→35). Forecast shows continued decline to 18.',
-      recommendation: 'Immediate 1:1 check-in. Sleep avg 4.2hrs. Stress 9/10 for 7 days.',
-    },
-    {
-      athleteId: '1',
-      athleteName: 'Sarah Johnson',
-      priority: 1,
-      readiness: 70,
-      reason: 'Star performer declining (-23% in 7 days). Historic r=0.82 correlation with PPG.',
-      recommendation: 'Proactive intervention before performance drops. Check workload & finals stress.',
-    },
-  ]);
+interface Alert {
+  id: string;
+  athleteId: string;
+  athleteName: string;
+  severity: AlertSeverity;
+  type: string;
+  reason: string;
+  timestamp: Date;
+  status: 'active' | 'resolved' | 'monitoring';
+}
 
-  const getReadinessColor = (score: number) => {
-    if (score >= 85) return 'from-secondary to-secondary';
-    if (score >= 70) return 'from-muted-foreground to-muted-foreground';
-    if (score >= 50) return 'from-muted-foreground to-muted-foreground';
-    return 'from-muted-foreground to-muted-foreground';
+function ReadinessPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'readiness' | 'alerts' | 'rules'>(
+    (searchParams.get('tab') as 'readiness' | 'alerts' | 'rules') || 'readiness'
+  );
+
+  // Data states
+  const [heatmapData, setHeatmapData] = useState<HeatmapAthlete[]>([]);
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch heatmap data
+        const heatmapRes = await fetch('/api/coach/analytics/team-heatmap');
+        if (heatmapRes.ok) {
+          const heatmapJson = await heatmapRes.json();
+          if (heatmapJson.athletes) {
+            setHeatmapData(heatmapJson.athletes);
+          }
+        }
+
+        // Fetch interventions
+        const interventionsRes = await fetch('/api/coach/interventions');
+        if (interventionsRes.ok) {
+          const interventionsJson = await interventionsRes.json();
+          if (interventionsJson.interventions) {
+            setInterventions(interventionsJson.interventions.filter((i: Intervention) => i.status === 'pending'));
+          }
+        }
+
+        // Fetch alerts from dashboard (crisis alerts)
+        const dashboardRes = await fetch('/api/coach/dashboard');
+        if (dashboardRes.ok) {
+          const dashboardJson = await dashboardRes.json();
+          if (dashboardJson.data?.crisisAlerts) {
+            const transformedAlerts = dashboardJson.data.crisisAlerts.map((a: any) => ({
+              id: a.id,
+              athleteId: a.athleteId,
+              athleteName: a.athleteName || 'Unknown',
+              severity: a.severity || 'medium',
+              type: a.type || 'Alert',
+              reason: a.reason || a.message || 'Requires attention',
+              timestamp: new Date(a.createdAt || Date.now()),
+              status: a.resolved ? 'resolved' : 'active',
+            }));
+            setAlerts(transformedAlerts);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching readiness data:', err);
+        setError('Failed to load readiness data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Handle tab changes with URL sync
+  const handleTabChange = (tab: 'readiness' | 'alerts' | 'rules') => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'readiness') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    router.replace(`/coach/readiness${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
-  const teamAvg = Math.round(athletes.reduce((sum, a) => sum + a.scores[13], 0) / athletes.length);
-  const highRisk = athletes.filter(a => a.scores[13] < 70).length;
-  const declining = athletes.filter(a => a.trend === 'declining').length;
+  const activeAlertCount = alerts.filter(a => a.status !== 'resolved').length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading readiness data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-10">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Team Readiness
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Header */}
+        <header className="animate-fade-in">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
+            <Activity className="w-7 h-7 text-primary" />
+            Readiness
           </h1>
-          <p className="mt-3 text-muted-foreground text-lg">Mental performance forecasting & intervention prioritization</p>
+          <p className="text-muted-foreground mt-1">Team wellness monitoring and intervention management</p>
+        </header>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit animate-slide-up">
+          <button
+            onClick={() => handleTabChange('readiness')}
+            className={cn(
+              'px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2',
+              activeTab === 'readiness'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Activity className="w-4 h-4" />
+            Team Readiness
+          </button>
+          <button
+            onClick={() => handleTabChange('alerts')}
+            className={cn(
+              'px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2',
+              activeTab === 'alerts'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Bell className="w-4 h-4" />
+            Alerts
+            {activeAlertCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-risk-red text-white text-xs font-bold min-w-[20px] text-center">
+                {activeAlertCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => handleTabChange('rules')}
+            className={cn(
+              'px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2',
+              activeTab === 'rules'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Settings className="w-4 h-4" />
+            Alert Rules
+          </button>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-          <div className="bg-gradient-to-br from-accent to-accent rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-accent text-xs font-bold uppercase tracking-wider mb-2">Team Avg</div>
-                <div className="text-5xl font-black mb-2">{teamAvg}<span className="text-2xl opacity-75">/100</span></div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">WHOOP for mental</div>
-              </div>
-              <div className="text-6xl opacity-20">🎯</div>
-            </div>
+        {/* Error State */}
+        {error && (
+          <div className="card-elevated p-6 border-risk-red/30 bg-risk-red-bg text-center">
+            <AlertCircle className="w-8 h-8 text-risk-red mx-auto mb-2" />
+            <p className="text-foreground font-medium">{error}</p>
+            <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
           </div>
+        )}
 
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">High Risk</div>
-                <div className="text-5xl font-black mb-2">{highRisk}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Need intervention</div>
-              </div>
-              <div className="text-6xl opacity-20">⚠️</div>
+        {/* Tab Content */}
+        {!error && (
+          activeTab === 'readiness'
+            ? <ReadinessTab athletes={heatmapData} interventions={interventions} />
+            : activeTab === 'alerts'
+              ? <AlertsTab alerts={alerts} setAlerts={setAlerts} />
+              : <AlertRulesTab />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// READINESS TAB
+// ============================================
+function ReadinessTab({
+  athletes,
+  interventions
+}: {
+  athletes: HeatmapAthlete[];
+  interventions: Intervention[];
+}) {
+  const getReadinessColor = (score: number) => {
+    if (score >= 85) return { bg: 'bg-risk-green', text: 'text-risk-green', border: 'border-risk-green' };
+    if (score >= 70) return { bg: 'bg-risk-yellow', text: 'text-risk-yellow', border: 'border-risk-yellow' };
+    if (score >= 50) return { bg: 'bg-warning', text: 'text-warning', border: 'border-warning' };
+    return { bg: 'bg-risk-red', text: 'text-risk-red', border: 'border-risk-red' };
+  };
+
+  // Calculate metrics from actual data
+  const latestScores = athletes.map(a => {
+    const history = a.readinessHistory || [];
+    return history[history.length - 1] || 0;
+  });
+  const teamAvg = latestScores.length > 0
+    ? Math.round(latestScores.reduce((sum, s) => sum + s, 0) / latestScores.length)
+    : 0;
+  const highRisk = latestScores.filter(s => s < 70).length;
+  const declining = athletes.filter(a => a.trend === 'declining').length;
+
+  // Empty state
+  if (athletes.length === 0) {
+    return (
+      <div className="card-elevated p-12 text-center animate-slide-up">
+        <Activity className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+        <h3 className="font-medium text-foreground mb-2">No Readiness Data Yet</h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          Readiness data will appear here once athletes complete their wellness check-ins.
+          Encourage your athletes to log their daily mood and wellness metrics.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-slide-up">
+        <div className="card-elevated p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Team Avg</p>
+              <p className="text-3xl font-bold text-foreground mt-1">
+                {teamAvg}<span className="text-lg text-muted-foreground">/100</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Mental readiness score</p>
             </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-muted-foreground to-muted-foreground rounded-2xl shadow-xl p-8 text-white hover:shadow-2xl transition-all hover:scale-105 transform">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-chrome text-xs font-bold uppercase tracking-wider mb-2">Declining</div>
-                <div className="text-5xl font-black mb-2">{declining}</div>
-                <div className="text-sm bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1 inline-block font-semibold">Watch closely</div>
-              </div>
-              <div className="text-6xl opacity-20">📉</div>
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Target className="w-5 h-5 text-primary" />
             </div>
           </div>
         </div>
 
-        {/* Intervention Queue */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100 mb-8">
-          <div className="p-8 border-b border-gray-100">
-            <h2 className="text-2xl font-black text-foreground flex items-center gap-3">
-              <span className="text-3xl">🚨</span>
-              Intervention Queue
-            </h2>
-            <p className="text-muted-foreground mt-2 text-lg">AI-prioritized based on forecasts</p>
+        <div className="card-elevated p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">High Risk</p>
+              <p className={cn(
+                "text-3xl font-bold mt-1",
+                highRisk > 0 ? "text-risk-red" : "text-foreground"
+              )}>
+                {highRisk}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Need intervention</p>
+            </div>
+            <div className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center",
+              highRisk > 0 ? "bg-risk-red/10" : "bg-muted"
+            )}>
+              <AlertTriangle className={cn(
+                "w-5 h-5",
+                highRisk > 0 ? "text-risk-red" : "text-muted-foreground"
+              )} />
+            </div>
           </div>
-          <div className="divide-y divide-gray-100">
-            {interventions.map((int, i) => (
-              <div key={i} className="p-6 hover:bg-background transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className={`bg-gradient-to-r ${int.priority === 1 ? 'from-muted-foreground to-muted-foreground' : 'from-muted-foreground to-muted-foreground'} rounded-xl w-16 h-16 flex items-center justify-center text-white text-2xl font-black shadow-lg`}>
-                    P{int.priority}
+        </div>
+
+        <div className="card-elevated p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Declining</p>
+              <p className={cn(
+                "text-3xl font-bold mt-1",
+                declining > 0 ? "text-risk-yellow" : "text-foreground"
+              )}>
+                {declining}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Watch closely</p>
+            </div>
+            <div className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center",
+              declining > 0 ? "bg-risk-yellow/10" : "bg-muted"
+            )}>
+              <TrendingDown className={cn(
+                "w-5 h-5",
+                declining > 0 ? "text-risk-yellow" : "text-muted-foreground"
+              )} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Intervention Queue */}
+      {interventions.length > 0 && (
+        <div className="card-elevated overflow-hidden animate-slide-up">
+          <div className="p-4 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-risk-red" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Intervention Queue</h2>
+              <p className="text-sm text-muted-foreground">AI-prioritized based on forecasts</p>
+            </div>
+          </div>
+          <div className="divide-y divide-border">
+            {interventions.slice(0, 5).map((int) => {
+              const colors = getReadinessColor(int.readiness);
+              return (
+                <div key={int.id} className="p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold",
+                      int.priority === 1 ? "bg-risk-red" : int.priority === 2 ? "bg-warning" : "bg-risk-yellow"
+                    )}>
+                      P{int.priority}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-foreground">{int.athleteName}</h3>
+                        <span className={cn("font-bold", colors.text)}>
+                          {int.readiness}/100
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-risk-red/5 border-l-4 border-risk-red mb-2">
+                        <p className="text-sm text-risk-red font-medium">{int.reason}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-info/5 border-l-4 border-info">
+                        <p className="text-sm text-info font-medium">{int.recommendation}</p>
+                      </div>
+                    </div>
+                    <Link href={`/coach/athletes/${int.athleteId}`}>
+                      <Button size="sm">
+                        View
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </Link>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-black">{int.athleteName}</h3>
-                      <span className={`text-2xl font-black bg-gradient-to-r ${getReadinessColor(int.readiness)} bg-clip-text text-transparent`}>
-                        {int.readiness}/100
-                      </span>
-                    </div>
-                    <div className="bg-muted-foreground/10 border-l-4 border-muted-foreground p-4 rounded-lg mb-3">
-                      <p className="text-chrome font-semibold text-sm">{int.reason}</p>
-                    </div>
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
-                      <p className="text-blue-900 font-semibold text-sm">💡 {int.recommendation}</p>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/coach/athletes/${int.athleteId}`}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-2xl transition-all font-bold hover:scale-105 transform whitespace-nowrap"
-                  >
-                    View
-                  </Link>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {/* Heatmap */}
-        <div className="bg-card rounded-2xl shadow-xl border border-gray-100">
-          <div className="p-8 border-b border-gray-100">
-            <h2 className="text-2xl font-black flex items-center gap-3">
-              <span className="text-3xl">🔥</span>
-              14-Day Readiness Heatmap
-            </h2>
-            <p className="text-muted-foreground mt-2 text-lg">Mental performance trends + 7-day forecast</p>
+      {/* Heatmap */}
+      <div className="card-elevated overflow-hidden animate-slide-up">
+        <div className="p-4 border-b border-border flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Activity className="w-5 h-5 text-primary" />
           </div>
-          <div className="p-8 overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left pb-4 pr-6 font-black">Athlete</th>
-                  {[...Array(14)].map((_, i) => (
-                    <th key={i} className="text-center pb-4 px-1 text-xs font-bold text-muted-foreground">D{i-13}</th>
-                  ))}
-                  <th className="text-center pb-4 pl-6 font-black">Trend</th>
-                  <th className="text-center pb-4 pl-6 font-black">7-Day Forecast</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {athletes.map((athlete) => (
-                  <tr key={athlete.athleteId} className="hover:bg-background transition-colors">
-                    <td className="py-4 pr-6">
-                      <div className="font-black">{athlete.athleteName}</div>
-                      <div className="text-sm text-muted-foreground">{athlete.sport}</div>
+          <div>
+            <h2 className="font-semibold text-foreground">14-Day Readiness Heatmap</h2>
+            <p className="text-sm text-muted-foreground">Mental performance trends + 7-day forecast</p>
+          </div>
+        </div>
+        <div className="p-4 overflow-x-auto">
+          <table className="w-full min-w-[900px]">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left pb-3 pr-4 font-semibold text-foreground">Athlete</th>
+                {[...Array(14)].map((_, i) => (
+                  <th key={i} className="text-center pb-3 px-1 text-xs font-medium text-muted-foreground">D{i-13}</th>
+                ))}
+                <th className="text-center pb-3 pl-4 font-semibold text-foreground">Trend</th>
+                <th className="text-center pb-3 pl-4 font-semibold text-foreground">7-Day Forecast</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {athletes.map((athlete) => {
+                const history = athlete.readinessHistory || [];
+                const paddedHistory = [...Array(Math.max(0, 14 - history.length)).fill(null), ...history.slice(-14)];
+
+                return (
+                  <tr key={athlete.athleteId} className="hover:bg-muted/50 transition-colors">
+                    <td className="py-3 pr-4">
+                      <Link href={`/coach/athletes/${athlete.athleteId}`} className="hover:text-primary transition-colors">
+                        <div className="font-medium text-foreground">{athlete.athleteName}</div>
+                        <div className="text-xs text-muted-foreground">{athlete.sport}</div>
+                      </Link>
                     </td>
-                    {athlete.scores.map((score, idx) => (
-                      <td key={idx} className="py-4 px-1">
-                        <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getReadinessColor(score)} text-white font-black text-sm flex items-center justify-center shadow-lg hover:scale-110 transform transition-all`}>
-                          {score}
-                        </div>
-                      </td>
-                    ))}
-                    <td className="py-4 pl-6 text-center">
+                    {paddedHistory.map((score, idx) => {
+                      if (score === null) {
+                        return (
+                          <td key={idx} className="py-3 px-1">
+                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                              -
+                            </div>
+                          </td>
+                        );
+                      }
+                      const colors = getReadinessColor(score);
+                      return (
+                        <td key={idx} className="py-3 px-1">
+                          <div className={cn(
+                            "w-10 h-10 rounded-lg text-white font-medium text-xs flex items-center justify-center",
+                            colors.bg
+                          )}>
+                            {score}
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="py-3 pl-4 text-center">
                       {athlete.trend === 'improving' && (
-                        <div className="flex items-center justify-center gap-2 text-secondary font-bold">
-                          <TrendingUp className="w-5 h-5" />Up
+                        <div className="flex items-center justify-center gap-1 text-risk-green font-medium text-sm">
+                          <TrendingUp className="w-4 h-4" />Up
                         </div>
                       )}
                       {athlete.trend === 'declining' && (
-                        <div className="flex items-center justify-center gap-2 text-muted-foreground font-bold">
-                          <TrendingDown className="w-5 h-5" />Down
+                        <div className="flex items-center justify-center gap-1 text-risk-red font-medium text-sm">
+                          <TrendingDown className="w-4 h-4" />Down
                         </div>
                       )}
+                      {athlete.trend === 'stable' && (
+                        <div className="text-muted-foreground font-medium text-sm">Stable</div>
+                      )}
                     </td>
-                    <td className="py-4 pl-6">
-                      <div className="flex gap-1">
-                        {athlete.forecast.map((score, idx) => (
-                          <div key={idx} className={`w-8 h-8 rounded bg-gradient-to-br ${getReadinessColor(score)} text-white font-bold text-xs flex items-center justify-center shadow opacity-75`}>
-                            {score}
-                          </div>
-                        ))}
+                    <td className="py-3 pl-4">
+                      <div className="flex gap-1 justify-center">
+                        {(athlete.forecast || []).slice(0, 7).map((score, idx) => {
+                          const colors = getReadinessColor(score);
+                          return (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "w-7 h-7 rounded text-white font-medium text-xs flex items-center justify-center opacity-75",
+                                colors.bg
+                              )}
+                            >
+                              {score}
+                            </div>
+                          );
+                        })}
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ============================================
+// ALERTS TAB
+// ============================================
+function AlertsTab({
+  alerts,
+  setAlerts
+}: {
+  alerts: Alert[];
+  setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
+}) {
+  const [filter, setFilter] = useState<'all' | AlertSeverity | 'resolved'>('all');
+
+  const getSeverityStyles = (severity: AlertSeverity) => {
+    switch (severity) {
+      case 'critical':
+        return {
+          card: 'bg-risk-red-bg border-l-risk-red',
+          icon: 'text-risk-red',
+          badge: 'bg-risk-red text-white',
+        };
+      case 'high':
+        return {
+          card: 'bg-warning/5 border-l-warning',
+          icon: 'text-warning',
+          badge: 'bg-warning text-white',
+        };
+      case 'medium':
+        return {
+          card: 'bg-risk-yellow-bg border-l-risk-yellow',
+          icon: 'text-risk-yellow',
+          badge: 'bg-risk-yellow text-white',
+        };
+      default:
+        return {
+          card: 'bg-muted/50 border-l-border',
+          icon: 'text-muted-foreground',
+          badge: 'bg-muted text-muted-foreground',
+        };
+    }
+  };
+
+  const getStatusStyles = (status: Alert['status']) => {
+    switch (status) {
+      case 'active':
+        return 'bg-risk-red/10 text-risk-red';
+      case 'monitoring':
+        return 'bg-warning/10 text-warning';
+      case 'resolved':
+        return 'bg-risk-green/10 text-risk-green';
+    }
+  };
+
+  const getTimeAgo = (date: Date) => {
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  const handleMarkResolved = async (alertId: string) => {
+    try {
+      // Optimistically update UI
+      setAlerts(alerts.map(alert =>
+        alert.id === alertId ? { ...alert, status: 'resolved' as const } : alert
+      ));
+
+      // Call API to mark crisis alert as reviewed
+      const response = await fetch('/api/coach/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: alertId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark alert as resolved');
+      }
+    } catch (error) {
+      console.error('Error marking alert as resolved:', error);
+      // Revert optimistic update on failure
+      setAlerts(alerts.map(alert =>
+        alert.id === alertId ? { ...alert, status: 'active' as const } : alert
+      ));
+    }
+  };
+
+  const filteredAlerts = alerts.filter(alert => {
+    if (filter === 'all') return alert.status !== 'resolved';
+    if (filter === 'resolved') return alert.status === 'resolved';
+    return alert.severity === filter && alert.status !== 'resolved';
+  });
+
+  const activeAlerts = alerts.filter(a => a.status === 'active');
+  const criticalCount = activeAlerts.filter(a => a.severity === 'critical').length;
+  const highCount = activeAlerts.filter(a => a.severity === 'high').length;
+  const mediumCount = activeAlerts.filter(a => a.severity === 'medium').length;
+  const resolvedCount = alerts.filter(a => a.status === 'resolved').length;
+
+  return (
+    <>
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
+        <div className="card-elevated p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-risk-red" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Critical</p>
+              <p className="text-2xl font-bold text-risk-red">{criticalCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card-elevated p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">High</p>
+              <p className="text-2xl font-bold text-warning">{highCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card-elevated p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-risk-yellow/10 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-risk-yellow" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Medium</p>
+              <p className="text-2xl font-bold text-risk-yellow">{mediumCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card-elevated p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-risk-green/10 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-risk-green" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Resolved</p>
+              <p className="text-2xl font-bold text-risk-green">{resolvedCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="card-elevated overflow-hidden animate-slide-up">
+        <div className="flex items-center gap-2 p-4 border-b border-border overflow-x-auto">
+          <button
+            onClick={() => setFilter('all')}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+              filter === 'all'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            )}
+          >
+            All Active ({activeAlerts.length})
+          </button>
+          <button
+            onClick={() => setFilter('critical')}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+              filter === 'critical'
+                ? 'bg-risk-red text-white'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Critical ({criticalCount})
+          </button>
+          <button
+            onClick={() => setFilter('high')}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+              filter === 'high'
+                ? 'bg-warning text-white'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            )}
+          >
+            High ({highCount})
+          </button>
+          <button
+            onClick={() => setFilter('medium')}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+              filter === 'medium'
+                ? 'bg-risk-yellow text-white'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Medium ({mediumCount})
+          </button>
+          <button
+            onClick={() => setFilter('resolved')}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap',
+              filter === 'resolved'
+                ? 'bg-risk-green text-white'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Resolved
+          </button>
+        </div>
+
+        {/* Alerts List */}
+        <div className="p-4 space-y-3">
+          {filteredAlerts.length === 0 ? (
+            <div className="p-12 text-center">
+              <Shield className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+              <h3 className="font-medium text-foreground mb-1">
+                {alerts.length === 0 ? 'No Alerts' : 'No alerts found'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {alerts.length === 0
+                  ? 'Alerts will appear here when athletes need attention'
+                  : filter === 'resolved'
+                    ? 'No resolved alerts to display'
+                    : 'All athletes are doing well!'
+                }
+              </p>
+            </div>
+          ) : (
+            filteredAlerts.map((alert) => {
+              const styles = getSeverityStyles(alert.severity);
+              return (
+                <div
+                  key={alert.id}
+                  className={cn(
+                    'rounded-lg border-l-4 p-4 transition-shadow hover:shadow-md',
+                    styles.card
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <AlertTriangle className={cn('w-5 h-5', styles.icon)} />
+                        <Link
+                          href={`/coach/athletes/${alert.athleteId}`}
+                          className="font-semibold text-foreground hover:text-primary transition-colors"
+                        >
+                          {alert.athleteName}
+                        </Link>
+                        <span className={cn('px-2 py-0.5 rounded text-xs font-medium', styles.badge)}>
+                          {alert.severity.toUpperCase()}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                          {alert.type}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-foreground mb-3 ml-8">{alert.reason}</p>
+
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground ml-8">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{getTimeAgo(alert.timestamp)}</span>
+                        </div>
+                        <span className={cn('px-2 py-0.5 rounded capitalize', getStatusStyles(alert.status))}>
+                          {alert.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {alert.status !== 'resolved' && (
+                        <>
+                          <Link
+                            href={`/coach/athletes/${alert.athleteId}`}
+                            className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm text-center whitespace-nowrap flex items-center gap-1"
+                          >
+                            View
+                            <ChevronRight className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => handleMarkResolved(alert.id)}
+                            className="px-3 py-1.5 bg-risk-green text-white rounded-lg hover:bg-risk-green/90 transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-1"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            Resolve
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Quick Help */}
+      <div className="p-4 rounded-lg bg-info/5 border border-info/10 animate-slide-up">
+        <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+          <Shield className="w-4 h-4 text-info" />
+          Alert Response Guidelines
+        </h3>
+        <ul className="space-y-1.5 text-sm text-muted-foreground">
+          <li><span className="font-medium text-risk-red">Critical:</span> Immediate action required - contact athlete within 1 hour</li>
+          <li><span className="font-medium text-warning">High:</span> Address within 24 hours - schedule a check-in</li>
+          <li><span className="font-medium text-risk-yellow">Medium:</span> Monitor closely - review at next opportunity</li>
+        </ul>
+      </div>
+    </>
+  );
+}
+
+// ============================================
+// ALERT RULES TAB
+// ============================================
+function AlertRulesTab() {
+  return (
+    <div className="space-y-6 animate-slide-up">
+      {/* Intro */}
+      <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+        <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+          <Settings className="w-4 h-4 text-primary" />
+          Smart Alert Rules
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Create custom rules to proactively monitor your athletes. Rules automatically evaluate
+          conditions like low readiness scores, missed check-ins, or concerning chat patterns
+          and generate alerts when triggered.
+        </p>
+      </div>
+
+      {/* Alert Rules Panel */}
+      <AlertRulesPanel />
+
+      {/* Quick Help */}
+      <div className="p-4 rounded-lg bg-muted/50 border border-border">
+        <h3 className="font-medium text-foreground mb-2">Rule Types</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div>
+            <p className="font-medium text-foreground">Readiness Monitoring</p>
+            <p className="text-muted-foreground">Track scores dropping below thresholds or declining trends</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Engagement Tracking</p>
+            <p className="text-muted-foreground">Alert on missed check-ins or chat inactivity</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Sentiment Analysis</p>
+            <p className="text-muted-foreground">Monitor for negative sentiment trends in conversations</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Topic Detection</p>
+            <p className="text-muted-foreground">Get notified when specific topics appear in chats</p>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ReadinessPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ReadinessPageContent />
+    </Suspense>
   );
 }

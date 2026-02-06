@@ -1,10 +1,18 @@
 # Multi-stage build for AI Sports Agent MCP Server
 # Optimized for production deployment with security best practices
+#
+# Deployment modes (set via REQUIREMENTS_FILE build arg):
+# - requirements.txt          (minimal: ~200MB, chat/voice/coach only)
+# - requirements-staging.txt  (staging: ~650MB, + ML predictions)
+# - requirements-full.txt     (full: ~8GB, + knowledge base RAG)
 
 # ============================================
 # Builder Stage
 # ============================================
 FROM python:3.11-slim AS builder
+
+# Build argument for requirements file selection
+ARG REQUIREMENTS_FILE=requirements.txt
 
 # Install system dependencies needed for building Python packages
 RUN apt-get update && apt-get install -y \
@@ -16,8 +24,8 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements file
-COPY services/mcp-server/requirements.txt .
+# Copy the selected requirements file
+COPY services/mcp-server/${REQUIREMENTS_FILE} ./requirements.txt
 
 # Install Python dependencies to user directory (no root needed)
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -44,6 +52,9 @@ WORKDIR /app
 
 # Copy application code
 COPY services/mcp-server/app ./app
+
+# Copy trained ML models (XGBoost predictor, slump detector)
+COPY services/mcp-server/models ./models
 
 # Expose port (Railway will set PORT dynamically)
 EXPOSE 8000

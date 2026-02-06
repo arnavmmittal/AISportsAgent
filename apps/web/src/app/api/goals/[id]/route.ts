@@ -17,7 +17,7 @@ export async function PATCH(
 
     const { id: goalId } = await params;
     const body = await req.json();
-    const { progress, status, title, description, targetDate } = body;
+    const { completionPct, status, title, description, targetDate } = body;
 
     // Get the goal to verify ownership
     const goal = await prisma.goal.findUnique({
@@ -39,15 +39,19 @@ export async function PATCH(
       );
     }
 
+    // If goal is completed, set completedAt timestamp
+    const isNowCompleted = status === 'COMPLETED' && goal.status !== 'COMPLETED';
+
     // Update goal
     const updatedGoal = await prisma.goal.update({
       where: { id: goalId },
       data: {
-        ...(progress !== undefined && { progress }),
+        ...(completionPct !== undefined && { completionPct }),
         ...(status && { status }),
         ...(title && { title }),
         ...(description !== undefined && { description }),
         ...(targetDate !== undefined && { targetDate: targetDate ? new Date(targetDate) : null }),
+        ...(isNowCompleted && { completedAt: new Date() }),
       },
     });
 

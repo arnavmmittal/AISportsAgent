@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { getOrchestrator } from '@/agents';
 import { AgentContext, CrisisDetection } from '@/agents/core/types';
 import { v4 as uuidv4 } from 'uuid';
+import { sendCrisisAlertToCoaches, sendPushToUsers } from '@/lib/push-notifications';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -216,6 +217,7 @@ export class ChatService {
         include: {
           Athlete: {
             include: {
+              User: { select: { name: true } },
               CoachAthlete: {
                 where: { consentGranted: true },
                 select: { coachId: true },
@@ -252,13 +254,39 @@ export class ChatService {
         indicators: detection.indicators,
       });
 
-      // TODO: Send notifications to coaches (email/SMS)
-      // For now, just log it - implement notification service later
+      // Send push notifications to coaches for HIGH/CRITICAL severity
       if (detection.severity === 'CRITICAL' || detection.severity === 'HIGH') {
-        this.log('warn', 'HIGH PRIORITY - Notify coaches immediately', {
+        const coachIds = session.Athlete.CoachAthlete.map((r) => r.coachId);
+        const athleteName = session.Athlete.User?.name || 'An athlete';
+
+        this.log('info', 'Sending crisis alert push notifications', {
           alertId: alert.id,
-          coaches: session.Athlete.CoachAthlete.map((r) => r.coachId),
+          coachCount: coachIds.length,
+          severity: detection.severity,
         });
+
+        // Send push notification to all linked coaches
+        if (coachIds.length > 0) {
+          try {
+            const result = await sendCrisisAlertToCoaches(
+              athleteName,
+              detection.severity,
+              alert.id
+            );
+
+            this.log('info', 'Crisis push notifications sent', {
+              alertId: alert.id,
+              successful: result.successful,
+              failed: result.failed,
+            });
+          } catch (pushError) {
+            // Don't throw - alert was created, push notification is best-effort
+            this.log('error', 'Failed to send crisis push notifications', {
+              alertId: alert.id,
+              error: pushError instanceof Error ? pushError.message : 'Unknown error',
+            });
+          }
+        }
       }
     } catch (error) {
       this.log('error', 'Failed to create crisis alert', {

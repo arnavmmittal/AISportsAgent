@@ -17,15 +17,17 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from '@/lib/sentry-stub';
 
 export interface AuditLogData {
   userId: string;
-  action: 'READ' | 'WRITE' | 'UPDATE' | 'DELETE' | 'EXPORT';
-  resource: string;
-  resourceId: string;
-  metadata?: Record<string, any>;
-  schoolId: string;
+  userRole: 'ATHLETE' | 'COACH' | 'ADMIN';
+  action: string;
+  resourceType: string;
+  resourceId?: string;
+  athleteId?: string;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
 /**
@@ -37,26 +39,20 @@ export async function logAudit(data: AuditLogData): Promise<void> {
     await prisma.auditLog.create({
       data: {
         userId: data.userId,
+        userRole: data.userRole,
         action: data.action,
-        resource: data.resource,
+        resourceType: data.resourceType,
         resourceId: data.resourceId,
-        metadata: data.metadata || {},
-        schoolId: data.schoolId,
+        athleteId: data.athleteId,
+        ipAddress: data.ipAddress,
+        userAgent: data.userAgent,
       },
     });
   } catch (error) {
     // Don't fail the request if audit log fails
     // But DO alert on this (critical for compliance)
     console.error('❌ Audit log failed:', error);
-    Sentry.captureException(error, {
-      level: 'error',
-      tags: {
-        critical: 'audit_log_failure',
-        action: data.action,
-        resource: data.resource,
-      },
-      extra: data,
-    });
+    Sentry.captureException(error as Error);
   }
 }
 
@@ -66,22 +62,16 @@ export async function logAudit(data: AuditLogData): Promise<void> {
 export async function logCoachAccess(data: {
   coachId: string;
   athleteId: string;
-  resource: string;
-  resourceIds: string[];
-  schoolId: string;
-  metadata?: Record<string, any>;
+  resourceType: string;
+  resourceId?: string;
 }): Promise<void> {
   await logAudit({
     userId: data.coachId,
+    userRole: 'COACH',
     action: 'READ',
-    resource: data.resource,
-    resourceId: data.resourceIds.join(','),
-    metadata: {
-      ...data.metadata,
-      athleteId: data.athleteId,
-      resourceCount: data.resourceIds.length,
-    },
-    schoolId: data.schoolId,
+    resourceType: data.resourceType,
+    resourceId: data.resourceId,
+    athleteId: data.athleteId,
   });
 }
 
@@ -89,26 +79,19 @@ export async function logCoachAccess(data: {
  * Log consent change
  */
 export async function logConsentChange(data: {
-  userId: string; // Who made the change (athlete)
-  coachId: string;
+  userId: string;
   athleteId: string;
+  coachId: string;
   previousValue: boolean;
   newValue: boolean;
-  schoolId: string;
 }): Promise<void> {
   await logAudit({
     userId: data.userId,
+    userRole: 'ATHLETE',
     action: 'UPDATE',
-    resource: 'CoachAthleteRelation',
+    resourceType: 'CoachAthleteRelation',
     resourceId: `${data.coachId}-${data.athleteId}`,
-    metadata: {
-      coachId: data.coachId,
-      athleteId: data.athleteId,
-      field: 'consentGranted',
-      previousValue: data.previousValue,
-      newValue: data.newValue,
-    },
-    schoolId: data.schoolId,
+    athleteId: data.athleteId,
   });
 }
 
@@ -118,31 +101,23 @@ export async function logConsentChange(data: {
 export async function logCrisisAlertReview(data: {
   coachId: string;
   alertId: string;
-  severity: string;
   athleteId: string;
-  schoolId: string;
 }): Promise<void> {
   await logAudit({
     userId: data.coachId,
+    userRole: 'COACH',
     action: 'UPDATE',
-    resource: 'CrisisAlert',
+    resourceType: 'CrisisAlert',
     resourceId: data.alertId,
-    metadata: {
-      severity: data.severity,
-      reviewed: true,
-      reviewedBy: data.coachId,
-      athleteId: data.athleteId,
-    },
-    schoolId: data.schoolId,
+    athleteId: data.athleteId,
   });
 }
 
 /**
- * Get recent audit logs for a school
+ * Get recent audit logs
  * Used in admin dashboard for compliance review
  */
 export async function getRecentAuditLogs(data: {
-  schoolId: string;
   limit?: number;
   hours?: number;
 }): Promise<any[]> {
@@ -153,22 +128,12 @@ export async function getRecentAuditLogs(data: {
 
   const logs = await prisma.auditLog.findMany({
     where: {
-      schoolId: data.schoolId,
-      createdAt: {
+      timestamp: {
         gte: since,
       },
     },
-    include: {
-      User: {
-        select: {
-          name: true,
-          email: true,
-          role: true,
-        },
-      },
-    },
     orderBy: {
-      createdAt: 'desc',
+      timestamp: 'desc',
     },
     take: limit,
   });
@@ -182,35 +147,19 @@ export async function getRecentAuditLogs(data: {
  */
 export async function getAthleteAuditLogs(data: {
   athleteId: string;
-  schoolId: string;
   limit?: number;
 }): Promise<any[]> {
   const limit = data.limit || 50;
 
   const logs = await prisma.auditLog.findMany({
     where: {
-      schoolId: data.schoolId,
       OR: [
-        { userId: data.athleteId }, // Actions by the athlete
-        {
-          // Actions on the athlete's data
-          metadata: {
-            path: ['athleteId'],
-            equals: data.athleteId,
-          },
-        },
+        { userId: data.athleteId },
+        { athleteId: data.athleteId },
       ],
     },
-    include: {
-      User: {
-        select: {
-          name: true,
-          role: true,
-        },
-      },
-    },
     orderBy: {
-      createdAt: 'desc',
+      timestamp: 'desc',
     },
     take: limit,
   });
@@ -220,35 +169,19 @@ export async function getAthleteAuditLogs(data: {
 
 /**
  * Simplified middleware wrapper for routes that need audit logging
- * Usage:
- *
- * export const GET = withAuditLog(handler, {
- *   resource: 'ChatSession',
- *   requireConsent: true,
- * });
  */
 export function withAuditLog(
-  handler: Function,
+  handler: (req: Request, context: unknown) => Promise<Response>,
   options: {
-    resource: string;
+    resourceType: string;
     requireConsent?: boolean;
   }
 ) {
-  return async (req: Request, context: any) => {
-    const startTime = Date.now();
-
-    // For pilot: simplified version
-    // Full version would extract session, verify consent, etc.
-
+  return async (req: Request, context: unknown) => {
     try {
       const response = await handler(req, context);
-
-      // Log successful access
-      // (In full implementation, would extract user from session)
-
       return response;
     } catch (error) {
-      // Log failed access attempt
       throw error;
     }
   };

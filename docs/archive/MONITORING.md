@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers the complete monitoring and alerting setup for AI Sports Agent in production.
+This guide covers the complete monitoring and alerting setup for Flow Sports Coach in production.
 
 **Monitoring Stack:**
 1. **Sentry** - Error tracking and performance monitoring ($26/month)
@@ -23,12 +23,12 @@ This guide covers the complete monitoring and alerting setup for AI Sports Agent
 2. **Create new project**:
    - Framework: Next.js
    - Platform: JavaScript
-   - Name: "aisportsagent-web" (production)
-   - Name: "aisportsagent-staging" (staging)
+   - Name: "flowsportscoach-web" (production)
+   - Name: "flowsportscoach-staging" (staging)
 
 3. **Get DSN (Data Source Name)**:
    ```
-   Settings → Projects → aisportsagent-web → Client Keys (DSN)
+   Settings → Projects → flowsportscoach-web → Client Keys (DSN)
 
    Example DSN:
    https://abc123@o456789.ingest.sentry.io/1234567
@@ -285,19 +285,19 @@ if (!isValid) {
 
 **Monitor 1: Main Application**
 - Type: HTTP(s)
-- URL: `https://app.aisportsagent.com`
+- URL: `https://app.flowsportscoach.com`
 - Monitoring Interval: 5 minutes
 - Alert Contacts: `your-email@university.edu`
 
 **Monitor 2: API Health Check**
 - Type: HTTP(s)
-- URL: `https://app.aisportsagent.com/api/health`
+- URL: `https://app.flowsportscoach.com/api/health`
 - Expected Status Code: `200`
 - Monitoring Interval: 5 minutes
 
 **Monitor 3: Database Connectivity**
 - Type: HTTP(s)
-- URL: `https://app.aisportsagent.com/api/health/db`
+- URL: `https://app.flowsportscoach.com/api/health/db`
 - Expected Response: `{"status":"healthy"}`
 - Monitoring Interval: 5 minutes
 
@@ -395,10 +395,10 @@ console.log(`School ${schoolId} spent $${usage.costUSD} today`);
 # Look for: Common stack trace, affected endpoint, user count
 
 # 3. Check recent deploys
-vercel list app.aisportsagent.com
+vercel list app.flowsportscoach.com
 
 # 4. Rollback if needed
-vercel rollback app.aisportsagent.com
+vercel rollback app.flowsportscoach.com
 ```
 
 **2. Performance Degradation:**
@@ -418,7 +418,7 @@ vercel rollback app.aisportsagent.com
 **3. Downtime Alert (UptimeRobot):**
 ```bash
 # 1. Verify downtime
-curl -I https://app.aisportsagent.com
+curl -I https://app.flowsportscoach.com
 # Expected: HTTP/2 200
 
 # 2. Check Vercel deployment status
@@ -458,7 +458,7 @@ For FERPA/HIPAA compliance:
 
 ```bash
 # Generate audit log report
-curl -X POST https://app.aisportsagent.com/api/admin/audit-logs \
+curl -X POST https://app.flowsportscoach.com/api/admin/audit-logs \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{
     "startDate": "2025-01-01",
@@ -490,7 +490,7 @@ export async function GET() {
 
 ```bash
 # Trigger test error
-curl https://app.aisportsagent.com/api/test-sentry
+curl https://app.flowsportscoach.com/api/test-sentry
 
 # Expected: Error appears in Sentry dashboard within 1 minute
 # Expected: Alert email sent (if configured)
@@ -518,7 +518,7 @@ export async function GET() {
 # Make 1000 chat requests in 1 minute
 
 for i in {1..1000}; do
-  curl -X POST https://staging.aisportsagent.com/api/chat/stream \
+  curl -X POST https://staging.flowsportscoach.com/api/chat/stream \
     -H "Authorization: Bearer $TEST_TOKEN" \
     -d '{"message": "test"}'
 done

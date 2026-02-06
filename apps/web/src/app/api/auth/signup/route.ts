@@ -1,11 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+/**
+ * User Registration API
+ *
+ * POST - Create a new user account with email verification
+ *
+ * Security features:
+ * - Input validation via Zod schema
+ * - XSS prevention via sanitization
+ * - Strong password requirements
+ * - Email verification required
+ * - Rate limiting (TODO: implement via middleware)
+ */
 
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 import { signupSchema } from '@/lib/validation/auth';
+import { sendEmail } from '@/lib/email';
+import crypto from 'crypto';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Lazy init Supabase Admin client (only during runtime, not build)
 let supabaseAdminInstance: ReturnType<typeof createClient> | null = null;
@@ -31,21 +46,15 @@ function getSupabaseAdmin() {
 // Default school ID - in production, this would be determined by subdomain or user selection
 const DEFAULT_SCHOOL_ID = 'default-school';
 
+// Email verification token expiry: 24 hours
+const VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
 /**
  * POST /api/auth/signup
- * DISABLED - Only seeded users can log in (coach@uw.edu and athlete1-150@uw.edu)
+ * Create a new user account
  */
 export async function POST(request: NextRequest) {
-  return NextResponse.json(
-    {
-      error: 'Registration is disabled. Please use your assigned credentials.',
-      message: 'Contact your administrator for access.'
-    },
-    { status: 403 }
-  );
-
-  // Original signup code disabled below
-  /* try {
+  try {
     const body = await request.json();
 
     // Validate input
@@ -68,17 +77,23 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
+      // Don't reveal if user exists - security best practice
       return NextResponse.json(
-        { error: 'An account with this email already exists' },
-        { status: 409 }
+        {
+          success: true,
+          message: 'If this email is not already registered, you will receive a verification email.',
+        },
+        { status: 200 }
       );
     }
 
-    // Create user in Supabase Auth
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Create user in Supabase Auth (unverified initially)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirm email for now
+      email_confirm: false, // Require email verification
       user_metadata: {
         name,
         role,
@@ -86,7 +101,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError || !authData.user) {
-      console.error('Supabase auth error:', authError);
+      console.error('[Signup] Supabase auth error:', authError);
       return NextResponse.json(
         {
           error: authError?.message || 'Failed to create authentication account',
@@ -111,6 +126,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_MS);
+
     // Create user and role-specific record in database
     const user = await prisma.$transaction(async (tx) => {
       // Create base user with Supabase user ID
@@ -123,6 +142,7 @@ export async function POST(request: NextRequest) {
           role,
           schoolId: school!.id,
           onboardingCompleted: false,
+          emailVerified: null, // Not verified yet
         },
         select: {
           id: true,
@@ -154,13 +174,80 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Store verification token
+      await tx.verificationToken.create({
+        data: {
+          identifier: email,
+          token: verificationToken,
+          expires: tokenExpiry,
+        },
+      });
+
       return newUser;
     });
+
+    // Send verification email
+    const verifyUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+
+    await sendEmail({
+      to: email,
+      subject: 'Verify Your Email - Flow Sports Coach',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 12px 24px; border-radius: 8px;">
+              <span style="color: white; font-weight: bold; font-size: 18px;">Flow Sports Coach</span>
+            </div>
+          </div>
+
+          <h2 style="color: #18181b; text-align: center;">Welcome, ${name}!</h2>
+
+          <p style="color: #52525b; line-height: 1.6;">
+            Thanks for signing up for Flow Sports Coach. Please verify your email address to get started with your mental performance journey.
+          </p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verifyUrl}"
+               style="display: inline-block;
+                      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                      color: white;
+                      padding: 14px 32px;
+                      text-decoration: none;
+                      border-radius: 8px;
+                      font-weight: 600;
+                      font-size: 16px;">
+              Verify Email Address
+            </a>
+          </div>
+
+          <p style="color: #a1a1aa; font-size: 14px; text-align: center;">
+            This link will expire in 24 hours.
+          </p>
+
+          <p style="color: #a1a1aa; font-size: 14px; text-align: center;">
+            Or copy this link: ${verifyUrl}
+          </p>
+
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+
+          <p style="color: #a1a1aa; font-size: 12px; text-align: center;">
+            If you didn't create an account, you can safely ignore this email.
+          </p>
+
+          <p style="color: #a1a1aa; font-size: 12px; text-align: center;">
+            Flow Sports Coach - Mental Performance Support for Athletes
+          </p>
+        </div>
+      `,
+      text: `Welcome to Flow Sports Coach, ${name}!\n\nPlease verify your email address by visiting:\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create an account, you can safely ignore this email.`,
+    });
+
+    console.log(`[Signup] User created: ${user.email} (${user.role}), verification email sent`);
 
     return NextResponse.json(
       {
         success: true,
-        message: 'Account created successfully',
+        message: 'Account created successfully! Please check your email to verify your account.',
         user: {
           id: user.id,
           email: user.email,
@@ -171,7 +258,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error('[Signup] Error:', error);
 
     // Handle Prisma errors
     if (error instanceof Error) {
@@ -195,5 +282,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-  */ // End of disabled signup code
 }

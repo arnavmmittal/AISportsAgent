@@ -1,10 +1,10 @@
-# AI Sports Agent - Mobile App
+# Flow Sports Coach - Mobile App
 
-React Native mobile application for AI Sports Agent, providing 24/7 mental performance support for collegiate athletes.
+React Native mobile application for Flow Sports Coach, providing 24/7 mental performance support for collegiate athletes.
 
 ## Overview
 
-This is a native iOS and Android app built with Expo and React Native. It provides the core features of AI Sports Agent in a mobile-optimized interface.
+This is a native iOS and Android app built with Expo and React Native. It provides the core features of Flow Sports Coach in a mobile-optimized interface.
 
 ### Key Features
 
@@ -374,7 +374,7 @@ Proprietary - University of Washington
 
 For issues or questions:
 - Email: support@sportsagent.com
-- GitHub Issues: https://github.com/arnavmmittal/AISportsAgent/issues
+- GitHub Issues: https://github.com/arnavmmittal/FlowSportsCoach/issues
 
 ---
 

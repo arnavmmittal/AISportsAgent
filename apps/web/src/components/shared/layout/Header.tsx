@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth, signOut } from '@/hooks/useAuth';
 import { usePathname, useRouter } from 'next/navigation';
 import { NotificationBell } from '@/components/coach/NotificationBell';
 
 export function Header() {
-  const { data: session, status } = useSession();
+  const { user, isLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -34,11 +34,11 @@ export function Header() {
   ];
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/' });
+    await signOut();
   };
 
   const handleDashboardRedirect = () => {
-    if (session?.user?.role === 'COACH') {
+    if (user?.role === 'COACH') {
       router.push('/coach/dashboard');
     } else {
       router.push('/dashboard');
@@ -46,9 +46,9 @@ export function Header() {
   };
 
   // For authenticated users
-  if (session) {
-    const links = session.user?.role === 'COACH' ? coachLinks : athleteLinks;
-    const roleDisplay = session.user?.role === 'COACH' ? 'Coach' : 'Athlete';
+  if (user) {
+    const links = user.role === 'COACH' ? coachLinks : athleteLinks;
+    const roleDisplay = user.role === 'COACH' ? 'Coach' : 'Athlete';
 
     return (
       <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
@@ -61,7 +61,7 @@ export function Header() {
                 className="flex-shrink-0 flex items-center group"
               >
                 <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
-                  AI Sports Agent
+                  Flow Sports Coach
                 </span>
               </button>
               <div className="hidden md:ml-8 md:flex md:space-x-1">
@@ -85,7 +85,7 @@ export function Header() {
             {/* Desktop User Menu */}
             <div className="hidden md:flex md:items-center md:space-x-4">
               {/* Notification Bell (Coach Only) */}
-              {session.user?.role === 'COACH' && <NotificationBell />}
+              {user?.role === 'COACH' && <NotificationBell />}
 
               <div className="relative">
                 <button
@@ -94,10 +94,10 @@ export function Header() {
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm">
-                      {session.user.name?.charAt(0).toUpperCase()}
+                      {user.name?.charAt(0).toUpperCase()}
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-medium text-foreground">{session.user.name}</p>
+                      <p className="text-sm font-medium text-foreground">{user.name}</p>
                       <p className="text-xs text-muted-foreground">{roleDisplay}</p>
                     </div>
                   </div>
@@ -110,11 +110,11 @@ export function Header() {
                 {isProfileMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 glass rounded-lg shadow-lg border border-border py-1">
                     <div className="px-4 py-3 border-b border-border">
-                      <p className="text-sm font-medium text-foreground">{session.user.name}</p>
-                      <p className="text-xs text-muted-foreground">{session.user.email}</p>
+                      <p className="text-sm font-medium text-foreground">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
                     <Link
-                      href={session.user?.role === 'COACH' ? '/coach/settings' : '/settings'}
+                      href={user?.role === 'COACH' ? '/coach/settings' : '/settings'}
                       className="block px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
                       onClick={() => setIsProfileMenuOpen(false)}
                     >
@@ -174,15 +174,15 @@ export function Header() {
             <div className="pt-4 pb-3 border-t border-border">
               <div className="flex items-center px-4 mb-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold">
-                  {session.user.name?.charAt(0).toUpperCase()}
+                  {user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-foreground">{session.user.name}</p>
+                  <p className="text-sm font-medium text-foreground">{user.name}</p>
                   <p className="text-xs text-muted-foreground">{roleDisplay}</p>
                 </div>
               </div>
               <Link
-                href={session.user?.role === 'COACH' ? '/coach/settings' : '/settings'}
+                href={user?.role === 'COACH' ? '/coach/settings' : '/settings'}
                 className="block px-4 py-2 text-base font-medium text-muted-foreground hover:bg-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -211,7 +211,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center group">
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
-              AI Sports Agent
+              Flow Sports Coach
             </span>
           </Link>
 

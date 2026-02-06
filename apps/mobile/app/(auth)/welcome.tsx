@@ -19,7 +19,7 @@ export default function Welcome() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.mainHeading}>AI Sports Agent</Text>
+          <Text style={styles.mainHeading}>Flow Sports Coach</Text>
           <Text style={styles.subHeading}>Mental Performance Made Accessible</Text>
 
           <Text style={styles.description}>

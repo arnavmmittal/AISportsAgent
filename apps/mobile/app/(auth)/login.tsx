@@ -121,7 +121,7 @@ export default function LoginScreen() {
           <View style={styles.logoContainer}>
             <Ionicons name="trophy" size={48} color="#fff" />
           </View>
-          <Text style={styles.title}>AI Sports Agent</Text>
+          <Text style={styles.title}>Flow Sports Coach</Text>
           <Text style={styles.subtitle}>Your mental performance coach</Text>
         </Animated.View>
       </LinearGradient>
@@ -195,6 +195,17 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.forgotPassword}
+          onPress={() => {
+            router.push('/(auth)/forgot-password');
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }}
+          disabled={isLoading}
+        >
+          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={handleLogin}
@@ -408,6 +419,16 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     color: Colors.error,
+    fontSize: Typography.sm,
+    fontWeight: Typography.medium,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: Spacing.md,
+    marginTop: -Spacing.sm,
+  },
+  forgotPasswordText: {
+    color: Colors.primary,
     fontSize: Typography.sm,
     fontWeight: Typography.medium,
   },

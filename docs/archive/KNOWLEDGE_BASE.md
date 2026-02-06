@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Sports Agent uses a **hybrid knowledge base system** for Retrieval-Augmented Generation (RAG):
+The Flow Sports Coach uses a **hybrid knowledge base system** for Retrieval-Augmented Generation (RAG):
 
 1. **PostgreSQL (Supabase)**: Stores knowledge chunks with metadata
 2. **OpenAI Embeddings**: Vector representations for semantic search
@@ -12,7 +12,7 @@ The AI Sports Agent uses a **hybrid knowledge base system** for Retrieval-Augmen
 
 ### ✅ What's Already Done
 
-- **PDF Parsed**: `AISportsAgentKnowledgeBase.pdf` (508KB)
+- **PDF Parsed**: `FlowSportsCoachKnowledgeBase.pdf` (508KB)
 - **Chunks Generated**: `chunks.json` (86KB, pre-processed)
 - **Ingestion Script**: Ready to run (see below)
 - **API Endpoint**: `/api/admin/knowledge/ingest` for adding new content
@@ -57,7 +57,7 @@ pnpm tsx scripts/ingest-knowledge-base.ts
 📚 Starting Knowledge Base Ingestion...
 
 📖 Loaded PDF chunks:
-  Source: AISportsAgentKnowledgeBase.pdf
+  Source: FlowSportsCoachKnowledgeBase.pdf
   Pages: 42
   Chunks: 127
   Characters: 245,892
@@ -89,7 +89,7 @@ By Category:
   GENERAL: 6
 
 By Source:
-  AISportsAgentKnowledgeBase.pdf: 127
+  FlowSportsCoachKnowledgeBase.pdf: 127
 ```
 
 ### 3. Verify Ingestion
@@ -208,7 +208,7 @@ Each knowledge chunk includes:
   id: "kb_1704394800_abc123",          // Unique ID
   title: "First 100 chars of content...", // Auto-generated
   content: "Full text content",        // The actual knowledge
-  source: "AISportsAgentKB.pdf",       // Source document
+  source: "FlowSportsCoachKB.pdf",       // Source document
   sourceUrl: "page-12",                // Reference (page number or URL)
   embedding: [0.123, -0.456, ...],     // 1536-dim vector (OpenAI)
   category: "MINDFULNESS",             // Auto-categorized

@@ -1,10 +1,10 @@
-# AI Sports Agent
+# Flow Sports Coach
 
 An intelligent, evidence-based virtual sports psychology assistant designed for collegiate athletes and their teams.
 
 ## Overview
 
-The AI Sports Agent provides athletes with 24/7 access to mental performance tools, emotional support, and cognitive-behavioral insights through a conversational interface. The system is designed to complement (not replace) human sports psychologists by extending their reach and ensuring athletes have support when university resources are limited.
+The Flow Sports Coach provides athletes with 24/7 access to mental performance tools, emotional support, and cognitive-behavioral insights through a conversational interface. The system is designed to complement (not replace) human sports psychologists by extending their reach and ensuring athletes have support when university resources are limited.
 
 ### Core Features
 
@@ -72,7 +72,7 @@ npm --version   # Should show v10.x.x or higher
 ### 1. Install Dependencies
 
 ```bash
-cd ~/Desktop/SportsAgent/ai-sports-agent
+cd ~/Desktop/SportsAgent/flow-sports-coach
 npm install
 ```
 
@@ -141,7 +141,7 @@ Visit [http://localhost:3000](http://localhost:3000)
 ## Project Structure
 
 ```
-ai-sports-agent/
+flow-sports-coach/
 ├── src/
 │   ├── app/                         # Next.js App Router
 │   │   ├── (athlete)/               # Athlete routes

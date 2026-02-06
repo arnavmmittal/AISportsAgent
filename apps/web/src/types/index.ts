@@ -1,4 +1,4 @@
-// Type definitions for the AI Sports Agent application
+// Type definitions for the Flow Sports Coach application
 
 import { User, Role, Athlete, Coach, ChatSession, Message, MessageRole } from '@prisma/client'
 

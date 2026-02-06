@@ -6,7 +6,7 @@
  * Features:
  * - Team overview cards (GREEN/YELLOW/RED counts)
  * - Game date selector (for pre-game readiness 24-48hrs before)
- * - Real-time data fetching from MCP backend
+ * - Real-time data fetching from API backend
  * - TeamReadinessTable with all athletes
  * - At-risk athlete highlights
  * - Auto-refresh every 5 minutes
@@ -57,26 +57,37 @@ export function ReadinessDashboard({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  // Fetch team readiness data from MCP backend
+  // Fetch team readiness data from API
   const fetchReadinessData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const url = new URL('http://localhost:8000/api/analytics/readiness/team');
-      url.searchParams.set('sport', sport);
-      url.searchParams.set('school_id', schoolId);
-      url.searchParams.set('game_date', gameDate);
+      // Use local API endpoint
+      const params = new URLSearchParams({
+        sport,
+        school_id: schoolId,
+        game_date: gameDate,
+      });
 
-      const response = await fetch(url.toString());
+      const response = await fetch(`/api/coach/dashboard?${params.toString()}`);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to fetch readiness data');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch readiness data');
       }
 
       const responseData = await response.json();
-      setData(responseData);
+      // Transform dashboard data to readiness format (matching TeamReadinessResponse interface)
+      setData({
+        sport: sport,
+        gameDate: gameDate,
+        totalAthletes: responseData.summary?.total_athletes || 0,
+        greenCount: responseData.summary?.green_count || 0,
+        yellowCount: responseData.summary?.yellow_count || 0,
+        redCount: responseData.summary?.red_count || 0,
+        athletes: responseData.athletes || [],
+      });
       setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load readiness data');

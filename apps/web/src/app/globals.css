@@ -2,183 +2,603 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   AI SPORTS AGENT - PROFESSIONAL DESIGN SYSTEM v2.0
+   Enterprise-grade design system for mental performance platform
+   Target: 5M+ users, institutional clients ($100-200k/year)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 :root {
-  --radius: 0.75rem;
-  /* AI Sports Agent - Premium Athletic Design System (Lovable) */
-  /* Primary - Deep Blue (Trust, Focus, Professionalism) */
-  --primary: 217 91% 40%; /* #1E40AF */
-  --primary-foreground: 210 40% 98%;
+  --radius: 0.625rem;
 
-  /* Secondary - Bright Blue */
-  --secondary: 217 91% 60%; /* #3B82F6 */
-  --secondary-foreground: 0 0% 100%;
+  /* ─────────────────────────────────────────────────────────────────────────
+     LIGHT MODE (Default) - Calming, Professional, Trustworthy
+     Designed for mental health context: warm whites, soft contrasts
+     ───────────────────────────────────────────────────────────────────────── */
 
-  /* Accent - Light Blue */
-  --accent: 213 94% 68%;
-  --accent-foreground: 220 47% 11%;
+  /* Primary - Deep Indigo (Trust, Focus, Professionalism) */
+  --primary: 226 70% 45%;
+  --primary-foreground: 0 0% 100%;
 
-  /* Backgrounds - Dark with blue tint */
-  --background: 210 29% 8%; /* #0F1419 */
-  --foreground: 0 0% 100%;
+  /* Secondary - Soft Blue (Supporting, Calm) */
+  --secondary: 214 32% 91%;
+  --secondary-foreground: 222 47% 11%;
+
+  /* Accent - Warm Amber (Energy, Optimism) */
+  --accent: 38 92% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Backgrounds - Warm off-whites (reduces eye strain, feels calming) */
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
 
   /* Card/Elevated surfaces */
-  --card: 217 33% 17%; /* #1E293B */
-  --card-foreground: 0 0% 100%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
 
   /* Popover */
-  --popover: 217 33% 17%;
-  --popover-foreground: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
 
   /* Muted surfaces */
-  --muted: 215 25% 27%; /* #334155 */
-  --muted-foreground: 215 20% 65%;
-
-  /* Chrome Silver */
-  --chrome: 0 0% 75%; /* #C0C0C0 */
-  --chrome-foreground: 220 47% 11%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 16% 47%;
 
   /* Borders */
-  --border: 217 33% 25%;
-  --input: 217 33% 20%;
-  --ring: 217 91% 60%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 226 70% 45%;
 
-  /* Status Colors - Professional Chrome/Silver/Blue Palette */
-  --success: 213 94% 68%; /* Light Blue */
+  /* ─────────────────────────────────────────────────────────────────────────
+     SEMANTIC STATUS COLORS - Critical for data communication
+     WCAG 2.1 AA compliant contrast ratios
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /* Success - Green (Positive outcomes, healthy states) */
+  --success: 142 71% 45%;
   --success-foreground: 0 0% 100%;
-  --warning: 220 13% 65%; /* Silver */
-  --warning-foreground: 0 0% 100%;
-  --destructive: 220 13% 34%; /* Steel */
+  --success-muted: 142 76% 94%;
+
+  /* Warning - Amber (Attention needed, caution) */
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
+  --warning-muted: 48 96% 89%;
+
+  /* Destructive/Error - Red (Critical issues, errors) */
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --info: 217 91% 60%; /* Bright Blue */
+  --destructive-muted: 0 86% 97%;
+
+  /* Info - Blue (Informational, neutral alerts) */
+  --info: 199 89% 48%;
   --info-foreground: 0 0% 100%;
+  --info-muted: 199 95% 93%;
 
-  /* Chart colors for analytics - Monochromatic Blue Scale */
-  --chart-1: 217 91% 40%; /* Deep Blue */
-  --chart-2: 217 91% 60%; /* Bright Blue */
-  --chart-3: 213 94% 68%; /* Light Blue */
-  --chart-4: 220 13% 65%; /* Silver */
-  --chart-5: 0 0% 75%; /* Chrome */
+  /* ─────────────────────────────────────────────────────────────────────────
+     READINESS TRAFFIC LIGHT SYSTEM
+     Universal understanding: Green = Go, Yellow = Caution, Red = Stop
+     ───────────────────────────────────────────────────────────────────────── */
 
-  /* Sidebar (for coach dashboard) */
-  --sidebar: 210 29% 8%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 217 91% 60%;
+  --readiness-green: 142 71% 45%;
+  --readiness-green-bg: 142 76% 94%;
+  --readiness-yellow: 45 93% 47%;
+  --readiness-yellow-bg: 48 96% 89%;
+  --readiness-red: 0 72% 51%;
+  --readiness-red-bg: 0 86% 97%;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     RISK LEVEL COLORS
+     4-tier system: LOW → MODERATE → HIGH → CRITICAL
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --risk-low: 142 71% 45%;
+  --risk-low-bg: 142 76% 94%;
+  --risk-moderate: 45 93% 47%;
+  --risk-moderate-bg: 48 96% 89%;
+  --risk-high: 25 95% 53%;
+  --risk-high-bg: 33 100% 93%;
+  --risk-critical: 0 72% 51%;
+  --risk-critical-bg: 0 86% 97%;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     CHART & DATA VISUALIZATION PALETTE
+     Accessible, distinguishable colors for analytics
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --chart-1: 226 70% 45%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 280 67% 53%;
+  --chart-5: 199 89% 48%;
+  --chart-6: 346 77% 49%;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     SIDEBAR (Coach Dashboard)
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 226 70% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217 33% 17%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 217 33% 25%;
-  --sidebar-ring: 217 91% 60%;
+  --sidebar-accent: 210 20% 96%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-border: 214 32% 91%;
+  --sidebar-ring: 226 70% 45%;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     ATHLETE ARCHETYPE COLORS
+     Distinct identification for 8 behavioral patterns
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --archetype-overthinker: 280 67% 53%;
+  --archetype-burnout: 0 72% 51%;
+  --archetype-momentum: 142 71% 45%;
+  --archetype-inconsistent: 45 93% 47%;
+  --archetype-avoider: 25 95% 53%;
+  --archetype-resilient: 199 89% 48%;
+  --archetype-lost: 215 16% 47%;
+  --archetype-perfectionist: 226 70% 45%;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE - Premium, Focused, Professional
+   Designed for late-night use by athletes and coaches
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 .dark {
-  /* AI Sports Agent - Premium Athletic Design System (Lovable) */
-  /* Same colors as light mode - already dark theme */
-  --primary: 217 91% 40%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 217 91% 60%;
-  --secondary-foreground: 0 0% 100%;
-  --accent: 213 94% 68%;
-  --accent-foreground: 220 47% 11%;
-  --background: 210 29% 8%;
-  --foreground: 0 0% 100%;
-  --card: 217 33% 17%;
-  --card-foreground: 0 0% 100%;
-  --popover: 217 33% 17%;
-  --popover-foreground: 0 0% 100%;
-  --muted: 215 25% 27%;
+  /* Primary - Lighter for dark backgrounds */
+  --primary: 224 76% 63%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary */
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+
+  /* Accent */
+  --accent: 38 92% 55%;
+  --accent-foreground: 0 0% 0%;
+
+  /* Backgrounds - Deep blue-gray (easier on eyes than pure black) */
+  --background: 222 47% 8%;
+  --foreground: 210 40% 98%;
+
+  /* Card */
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+
+  /* Popover */
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+
+  /* Muted */
+  --muted: 217 33% 17%;
   --muted-foreground: 215 20% 65%;
-  --border: 217 33% 25%;
-  --input: 217 33% 20%;
-  --ring: 217 91% 60%;
-  --destructive: 0 84% 60%;
+
+  /* Borders */
+  --border: 217 33% 22%;
+  --input: 217 33% 17%;
+  --ring: 224 76% 63%;
+
+  /* Status Colors - Adjusted for dark mode visibility */
+  --success: 142 71% 55%;
+  --success-foreground: 0 0% 0%;
+  --success-muted: 142 50% 15%;
+
+  --warning: 45 93% 55%;
+  --warning-foreground: 0 0% 0%;
+  --warning-muted: 45 50% 15%;
+
+  --destructive: 0 72% 60%;
   --destructive-foreground: 0 0% 100%;
-  --sidebar: 210 29% 8%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 217 91% 60%;
+  --destructive-muted: 0 50% 15%;
+
+  --info: 199 89% 55%;
+  --info-foreground: 0 0% 0%;
+  --info-muted: 199 50% 15%;
+
+  /* Readiness - Adjusted for dark mode */
+  --readiness-green: 142 71% 55%;
+  --readiness-green-bg: 142 50% 15%;
+  --readiness-yellow: 45 93% 55%;
+  --readiness-yellow-bg: 45 50% 15%;
+  --readiness-red: 0 72% 60%;
+  --readiness-red-bg: 0 50% 15%;
+
+  /* Risk Levels - Dark mode */
+  --risk-low: 142 71% 55%;
+  --risk-low-bg: 142 50% 15%;
+  --risk-moderate: 45 93% 55%;
+  --risk-moderate-bg: 45 50% 15%;
+  --risk-high: 25 95% 60%;
+  --risk-high-bg: 25 50% 15%;
+  --risk-critical: 0 72% 60%;
+  --risk-critical-bg: 0 50% 15%;
+
+  /* Charts - Dark mode */
+  --chart-1: 224 76% 63%;
+  --chart-2: 142 71% 55%;
+  --chart-3: 38 92% 55%;
+  --chart-4: 280 67% 60%;
+  --chart-5: 199 89% 55%;
+  --chart-6: 346 77% 55%;
+
+  /* Sidebar - Dark mode */
+  --sidebar: 222 47% 8%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 224 76% 63%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 217 33% 17%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 217 33% 25%;
-  --sidebar-ring: 217 91% 60%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217 33% 22%;
+  --sidebar-ring: 224 76% 63%;
+
+  /* Archetypes - Dark mode */
+  --archetype-overthinker: 280 67% 60%;
+  --archetype-burnout: 0 72% 60%;
+  --archetype-momentum: 142 71% 55%;
+  --archetype-inconsistent: 45 93% 55%;
+  --archetype-avoider: 25 95% 60%;
+  --archetype-resilient: 199 89% 55%;
+  --archetype-lost: 215 20% 55%;
+  --archetype-perfectionist: 224 76% 63%;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE LAYER - Foundation Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    letter-spacing: -0.011em;
   }
 
-  /* Hide scrollbar for mobile feel */
-  ::-webkit-scrollbar {
-    display: none;
+  /* Professional Typography Scale */
+  h1, .h1 {
+    @apply text-3xl font-semibold tracking-tight;
+    line-height: 1.2;
   }
 
-  * {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  h2, .h2 {
+    @apply text-2xl font-semibold tracking-tight;
+    line-height: 1.25;
+  }
+
+  h3, .h3 {
+    @apply text-xl font-semibold;
+    line-height: 1.3;
+  }
+
+  h4, .h4 {
+    @apply text-lg font-medium;
+    line-height: 1.35;
+  }
+
+  h5, .h5 {
+    @apply text-base font-medium;
+    line-height: 1.4;
+  }
+
+  h6, .h6 {
+    @apply text-sm font-medium uppercase tracking-wide;
+    line-height: 1.5;
+  }
+
+  /* Focus States - Accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Custom Scrollbar (for desktop - subtle, professional) */
+  @media (min-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      @apply bg-transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      @apply bg-border rounded-full;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      @apply bg-muted-foreground/30;
+    }
+  }
+
+  /* Hide scrollbar on mobile for cleaner look */
+  @media (max-width: 767px) {
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  }
+
+  /* Selection Color */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT LAYER - Reusable Component Patterns
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* Card Variants */
+  .card-elevated {
+    @apply bg-card rounded-lg border border-border shadow-sm;
+  }
+
+  .card-interactive {
+    @apply bg-card rounded-lg border border-border shadow-sm transition-all duration-200;
+    @apply hover:shadow-md hover:border-primary/20;
+  }
+
+  .card-glass {
+    @apply bg-card/80 backdrop-blur-xl rounded-lg border border-border/50;
+  }
+
+  /* Status Backgrounds */
+  .bg-success-muted {
+    background-color: hsl(var(--success-muted));
+  }
+
+  .bg-warning-muted {
+    background-color: hsl(var(--warning-muted));
+  }
+
+  .bg-destructive-muted {
+    background-color: hsl(var(--destructive-muted));
+  }
+
+  .bg-info-muted {
+    background-color: hsl(var(--info-muted));
+  }
+
+  /* Readiness Backgrounds */
+  .bg-readiness-green {
+    background-color: hsl(var(--readiness-green));
+  }
+
+  .bg-readiness-green-muted {
+    background-color: hsl(var(--readiness-green-bg));
+  }
+
+  .bg-readiness-yellow {
+    background-color: hsl(var(--readiness-yellow));
+  }
+
+  .bg-readiness-yellow-muted {
+    background-color: hsl(var(--readiness-yellow-bg));
+  }
+
+  .bg-readiness-red {
+    background-color: hsl(var(--readiness-red));
+  }
+
+  .bg-readiness-red-muted {
+    background-color: hsl(var(--readiness-red-bg));
+  }
+
+  /* Text Colors for Readiness */
+  .text-readiness-green {
+    color: hsl(var(--readiness-green));
+  }
+
+  .text-readiness-yellow {
+    color: hsl(var(--readiness-yellow));
+  }
+
+  .text-readiness-red {
+    color: hsl(var(--readiness-red));
+  }
+
+  /* Risk Level Backgrounds */
+  .bg-risk-low { background-color: hsl(var(--risk-low)); }
+  .bg-risk-low-muted { background-color: hsl(var(--risk-low-bg)); }
+  .bg-risk-moderate { background-color: hsl(var(--risk-moderate)); }
+  .bg-risk-moderate-muted { background-color: hsl(var(--risk-moderate-bg)); }
+  .bg-risk-high { background-color: hsl(var(--risk-high)); }
+  .bg-risk-high-muted { background-color: hsl(var(--risk-high-bg)); }
+  .bg-risk-critical { background-color: hsl(var(--risk-critical)); }
+  .bg-risk-critical-muted { background-color: hsl(var(--risk-critical-bg)); }
+
+  /* Text Colors for Risk */
+  .text-risk-low { color: hsl(var(--risk-low)); }
+  .text-risk-moderate { color: hsl(var(--risk-moderate)); }
+  .text-risk-high { color: hsl(var(--risk-high)); }
+  .text-risk-critical { color: hsl(var(--risk-critical)); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITIES LAYER - Helper Classes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 @layer utilities {
-  /* Gradient backgrounds */
-  .gradient-primary {
-    @apply bg-gradient-to-br from-primary to-secondary;
+  /* Safe Area for Mobile (notch, home indicator) */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
-  .gradient-dark {
-    @apply bg-gradient-to-b from-background via-card to-background;
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  .gradient-hero {
-    @apply bg-gradient-to-br from-primary via-secondary to-accent;
+  .safe-area-x {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
-  /* Glass morphism */
-  .glass {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
-  }
-
-  .glass-strong {
-    @apply bg-card/90 backdrop-blur-2xl border border-chrome/20;
-  }
-
-  /* Chrome/metallic effects */
-  .chrome-border {
-    @apply border border-chrome/30;
-  }
-
-  .chrome-glow {
-    box-shadow: 0 0 20px hsl(var(--chrome) / 0.15);
-  }
-
-  /* Blue glow effect */
-  .blue-glow {
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
-  }
-
-  .blue-glow-sm {
-    box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
-  }
-
-  /* Safe area for mobile */
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-
-  .safe-top {
-    padding-top: env(safe-area-inset-top, 20px);
-  }
-
-  /* Mobile tap highlight */
+  /* Mobile Optimizations */
   .tap-highlight-none {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Smooth momentum scrolling */
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+
+  /* Smooth Scrolling */
   .scroll-smooth {
+    scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Subtle shadow for elevation */
+  .shadow-subtle {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .shadow-elevated {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  }
+
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary to-primary/80;
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 71% 35%) 100%);
+  }
+
+  /* Glow Effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.25);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 20px hsl(var(--success) / 0.25);
+  }
+
+  /* Animation Utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulseSubtle 2s ease-in-out infinite;
+  }
+
+  /* Streaming Text Cursor (for AI chat) */
+  .typing-cursor::after {
+    content: '▋';
+    animation: blink 1s step-end infinite;
+    @apply text-primary ml-0.5;
+  }
+
+  /* Number Tabular Figures (for metrics/scores) */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Truncate with Ellipsis */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Skeleton Loading Animation */
+.skeleton {
+  @apply bg-muted animate-pulse rounded;
+}
+
+.skeleton-shimmer {
+  @apply bg-gradient-to-r from-muted via-muted/50 to-muted bg-[length:200%_100%];
+  animation: shimmer 1.5s ease-in-out infinite;
 }

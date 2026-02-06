@@ -23,7 +23,7 @@ import { generateWeeklySummaries } from '@/lib/summaries/generateWeeklySummaries
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    // Option 1: NextAuth session (for manual triggers by coaches/admins)
+    // Option 1: Supabase session (for manual triggers by coaches/admins)
     const { authorized, user } = await requireAuth(request);
 
     // Option 2: API key (for cron jobs)

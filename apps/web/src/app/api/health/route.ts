@@ -24,7 +24,7 @@ export async function GET() {
       {
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        service: 'ai-sports-agent-web',
+        service: 'flow-sports-coach-web',
       },
       { status: 200 }
     );

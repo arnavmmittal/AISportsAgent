@@ -1,0 +1,32 @@
+# FastAPI Backend Dependencies
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+gunicorn==21.2.0
+pydantic==2.10.0
+pydantic-settings==2.6.0
+
+# Database
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+
+# AI/ML (minimal - just OpenAI)
+openai==1.58.1
+
+# Auth (minimal - remove firebase for now)
+python-jose[cryptography]==3.3.0
+PyJWT==2.10.1
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+
+# Utilities
+python-dotenv==1.0.1
+httpx==0.28.1
+numpy==1.26.4
+aiohttp==3.9.5
+redis==5.0.1
+
+# PDF Processing (for voice routes)
+pypdf==5.1.0
+
+# Monitoring
+loguru==0.7.3

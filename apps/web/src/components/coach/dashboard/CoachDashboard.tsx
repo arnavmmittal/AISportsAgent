@@ -5,11 +5,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { apiClient, type TeamAnalytics, type Recommendation } from '@/lib/api-client';
+import { useAuth } from '@/hooks/useAuth';
+import { type TeamAnalytics, type Recommendation } from '@/lib/api-client';
 
 export function CoachDashboard() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState<TeamAnalytics | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,25 +17,47 @@ export function CoachDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState(30);
 
   useEffect(() => {
-    if (session?.user?.id && session?.user?.role === 'COACH') {
+    if (user?.id && user?.role === 'COACH') {
       loadDashboardData();
     }
-  }, [session, selectedPeriod]);
+  }, [user?.id, selectedPeriod]);
 
   const loadDashboardData = async () => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const [analyticsData, recsData] = await Promise.all([
-        apiClient.getTeamAnalytics(session.user.id, selectedPeriod),
-        apiClient.getRecommendations(session.user.id),
-      ]);
+      // Use local API endpoint
+      const response = await fetch(`/api/coach/dashboard?days=${selectedPeriod}`);
 
-      setAnalytics(analyticsData);
-      setRecommendations(recsData);
+      if (!response.ok) {
+        throw new Error('Failed to load dashboard');
+      }
+
+      const data = await response.json();
+
+      // Transform response to expected format
+      setAnalytics({
+        period_days: selectedPeriod,
+        team_size: data.summary?.totalAthletes || 0,
+        total_mood_logs: 0,
+        averages: {
+          mood: data.summary?.averageMood || 0,
+          confidence: data.summary?.averageConfidence || 0,
+          stress: data.summary?.averageStress || 0,
+        },
+        trends: {},
+        at_risk_athletes: data.atRiskAthletes || [],
+        engagement: {
+          athletes_using_platform: data.summary?.activeAthletes || 0,
+          engagement_rate: 0,
+          total_chat_sessions: 0,
+        },
+        sport: '',
+      });
+      setRecommendations(data.recommendations || []);
     } catch (err) {
       setError('Failed to load dashboard data');
       console.error(err);
@@ -44,7 +66,7 @@ export function CoachDashboard() {
     }
   };
 
-  if (session?.user?.role !== 'COACH') {
+  if (user?.role !== 'COACH') {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-gray-500">This dashboard is only available for coaches</p>

@@ -123,10 +123,10 @@ function calculateGroupEffectiveness(
     .filter((r): r is number => r !== null);
 
   // Aggregate outcome changes
-  let moodChanges: number[] = [];
-  let confChanges: number[] = [];
-  let stressChanges: number[] = [];
-  let perfChanges: number[] = [];
+  const moodChanges: number[] = [];
+  const confChanges: number[] = [];
+  const stressChanges: number[] = [];
+  const perfChanges: number[] = [];
 
   for (const intervention of interventions) {
     for (const outcome of intervention.Outcomes) {

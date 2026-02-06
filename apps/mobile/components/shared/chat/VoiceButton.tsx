@@ -16,8 +16,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
-import { Colors } from '../../constants/theme';
-import type { VoiceState } from '../../hooks/useVoiceChat';
+import { Colors } from '../../../constants/theme';
+import type { VoiceState } from '../../../hooks/useVoiceChat';
 
 interface VoiceButtonProps {
   voiceState: VoiceState;

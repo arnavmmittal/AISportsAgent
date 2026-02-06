@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { createClient } from '@/lib/supabase-client';
+import type { User } from '@supabase/supabase-js';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { useChatPersistence, useAthleteActivity } from '@/hooks/useChatPersistence';
 import { VoiceButton, AudioVisualizer } from '@/components/shared/voice/VoiceButton';
+import { MobileVoiceWidget } from '@/components/shared/voice/MobileVoiceWidget';
 import { ActionPlanWidget } from '@/components/shared/chat/ActionPlanWidget';
 import { MetricTrackerWidget } from '@/components/shared/chat/MetricTrackerWidget';
 import { PracticeDrillCard } from '@/components/shared/chat/PracticeDrillCard';
@@ -94,7 +97,10 @@ interface StructuredMetadata {
 }
 
 export function ChatInterface() {
-  const { data: session } = useSession();
+  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +110,37 @@ export function ChatInterface() {
   const [currentMetadata, setCurrentMetadata] = useState<StructuredMetadata | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Voice integration
+  // Chat state persistence - remembers session across page refreshes
+  const {
+    state: persistedState,
+    isHydrated,
+    setSessionId: persistSessionId,
+    setDraftMessage,
+    recordActivity,
+  } = useChatPersistence(user?.id);
+
+  // Track activity for coach visibility (privacy-respecting: only status, no content)
+  useAthleteActivity(user?.id, sessionId, messages.length > 0 && !isLoading);
+
+  // Get user on mount and subscribe to auth changes
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setAuthLoading(false);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  // Voice integration - uses /api/voice/* endpoints
   const {
     voiceState,
     isListening,
@@ -112,48 +148,173 @@ export function ChatInterface() {
     transcript,
     error: voiceError,
     toggleVoice,
+    speakResponse,
   } = useVoiceChat({
     sessionId,
-    athleteId: session?.user?.id || '',
+    athleteId: user?.id || '',
     onTranscript: (text, isFinal) => {
-      if (isFinal) {
-        // Voice transcript is final - add as user message
-        const userMessage: Message = {
-          id: `msg_${Date.now()}`,
-          role: 'user',
-          content: text,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, userMessage]);
+      // Show transcript in input while speaking
+      if (!isFinal) {
+        setInputValue(text);
       }
     },
-    onResponse: (text) => {
-      // AI response from voice - add as assistant message
-      const assistantMessage: Message = {
-        id: `msg_${Date.now()}_assistant`,
-        role: 'assistant',
-        content: text,
+    onAudioComplete: async (transcribedText) => {
+      // Voice transcript is complete - send to chat API
+      if (!transcribedText.trim() || !user?.id) return;
+
+      const userMessage: Message = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
+        content: transcribedText,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, userMessage]);
+      setInputValue('');
+      setIsLoading(true);
+      recordActivity();
+
+      try {
+        // Send to chat API and collect full response for TTS
+        const response = await fetch('/api/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message: transcribedText,
+            athlete_id: user.id,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to get response');
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) throw new Error('No response body');
+
+        // Add placeholder for assistant message
+        const assistantId = `msg_${Date.now()}_assistant`;
+        setMessages((prev) => [
+          ...prev,
+          { id: assistantId, role: 'assistant', content: '', timestamp: new Date() },
+        ]);
+
+        let fullResponse = '';
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') break;
+              if (!data) continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.type === 'token') {
+                  // Token content is in parsed.data.content
+                  fullResponse += parsed.data.content || '';
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const lastIndex = updated.length - 1;
+                    if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
+                      updated[lastIndex] = { ...updated[lastIndex], content: fullResponse };
+                    }
+                    return updated;
+                  });
+                } else if (parsed.type === 'crisis_alert' || parsed.type === 'crisis_check') {
+                  setCrisisAlert({
+                    final_risk_level: parsed.data.severity || parsed.data.final_risk_level || 'HIGH',
+                    message: 'Professional support is available 24/7 at 988',
+                  });
+                }
+              } catch {}
+            }
+          }
+        }
+
+        // Speak the full response using TTS
+        if (fullResponse.trim()) {
+          await speakResponse(fullResponse);
+        }
+      } catch (error) {
+        console.error('Voice chat error:', error);
+      } finally {
+        setIsLoading(false);
+      }
     },
     onError: (error) => {
       console.error('Voice error:', error);
     },
   });
 
-  // Initialize session ID (persistent per user)
+  // Initialize session ID - use persisted session, load most recent, or create new UUID
   useEffect(() => {
-    if (session?.user?.id) {
-      // Use persistent session ID based on user ID only (no timestamp)
-      // This allows session history to persist across page refreshes
-      setSessionId(`session_${session.user.id}`);
+    if (!user?.id || !isHydrated) return;
+
+    const initializeSession = async () => {
+      try {
+        // First, check if we have a persisted session ID
+        if (persistedState.sessionId) {
+          setSessionId(persistedState.sessionId);
+          return;
+        }
+
+        // Try to load the most recent chat session
+        const response = await fetch('/api/chat?limit=1');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data?.length > 0) {
+            // Use the most recent session
+            const recentSessionId = data.data[0].id;
+            setSessionId(recentSessionId);
+            persistSessionId(recentSessionId);
+            return;
+          }
+        }
+
+        // No existing session - generate a new UUID
+        // The session will be created when the user sends their first message
+        const newSessionId = crypto.randomUUID();
+        setSessionId(newSessionId);
+        persistSessionId(newSessionId);
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+        // Fallback to new UUID
+        const newSessionId = crypto.randomUUID();
+        setSessionId(newSessionId);
+        persistSessionId(newSessionId);
+      }
+    };
+
+    initializeSession();
+  }, [user?.id, isHydrated, persistedState.sessionId, persistSessionId]);
+
+  // Restore draft message from persistence
+  useEffect(() => {
+    if (isHydrated && persistedState.draftMessage && !inputValue) {
+      setInputValue(persistedState.draftMessage);
     }
-  }, [session]);
+  }, [isHydrated, persistedState.draftMessage]);
+
+  // Save draft message on change (debounced via state)
+  useEffect(() => {
+    if (isHydrated && inputValue !== persistedState.draftMessage) {
+      setDraftMessage(inputValue);
+    }
+  }, [inputValue, isHydrated]);
 
   // Load message history when session ID is set
   useEffect(() => {
-    if (!sessionId || !session?.user?.id) return;
+    if (!sessionId || !user?.id) return;
 
     const loadHistory = async () => {
       try {
@@ -180,7 +341,7 @@ export function ChatInterface() {
     };
 
     loadHistory();
-  }, [sessionId, session?.user?.id]);
+  }, [sessionId, user?.id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -188,7 +349,7 @@ export function ChatInterface() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputValue.trim() || !session?.user?.id || isLoading) return;
+    if (!inputValue.trim() || !user?.id || isLoading) return;
 
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
@@ -200,8 +361,10 @@ export function ChatInterface() {
     const userInput = inputValue;
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
+    setDraftMessage(''); // Clear persisted draft
     setIsLoading(true);
     setCrisisAlert(null);
+    recordActivity(); // Track for coach visibility
 
     try {
       // Create assistant message placeholder for streaming
@@ -225,7 +388,7 @@ export function ChatInterface() {
         body: JSON.stringify({
           session_id: sessionId,
           message: userInput,
-          athlete_id: session.user.id,
+          athlete_id: user.id,
         }),
       });
 
@@ -304,6 +467,37 @@ export function ChatInterface() {
                 // Store structured metadata for widgets
                 setCurrentMetadata(parsed.data as StructuredMetadata);
                 console.log('Received structured metadata:', parsed.data);
+              } else if (parsed.type === 'widget') {
+                // Handle widget events from LangGraph structured output tools
+                const widgetType = parsed.data?.widgetType;
+                const widgetPayload = parsed.data?.payload;
+
+                if (widgetType && widgetPayload) {
+                  setCurrentMetadata((prev) => {
+                    // Create minimal default metadata if none exists (LangGraph widgets may arrive independently)
+                    const base: StructuredMetadata = prev || {
+                      session_stage: 'action',
+                      detected_issue_tags: [],
+                      sport_context: { sport: '', setting: '' },
+                      key_hypotheses: [],
+                      action_plan: { today: [], this_week: [], next_competition: [] },
+                      tracking: { metrics: [], adherence_check: '', one_word_debrief: '' },
+                      next_prompt: '',
+                      kb_citations: [],
+                      human_response: '',
+                    };
+                    const updated = { ...base };
+                    if (widgetType === 'action_plan') {
+                      updated.action_plan = widgetPayload;
+                    } else if (widgetType === 'practice_drill') {
+                      updated.practice_drill = widgetPayload;
+                    } else if (widgetType === 'routine') {
+                      updated.pre_performance_routine = widgetPayload;
+                    }
+                    return updated;
+                  });
+                  console.log('Received widget:', widgetType, widgetPayload);
+                }
               } else if (parsed.type === 'done') {
                 // Streaming complete
                 console.log('Streaming completed');
@@ -336,7 +530,15 @@ export function ChatInterface() {
     }
   };
 
-  if (!session?.user) {
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-gray-500">Please sign in to start chatting</p>
@@ -471,9 +673,11 @@ export function ChatInterface() {
                 metrics={currentMetadata.tracking.metrics}
                 adherence_check={currentMetadata.tracking.adherence_check}
                 one_word_debrief={currentMetadata.tracking.one_word_debrief}
-                onLogMetric={(metricName, value) => {
-                  console.log(`Logged ${metricName}: ${value}`);
-                  // TODO: Save to database
+                onLogMetric={async (metricName, value) => {
+                  // Note: Custom metrics tracking API not yet implemented.
+                  // For MVP, metrics are stored in chat context only.
+                  // TODO: Create /api/athlete/metrics endpoint for persistence
+                  console.log(`Metric logged: ${metricName} = ${value}`);
                 }}
               />
             )}
@@ -483,12 +687,16 @@ export function ChatInterface() {
               <PracticeDrillCard
                 drill={currentMetadata.practice_drill}
                 onStartDrill={() => {
-                  console.log('Starting drill:', currentMetadata.practice_drill?.name);
-                  // TODO: Navigate to drill timer/tracker
+                  // Note: Drill timer/tracker feature not yet implemented.
+                  // For now, drills are instruction-only from chat.
+                  // TODO: Create drill timer component and /api/athlete/drills endpoint
+                  console.log('Drill started:', currentMetadata.practice_drill?.name);
                 }}
                 onTrackProgress={(week, notes) => {
+                  // Note: Drill progress tracking API not yet implemented.
+                  // Progress is stored in chat context only for MVP.
+                  // TODO: Create /api/athlete/drill-progress endpoint
                   console.log(`Week ${week} progress:`, notes);
-                  // TODO: Save progress to database
                 }}
               />
             )}
@@ -498,12 +706,16 @@ export function ChatInterface() {
               <RoutineBuilderWidget
                 routine={currentMetadata.pre_performance_routine}
                 onComplete={() => {
+                  // Note: Routine completion tracking not yet implemented.
+                  // For MVP, routines are suggested but not persisted.
+                  // TODO: Create /api/athlete/routines endpoint for persistence
                   console.log('Routine completed!');
-                  // TODO: Log completion, ask for feedback
                 }}
                 onSaveCustomization={(customizedRoutine) => {
-                  console.log('Saving customized routine:', customizedRoutine);
-                  // TODO: Save to athlete memory
+                  // Note: Custom routine persistence not yet implemented.
+                  // Customizations are session-only for MVP.
+                  // TODO: Save customized routines to athlete profile
+                  console.log('Customized routine (not persisted):', customizedRoutine);
                 }}
               />
             )}
@@ -554,7 +766,7 @@ export function ChatInterface() {
                 setVoiceMode(!voiceMode);
                 toggleVoice();
               }}
-              disabled={isLoading || !sessionId || !session?.user?.id}
+              disabled={isLoading || !sessionId || !user?.id}
             />
 
             <button
@@ -577,6 +789,19 @@ export function ChatInterface() {
           )}
         </div>
       </div>
+
+      {/* Mobile Voice Widget - Floating FAB and full-screen voice UI for mobile */}
+      <MobileVoiceWidget
+        voiceState={voiceState}
+        volume={volume}
+        transcript={transcript}
+        isListening={isListening}
+        onToggle={() => {
+          setVoiceMode(!voiceMode);
+          toggleVoice();
+        }}
+        disabled={isLoading || !sessionId || !user?.id}
+      />
     </div>
   );
 }

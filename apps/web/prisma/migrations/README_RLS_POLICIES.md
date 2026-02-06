@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains SQL migration files that enable Row-Level Security (RLS) policies on all database tables. RLS is the **primary security boundary** for multi-tenant data isolation in the AI Sports Agent platform.
+This directory contains SQL migration files that enable Row-Level Security (RLS) policies on all database tables. RLS is the **primary security boundary** for multi-tenant data isolation in the Flow Sports Coach platform.
 
 ## Purpose
 

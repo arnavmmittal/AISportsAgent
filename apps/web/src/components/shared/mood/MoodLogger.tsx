@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MoodLogData {
   mood: number;
@@ -18,7 +18,7 @@ interface MoodLogData {
 }
 
 export function MoodLogger() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<MoodLogData>({
     mood: 5,
     confidence: 5,
@@ -33,7 +33,7 @@ export function MoodLogger() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     setIsSubmitting(true);
 
@@ -44,7 +44,7 @@ export function MoodLogger() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          athleteId: session.user.id,
+          athleteId: user?.id,
         }),
       });
 
@@ -65,7 +65,7 @@ export function MoodLogger() {
     }
   };
 
-  if (!session?.user) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center p-8">
         <p className="text-muted-foreground">Please sign in to log your mood</p>

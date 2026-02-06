@@ -1,6 +1,8 @@
 /**
- * Core types for the MCP Agent System
+ * Core types for the LangGraph Agent System
  */
+
+import type { EnrichedAthleteContext } from '@/services/AthleteContextService';
 
 export type AgentRole = 'athlete' | 'governance' | 'knowledge';
 
@@ -20,6 +22,8 @@ export interface AgentContext {
   sport?: string;
   conversationHistory: AgentMessage[];
   metadata?: Record<string, any>;
+  // Enriched context from AthleteContextService
+  enrichedContext?: EnrichedAthleteContext;
 }
 
 export interface AgentResponse {

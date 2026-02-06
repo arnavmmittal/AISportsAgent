@@ -1,14 +1,24 @@
-# AI Sports Agent - Performance Analytics Platform
+# Flow Sports Coach - Performance Analytics Platform
 
 **Performance optimization platform for collegiate athletics** that correlates mental readiness with game performance, providing predictive analytics and 24/7 athlete support to give programs a competitive edge.
+
+## ⚠️ Important Terminology
+
+**"Coaches" in this application refers to Sports Psychologists, NOT sport team coaches.**
+
+At universities like UW, there are only ~6 Sports Psychologists serving hundreds of student-athletes across all sports programs. This creates a critical 1:150+ ratio that makes traditional 1-on-1 support impossible. The app's "Coach Portal" is designed for these mental performance professionals—not the basketball coach, football coach, etc.
+
+**User Types:**
+- **Athletes** = Student-athletes from any sport (basketball, football, soccer, etc.)
+- **Coaches** = Sports Psychologists / Mental Performance Consultants (NOT sport team coaches)
 
 ## 🎯 The Problem
 
 **Sports psychology doesn't scale:**
-- Each sports psychologist serves 150+ athletes
-- Individual 1-on-1 Zoom meetings are physically impossible
+- Each sports psychologist serves 150+ athletes across multiple sports
+- Individual 1-on-1 Zoom meetings are physically impossible at this ratio
 - Athletes need support but can't access it (night before game, after bad performance)
-- **Coaches are coaching blind** - no data on who's mentally struggling until performance drops
+- **Sports psychologists are working blind** - no data on who's struggling until performance drops
 
 **The cost of ignorance:**
 - Star player transfers due to mental health issues: **$500k lost**
@@ -42,13 +52,26 @@
 
 **Pricing:** $100-200k/year (market-rate for D1 performance tech)
 
+### UX Design for 1:150+ Ratio
+
+The Coach Portal is specifically designed for the reality that one sports psychologist serves 150+ athletes:
+
+- **Triage-first dashboard**: Critical-risk athletes surface to the top automatically
+- **Visual heatmaps**: See 100+ athletes' readiness at a glance, no clicking required
+- **AI-prioritized intervention queue**: Recommendations on who needs attention most
+- **Risk-based filtering**: Instantly filter to Critical / Warning / Good status
+- **Bulk assignments**: Create mental skills exercises for entire teams
+- **Crisis escalation**: Automatic alerts ensure high-risk cases never get missed
+
+This design means a psychologist can effectively monitor their entire caseload in minutes, not hours.
+
 ---
 
 ## 🏗️ Architecture
 
 ### Monorepo Structure
 ```
-AISportsAgent/
+FlowSportsCoach/
 ├── apps/
 │   ├── web/          # Next.js (web app for athletes + coaches)
 │   └── mobile/       # React Native Expo (iOS + Android)

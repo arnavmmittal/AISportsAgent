@@ -4,10 +4,19 @@ import { VoiceManager, VoiceState, AudioChunk } from '@/lib/voice/VoiceManager';
 export interface UseVoiceChatOptions {
   sessionId: string;
   athleteId: string;
-  backendUrl?: string;
   onTranscript?: (text: string, isFinal: boolean) => void;
   onResponse?: (text: string) => void;
   onError?: (error: Error) => void;
+  /** Called when transcription completes - use this to send to chat API */
+  onAudioComplete?: (transcript: string) => void;
+}
+
+// Type for callback refs
+interface CallbackRefs {
+  onTranscript?: (text: string, isFinal: boolean) => void;
+  onResponse?: (text: string) => void;
+  onError?: (error: Error) => void;
+  onAudioComplete?: (transcript: string) => void;
 }
 
 export interface UseVoiceChatReturn {
@@ -21,24 +30,32 @@ export interface UseVoiceChatReturn {
   startVoice: () => Promise<void>;
   stopVoice: () => void;
   toggleVoice: () => Promise<void>;
+  /** Speak text using TTS (call after getting AI response) */
+  speakResponse: (text: string, emotionalContext?: string) => Promise<void>;
 }
 
 /**
  * React hook for voice chat integration
  *
+ * Voice Flow:
+ * 1. User presses mic → startVoice() → VoiceManager records
+ * 2. User stops speaking → silence detected → audio sent to /api/voice/transcribe
+ * 3. Transcript returned → onAudioComplete(transcript) called
+ * 4. Parent component sends transcript to chat API, gets response
+ * 5. Parent calls speakResponse(aiResponse) → /api/voice/synthesize → audio plays
+ *
  * Usage:
  * ```tsx
- * const {
- *   voiceState,
- *   isListening,
- *   volume,
- *   transcript,
- *   startVoice,
- *   stopVoice,
- * } = useVoiceChat({
- *   sessionId: 'session-123',
- *   athleteId: 'athlete-456',
- *   onResponse: (text) => console.log('AI response:', text),
+ * const handleAudioComplete = async (transcript: string) => {
+ *   // Send to chat API
+ *   const response = await sendMessage(transcript);
+ *   // Speak the response
+ *   await speakResponse(response);
+ * };
+ *
+ * const { toggleVoice, speakResponse, isListening } = useVoiceChat({
+ *   sessionId, athleteId,
+ *   onAudioComplete: handleAudioComplete,
  * });
  * ```
  */
@@ -46,10 +63,10 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
   const {
     sessionId,
     athleteId,
-    backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
     onTranscript,
     onResponse,
     onError,
+    onAudioComplete,
   } = options;
 
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
@@ -58,8 +75,20 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
   const [error, setError] = useState<Error | null>(null);
 
   const voiceManagerRef = useRef<VoiceManager | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const audioChunkCountRef = useRef<number>(0);
+  const isProcessingRef = useRef<boolean>(false);
+
+  // Use refs for callbacks to avoid stale closure issues
+  const callbacksRef = useRef<CallbackRefs>({});
+
+  // Keep refs updated with latest callbacks
+  useEffect(() => {
+    callbacksRef.current = {
+      onTranscript,
+      onResponse,
+      onError,
+      onAudioComplete,
+    };
+  }, [onTranscript, onResponse, onError, onAudioComplete]);
 
   // Initialize VoiceManager
   useEffect(() => {
@@ -67,15 +96,15 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       sampleRate: 16000,
       channelCount: 1,
       chunkDurationMs: 1000,
-      silenceThresholdMs: 10500,  // 1.5 seconds of silence before triggering
-      silenceThreshold: 0.5,    // Increased from 0.01 to be less sensitive
+      silenceThresholdMs: 2000, // 2 seconds of silence before triggering
+      silenceThreshold: 0.02, // RMS volume threshold (0.01-0.05 is typical silence)
     });
 
     const vm = voiceManagerRef.current;
 
     // Register callbacks
     vm.on('stateChange', (state) => {
-      console.log('VoiceManager state changed to:', state);
+      console.log('[VoiceChat] State changed to:', state);
       setVoiceState(state);
     });
 
@@ -83,183 +112,129 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       setVolume(vol);
     });
 
-    vm.on('transcript', (text, isFinal) => {
-      setTranscript(text);
-      onTranscript?.(text, isFinal);
-    });
-
     vm.on('error', (err) => {
+      console.error('[VoiceChat] Error:', err);
       setError(err);
-      onError?.(err);
+      callbacksRef.current.onError?.(err);
+      isProcessingRef.current = false;
     });
 
+    // When recording stops and we have audio, transcribe it
     vm.on('audioChunk', async (chunk) => {
-      // Send audio chunk to backend via WebSocket
-      console.log('Audio chunk received from VoiceManager, size:', chunk.data.size);
-      audioChunkCountRef.current += 1;
+      console.log('[VoiceChat] Audio chunk received, size:', chunk.data.size);
 
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        // Send audio chunk first
-        await sendAudioChunk(chunk);
-        console.log('Audio chunk sent to backend, total chunks:', audioChunkCountRef.current);
+      // Prevent double processing
+      if (isProcessingRef.current) {
+        console.log('[VoiceChat] Already processing, skipping');
+        return;
+      }
+      isProcessingRef.current = true;
 
-        // AFTER audio chunk is sent, send utterance_end signal
-        // This ensures the backend receives audio before processing
-        wsRef.current.send(JSON.stringify({
-          type: 'utterance_end',
-          sessionId,
-          athleteId,
-        }));
-        console.log('utterance_end signal sent after audio chunk');
-      } else {
-        console.warn('WebSocket not open, cannot send audio chunk');
+      try {
+        // Transcribe audio using local API route
+        const transcription = await transcribeAudio(chunk.data);
+
+        console.log('[VoiceChat] Transcription:', transcription.text);
+        setTranscript(transcription.text);
+        callbacksRef.current.onTranscript?.(transcription.text, true);
+
+        // Notify parent that audio is complete with transcript
+        // Parent will call speakResponse() which sets state to 'speaking'
+        // If no transcript or parent doesn't call speakResponse, reset to idle
+        if (transcription.text && transcription.text.trim()) {
+          // Reset to idle - parent's onAudioComplete will handle the rest
+          // speakResponse() will set state to 'speaking' when called
+          setVoiceState('idle');
+          callbacksRef.current.onAudioComplete?.(transcription.text);
+        } else {
+          // No transcript, reset to idle
+          setVoiceState('idle');
+        }
+      } catch (err) {
+        console.error('[VoiceChat] Transcription error:', err);
+        const error = err instanceof Error ? err : new Error('Transcription failed');
+        setError(error);
+        callbacksRef.current.onError?.(error);
+        setVoiceState('idle'); // Reset on error too
+      } finally {
+        isProcessingRef.current = false;
       }
     });
 
     vm.on('silenceDetected', () => {
-      // User stopped speaking - signal backend that utterance is complete
-      console.log('Silence detected, audio chunks captured:', audioChunkCountRef.current);
-
-      // Only send utterance_end if we have audio chunks
-      if (audioChunkCountRef.current === 0) {
-        console.warn('No audio chunks captured, skipping utterance_end signal');
-        return;
-      }
-
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'utterance_end',
-          sessionId,
-          athleteId,
-        }));
-        console.log('utterance_end signal sent to backend');
-      } else {
-        console.warn('WebSocket not open, cannot send utterance_end');
-      }
+      console.log('[VoiceChat] Silence detected');
+      // VoiceManager will stop recording and emit audioChunk
     });
 
     return () => {
       vm.destroy();
-      wsRef.current?.close();
     };
   }, []); // Empty deps - only run once on mount
 
   /**
-   * Send audio chunk to backend via WebSocket
+   * Transcribe audio using local API route
    */
-  const sendAudioChunk = useCallback(async (chunk: AudioChunk) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      return;
+  const transcribeAudio = async (audioBlob: Blob): Promise<{ text: string; emotion?: { detected: string; confidence: number } }> => {
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.webm');
+    formData.append('detect_emotion', 'true');
+
+    const response = await fetch('/api/voice/transcribe', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Transcription failed: ${response.status}`);
     }
 
-    try {
-      // Convert Blob to ArrayBuffer
-      const arrayBuffer = await chunk.data.arrayBuffer();
-
-      // Send binary data
-      wsRef.current.send(arrayBuffer);
-    } catch (err) {
-      console.error('Failed to send audio chunk:', err);
-    }
-  }, []);
+    return response.json();
+  };
 
   /**
-   * Connect to WebSocket for bidirectional voice streaming
+   * Synthesize and play speech using local API route
    */
-  const connectWebSocket = useCallback(() => {
-    // Convert http(s) to ws(s)
-    const wsUrl = backendUrl.replace(/^http/, 'ws') + '/api/voice/stream';
-
-    console.log('Connecting to WebSocket:', wsUrl);
-    console.log('Session ID:', sessionId);
-    console.log('Athlete ID:', athleteId);
-
-    // Close existing connection if any
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.close();
+  const speakResponse = useCallback(async (text: string, emotionalContext?: string): Promise<void> => {
+    if (!text || !text.trim()) return;
+    if (!voiceManagerRef.current) {
+      throw new Error('VoiceManager not initialized');
     }
 
-    wsRef.current = new WebSocket(wsUrl);
+    console.log('[VoiceChat] Speaking response:', text.substring(0, 50) + '...');
+    setVoiceState('speaking');
 
-    wsRef.current.onopen = () => {
-      console.log('Voice WebSocket connected');
+    try {
+      const response = await fetch('/api/voice/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          emotional_context: emotionalContext || 'supportive',
+        }),
+      });
 
-      // Validate before sending handshake
-      if (!sessionId || !athleteId) {
-        console.error('Cannot send handshake - missing sessionId or athleteId');
-        wsRef.current?.close();
-        return;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Synthesis failed: ${response.status}`);
       }
 
-      // Send initial handshake
-      const handshake = {
-        type: 'start',
-        sessionId,
-        athleteId,
-      };
-      console.log('Sending handshake:', handshake);
-      wsRef.current?.send(JSON.stringify(handshake));
-    };
+      // Get audio blob and play it
+      const audioBlob = await response.blob();
+      const arrayBuffer = await audioBlob.arrayBuffer();
 
-    wsRef.current.onmessage = async (event) => {
-      try {
-        // Handle text messages (transcripts, responses)
-        if (typeof event.data === 'string') {
-          const data = JSON.parse(event.data);
+      console.log('[VoiceChat] Playing audio, size:', arrayBuffer.byteLength);
+      await voiceManagerRef.current.playAudioStream(arrayBuffer);
 
-          switch (data.type) {
-            case 'started':
-              // WebSocket session successfully started
-              console.log('Voice session started:', data.sessionId);
-              break;
-
-            case 'transcript':
-              // Partial transcript from Whisper
-              setTranscript(data.text);
-              onTranscript?.(data.text, data.isFinal);
-              break;
-
-            case 'response':
-              // Text response from AI (before TTS)
-              onResponse?.(data.text);
-              break;
-
-            case 'error':
-              setError(new Error(data.message));
-              onError?.(new Error(data.message));
-              break;
-          }
-        }
-        // Handle binary messages (TTS audio)
-        else if (event.data instanceof Blob) {
-          console.log('Received audio chunk from backend, size:', event.data.size);
-          const arrayBuffer = await event.data.arrayBuffer();
-          console.log('Converted to ArrayBuffer, size:', arrayBuffer.byteLength);
-          voiceManagerRef.current?.playAudioStream(arrayBuffer);
-          console.log('Audio chunk sent to VoiceManager for playback');
-        }
-        else if (event.data instanceof ArrayBuffer) {
-          console.log('Received ArrayBuffer audio chunk from backend, size:', event.data.byteLength);
-          voiceManagerRef.current?.playAudioStream(event.data);
-          console.log('Audio chunk sent to VoiceManager for playback');
-        }
-        else {
-          console.warn('Received unknown message type:', typeof event.data);
-        }
-      } catch (err) {
-        console.error('Error handling WebSocket message:', err);
-      }
-    };
-
-    wsRef.current.onerror = (event) => {
-      console.error('WebSocket error:', event);
-      setError(new Error('WebSocket connection error'));
-    };
-
-    wsRef.current.onclose = () => {
-      console.log('Voice WebSocket disconnected');
-    };
-  }, [backendUrl, sessionId, athleteId, onTranscript, onResponse, onError]);
+      onResponse?.(text);
+    } catch (err) {
+      console.error('[VoiceChat] Speech synthesis error:', err);
+      const error = err instanceof Error ? err : new Error('Speech synthesis failed');
+      setError(error);
+      onError?.(error);
+      setVoiceState('idle');
+    }
+  }, [onResponse, onError]);
 
   /**
    * Start voice input
@@ -275,34 +250,22 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
         throw new Error('Session ID and Athlete ID are required for voice chat');
       }
 
-      // Connect WebSocket if not already connected
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        connectWebSocket();
-        // Wait for connection to establish
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      // Check if connection succeeded
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        throw new Error('Failed to establish WebSocket connection');
-      }
-
-      // Check microphone permission first
-      console.log('Checking microphone permission...');
+      // Check microphone permission
+      console.log('[VoiceChat] Checking microphone permission...');
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('Microphone permission granted, tracks:', stream.getTracks().length);
-        stream.getTracks().forEach(track => track.stop()); // Stop the test stream
+        console.log('[VoiceChat] Microphone permission granted');
+        stream.getTracks().forEach(track => track.stop());
       } catch (permError) {
-        console.error('Microphone permission denied:', permError);
+        console.error('[VoiceChat] Microphone permission denied:', permError);
         throw new Error('Microphone access denied. Please grant microphone permission and try again.');
       }
 
       // Start recording
-      console.log('Starting recording with VoiceManager...');
-      audioChunkCountRef.current = 0; // Reset chunk counter for new recording
+      console.log('[VoiceChat] Starting recording...');
+      isProcessingRef.current = false;
       await voiceManagerRef.current.startRecording();
-      console.log('Recording started successfully');
+      console.log('[VoiceChat] Recording started');
       setTranscript('');
       setError(null);
     } catch (err) {
@@ -310,7 +273,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
       setError(error);
       onError?.(error);
     }
-  }, [connectWebSocket, onError, sessionId, athleteId]);
+  }, [sessionId, athleteId, onError]);
 
   /**
    * Stop voice input
@@ -342,5 +305,6 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
     startVoice,
     stopVoice,
     toggleVoice,
+    speakResponse,
   };
 }

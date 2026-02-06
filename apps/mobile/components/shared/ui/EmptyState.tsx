@@ -4,7 +4,7 @@
 
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+import { Colors, Spacing, Typography, BorderRadius } from '../../../constants/theme';
 
 interface ActionButton {
   label: string;

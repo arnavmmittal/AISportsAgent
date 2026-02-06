@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/shared/layout/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/shared/ui/card';
 import { Button } from '@/components/shared/ui/button';
@@ -47,7 +47,7 @@ interface HistoricalMoodLog {
 }
 
 export default function MoodPage() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<MoodLogData>({
     mood: 3, // UI scale 1-5
     confidence: 5,
@@ -63,11 +63,11 @@ export default function MoodPage() {
   // Fetch historical mood logs
   useEffect(() => {
     const fetchMoodLogs = async () => {
-      if (!session?.user?.id) return;
+      if (!user?.id) return;
 
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/mood-logs?athleteId=${session.user.id}&limit=30`);
+        const response = await fetch(`/api/mood-logs?athleteId=${user?.id}&limit=30`);
         const result = await response.json();
 
         if (result.success) {
@@ -81,7 +81,7 @@ export default function MoodPage() {
     };
 
     fetchMoodLogs();
-  }, [session?.user?.id, showSuccess]); // Refetch when a new mood is logged
+  }, [user?.id, showSuccess]); // Refetch when a new mood is logged
 
   const handleMoodSelect = (moodValue: number) => {
     setFormData((prev) => ({ ...prev, mood: moodValue }));
@@ -93,7 +93,7 @@ export default function MoodPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     setIsSubmitting(true);
 
@@ -105,7 +105,7 @@ export default function MoodPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          athleteId: session.user.id,
+          athleteId: user?.id,
           mood: dbMood,
           confidence: formData.confidence,
           stress: formData.stress,

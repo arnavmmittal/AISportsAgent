@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to safely rotate encryption keys for field-level encrypted data in the AI Sports Agent platform.
+This guide explains how to safely rotate encryption keys for field-level encrypted data in the Flow Sports Coach platform.
 
 **What's Encrypted:**
 - `ChatSummary.summary` - Weekly summary text
@@ -373,12 +373,12 @@ What we did:
 What you should do:
 - No action required on your part
 - Your chat summaries remain secure and private
-- Contact us if you have questions: support@aisportsagent.com
+- Contact us if you have questions: support@flowsportscoach.com
 
 We take your privacy seriously and apologize for any concern this may cause.
 
 Best regards,
-AI Sports Agent Security Team
+Flow Sports Coach Security Team
 ```
 
 ---

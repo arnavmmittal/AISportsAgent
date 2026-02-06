@@ -12,12 +12,14 @@ import { prisma } from '@/lib/prisma';
 
 // Test data cleanup
 afterAll(async () => {
-  // Clean up test data
-  await prisma.message.deleteMany({ where: { sessionId: { startsWith: 'test-' } } });
+  // Clean up test data (order matters due to foreign key constraints)
+  await prisma.auditLog.deleteMany({ where: { userId: { startsWith: 'test-' } } });
+  await prisma.chatSummary.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
+  await prisma.crisisAlert.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
+  await prisma.message.deleteMany({ where: { id: { startsWith: 'test-' } } });
   await prisma.chatSession.deleteMany({ where: { id: { startsWith: 'test-' } } });
   await prisma.goal.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
   await prisma.moodLog.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
-  await prisma.crisisAlert.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
   await prisma.coachAthleteRelation.deleteMany({ where: { athleteId: { startsWith: 'test-' } } });
   await prisma.athlete.deleteMany({ where: { userId: { startsWith: 'test-' } } });
   await prisma.coach.deleteMany({ where: { userId: { startsWith: 'test-' } } });
@@ -39,6 +41,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       data: {
         id: 'test-school-1',
         name: 'University A',
+        division: 'D1',
       },
     });
     school1Id = school1.id;
@@ -47,6 +50,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       data: {
         id: 'test-school-2',
         name: 'University B',
+        division: 'D1',
       },
     });
     school2Id = school2.id;
@@ -67,7 +71,6 @@ describe('Integration: Multi-Tenant Isolation', () => {
         userId: user1.id,
         sport: 'Basketball',
         year: 'JUNIOR',
-        schoolId: school1Id,
       },
     });
     athlete1Id = user1.id;
@@ -85,8 +88,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
     await prisma.coach.create({
       data: {
         userId: coach1User.id,
-        team: 'Basketball',
-        schoolId: school1Id,
+        sport: 'Basketball',
       },
     });
     coach1Id = coach1User.id;
@@ -107,7 +109,6 @@ describe('Integration: Multi-Tenant Isolation', () => {
         userId: user2.id,
         sport: 'Soccer',
         year: 'SOPHOMORE',
-        schoolId: school2Id,
       },
     });
     athlete2Id = user2.id;
@@ -125,8 +126,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
     await prisma.coach.create({
       data: {
         userId: coach2User.id,
-        team: 'Soccer',
-        schoolId: school2Id,
+        sport: 'Soccer',
       },
     });
     coach2Id = coach2User.id;
@@ -148,7 +148,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       where: {
         id: goal1.id,
         Athlete: {
-          schoolId: school2Id, // Wrong school!
+          User: { schoolId: school2Id }, // Wrong school!
         },
       },
     });
@@ -168,6 +168,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
 
     await prisma.message.create({
       data: {
+        id: 'test-msg-session1',
         sessionId: session1.id,
         role: 'user',
         content: 'I am feeling anxious about the game.',
@@ -179,7 +180,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       where: {
         id: session1.id,
         Athlete: {
-          schoolId: school2Id, // Wrong school!
+          User: { schoolId: school2Id }, // Wrong school!
         },
       },
     });
@@ -197,6 +198,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
         stress: 5,
         energy: 6,
         sleep: 7,
+        tags: 'test',
       },
     });
 
@@ -205,7 +207,7 @@ describe('Integration: Multi-Tenant Isolation', () => {
       where: {
         id: moodLog1.id,
         Athlete: {
-          schoolId: school2Id,
+          User: { schoolId: school2Id },
         },
       },
     });
@@ -225,6 +227,7 @@ describe('Integration: Coach Consent Flow', () => {
       data: {
         id: 'test-school-consent',
         name: 'Consent Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -244,7 +247,6 @@ describe('Integration: Coach Consent Flow', () => {
         userId: athleteUser.id,
         sport: 'Track',
         year: 'SENIOR',
-        schoolId,
       },
     });
     athleteId = athleteUser.id;
@@ -262,8 +264,7 @@ describe('Integration: Coach Consent Flow', () => {
     await prisma.coach.create({
       data: {
         userId: coachUser.id,
-        team: 'Track',
-        schoolId,
+        sport: 'Track',
       },
     });
     coachId = coachUser.id;
@@ -279,6 +280,7 @@ describe('Integration: Coach Consent Flow', () => {
 
     await prisma.message.create({
       data: {
+        id: 'test-msg-consent',
         sessionId,
         role: 'user',
         content: 'Private message from athlete',
@@ -292,7 +294,7 @@ describe('Integration: Coach Consent Flow', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true, // Requires consent
@@ -313,7 +315,6 @@ describe('Integration: Coach Consent Flow', () => {
         coachId,
         athleteId,
         consentGranted: true,
-        schoolId,
       },
     });
 
@@ -322,7 +323,7 @@ describe('Integration: Coach Consent Flow', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true,
@@ -353,7 +354,7 @@ describe('Integration: Coach Consent Flow', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true,
@@ -377,6 +378,7 @@ describe('Integration: Crisis Detection Flow', () => {
       data: {
         id: 'test-school-crisis',
         name: 'Crisis Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -396,7 +398,6 @@ describe('Integration: Crisis Detection Flow', () => {
         userId: user.id,
         sport: 'Swimming',
         year: 'FRESHMAN',
-        schoolId,
       },
     });
     athleteId = user.id;
@@ -411,12 +412,23 @@ describe('Integration: Crisis Detection Flow', () => {
   });
 
   it('should create crisis alert when detected', async () => {
+    // Create a message first (required for crisis alert)
+    const message = await prisma.message.create({
+      data: {
+        id: 'test-msg-crisis',
+        sessionId,
+        role: 'user',
+        content: 'Test crisis content',
+      },
+    });
+
     // Simulate crisis detection creating an alert
     const alert = await prisma.crisisAlert.create({
       data: {
         id: 'test-alert-1',
         athleteId,
         sessionId,
+        messageId: message.id,
         severity: 'HIGH',
         detectedAt: new Date(),
         reviewed: false,
@@ -461,8 +473,7 @@ describe('Integration: Crisis Detection Flow', () => {
     await prisma.coach.create({
       data: {
         userId: coachUser.id,
-        team: 'Swimming',
-        schoolId,
+        sport: 'Swimming',
       },
     });
 
@@ -470,7 +481,7 @@ describe('Integration: Crisis Detection Flow', () => {
     const alerts = await prisma.crisisAlert.findMany({
       where: {
         Athlete: {
-          schoolId,
+          User: { schoolId },
         },
       },
     });
@@ -512,6 +523,7 @@ describe('Integration: Data Lifecycle', () => {
       data: {
         id: 'test-school-lifecycle',
         name: 'Lifecycle Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -531,7 +543,6 @@ describe('Integration: Data Lifecycle', () => {
         userId: user.id,
         sport: 'Volleyball',
         year: 'JUNIOR',
-        schoolId,
       },
     });
     athleteId = user.id;
@@ -557,6 +568,7 @@ describe('Integration: Data Lifecycle', () => {
         stress: 4,
         energy: 8,
         sleep: 8,
+        tags: 'test',
       },
     });
 
@@ -570,6 +582,7 @@ describe('Integration: Data Lifecycle', () => {
 
     await prisma.message.create({
       data: {
+        id: 'test-msg-lifecycle',
         sessionId: session.id,
         role: 'user',
         content: 'Test message',
@@ -628,7 +641,7 @@ describe('Integration: Performance & Scale', () => {
 
     // Create test data
     await prisma.school.create({
-      data: { id: schoolId, name: 'Performance Test School' },
+      data: { id: schoolId, name: 'Performance Test School', division: 'D1' },
     });
 
     await prisma.user.create({
@@ -646,7 +659,6 @@ describe('Integration: Performance & Scale', () => {
         userId: athleteId,
         sport: 'Football',
         year: 'SENIOR',
-        schoolId,
       },
     });
 
@@ -660,6 +672,7 @@ describe('Integration: Performance & Scale', () => {
       stress: Math.floor(Math.random() * 10) + 1,
       energy: Math.floor(Math.random() * 10) + 1,
       sleep: Math.floor(Math.random() * 12) + 1,
+      tags: 'test',
       createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
     }));
 
@@ -688,7 +701,7 @@ describe('Integration: Performance & Scale', () => {
 
     // Create test data
     await prisma.school.create({
-      data: { id: schoolId, name: 'Pagination Test School' },
+      data: { id: schoolId, name: 'Pagination Test School', division: 'D1' },
     });
 
     await prisma.user.create({
@@ -706,7 +719,6 @@ describe('Integration: Performance & Scale', () => {
         userId: athleteId,
         sport: 'Baseball',
         year: 'SOPHOMORE',
-        schoolId,
       },
     });
 
@@ -719,6 +731,7 @@ describe('Integration: Performance & Scale', () => {
 
     // Create 100 messages
     const messages = Array.from({ length: 100 }, (_, i) => ({
+      id: `test-msg-pagination-${i}`,
       sessionId,
       role: i % 2 === 0 ? 'user' : 'assistant',
       content: `Message ${i}`,
@@ -758,6 +771,7 @@ describe('Integration: Encryption & Data Protection', () => {
       data: {
         id: 'test-school-encryption',
         name: 'Encryption Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -777,7 +791,6 @@ describe('Integration: Encryption & Data Protection', () => {
         userId: user.id,
         sport: 'Tennis',
         year: 'SENIOR',
-        schoolId,
       },
     });
     athleteId = user.id;
@@ -795,10 +808,12 @@ describe('Integration: Encryption & Data Protection', () => {
     // Create a chat summary with sensitive content
     const summary = await prisma.chatSummary.create({
       data: {
+        athleteId,
         sessionId,
         summary: 'Athlete discussed anxiety about upcoming championship game and family pressure.',
-        themes: ['anxiety', 'pressure', 'family'],
-        sentiment: 'CONCERNED',
+        keyThemes: ['anxiety', 'pressure', 'family'],
+        messageCount: 10,
+        emotionalState: 'CONCERNED',
       },
     });
 
@@ -806,7 +821,7 @@ describe('Integration: Encryption & Data Protection', () => {
     // This test documents the expected behavior
     expect(summary).toBeDefined();
     expect(summary.summary).toBeTruthy();
-    expect(summary.themes).toContain('anxiety');
+    expect(summary.keyThemes).toContain('anxiety');
   });
 
   it('should redact PII before storing or processing', async () => {
@@ -815,6 +830,7 @@ describe('Integration: Encryption & Data Protection', () => {
 
     const message = await prisma.message.create({
       data: {
+        id: 'test-msg-pii',
         sessionId,
         role: 'user',
         content: messageWithPII,
@@ -842,6 +858,7 @@ describe('Integration: Audit Logging', () => {
       data: {
         id: 'test-school-audit',
         name: 'Audit Test University',
+        division: 'D1',
       },
     });
     schoolId = school.id;
@@ -859,8 +876,7 @@ describe('Integration: Audit Logging', () => {
     await prisma.coach.create({
       data: {
         userId: coachUser.id,
-        team: 'All Sports',
-        schoolId,
+        sport: 'All Sports',
       },
     });
     coachId = coachUser.id;
@@ -880,7 +896,6 @@ describe('Integration: Audit Logging', () => {
         userId: athleteUser.id,
         sport: 'Swimming',
         year: 'JUNIOR',
-        schoolId,
       },
     });
     athleteId = athleteUser.id;
@@ -891,7 +906,6 @@ describe('Integration: Audit Logging', () => {
         coachId,
         athleteId,
         consentGranted: true,
-        schoolId,
       },
     });
   });
@@ -902,7 +916,7 @@ describe('Integration: Audit Logging', () => {
       where: {
         athleteId,
         Athlete: {
-          CoachAthleteRelations: {
+          CoachAthlete: {
             some: {
               coachId,
               consentGranted: true,
@@ -916,14 +930,11 @@ describe('Integration: Audit Logging', () => {
     const auditLog = await prisma.auditLog.create({
       data: {
         userId: coachId,
+        userRole: 'COACH',
         action: 'READ',
-        resource: 'ChatSession',
+        resourceType: 'ChatSession',
         resourceId: sessions[0]?.id || 'none',
-        metadata: {
-          athleteId,
-          sessionCount: sessions.length,
-        },
-        schoolId,
+        athleteId,
       },
     });
 
@@ -931,7 +942,7 @@ describe('Integration: Audit Logging', () => {
     expect(auditLog).toBeDefined();
     expect(auditLog.action).toBe('READ');
     expect(auditLog.userId).toBe(coachId);
-    expect(auditLog.resource).toBe('ChatSession');
+    expect(auditLog.resourceType).toBe('ChatSession');
   });
 
   it('should log consent changes', async () => {
@@ -950,32 +961,33 @@ describe('Integration: Audit Logging', () => {
     const auditLog = await prisma.auditLog.create({
       data: {
         userId: athleteId,
+        userRole: 'ATHLETE',
         action: 'UPDATE',
-        resource: 'CoachAthleteRelation',
+        resourceType: 'CoachAthleteRelation',
         resourceId: `${coachId}-${athleteId}`,
-        metadata: {
-          previousValue: true,
-          newValue: false,
-          field: 'consentGranted',
-        },
-        schoolId,
       },
     });
 
     expect(auditLog).toBeDefined();
     expect(auditLog.action).toBe('UPDATE');
-    expect(auditLog.metadata).toMatchObject({
-      previousValue: true,
-      newValue: false,
-    });
+    expect(auditLog.resourceType).toBe('CoachAthleteRelation');
   });
 
   it('should track all crisis alert reviews', async () => {
-    // Create crisis alert
+    // Create crisis alert with message
     const session = await prisma.chatSession.create({
       data: {
         id: 'test-session-audit-crisis',
         athleteId,
+      },
+    });
+
+    const message = await prisma.message.create({
+      data: {
+        id: 'test-msg-audit-crisis',
+        sessionId: session.id,
+        role: 'user',
+        content: 'Test crisis message',
       },
     });
 
@@ -984,6 +996,7 @@ describe('Integration: Audit Logging', () => {
         id: 'test-alert-audit',
         athleteId,
         sessionId: session.id,
+        messageId: message.id,
         severity: 'MEDIUM',
         detectedAt: new Date(),
         reviewed: false,
@@ -1003,39 +1016,32 @@ describe('Integration: Audit Logging', () => {
     const auditLog = await prisma.auditLog.create({
       data: {
         userId: coachId,
+        userRole: 'COACH',
         action: 'UPDATE',
-        resource: 'CrisisAlert',
+        resourceType: 'CrisisAlert',
         resourceId: alert.id,
-        metadata: {
-          severity: alert.severity,
-          reviewed: true,
-          reviewedBy: coachId,
-        },
-        schoolId,
+        athleteId,
       },
     });
 
     expect(auditLog).toBeDefined();
-    expect(auditLog.resource).toBe('CrisisAlert');
-    expect(auditLog.metadata).toMatchObject({
-      reviewed: true,
-      reviewedBy: coachId,
-    });
+    expect(auditLog.resourceType).toBe('CrisisAlert');
+    expect(auditLog.athleteId).toBe(athleteId);
   });
 
   it('should query audit logs for compliance review', async () => {
-    // Query all audit logs for the school in the last 24 hours
+    // Query all audit logs for the user in the last 24 hours
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const auditLogs = await prisma.auditLog.findMany({
       where: {
-        schoolId,
-        createdAt: {
+        userId: coachId,
+        timestamp: {
           gte: yesterday,
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        timestamp: 'desc',
       },
     });
 
@@ -1046,8 +1052,7 @@ describe('Integration: Audit Logging', () => {
     const log = auditLogs[0];
     expect(log).toHaveProperty('userId');
     expect(log).toHaveProperty('action');
-    expect(log).toHaveProperty('resource');
-    expect(log).toHaveProperty('metadata');
-    expect(log).toHaveProperty('createdAt');
+    expect(log).toHaveProperty('resourceType');
+    expect(log).toHaveProperty('timestamp');
   });
 });

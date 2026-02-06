@@ -550,7 +550,7 @@ export default function SettingsScreen() {
               title="Help Center"
               subtitle="Get help and support"
               onPress={() =>
-                Alert.alert('Help Center', 'Contact support@aisportsagent.com for assistance')
+                Alert.alert('Help Center', 'Contact support@flowsportscoach.com for assistance')
               }
             />
             <View style={styles.separator} />
@@ -561,7 +561,7 @@ export default function SettingsScreen() {
               subtitle="Version 1.0.0"
               onPress={() =>
                 Alert.alert(
-                  'AI Sports Agent',
+                  'Flow Sports Coach',
                   'Version 1.0.0\n\nYour 24/7 mental performance coach powered by AI.\n\nBuilt with evidence-based sports psychology.'
                 )
               }
