@@ -58,22 +58,19 @@ function SignInForm() {
         return;
       }
 
-      // Get user role from database to determine redirect
-      const { data: userData, error: userError } = await supabase
-        .from('User')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
+      // Get user role from API (uses Prisma, avoids Supabase REST table name issues)
+      const roleResponse = await fetch(`/api/auth/user-role?userId=${data.user.id}`);
+      const roleData = await roleResponse.json();
 
-      if (userError || !userData) {
-        console.error('Error fetching user role:', userError);
+      if (!roleResponse.ok || !roleData.role) {
+        console.error('Error fetching user role:', roleData.error);
         setError('Failed to load user profile');
         setIsLoading(false);
         return;
       }
 
       // Redirect based on role
-      if (userData.role === 'COACH' || userData.role === 'ADMIN') {
+      if (roleData.role === 'COACH' || roleData.role === 'ADMIN') {
         router.push('/coach/dashboard');
       } else {
         router.push('/student/home');

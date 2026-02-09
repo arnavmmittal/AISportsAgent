@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 /**
  * Supabase Auth Callback Route
@@ -56,25 +57,24 @@ export async function GET(request: NextRequest) {
     }
 
     if (data?.user) {
-      // Get user role from database
-      const { data: userData, error: userError } = await supabase
-        .from('User')
-        .select('role')
-        .eq('id', data.user.id)
-        .single()
+      // Get user role from database using Prisma (avoids Supabase REST table name issues)
+      try {
+        const userData = await prisma.user.findUnique({
+          where: { id: data.user.id },
+          select: { role: true },
+        })
 
-      if (userError || !userData) {
-        console.error('Error fetching user role:', userError)
+        // Redirect based on role
+        const roleRedirect = userData?.role === 'COACH'
+          ? '/coach/dashboard'
+          : '/student/home'
+
+        return NextResponse.redirect(`${origin}${roleRedirect}`)
+      } catch (error) {
+        console.error('Error fetching user role:', error)
         // Default to athlete dashboard if role fetch fails
-        return NextResponse.redirect(`${origin}/dashboard`)
+        return NextResponse.redirect(`${origin}/student/home`)
       }
-
-      // Redirect based on role
-      const roleRedirect = userData.role === 'COACH'
-        ? '/coach/dashboard'
-        : '/dashboard'
-
-      return NextResponse.redirect(`${origin}${roleRedirect}`)
     }
   }
 
