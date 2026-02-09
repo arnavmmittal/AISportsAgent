@@ -29,6 +29,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ role: user.role });
   } catch (error) {
     console.error('Error fetching user role:', error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    // Return detailed error in staging for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({
+      error: 'Internal error',
+      details: process.env.NEXT_PUBLIC_ENV === 'staging' ? errorMessage : undefined
+    }, { status: 500 });
   }
 }
