@@ -5,8 +5,8 @@ import { config } from 'dotenv';
 import { calculateReadiness } from '../src/lib/analytics/readiness';
 import { getSportConfig } from '../src/lib/analytics/sport-configs';
 
-// Load environment variables from .env.local
-config({ path: '.env.local' });
+// Load environment variables from .env.local (override .env)
+config({ path: '.env.local', override: true });
 
 const prisma = new PrismaClient();
 
