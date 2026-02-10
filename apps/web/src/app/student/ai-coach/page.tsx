@@ -127,7 +127,11 @@ function AICoachPageContent() {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  // Voice integration
+  // Track if we're in voice mode for response handling
+  const isVoiceModeRef = useRef(false);
+  const pendingVoiceResponseRef = useRef<string>('');
+
+  // Voice integration with full flow: STT → AI → TTS
   const {
     voiceState,
     isListening,
@@ -135,34 +139,137 @@ function AICoachPageContent() {
     transcript,
     error: voiceError,
     toggleVoice,
+    speakResponse,
   } = useVoiceChat({
     sessionId,
     athleteId: user?.id || '',
     onTranscript: (text, isFinal) => {
-      if (isFinal && text.trim()) {
-        const userMessage: Message = {
-          id: `msg_${Date.now()}`,
-          role: 'user',
-          content: text,
-          timestamp: new Date(),
-          source: 'voice',
-        };
-        setMessages((prev) => [...prev, userMessage]);
+      // Just log interim transcripts - we handle final in onAudioComplete
+      if (!isFinal) {
+        console.log('[Voice] Interim transcript:', text);
       }
     },
-    onResponse: (text) => {
-      const assistantMessage: Message = {
-        id: `msg_${Date.now()}_assistant`,
-        role: 'assistant',
+    onAudioComplete: async (text) => {
+      // Called when voice transcription is complete
+      // Send to AI and speak the response
+      if (!text.trim() || !user?.id) return;
+
+      console.log('[Voice] Audio complete, sending to AI:', text);
+      isVoiceModeRef.current = true;
+      pendingVoiceResponseRef.current = '';
+
+      // Add user message
+      const userMessage: Message = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
         content: text,
         timestamp: new Date(),
         source: 'voice',
-        hasAudio: true,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, userMessage]);
+      setIsLoading(true);
+
+      try {
+        // Create assistant message placeholder
+        const assistantId = `msg_${Date.now()}_assistant`;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantId,
+            role: 'assistant',
+            content: '',
+            timestamp: new Date(),
+            source: 'voice',
+            hasAudio: true,
+          },
+        ]);
+
+        // Stream the response
+        const response = await fetch('/api/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message: text,
+            athlete_id: user.id,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to get response');
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) throw new Error('No response body');
+
+        let buffer = '';
+        let fullResponse = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') break;
+              if (!data) continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                if (parsed.type === 'token' || parsed.type === 'content') {
+                  const content = parsed.type === 'token' ? parsed.data.content : parsed.data;
+                  fullResponse += content;
+
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const lastIndex = updated.length - 1;
+                    if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
+                      updated[lastIndex] = {
+                        ...updated[lastIndex],
+                        content: fullResponse,
+                      };
+                    }
+                    return updated;
+                  });
+                }
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+
+        // Speak the full response using TTS
+        if (fullResponse.trim()) {
+          console.log('[Voice] Speaking response:', fullResponse.substring(0, 50) + '...');
+          await speakResponse(fullResponse, 'supportive');
+        }
+
+      } catch (error) {
+        console.error('[Voice] Error:', error);
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg?.role === 'assistant' && lastMsg.content === '') {
+            lastMsg.content = "I'm having trouble connecting right now. Let's try again in a moment.";
+          }
+          return updated;
+        });
+      } finally {
+        setIsLoading(false);
+        isVoiceModeRef.current = false;
+      }
     },
     onError: (error) => {
       console.error('Voice error:', error);
+      isVoiceModeRef.current = false;
     },
   });
 
