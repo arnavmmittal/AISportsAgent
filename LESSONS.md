@@ -5,6 +5,32 @@
 
 ---
 
+## Product Positioning
+
+### 2026-02-26: Mental Performance ≠ Mental Health
+**Severity:** HIGH
+**Discovery:** Documentation and conversations were framing the product as "mental health support"
+
+**Correct Framing:**
+- **IS**: Mental performance analytics platform for competitive advantage
+- **IS**: AI coaching for flow state, confidence, focus, pre-game preparation
+- **IS**: Predictive analytics correlating mental readiness with game performance
+- **IS NOT**: Mental health therapy or counseling
+- **IS NOT**: Depression/anxiety treatment app
+
+**Crisis Detection Context:**
+- Crisis detection exists as a **safety guardrail** (legal/liability)
+- It's NOT the core feature - it's a necessary protection
+- Main goal: Catch athletes in crisis and escalate to human professionals
+- Secondary to the core mission of performance optimization
+
+**Prevention:**
+- Always frame as "mental PERFORMANCE" not "mental health"
+- Compare to WHOOP (physical readiness) - we're the mental equivalent
+- ROI is about wins and competitive edge, not therapy outcomes
+
+---
+
 ## Security
 
 ### 2026-02-17: Credentials Exposed in Git

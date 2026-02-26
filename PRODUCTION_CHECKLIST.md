@@ -8,13 +8,18 @@
 
 ## Critical Understanding
 
-This platform handles **sensitive mental health data** from collegiate athletes. Before production:
+Flow Sports Coach is a **mental performance analytics platform** - not a mental health app. The core purpose is:
 
-1. **A missed crisis detection could have tragic consequences**
-2. **A data breach would destroy trust and violate FERPA**
-3. **Cost overruns could bankrupt the project**
+1. **Predictive analytics**: Correlate mental readiness with game performance
+2. **Scalable support**: Replace impossible 1:150 sports psychologist ratio with 24/7 AI coaching
+3. **Competitive edge**: Data-driven lineup decisions and intervention prioritization
 
-All three concerns are addressed in the current architecture. This checklist verifies they work.
+**Safety guardrails** (crisis detection, escalation) exist for liability protection, but are not the primary focus.
+
+**Before production, verify:**
+1. Data privacy (FERPA compliance for student athletes)
+2. Cost controls (prevent runaway OpenAI spending)
+3. Crisis escalation works (legal/safety requirement)
 
 ---
 
