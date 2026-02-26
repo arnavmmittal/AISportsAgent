@@ -279,6 +279,42 @@ GET    /v1/sessions          # Session history
 - `staging` - Pre-production testing (active development)
 - `feature/*` - Short-lived feature branches (delete after merge)
 
+### 🔴 CLAUDE: Branch Awareness (CRITICAL)
+
+**At the START of every session:**
+```bash
+git branch --show-current
+git status
+```
+
+**Before EVERY commit:**
+1. Check current branch: `git branch --show-current`
+2. Verify you're on the RIGHT branch for the work:
+   - Bug fixes / features → `staging` or `feature/*`
+   - NEVER commit directly to `main`
+3. If on wrong branch, switch BEFORE making changes
+
+**Branch Rules for Claude:**
+- **Default to `staging`** for all work unless explicitly told otherwise
+- **Never push to `main`** without explicit user instruction "deploy to production"
+- **Report current branch** when starting work: "Currently on branch: X"
+- **Warn if on `main`**: "⚠️ You're on main branch. Switch to staging?"
+
+**Quick Branch Commands:**
+```bash
+# Check current branch
+git branch --show-current
+
+# Switch to staging (safe default)
+git checkout staging && git pull origin staging
+
+# Create feature branch from staging
+git checkout staging && git pull && git checkout -b feature/name
+
+# See all branches
+git branch -a
+```
+
 ### Environment Variables
 
 **flow-sports-coach** (.env.local):
