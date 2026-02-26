@@ -34,6 +34,10 @@ vercel-*.env
 apps/web/vercel-*.env
 apps/mobile/vercel-*.env
 
+# Temporary files
+.temp/
+*.temp
+
 # Turbo
 .turbo
 
