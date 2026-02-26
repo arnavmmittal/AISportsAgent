@@ -15,9 +15,10 @@ const { Client } = require('pg');
 require('dotenv').config({ path: '.env.local' });
 
 // All tables from Prisma schema (46 tables)
+// Note: Some tables may have different names in DB (e.g., chat_summaries vs ChatSummary)
 const ALL_TABLES = [
   'Account', 'AlertRule', 'Assignment', 'AssignmentSubmission', 'Athlete',
-  'AthleteModel', 'AuditLog', 'ChatInsight', 'ChatSession', 'ChatSummary',
+  'AthleteModel', 'AuditLog', 'ChatInsight', 'ChatSession', 'chat_summaries',
   'Coach', 'CoachAthleteRelation', 'CoachDigest', 'CoachDigestPreferences',
   'CoachNote', 'CoachTouchpoint', 'ConversationInsight', 'CrisisAlert',
   'ErrorLog', 'GameResult', 'GameSchedule', 'GeneratedAlert', 'Goal',
@@ -31,7 +32,7 @@ const ALL_TABLES = [
 // Tables that MUST have RLS for security (contain sensitive athlete data)
 const CRITICAL_TABLES = [
   'User', 'Athlete', 'Coach', 'MoodLog', 'Goal', 'Task', 'ChatSession',
-  'Message', 'ChatInsight', 'ChatSummary', 'CrisisAlert', 'ConversationInsight',
+  'Message', 'ChatInsight', 'chat_summaries', 'CrisisAlert', 'ConversationInsight',
   'PerformanceMetric', 'PerformanceOutcome', 'GameResult', 'ReadinessScore',
   'Intervention', 'InterventionOutcome', 'WearableConnection', 'WearableData',
   'WearableDataPoint', 'AthleteModel', 'PredictionLog', 'CoachNote',
@@ -40,7 +41,7 @@ const CRITICAL_TABLES = [
 
 // Tables that use athleteId (not userId) - common source of bugs
 const ATHLETE_ID_TABLES = [
-  'MoodLog', 'Goal', 'Task', 'ChatSession', 'ChatInsight', 'ChatSummary',
+  'MoodLog', 'Goal', 'Task', 'ChatSession', 'ChatInsight', 'chat_summaries',
   'PerformanceMetric', 'PerformanceOutcome', 'GameResult', 'ReadinessScore',
   'Intervention', 'WearableConnection', 'WearableData', 'WearableDataPoint',
   'AthleteModel', 'PredictionLog', 'CrisisAlert', 'ConversationInsight',
