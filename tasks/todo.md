@@ -6,28 +6,33 @@
 
 ---
 
-## Production Readiness (BLOCKING)
+## Production Readiness - Current Status
 
-### Security - Must Complete
-- [ ] Apply ChatSummary RLS policies (migration created: 20260226_fix_chatsummary_policies.sql)
-- [ ] Apply missing policies for 5 tables (migration created: 20260226_add_missing_policies.sql)
-- [ ] Run security audit - must show "AUDIT PASSED"
-- [ ] Rotate Supabase service role key (requires Supabase dashboard)
-- [ ] Test athlete data isolation (Athlete A cannot see Athlete B's data)
+### ✅ COMPLETED (this session)
+- [x] Run comprehensive security audit
+- [x] Fix ChatSummary → chat_summaries table name mismatch
+- [x] Enable RLS on chat_summaries table
+- [x] Add 2 policies to chat_summaries
+- [x] Add policies to 5 warning tables (Coach, ConversationInsight, etc.)
+- [x] Security audit now shows: **PASSED** (46/46 tables, 103 policies)
+- [x] Correct product positioning in documentation
+- [x] Update global lessons with product understanding
 
-### Safety - Must Complete
+### ⏳ NEEDS MANUAL TESTING
+- [ ] Test crisis escalation cron end-to-end (requires running server)
 - [ ] Test crisis detection with all keywords
-- [ ] Test escalation cron job end-to-end
 - [ ] Verify emergency resources appear in crisis responses
+- [ ] Manual test: athlete data isolation
+- [ ] Manual test: coach consent flows
 
-### Verification
-- [ ] Run `npm run test:rls` - all tests must pass
-- [ ] Manual test: coach with consent can see athlete data
-- [ ] Manual test: coach without consent CANNOT see athlete data
+### ⏳ NEEDS MANUAL ACTION (Supabase Dashboard)
+- [ ] Rotate Supabase service role key
+  - Go to: Supabase Dashboard → Settings → API → Regenerate
+  - Update Vercel: `vercel env add SUPABASE_SERVICE_ROLE_KEY preview --force`
 
 ---
 
-## Current Sprint (After Production Blockers)
+## Next Sprint
 
 ### High Priority
 - [ ] Add pre-commit hook for secrets detection
@@ -35,9 +40,8 @@
 - [ ] Add comprehensive API route tests
 
 ### Medium Priority
-- [ ] Add monitoring/alerting for cost spikes
+- [ ] Configure Sentry alerts for production
 - [ ] Document API endpoints in OpenAPI format
-- [ ] Configure Sentry alerts
 
 ### Low Priority
 - [ ] Add performance benchmarks
@@ -48,18 +52,14 @@
 ## Backlog
 
 ### MVP Features
-- [ ] Voice chat integration
-- [ ] Enhanced coach dashboard
-- [ ] Email notifications for crisis alerts (beyond escalation)
+- [ ] Voice chat integration enhancements
+- [ ] Enhanced coach dashboard analytics
+- [ ] Email notifications for crisis alerts
 
 ### Security Hardening
 - [ ] Add rate limiting to all API routes
 - [ ] Implement session timeout
-- [ ] HIPAA compliance review
-
-### Performance
-- [ ] Add Redis caching layer
-- [ ] Connection pooling verification
+- [ ] FERPA compliance review
 
 ---
 
@@ -68,27 +68,25 @@
 ### 2026-02-26
 - [x] Run comprehensive production readiness assessment
 - [x] Create PRODUCTION_CHECKLIST.md
-- [x] Create ChatSummary RLS policy fix migration
-- [x] Create missing policies migration for warning tables
-- [x] Verify cron jobs are fully implemented (escalation, weekly summaries)
-- [x] Verify credentials are NOT in git (only templates)
+- [x] Enable RLS on chat_summaries table (was missing)
+- [x] Add policies to chat_summaries (2 policies)
+- [x] Add policies to Coach, ConversationInsight, InterventionOutcome, AthleteModel, CoachNote
+- [x] Fix security audit script (ChatSummary → chat_summaries)
+- [x] Security audit: **46/46 tables RLS enabled, 103 policies**
+- [x] Verify cron jobs are fully implemented
+- [x] Correct product positioning (mental PERFORMANCE, not mental health)
+- [x] Update LESSONS.md with product positioning lesson
 - [x] Update global workflow system
 
 ### 2026-02-17
 - [x] Create comprehensive ARCHITECTURE.md
 - [x] Remove exposed credentials from git
 - [x] Enable RLS on all 46 tables
-- [x] Create 96 security policies
-- [x] Rotate OpenAI API key
-- [x] Rotate ElevenLabs API key
-- [x] Rotate NEXTAUTH_SECRET
-- [x] Rotate CRON_SECRET
-- [x] Rotate SUMMARY_ENCRYPTION_KEY
+- [x] Create 96 security policies (now 103)
+- [x] Rotate OpenAI, ElevenLabs, NEXTAUTH_SECRET, CRON_SECRET, SUMMARY_ENCRYPTION_KEY
 - [x] Create security audit script
 - [x] Update Vercel preview environment variables
-- [x] Create LESSONS.md self-improving knowledge base
-- [x] Create WORKFLOW.md development workflow
-- [x] Create workflow.sh automation script
+- [x] Create LESSONS.md, WORKFLOW.md, workflow.sh
 
 ---
 
