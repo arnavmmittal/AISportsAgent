@@ -2,27 +2,46 @@
 
 > **Active task list** for current sprint.
 > Check `LESSONS.md` in project root for lessons learned.
+> See `PRODUCTION_CHECKLIST.md` for full deployment checklist.
 
 ---
 
-## Current Sprint
+## Production Readiness (BLOCKING)
+
+### Security - Must Complete
+- [ ] Apply ChatSummary RLS policies (migration created: 20260226_fix_chatsummary_policies.sql)
+- [ ] Apply missing policies for 5 tables (migration created: 20260226_add_missing_policies.sql)
+- [ ] Run security audit - must show "AUDIT PASSED"
+- [ ] Rotate Supabase service role key (requires Supabase dashboard)
+- [ ] Test athlete data isolation (Athlete A cannot see Athlete B's data)
+
+### Safety - Must Complete
+- [ ] Test crisis detection with all keywords
+- [ ] Test escalation cron job end-to-end
+- [ ] Verify emergency resources appear in crisis responses
+
+### Verification
+- [ ] Run `npm run test:rls` - all tests must pass
+- [ ] Manual test: coach with consent can see athlete data
+- [ ] Manual test: coach without consent CANNOT see athlete data
+
+---
+
+## Current Sprint (After Production Blockers)
 
 ### High Priority
-- [ ] Verify Supabase RLS policies are working correctly
-- [ ] Rotate Supabase service role key (requires Supabase dashboard)
-- [ ] Test athlete data isolation between users
-- [ ] Implement cost tracking circuit breaker
-
-### Medium Priority
 - [ ] Add pre-commit hook for secrets detection
 - [ ] Set up CI/CD pipeline with security audit
-- [ ] Complete ChatSummary table migration
 - [ ] Add comprehensive API route tests
 
-### Low Priority
+### Medium Priority
 - [ ] Add monitoring/alerting for cost spikes
 - [ ] Document API endpoints in OpenAPI format
+- [ ] Configure Sentry alerts
+
+### Low Priority
 - [ ] Add performance benchmarks
+- [ ] Optimize database queries with indexes
 
 ---
 
@@ -30,24 +49,30 @@
 
 ### MVP Features
 - [ ] Voice chat integration
-- [ ] Coach dashboard with aggregated insights
-- [ ] Weekly report generation
-- [ ] Email notifications for crisis alerts
+- [ ] Enhanced coach dashboard
+- [ ] Email notifications for crisis alerts (beyond escalation)
 
 ### Security Hardening
 - [ ] Add rate limiting to all API routes
 - [ ] Implement session timeout
-- [ ] Add audit logging for data access
 - [ ] HIPAA compliance review
 
 ### Performance
-- [ ] Optimize database queries with indexes
 - [ ] Add Redis caching layer
-- [ ] Implement connection pooling verification
+- [ ] Connection pooling verification
 
 ---
 
 ## Completed
+
+### 2026-02-26
+- [x] Run comprehensive production readiness assessment
+- [x] Create PRODUCTION_CHECKLIST.md
+- [x] Create ChatSummary RLS policy fix migration
+- [x] Create missing policies migration for warning tables
+- [x] Verify cron jobs are fully implemented (escalation, weekly summaries)
+- [x] Verify credentials are NOT in git (only templates)
+- [x] Update global workflow system
 
 ### 2026-02-17
 - [x] Create comprehensive ARCHITECTURE.md
@@ -67,4 +92,4 @@
 
 ---
 
-*Updated: 2026-02-17*
+*Updated: 2026-02-26*
