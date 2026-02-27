@@ -31,6 +31,41 @@
 
 ---
 
+### 2026-02-26: The Core Value is Deep Insights, Not Basic Tracking
+**Severity:** HIGH
+**Discovery:** Over-focusing on safety features when the real value is in `deep-insights.ts`
+
+**What's Actually Built (1900+ lines of sophisticated analytics):**
+- **10 types of non-trivial insights**:
+  1. Optimal ranges ("Best at 72-78, not 85+")
+  2. Personal thresholds ("YOUR cliff is stress > 7.5")
+  3. Comparative differences ("2.1x more sleep-dependent than team")
+  4. Counter-intuitive patterns ("You perform BETTER under stress")
+  5. Temporal patterns ("Tuesday mood predicts Saturday games")
+  6. Interaction effects ("Sleep only matters when stress is high")
+  7. Technique → sport stats ("Visualization adds 2.3 PPG")
+  8. Situational effectiveness ("Breathing > visualization pre-game")
+  9. Chat → performance correlation
+  10. Mood trend analysis
+
+**Statistical Rigor:**
+- Pearson r with 95% CI
+- P-value thresholding (p < 0.05)
+- Minimum 20 data points
+- Cohen's magnitude classification
+
+**Key Files:**
+- `/src/lib/analytics/deep-insights.ts` - The core insight engine
+- `/src/lib/analytics/performance-correlation.ts` - Mental → Performance
+- `/src/lib/chat-analysis.ts` - What techniques lead to wins
+
+**Prevention:**
+- Don't over-index on safety features in discussions
+- Lead with: "What mental patterns predict your best performances?"
+- The differentiator is NON-TRIVIAL insights, not "sleep more"
+
+---
+
 ## Security
 
 ### 2026-02-17: Credentials Exposed in Git
