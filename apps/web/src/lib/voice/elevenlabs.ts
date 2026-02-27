@@ -33,6 +33,7 @@ export interface ElevenLabsConfig {
   similarityBoost?: number; // 0.0-1.0: how much to match original voice
   style?: number; // 0.0-1.0: speaking style intensity
   useSpeakerBoost?: boolean; // Enhance clarity (recommended)
+  speed?: number; // 0.25-4.0: speaking speed (1.0 = normal, 1.2 = 20% faster)
 }
 
 export interface VoiceSettings {
@@ -64,13 +65,17 @@ export async function textToSpeech(
       : config.voiceId || VOICES.rachel;
 
   const voiceSettings: VoiceSettings = {
-    stability: config.stability ?? 0.5, // Balanced
-    similarity_boost: config.similarityBoost ?? 0.75,
-    style: config.style ?? 0.5,
+    stability: config.stability ?? 0.35, // Lower = more natural/casual
+    similarity_boost: config.similarityBoost ?? 0.7,
+    style: config.style ?? 0.4, // Lower = more conversational
     use_speaker_boost: config.useSpeakerBoost ?? true,
   };
 
-  const modelId = config.modelId || 'eleven_multilingual_v2';
+  // Use turbo model for faster generation (2-3x faster than multilingual)
+  const modelId = config.modelId || 'eleven_turbo_v2_5';
+
+  // Speed: 1.15 = 15% faster, sounds more natural/energetic
+  const speed = config.speed ?? 1.15;
 
   try {
     console.log('[ElevenLabs] Generating TTS for text:', text.substring(0, 50) + '...');
@@ -86,6 +91,7 @@ export async function textToSpeech(
         text,
         model_id: modelId,
         voice_settings: voiceSettings,
+        speed, // 1.15 = slightly faster, more natural
       }),
     });
 
@@ -123,13 +129,14 @@ export async function* streamTextToSpeech(
       : config.voiceId || VOICES.rachel;
 
   const voiceSettings: VoiceSettings = {
-    stability: config.stability ?? 0.5,
-    similarity_boost: config.similarityBoost ?? 0.75,
-    style: config.style ?? 0.5,
+    stability: config.stability ?? 0.35,
+    similarity_boost: config.similarityBoost ?? 0.7,
+    style: config.style ?? 0.4,
     use_speaker_boost: config.useSpeakerBoost ?? true,
   };
 
-  const modelId = config.modelId || 'eleven_multilingual_v2';
+  const modelId = config.modelId || 'eleven_turbo_v2_5';
+  const speed = config.speed ?? 1.15;
 
   try {
     console.log('[ElevenLabs] Streaming TTS for text:', text.substring(0, 50) + '...');
@@ -144,6 +151,7 @@ export async function* streamTextToSpeech(
         text,
         model_id: modelId,
         voice_settings: voiceSettings,
+        speed,
       }),
     });
 
@@ -186,53 +194,59 @@ export function getAvailableVoices(): typeof VOICES {
  * Voice presets for different conversation contexts
  */
 export const VOICE_PRESETS = {
-  // For general coaching conversations
+  // For general coaching conversations - casual, friendly
   default: {
     voiceId: 'rachel' as VoiceId,
-    stability: 0.5,
-    similarityBoost: 0.75,
-    style: 0.5,
+    stability: 0.35, // Lower = more natural variation
+    similarityBoost: 0.7,
+    style: 0.4, // Conversational
     useSpeakerBoost: true,
+    speed: 1.15, // Slightly faster = more natural
   },
   // For crisis/anxiety support - calm, reassuring
   calm: {
     voiceId: 'elli' as VoiceId,
-    stability: 0.7, // Very stable, reassuring
-    similarityBoost: 0.75,
-    style: 0.3, // Less dramatic, more neutral
+    stability: 0.5, // Stable but not robotic
+    similarityBoost: 0.7,
+    style: 0.25,
     useSpeakerBoost: true,
+    speed: 1.0, // Normal speed for calm delivery
   },
   // For motivation/performance talks - energetic, inspiring
   motivation: {
     voiceId: 'domi' as VoiceId,
-    stability: 0.3, // More expressive
-    similarityBoost: 0.75,
-    style: 0.8, // Very expressive
+    stability: 0.25, // Very expressive
+    similarityBoost: 0.7,
+    style: 0.7,
     useSpeakerBoost: true,
+    speed: 1.2, // Faster = more energetic
   },
-  // For instructions/techniques - clear, factual
+  // For instructions/techniques - clear, casual
   instruction: {
     voiceId: 'rachel' as VoiceId,
-    stability: 0.8, // Very consistent
-    similarityBoost: 0.75,
-    style: 0.2, // Neutral tone
+    stability: 0.5,
+    similarityBoost: 0.7,
+    style: 0.3,
     useSpeakerBoost: true,
+    speed: 1.1,
   },
-  // Supportive/empathetic tone
+  // Supportive/empathetic tone - warm, casual
   supportive: {
     voiceId: 'rachel' as VoiceId,
-    stability: 0.5,
-    similarityBoost: 0.75,
-    style: 0.4,
+    stability: 0.35,
+    similarityBoost: 0.7,
+    style: 0.35,
     useSpeakerBoost: true,
+    speed: 1.1,
   },
-  // Encouraging tone
+  // Encouraging tone - upbeat, friendly
   encouraging: {
     voiceId: 'antoni' as VoiceId,
-    stability: 0.4,
-    similarityBoost: 0.8,
-    style: 0.6,
+    stability: 0.3,
+    similarityBoost: 0.75,
+    style: 0.55,
     useSpeakerBoost: true,
+    speed: 1.15,
   },
 } as const;
 
