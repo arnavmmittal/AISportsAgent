@@ -329,6 +329,9 @@ function AICoachPageContent() {
             source: 'text' as MessageSource,
           }));
           setMessages(loadedMessages);
+        } else if (response.status === 404) {
+          // New session - no messages yet, this is expected
+          setMessages([]);
         }
       } catch (error) {
         console.error('Failed to load chat history:', error);
@@ -808,9 +811,7 @@ function AICoachPageContent() {
                 );
               })}
 
-              {isLoading && messages[messages.length - 1]?.content === '' && (
-                <TypingIndicator />
-              )}
+              {/* TypingIndicator removed - ChatBubble handles streaming state */}
             </>
           )}
           <div ref={messagesEndRef} className="h-4" />
