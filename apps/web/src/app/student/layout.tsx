@@ -16,41 +16,44 @@ import {
   ChevronLeft,
   ChevronRight,
   Brain,
+  Home,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Student Portal Layout - Consolidated Navigation (v2.1)
+ * Student Portal Layout - v2.2 with Mobile Bottom Tabs
  *
- * Streamlined to 6 primary navigation items:
+ * Desktop: Collapsible sidebar navigation
+ * Mobile: Fixed bottom tab bar (like native apps)
+ *
+ * Navigation items:
  * - Home (Dashboard) - Overview and quick stats
- * - AI Coach - Chat interface with integrated Chat History
- * - Wellness - Combined Readiness + Mood logging
- * - Goals - Goal setting with integrated Progress tracking
+ * - AI Coach - Chat interface (PRIMARY)
+ * - Wellness - Readiness + Mood logging
+ * - Goals - Goal setting with progress tracking
  * - Assignments - Coach-assigned tasks
- * - Settings - Account preferences
- *
- * Consolidated features:
- * - Chat History → accessible within AI Coach page
- * - Mood Log → merged into Wellness page
- * - Progress → integrated into Goals page
+ * - Settings - Account preferences (sidebar only)
  */
 
 const navItems = [
-  { href: '/student/home', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/student/ai-coach', label: 'AI Coach', icon: Brain, primary: true },
-  { href: '/student/wellness', label: 'Wellness', icon: Activity },
-  { href: '/student/goals', label: 'Goals', icon: Target },
-  { href: '/student/assignments', label: 'Assignments', icon: ClipboardList },
-  { href: '/student/settings', label: 'Settings', icon: Settings },
+  { href: '/student/home', label: 'Dashboard', shortLabel: 'Home', icon: LayoutDashboard, showInMobile: true },
+  { href: '/student/ai-coach', label: 'AI Coach', shortLabel: 'Coach', icon: Brain, primary: true, showInMobile: true },
+  { href: '/student/wellness', label: 'Wellness', shortLabel: 'Wellness', icon: Activity, showInMobile: true },
+  { href: '/student/goals', label: 'Goals', shortLabel: 'Goals', icon: Target, showInMobile: true },
+  { href: '/student/assignments', label: 'Assignments', shortLabel: 'Tasks', icon: ClipboardList, showInMobile: true },
+  { href: '/student/settings', label: 'Settings', shortLabel: 'Settings', icon: Settings, showInMobile: false },
 ];
+
+// Mobile bottom tabs (max 5 for usability)
+const mobileNavItems = navItems.filter(item => item.showInMobile);
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -58,29 +61,49 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     router.refresh();
   };
 
-  // Load sidebar state from localStorage on mount
+  // Detect mobile viewport
   useEffect(() => {
-    const savedState = localStorage.getItem('student-sidebar-open');
-    if (savedState !== null) {
-      setIsSidebarOpen(savedState === 'true');
-    }
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      // Auto-close sidebar on mobile
+      if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Load sidebar state from localStorage on mount (desktop only)
+  useEffect(() => {
+    if (!isMobile) {
+      const savedState = localStorage.getItem('student-sidebar-open');
+      if (savedState !== null) {
+        setIsSidebarOpen(savedState === 'true');
+      }
+    }
+  }, [isMobile]);
 
   // Save sidebar state to localStorage when it changes
   const toggleSidebar = () => {
     const newState = !isSidebarOpen;
     setIsSidebarOpen(newState);
-    localStorage.setItem('student-sidebar-open', String(newState));
+    if (!isMobile) {
+      localStorage.setItem('student-sidebar-open', String(newState));
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hamburger Menu Button - Visible on all screen sizes */}
+      {/* Desktop Sidebar Toggle Button - Hidden on mobile */}
       <button
         onClick={toggleSidebar}
         className={cn(
           'fixed top-4 z-50 p-2.5 bg-card rounded-lg shadow-md hover:shadow-lg transition-all',
           'border border-border hover:border-primary/30',
+          'hidden md:block', // Hide on mobile
           isSidebarOpen ? 'left-[17rem]' : 'left-4'
         )}
         aria-label="Toggle sidebar"
@@ -92,10 +115,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         )}
       </button>
 
-      {/* Sidebar */}
+      {/* Desktop Sidebar - Hidden on mobile */}
       <aside
         className={cn(
           'fixed top-0 left-0 h-full bg-card border-r border-border z-40 transition-all duration-300 ease-in-out',
+          'hidden md:block', // Hide on mobile
           isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'
         )}
       >
@@ -180,11 +204,70 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Mobile Header - Shows on mobile only */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-40 flex items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <Brain className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <span className="font-bold text-foreground">Flow Coach</span>
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="p-2 text-muted-foreground hover:text-foreground rounded-lg"
+          aria-label="Sign out"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
+      </header>
+
+      {/* Mobile Bottom Tab Bar - Shows on mobile only */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border z-40 safe-area-bottom">
+        <div className="flex items-center justify-around h-full px-2">
+          {mobileNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push(item.href);
+                }}
+                className={cn(
+                  'flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors',
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
+                )}
+              >
+                <Icon className={cn(
+                  'w-6 h-6 mb-0.5',
+                  isActive && 'scale-110'
+                )} />
+                <span className={cn(
+                  'text-[10px] font-medium',
+                  isActive && 'font-semibold'
+                )}>
+                  {item.shortLabel}
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Main content - Adjusted for mobile header and bottom tabs */}
       <main
         className={cn(
           'min-h-screen transition-all duration-300 ease-in-out',
-          isSidebarOpen ? 'ml-64' : 'ml-0'
+          // Desktop: margin for sidebar
+          'md:ml-0',
+          isSidebarOpen && 'md:ml-64',
+          // Mobile: padding for header and bottom tabs
+          'pt-14 pb-16 md:pt-0 md:pb-0'
         )}
       >
         {children}

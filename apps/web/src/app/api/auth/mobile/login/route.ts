@@ -15,18 +15,25 @@ import { logLoginAttempt } from '@/lib/audit';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-// JWT secret (same as NEXTAUTH_SECRET)
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
-);
-
-// Supabase client for server-side auth
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export async function POST(request: NextRequest) {
+  // Create Supabase client inside function to ensure env vars are available
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const jwtSecret = process.env.NEXTAUTH_SECRET;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables');
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 500 }
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const JWT_SECRET = new TextEncoder().encode(
+    jwtSecret || 'your-secret-key-change-in-production'
+  );
+
   try {
     const body = await request.json();
     const { email, password } = body;
