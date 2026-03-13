@@ -1,12 +1,13 @@
 /**
-
  * Mobile app login endpoint
  * Returns JWT token for stateless authentication
+ *
+ * Uses Supabase Auth for authentication (same as web app)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { compare } from 'bcryptjs';
 import { SignJWT } from 'jose';
+import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
 import { logLoginAttempt } from '@/lib/audit';
 
@@ -17,6 +18,12 @@ export const runtime = 'nodejs';
 // JWT secret (same as NEXTAUTH_SECRET)
 const JWT_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
+);
+
+// Supabase client for server-side auth
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export async function POST(request: NextRequest) {
@@ -31,19 +38,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Database authentication for real users
     try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-        include: {
-          School: true,
-          Athlete: true,
-          Coach: true,
-        },
+      // Authenticate with Supabase Auth (same as web app)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      if (!user || !user.password) {
-        // Audit log: Failed login attempt (user not found)
+      if (authError || !authData.user) {
+        // Audit log: Failed login attempt
         await logLoginAttempt(
           email,
           false,
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
               'user-agent': request.headers.get('user-agent') || undefined,
             },
           },
-          'User not found'
+          authError?.message || 'Authentication failed'
         ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
 
         return NextResponse.json(
@@ -62,12 +65,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const isValid = await compare(password, user.password);
+      // Get user details from our database
+      const user = await prisma.user.findUnique({
+        where: { id: authData.user.id },
+        include: {
+          School: true,
+          Athlete: true,
+          Coach: true,
+        },
+      });
 
-      if (!isValid) {
-        // Audit log: Failed login attempt (invalid password)
+      if (!user) {
+        // User exists in Supabase Auth but not in our User table
         await logLoginAttempt(
-          user.id,
+          email,
           false,
           {
             headers: {
@@ -75,16 +86,16 @@ export async function POST(request: NextRequest) {
               'user-agent': request.headers.get('user-agent') || undefined,
             },
           },
-          'Invalid password'
+          'User profile not found'
         ).catch(err => console.error('[Audit] Failed to log login attempt:', err));
 
         return NextResponse.json(
-          { error: 'Invalid credentials' },
+          { error: 'User profile not found' },
           { status: 401 }
         );
       }
 
-      // Generate JWT token
+      // Generate JWT token for mobile app
       const token = await new SignJWT({
         id: user.id,
         email: user.email,
@@ -119,12 +130,18 @@ export async function POST(request: NextRequest) {
           coach: user.Coach,
         },
         token,
+        // Also include Supabase session for clients that prefer it
+        supabaseSession: {
+          access_token: authData.session?.access_token,
+          refresh_token: authData.session?.refresh_token,
+          expires_at: authData.session?.expires_at,
+        },
       });
     } catch (error) {
       console.error('Database error:', error);
       return NextResponse.json(
-        { error: 'Invalid credentials or database unavailable' },
-        { status: 401 }
+        { error: 'Authentication service unavailable' },
+        { status: 500 }
       );
     }
   } catch (error) {
