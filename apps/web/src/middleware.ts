@@ -12,6 +12,13 @@ import { createServerClient } from '@supabase/ssr';
  * - Prevents athletes from accessing coach routes
  */
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Skip middleware entirely for mobile auth API routes to preserve request body
+  if (pathname.startsWith('/api/auth/mobile')) {
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
