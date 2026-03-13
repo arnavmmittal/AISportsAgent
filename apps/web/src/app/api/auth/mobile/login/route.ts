@@ -32,10 +32,13 @@ export async function POST(request: NextRequest) {
     // Parse request body
     let body;
     try {
-      body = await request.json();
+      const text = await request.text();
+      console.log('[Mobile Login] Raw body:', text);
+      body = JSON.parse(text);
     } catch (e) {
+      console.error('[Mobile Login] Body parse error:', e);
       return NextResponse.json(
-        { error: 'Invalid request body', code: 'INVALID_BODY' },
+        { error: 'Invalid request body', code: 'INVALID_BODY', details: String(e) },
         { status: 400 }
       );
     }
