@@ -159,6 +159,29 @@ export async function POST(req: NextRequest) {
 
     console.log(`[LangGraph Chat] Processing message for athlete: ${athlete_id}, session: ${session_id}`);
 
+    // Check critical environment variables
+    const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+    const hasDBUrl = !!process.env.DATABASE_URL;
+    console.log(`[LangGraph Chat] Env check - OPENAI_API_KEY: ${hasOpenAIKey}, DATABASE_URL: ${hasDBUrl}`);
+
+    if (!hasOpenAIKey) {
+      console.error('[LangGraph Chat] OPENAI_API_KEY is missing!');
+      return new Response(
+        encoder.encode('data: ' + JSON.stringify({
+          type: 'error',
+          data: 'Server configuration error: OpenAI API key not configured'
+        }) + '\n\n'),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        }
+      );
+    }
+
     // Stream response using LangGraph
     const stream = new ReadableStream({
       async start(controller) {
