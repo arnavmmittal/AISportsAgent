@@ -19,6 +19,7 @@ import {
   Search,
   ChevronLeft,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
@@ -699,7 +700,7 @@ function AICoachPageContent() {
         </div>
       </aside>
 
-      <div className="max-w-4xl mx-auto h-screen flex flex-col">
+      <div className="max-w-4xl mx-auto h-[100dvh] flex flex-col">
         {/* Header */}
         <header className="flex-shrink-0 p-4 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="flex items-center justify-between">
@@ -864,6 +865,12 @@ function AICoachPageContent() {
                 placeholder={voiceMode ? 'Voice mode active...' : "What's on your mind?"}
                 disabled={isLoading || voiceMode}
                 rows={1}
+                // Mobile keyboard optimization
+                enterKeyHint="send"
+                inputMode="text"
+                autoComplete="off"
+                autoCorrect="on"
+                autoCapitalize="sentences"
                 className={cn(
                   'w-full resize-none rounded-xl border border-border bg-background px-4 py-3 pr-12',
                   'text-sm placeholder:text-muted-foreground',
@@ -878,8 +885,13 @@ function AICoachPageContent() {
                 disabled={isLoading || !inputValue.trim() || voiceMode}
                 size="icon"
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                aria-label={isLoading ? 'Sending message...' : 'Send message'}
               >
-                <Send className="w-4 h-4" />
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>

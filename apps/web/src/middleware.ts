@@ -52,8 +52,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
-
   // Route categorization
   const isAuthPage = pathname.startsWith('/auth');
   const isCoachRoute = pathname.startsWith('/coach');

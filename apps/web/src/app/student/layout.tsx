@@ -222,8 +222,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       </header>
 
       {/* Mobile Bottom Tab Bar - Shows on mobile only */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border z-40 safe-area-bottom">
-        <div className="flex items-center justify-around h-full px-2">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[4.5rem] bg-card border-t border-border z-40 safe-area-bottom" role="tablist" aria-label="Main navigation">
+        <div className="flex items-stretch justify-around h-full px-1">
           {mobileNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
@@ -236,15 +236,20 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
                   e.preventDefault();
                   router.push(item.href);
                 }}
+                role="tab"
+                aria-selected={isActive}
+                aria-label={item.label}
                 className={cn(
-                  'flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors',
+                  // Ensure minimum 48px touch target (WCAG 2.1 AA compliance)
+                  'flex flex-col items-center justify-center flex-1 min-h-[48px] py-2 px-1',
+                  'transition-colors touch-none select-none active:bg-muted/50',
                   isActive
                     ? 'text-primary'
-                    : 'text-muted-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <Icon className={cn(
-                  'w-6 h-6 mb-0.5',
+                  'w-6 h-6 mb-1',
                   isActive && 'scale-110'
                 )} />
                 <span className={cn(
