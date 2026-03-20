@@ -241,19 +241,21 @@ export async function callModelNode(
       ...state.messages,
     ];
 
+    console.log('[LANGGRAPH:MODEL] Calling OpenAI model...');
+
     // Invoke the model
     const response = await model.invoke(messagesForModel);
 
     const duration = Date.now() - startTime;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[LANGGRAPH:MODEL]', {
-        hasToolCalls: (response.tool_calls?.length || 0) > 0,
-        toolCalls: response.tool_calls?.map((tc) => tc.name),
-        contentLength: (response.content as string)?.length || 0,
-        duration: `${duration}ms`,
-      });
-    }
+    // Always log for debugging (remove NODE_ENV check temporarily)
+    console.log('[LANGGRAPH:MODEL] Response received:', {
+      hasToolCalls: (response.tool_calls?.length || 0) > 0,
+      toolCalls: response.tool_calls?.map((tc) => tc.name),
+      contentLength: (response.content as string)?.length || 0,
+      contentPreview: (response.content as string)?.substring(0, 100) || '',
+      duration: `${duration}ms`,
+    });
 
     // Increment turn count
     const newTurnCount = state.turnCountInPhase + 1;
