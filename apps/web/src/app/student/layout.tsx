@@ -212,13 +212,26 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           </div>
           <span className="font-bold text-foreground">Flow Coach</span>
         </div>
-        <button
-          onClick={handleSignOut}
-          className="p-2 text-muted-foreground hover:text-foreground rounded-lg"
-          aria-label="Sign out"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <a
+            href="/student/settings"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push('/student/settings');
+            }}
+            className="p-2.5 text-muted-foreground hover:text-foreground active:bg-muted/50 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </a>
+          <button
+            onClick={handleSignOut}
+            className="p-2.5 text-muted-foreground hover:text-foreground active:bg-muted/50 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="Sign out"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       {/* Mobile Bottom Tab Bar - Shows on mobile only */}

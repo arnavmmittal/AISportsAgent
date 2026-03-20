@@ -678,7 +678,10 @@ function WellnessPageContent() {
               <h2 id="readiness-heading" className="sr-only">Current Readiness Score</h2>
 
               <div className="flex flex-col items-center">
-                <ReadinessGauge score={readiness.score} size="xl" showLabel animated />
+                {/* Responsive gauge: scales down on mobile */}
+                <div className="transform scale-75 md:scale-100 origin-center">
+                  <ReadinessGauge score={readiness.score} size="xl" showLabel animated />
+                </div>
 
                 <div className="mt-6 text-center">
                   <h3

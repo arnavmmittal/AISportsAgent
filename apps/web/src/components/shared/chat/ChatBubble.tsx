@@ -169,12 +169,13 @@ export function ChatBubble({
           )}
         </div>
 
-        {/* Actions and timestamp */}
+        {/* Actions and timestamp - visible on mobile, hover on desktop */}
         <div
           className={cn(
             'flex items-center gap-2 mt-1 px-1',
             isUser ? 'flex-row-reverse' : 'flex-row',
-            'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+            // Mobile: always visible (slightly dimmed), Desktop: show on hover
+            'opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200'
           )}
         >
           {/* Voice input indicator */}
@@ -205,15 +206,15 @@ export function ChatBubble({
                   size="icon-sm"
                   onClick={isPlaying ? onStopAudio : onPlayAudio}
                   className={cn(
-                    'h-6 w-6',
+                    'h-8 w-8 md:h-6 md:w-6', // Larger on mobile for touch
                     isPlaying && 'text-primary bg-primary/10'
                   )}
                   aria-label={isPlaying ? 'Stop playback' : 'Play audio'}
                 >
                   {isPlaying ? (
-                    <VolumeX size={12} />
+                    <VolumeX size={14} className="md:w-3 md:h-3" />
                   ) : (
-                    <Volume2 size={12} />
+                    <Volume2 size={14} className="md:w-3 md:h-3" />
                   )}
                 </Button>
               )}
@@ -223,13 +224,13 @@ export function ChatBubble({
                   variant="ghost"
                   size="icon-sm"
                   onClick={handleCopy}
-                  className="h-6 w-6"
+                  className="h-8 w-8 md:h-6 md:w-6" // Larger on mobile for touch
                   aria-label={copied ? 'Copied!' : 'Copy message'}
                 >
                   {copied ? (
-                    <Check size={12} className="text-success" />
+                    <Check size={14} className="md:w-3 md:h-3 text-success" />
                   ) : (
-                    <Copy size={12} />
+                    <Copy size={14} className="md:w-3 md:h-3" />
                   )}
                 </Button>
               )}
@@ -239,10 +240,10 @@ export function ChatBubble({
                   variant="ghost"
                   size="icon-sm"
                   onClick={onRetry}
-                  className="h-6 w-6"
+                  className="h-8 w-8 md:h-6 md:w-6" // Larger on mobile for touch
                   aria-label="Retry this response"
                 >
-                  <RotateCcw size={12} />
+                  <RotateCcw size={14} className="md:w-3 md:h-3" />
                 </Button>
               )}
             </div>

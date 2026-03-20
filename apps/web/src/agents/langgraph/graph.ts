@@ -287,26 +287,60 @@ export async function* streamConversationGraph(
   });
 
   for await (const event of stream) {
-    // Debug: Log all events in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[LANGGRAPH:STREAM_EVENT]', event.event, event.name || '');
-    }
+    // Debug: Log all events (always enabled for debugging)
+    console.log('[LANGGRAPH:STREAM_EVENT]', {
+      event: event.event,
+      name: event.name || '',
+      dataKeys: event.data ? Object.keys(event.data) : [],
+    });
 
     // Yield different event types
     if (event.event === 'on_llm_stream') {
       // Token streaming from the model
       const chunk = event.data?.chunk;
       if (chunk?.content) {
-        yield {
-          type: 'token',
-          data: { content: chunk.content },
-        };
+        const content = typeof chunk.content === 'string'
+          ? chunk.content
+          : Array.isArray(chunk.content)
+            ? chunk.content.map((c: { text?: string }) => c.text || '').join('')
+            : '';
+        if (content) {
+          yield {
+            type: 'token',
+            data: { content },
+          };
+        }
       }
     } else if (event.event === 'on_chat_model_stream') {
       // Alternative event name for chat model streaming
       const chunk = event.data?.chunk;
-      const content = chunk?.content || chunk?.text || '';
+      // Handle different chunk structures
+      let content = '';
+      if (chunk?.content) {
+        content = typeof chunk.content === 'string'
+          ? chunk.content
+          : Array.isArray(chunk.content)
+            ? chunk.content.map((c: { text?: string }) => c.text || '').join('')
+            : '';
+      } else if (chunk?.text) {
+        content = chunk.text;
+      } else if (chunk?.message?.content) {
+        content = typeof chunk.message.content === 'string'
+          ? chunk.message.content
+          : '';
+      }
       if (content) {
+        yield {
+          type: 'token',
+          data: { content },
+        };
+      }
+    } else if (event.event === 'on_chat_model_end') {
+      // Fallback: Get content from final message if streaming didn't work
+      const output = event.data?.output;
+      const content = output?.content || output?.message?.content;
+      if (content && typeof content === 'string') {
+        console.log('[LANGGRAPH:STREAM] Got content from on_chat_model_end:', content.substring(0, 100) + '...');
         yield {
           type: 'token',
           data: { content },
