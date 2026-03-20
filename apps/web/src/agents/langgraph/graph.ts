@@ -446,6 +446,37 @@ export async function* streamConversationGraph(
   // Get final state
   const finalState = await graph.getState(config);
 
+  // Fallback: If no tokens were yielded but we have messages in state, yield the last AI message
+  if (tokenCount === 0 && finalState.values?.messages?.length > 0) {
+    const messages = finalState.values.messages;
+    // Find the last AI message
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      // Check if it's an AI message (has content but no role 'user')
+      if (msg.content && msg._getType?.() === 'ai') {
+        console.log('[LANGGRAPH:STREAM] Yielding fallback from final state:', msg.content.substring(0, 100));
+        yield {
+          type: 'token',
+          data: { content: msg.content },
+        };
+        tokenCount++;
+        break;
+      }
+    }
+  }
+
+  // If still no tokens, yield error message
+  if (tokenCount === 0) {
+    console.error('[LANGGRAPH:STREAM] No tokens yielded, checking for error in state');
+    const errorMsg = finalState.values?.error;
+    if (errorMsg) {
+      yield {
+        type: 'token',
+        data: { content: "I'm having trouble responding right now. Please try again in a moment." },
+      };
+    }
+  }
+
   yield {
     type: 'done',
     data: {
