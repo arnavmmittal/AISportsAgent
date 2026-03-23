@@ -271,11 +271,18 @@ async function tryInvokeModel(
   const response = await model.invoke(messagesForModel);
   const duration = Date.now() - startTime;
 
+  // Handle content that might be string or array (Anthropic returns array)
+  const contentStr = typeof response.content === 'string'
+    ? response.content
+    : Array.isArray(response.content)
+      ? response.content.map((c: { text?: string }) => c.text || '').join('')
+      : '';
+
   console.log(`[LANGGRAPH:MODEL] ${providerName} response received:`, {
     hasToolCalls: (response.tool_calls?.length || 0) > 0,
     toolCalls: response.tool_calls?.map((tc: { name: string }) => tc.name),
-    contentLength: (response.content as string)?.length || 0,
-    contentPreview: (response.content as string)?.substring(0, 100) || '',
+    contentLength: contentStr.length,
+    contentPreview: contentStr.substring(0, 100),
     duration: `${duration}ms`,
   });
 
