@@ -38,32 +38,36 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
   };
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl border-2 border-secondary/20 p-6 mt-4 shadow-lg">
+    <div className="drill-card animate-fade-in">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🏋️</span>
-            <h3 className="text-xl font-bold text-gray-800">{drill.name}</h3>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <span className="bg-teal-100 px-3 py-1 rounded-full font-medium">
-              {drill.mental_skill.replace(/_/g, ' ').toUpperCase()}
-            </span>
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {drill.duration_minutes} min
-            </span>
+          <div>
+            <h3 className="font-semibold text-lg">{drill.name}</h3>
+            <div className="flex items-center gap-3 text-sm opacity-80 mt-1">
+              <span className="bg-white/10 px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide">
+                {drill.mental_skill.replace(/_/g, ' ')}
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {drill.duration_minutes} min
+              </span>
+            </div>
           </div>
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
+          className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
         >
           <svg
-            className={`w-6 h-6 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -74,90 +78,79 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
       </div>
 
       {isExpanded && (
-        <>
+        <div className="space-y-4">
           {/* Setup */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>⚙️</span> Setup
-            </h4>
-            <p className="text-gray-600 text-sm bg-card p-3 rounded-lg">
-              {drill.setup}
-            </p>
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-2">Setup</h4>
+            <p className="text-sm bg-white/5 p-3 rounded-lg">{drill.setup}</p>
           </div>
 
           {/* Mental & Physical Components */}
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div className="bg-card p-4 rounded-lg border border-accent/20">
-              <h4 className="font-semibold text-accent mb-2 flex items-center gap-2">
-                <span>🧠</span> Mental Component
-              </h4>
-              <p className="text-gray-600 text-sm">{drill.mental_component}</p>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="bg-white/5 p-3 rounded-lg">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-accent mb-2">Mental</h4>
+              <p className="text-sm opacity-90">{drill.mental_component}</p>
             </div>
-            <div className="bg-card p-4 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
-                <span>💪</span> Physical Component
-              </h4>
-              <p className="text-gray-600 text-sm">{drill.physical_component}</p>
+            <div className="bg-white/5 p-3 rounded-lg">
+              <h4 className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-2">Physical</h4>
+              <p className="text-sm opacity-90">{drill.physical_component}</p>
             </div>
           </div>
 
           {/* 4-Week Progression */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <span>📈</span> 4-Week Progression
-            </h4>
-            <div className="space-y-2">
-              {drill.progression.map((week, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg border-2 transition-all ${
-                    currentWeek === index + 1
-                      ? 'bg-teal-100 border-teal-400'
-                      : 'bg-card border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        currentWeek === index + 1
-                          ? 'bg-teal-500 text-white'
-                          : currentWeek > index + 1
-                          ? 'bg-secondary/100 text-white'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}
-                    >
-                      {currentWeek > index + 1 ? '✓' : index + 1}
-                    </div>
-                    <p className="text-sm text-gray-700 flex-1">{week}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Current Week:</label>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide opacity-70">4-Week Progression</h4>
               <select
                 value={currentWeek}
                 onChange={(e) => setCurrentWeek(Number(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="text-xs bg-white/10 border-0 rounded px-2 py-1 text-white focus:ring-1 focus:ring-white/30"
               >
                 {[1, 2, 3, 4].map((week) => (
-                  <option key={week} value={week}>
+                  <option key={week} value={week} className="bg-gray-800">
                     Week {week}
                   </option>
                 ))}
               </select>
             </div>
+            <div className="space-y-2">
+              {drill.progression.map((week, index) => (
+                <div
+                  key={index}
+                  className={`p-3 rounded-lg flex items-start gap-3 transition-colors ${
+                    currentWeek === index + 1 ? 'bg-accent/20' : 'bg-white/5'
+                  }`}
+                >
+                  <div
+                    className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+                      currentWeek === index + 1
+                        ? 'bg-accent text-accent-foreground'
+                        : currentWeek > index + 1
+                        ? 'bg-white/20'
+                        : 'bg-white/10'
+                    }`}
+                  >
+                    {currentWeek > index + 1 ? (
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      index + 1
+                    )}
+                  </div>
+                  <p className="text-sm flex-1">{week}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Success Metrics */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>🎯</span> Success Metrics
-            </h4>
-            <ul className="bg-card p-4 rounded-lg space-y-2">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-2">Success Metrics</h4>
+            <ul className="bg-white/5 p-3 rounded-lg space-y-1.5">
               {drill.success_metrics.map((metric, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                  <span className="text-teal-500 mt-0.5">•</span>
+                <li key={index} className="flex items-start gap-2 text-sm">
+                  <span className="text-accent mt-0.5">•</span>
                   <span>{metric}</span>
                 </li>
               ))}
@@ -165,43 +158,41 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
           </div>
 
           {/* Coaching Notes */}
-          <div className="mb-4">
-            <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <span>💡</span> Coaching Notes
-            </h4>
-            <p className="text-sm text-gray-600 bg-muted/10 p-3 rounded-lg border border-muted">
-              {drill.coaching_notes}
-            </p>
-          </div>
+          {drill.coaching_notes && (
+            <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+              <h4 className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">Coaching Notes</h4>
+              <p className="text-sm opacity-90">{drill.coaching_notes}</p>
+            </div>
+          )}
 
           {/* Track Progress */}
-          <div className="bg-card p-4 rounded-lg border-2 border-teal-300">
-            <h4 className="font-semibold text-gray-700 mb-3">Track Your Progress</h4>
+          <div className="pt-2">
             <textarea
               value={progressNotes}
               onChange={(e) => setProgressNotes(e.target.value)}
-              placeholder="How did this week's drill go? Note any challenges or improvements..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 mb-3"
-              rows={3}
+              placeholder="How did this week's drill go?"
+              className="w-full px-3 py-2 bg-white/10 border-0 rounded-lg text-sm placeholder:text-white/50 focus:ring-1 focus:ring-white/30 mb-3"
+              rows={2}
             />
             <div className="flex gap-2">
               <button
                 onClick={handleTrackProgress}
-                className="px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-medium hover:bg-teal-600 transition-colors"
+                disabled={!progressNotes.trim()}
+                className="flex-1 h-10 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Log Progress
               </button>
               {onStartDrill && (
                 <button
                   onClick={onStartDrill}
-                  className="px-4 py-2 bg-secondary/100 text-white rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
+                  className="h-10 px-4 bg-white/10 rounded-lg text-sm font-medium hover:bg-white/20 transition-colors"
                 >
-                  Start Drill
+                  Start
                 </button>
               )}
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

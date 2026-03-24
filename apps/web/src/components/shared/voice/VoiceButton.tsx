@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { Button } from '@/components/shared/ui/button';
 import { cn } from '@/lib/utils';
 import type { VoiceState } from '@/lib/voice/VoiceManager';
 
@@ -43,20 +42,6 @@ export function VoiceButton({
     }
   }, [voiceState, volume]);
 
-  const getButtonVariant = () => {
-    switch (voiceState) {
-      case 'listening':
-        return 'default';
-      case 'processing':
-      case 'speaking':
-        return 'secondary';
-      case 'error':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
-
   const getIcon = () => {
     switch (voiceState) {
       case 'listening':
@@ -92,7 +77,7 @@ export function VoiceButton({
       {/* Volume visualization - pulsing ring when listening */}
       {voiceState === 'listening' && (
         <div
-          className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"
+          className="absolute inset-0 rounded-lg bg-accent/20"
           style={{
             transform: `scale(${pulseScale})`,
             transition: 'transform 0.1s ease-out',
@@ -100,25 +85,26 @@ export function VoiceButton({
         />
       )}
 
-      <Button
+      <button
         onClick={onToggle}
         disabled={disabled || voiceState === 'processing' || voiceState === 'speaking'}
-        variant={getButtonVariant()}
-        size="lg"
         className={cn(
-          'relative gap-2 transition-all',
-          voiceState === 'listening' && 'ring-2 ring-primary ring-offset-2',
+          'input-button relative transition-all',
+          voiceState === 'listening' && 'input-button-voice active ring-2 ring-accent ring-offset-2 ring-offset-background',
+          voiceState === 'idle' && 'input-button-voice',
+          voiceState === 'processing' && 'bg-muted text-muted-foreground',
+          voiceState === 'speaking' && 'bg-accent/50 text-accent-foreground',
+          voiceState === 'error' && 'bg-destructive text-destructive-foreground',
           className
         )}
         aria-label={getLabel()}
       >
         {getIcon()}
-        <span className="hidden sm:inline">{getLabel()}</span>
-      </Button>
+      </button>
 
       {/* Privacy indicator - red dot when recording */}
       {voiceState === 'listening' && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse" />
+        <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full animate-pulse-subtle" />
       )}
     </div>
   );
@@ -148,13 +134,13 @@ export function AudioVisualizer({
   });
 
   return (
-    <div className={cn('flex items-center gap-1 h-16', className)}>
+    <div className={cn('flex items-center justify-center gap-0.5 h-12', className)}>
       {heights.map((height, i) => (
         <div
           key={i}
           className={cn(
-            'w-1 bg-primary rounded-full transition-all duration-100',
-            !isActive && 'bg-muted'
+            'w-1 rounded-full transition-all duration-100',
+            isActive ? 'bg-accent' : 'bg-muted'
           )}
           style={{
             height: `${height}%`,
