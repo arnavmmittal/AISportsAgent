@@ -232,7 +232,12 @@ function getOpenAIModel(): Runnable<any, any> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getAnthropicModel(): Runnable<any, any> {
   if (!anthropicModelInstance) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+    }
     const model = new ChatAnthropic({
+      anthropicApiKey: apiKey,
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
       temperature: 0.7,
       maxTokens: 2048,
