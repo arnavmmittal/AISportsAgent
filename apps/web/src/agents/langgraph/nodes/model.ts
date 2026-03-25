@@ -309,6 +309,14 @@ export async function callModelNode(
     ...state.messages,
   ];
 
+  // Log key availability for debugging
+  console.log('[LANGGRAPH:MODEL] Environment check:', {
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    openAIKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+    anthropicKeyLength: process.env.ANTHROPIC_API_KEY?.length || 0,
+  });
+
   // Try OpenAI first
   try {
     const openaiModel = getModelWithTools('openai');
@@ -320,13 +328,16 @@ export async function callModelNode(
     };
   } catch (openaiError) {
     console.error('[LANGGRAPH:MODEL] OpenAI failed:', openaiError);
+    console.error('[LANGGRAPH:MODEL] OpenAI error type:', openaiError instanceof Error ? openaiError.constructor.name : typeof openaiError);
 
     // If OpenAI fails and we have Anthropic key, try Anthropic as fallback
     if (hasAnthropicKey()) {
       console.log('[LANGGRAPH:MODEL] Falling back to Anthropic...');
       try {
         const anthropicModel = getModelWithTools('anthropic');
+        console.log('[LANGGRAPH:MODEL] Anthropic model created successfully');
         const { response } = await tryInvokeModel(anthropicModel, messagesForModel, 'Anthropic');
+        console.log('[LANGGRAPH:MODEL] Anthropic invocation successful');
 
         return {
           messages: [response],
@@ -334,12 +345,15 @@ export async function callModelNode(
         };
       } catch (anthropicError) {
         console.error('[LANGGRAPH:MODEL] Anthropic also failed:', anthropicError);
+        console.error('[LANGGRAPH:MODEL] Anthropic error type:', anthropicError instanceof Error ? anthropicError.constructor.name : typeof anthropicError);
+        console.error('[LANGGRAPH:MODEL] Anthropic error stack:', anthropicError instanceof Error ? anthropicError.stack : 'no stack');
       }
     } else {
       console.log('[LANGGRAPH:MODEL] No Anthropic API key configured for fallback');
     }
 
     // Both providers failed or Anthropic not available - return fallback response
+    console.error('[LANGGRAPH:MODEL] Both providers failed, returning fallback message');
     return {
       messages: [
         new AIMessage({
