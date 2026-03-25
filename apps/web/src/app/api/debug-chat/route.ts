@@ -3,14 +3,15 @@
  * TEMPORARY - Remove after debugging
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { allTools } from '@/agents/langgraph/tools';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const results: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     environment: {},
@@ -115,6 +116,59 @@ export async function GET() {
   } else {
     results.anthropic = { status: 'no_key' };
     results.anthropicWithTools = { status: 'no_key' };
+  }
+
+  // Test the actual LangGraph flow (if ?full=true)
+  const url = req.nextUrl;
+  if (url.searchParams.get('full') === 'true') {
+    try {
+      const { streamConversationGraph } = await import('@/agents/langgraph/graph');
+
+      const testSessionId = `debug-${Date.now()}`;
+      const testAthleteId = 'debug-athlete';
+      const testUserId = 'debug-user';
+
+      let responseContent = '';
+      let eventCount = 0;
+      const events: Array<{ type: string; preview?: string }> = [];
+
+      const stream = streamConversationGraph(
+        'Say hello briefly',
+        testSessionId,
+        testAthleteId,
+        testUserId,
+        null
+      );
+
+      for await (const event of stream) {
+        eventCount++;
+        const eventInfo: { type: string; preview?: string } = { type: event.type };
+
+        if (event.type === 'token' && event.data?.content) {
+          responseContent += event.data.content;
+          eventInfo.preview = event.data.content.substring(0, 50);
+        }
+
+        events.push(eventInfo);
+
+        // Limit events to prevent timeout
+        if (eventCount > 100) break;
+      }
+
+      results.langgraphStream = {
+        status: 'success',
+        eventCount,
+        responseLength: responseContent.length,
+        responsePreview: responseContent.substring(0, 200),
+        events: events.slice(0, 20),
+      };
+    } catch (error) {
+      results.langgraphStream = {
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack?.substring(0, 500) : undefined,
+      };
+    }
   }
 
   return NextResponse.json(results);
