@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
+import { allTools } from '@/agents/langgraph/tools';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ export async function GET() {
     environment: {},
     openai: { status: 'not_tested' },
     anthropic: { status: 'not_tested' },
+    anthropicWithTools: { status: 'not_tested' },
   };
 
   // Check environment variables
@@ -27,6 +29,7 @@ export async function GET() {
     anthropicKeyPrefix: process.env.ANTHROPIC_API_KEY?.substring(0, 7) || 'missing',
     openAIModel: process.env.OPENAI_MODEL || 'not set',
     anthropicModel: process.env.ANTHROPIC_MODEL || 'not set',
+    toolCount: allTools.length,
   };
 
   // Test OpenAI
@@ -48,7 +51,7 @@ export async function GET() {
     };
   }
 
-  // Test Anthropic
+  // Test Anthropic (simple)
   if (process.env.ANTHROPIC_API_KEY) {
     try {
       const anthropic = new ChatAnthropic({
@@ -76,8 +79,42 @@ export async function GET() {
         errorType: error instanceof Error ? error.constructor.name : typeof error,
       };
     }
+
+    // Test Anthropic WITH tools (like production)
+    try {
+      const anthropic = new ChatAnthropic({
+        anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+        model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+        maxTokens: 100,
+      });
+      const modelWithTools = anthropic.bindTools(allTools);
+      const response = await modelWithTools.invoke([
+        { role: 'user', content: 'Say "hello" - do not use any tools.' }
+      ]);
+
+      // Handle content that might be array (Anthropic format)
+      const content = typeof response.content === 'string'
+        ? response.content
+        : Array.isArray(response.content)
+          ? response.content.map((c: { text?: string }) => c.text || '').join('')
+          : 'unknown format';
+
+      results.anthropicWithTools = {
+        status: 'success',
+        response: content.substring(0, 100),
+        hasToolCalls: (response.tool_calls?.length || 0) > 0,
+      };
+    } catch (error) {
+      results.anthropicWithTools = {
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        stack: error instanceof Error ? error.stack?.substring(0, 500) : undefined,
+      };
+    }
   } else {
     results.anthropic = { status: 'no_key' };
+    results.anthropicWithTools = { status: 'no_key' };
   }
 
   return NextResponse.json(results);
