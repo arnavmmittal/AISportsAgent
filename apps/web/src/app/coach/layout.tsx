@@ -1,34 +1,39 @@
 'use client';
 
-// Force dynamic rendering for all coach pages
 export const dynamic = 'force-dynamic';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
-import { LogOut, ChevronLeft, ChevronRight, Brain, Sparkles } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { Brain, LogOut, Settings } from 'lucide-react';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/shared/layout/AppSidebar';
+import { MobileBottomNav } from '@/components/shared/layout/MobileBottomNav';
 import { COACH_NAV } from '@/config/navigation';
 
 /**
- * Coach Portal Layout - Unified Navigation (v3.0)
+ * Coach Portal Layout - v4.0 with shadcn Sidebar
  *
- * Uses centralized navigation config for consistency.
+ * Desktop: Collapsible sidebar (icon mode) with keyboard shortcut (Ctrl+B)
+ * Mobile: Fixed bottom tab bar + header (previously had no mobile support!)
  *
- * 6 primary navigation items with clear purposes:
+ * 7 navigation items with clear purposes:
  * 1. Dashboard - "What's happening RIGHT NOW?"
  * 2. AI Insights - "What should I KNOW and DO?" (THE SHOWCASE)
- * 3. Athletes - "Deep dive on INDIVIDUALS"
- * 4. Readiness - "Who's READY today?"
- * 5. Data Hub - "Manage my DATA"
- * 6. Settings - "Configure my ACCOUNT"
+ * 3. ROI Dashboard - "Demonstrate value to ADs"
+ * 4. Athletes - "Deep dive on INDIVIDUALS"
+ * 5. Readiness - "Who's READY today?"
+ * 6. Data Hub - "Manage my DATA"
+ * 7. Settings - "Configure my ACCOUNT"
  */
 
+// Mobile bottom nav: show top 5 items (most important), exclude Settings and Data Hub
+const mobileNavItems = COACH_NAV.filter(
+  item => item.href !== '/coach/settings' && item.href !== '/coach/data'
+);
+
 export default function CoachLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -36,128 +41,54 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
     router.refresh();
   };
 
-  // Load sidebar state from localStorage on mount
-  useEffect(() => {
-    const savedState = localStorage.getItem('coach-sidebar-open');
-    if (savedState !== null) {
-      setIsSidebarOpen(savedState === 'true');
-    }
-  }, []);
-
-  // Save sidebar state to localStorage when it changes
-  const toggleSidebar = () => {
-    const newState = !isSidebarOpen;
-    setIsSidebarOpen(newState);
-    localStorage.setItem('coach-sidebar-open', String(newState));
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hamburger Menu Button */}
-      <button
-        onClick={toggleSidebar}
-        className={cn(
-          'fixed top-4 z-50 p-2.5 bg-card rounded-lg shadow-md hover:shadow-lg transition-all',
-          'border border-border hover:border-primary/30',
-          isSidebarOpen ? 'left-[17rem]' : 'left-4'
-        )}
-        aria-label="Toggle sidebar"
-      >
-        {isSidebarOpen ? (
-          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        )}
-      </button>
+    <SidebarProvider>
+      <AppSidebar
+        navItems={COACH_NAV}
+        portalLabel="Coach Portal"
+        onSignOut={handleSignOut}
+      />
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          'fixed top-0 left-0 h-full bg-card border-r border-border z-40 transition-all duration-300 ease-in-out',
-          isSidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'
-        )}
-      >
-        <div className="flex flex-col h-full overflow-hidden">
-          {/* Logo/Header */}
-          <div className="p-6 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <Brain className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-foreground whitespace-nowrap">
-                  Flow Sports Coach
-                </h1>
-                <p className="text-xs text-muted-foreground whitespace-nowrap">Coach Portal</p>
-              </div>
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Mobile Header — NEW for coach portal (previously had none!) */}
+        <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card/95 backdrop-blur-sm border-b border-border z-40 flex items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Brain className="w-5 h-5 text-primary-foreground" />
             </div>
+            <span className="font-bold text-foreground">Flow Coach</span>
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 overflow-y-auto">
-            <ul className="space-y-1">
-              {COACH_NAV.map((item) => {
-                const Icon = item.icon;
-                const isActive =
-                  pathname === item.href ||
-                  pathname?.startsWith(item.href + '/') ||
-                  // Handle /coach root path
-                  (item.href === '/coach/dashboard' && pathname === '/coach');
-
-                return (
-                  <li key={item.href}>
-                    <a
-                      href={item.href}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(item.href);
-                      }}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap group',
-                        isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : item.highlight
-                          ? 'text-purple-400 hover:bg-purple-500/10 hover:text-purple-300'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                      )}
-                    >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      <span className="text-sm flex-1">{item.label}</span>
-                      {item.badge && !isActive && (
-                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-500/20 text-purple-300">
-                          <Sparkles className="w-3 h-3" />
-                          {item.badge}
-                        </span>
-                      )}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          {/* User Actions */}
-          <div className="p-4 border-t border-border">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => router.push('/coach/settings')}
+              className="p-2.5 text-muted-foreground hover:text-foreground active:bg-muted/50 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all whitespace-nowrap"
+              className="p-2.5 text-muted-foreground hover:text-foreground active:bg-muted/50 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Sign out"
             >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              <span>Sign Out</span>
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
-        </div>
-      </aside>
+        </header>
 
-      {/* Main content */}
-      <main
-        className={cn(
-          'min-h-screen transition-all duration-300 ease-in-out',
-          isSidebarOpen ? 'ml-64' : 'ml-0'
-        )}
-      >
-        {children}
-      </main>
-    </div>
+        {/* Desktop Sidebar Trigger */}
+        <div className="hidden md:flex items-center h-12 px-2 border-b border-border">
+          <SidebarTrigger />
+        </div>
+
+        {/* Main Content */}
+        <main className="flex-1 pt-14 pb-20 md:pt-0 md:pb-0">
+          {children}
+        </main>
+
+        {/* Mobile Bottom Tab Bar — NEW for coach portal */}
+        <MobileBottomNav items={mobileNavItems} />
+      </div>
+    </SidebarProvider>
   );
 }
