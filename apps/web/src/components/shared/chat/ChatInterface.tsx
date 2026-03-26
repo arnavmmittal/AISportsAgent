@@ -547,28 +547,34 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="flex flex-col h-full bg-background overflow-hidden">
       {/* Crisis Resources Modal */}
       <CrisisResourcesModal
         crisis={crisisAlert}
         onClose={() => setCrisisAlert(null)}
       />
 
-      {/* Crisis Alert Banner */}
+      {/* Crisis Alert Banner - Calm but serious */}
       {crisisAlert && (
-        <div className="bg-gradient-to-r from-red-500 to-pink-500 border-b-4 border-muted-foreground p-5 animate-in fade-in duration-300 shadow-lg">
-          <div className="flex items-start gap-4 max-w-4xl mx-auto">
-            <div className="flex-shrink-0 bg-card rounded-full p-2">
-              <svg className="w-7 h-7 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
+        <div className={`crisis-banner ${crisisAlert.final_risk_level === 'CRITICAL' ? 'critical' : ''} animate-fade-in`}>
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className={`w-5 h-5 ${crisisAlert.final_risk_level === 'CRITICAL' ? 'text-destructive' : 'text-warning'}`} fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </div>
-            <div className="flex-1">
-              <p className="text-lg font-bold text-white mb-2">Support Available 24/7</p>
-              <p className="text-base text-white/95">{crisisAlert.message}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-foreground">Support Available 24/7</p>
+              <p className="text-sm text-muted-foreground mt-1">{crisisAlert.message}</p>
+              <button className="text-sm font-medium text-accent mt-2 hover:underline">
+                View resources
+              </button>
             </div>
-            <button onClick={() => setCrisisAlert(null)} className="text-white/80 hover:text-white transition-colors bg-card/20 rounded-full p-2">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <button
+              onClick={() => setCrisisAlert(null)}
+              className="flex-shrink-0 w-8 h-8 rounded-md bg-muted text-muted-foreground hover:bg-muted/80 flex items-center justify-center transition-colors"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
@@ -577,84 +583,68 @@ export function ChatInterface() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth">
         {messages.length === 0 ? (
-          <div className="text-center py-16 px-6">
-            <div className="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-8 shadow-2xl animate-pulse">
-              <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          <div className="flex flex-col items-center justify-center h-full px-6 text-center">
+            {/* Coach Avatar - Animated */}
+            <div className="coach-avatar-large mb-6">
+              <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <h3 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-5">
-              Hey there! Ready to level up? 💪
-            </h3>
-            <p className="text-xl text-gray-700 max-w-2xl mx-auto mb-10 leading-relaxed">
-              I'm your 24/7 mental performance coach. Whether you're battling pre-game jitters, need a confidence boost, or just want to chat about what's on your mind - I've got your back. Let's unlock your full potential together!
+
+            <h2 className="text-2xl font-semibold text-foreground mb-2">
+              Ready when you are
+            </h2>
+            <p className="text-base text-muted-foreground max-w-xs">
+              What's on your mind heading into your next competition?
             </p>
-            <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
-              <div className="bg-card rounded-2xl p-6 border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <p className="text-2xl mb-2">🎯</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Crush Pre-Game Nerves</p>
-                <p className="text-sm text-gray-600">"I get so anxious before games..."</p>
-              </div>
-              <div className="bg-card rounded-2xl p-6 border-2 border-accent/20 hover:border-accent/20 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <p className="text-2xl mb-2">💪</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Boost Your Confidence</p>
-                <p className="text-sm text-gray-600">"How do I believe in myself more?"</p>
-              </div>
-              <div className="bg-card rounded-2xl p-6 border-2 border-pink-200 hover:border-pink-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <p className="text-2xl mb-2">🧘</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Balance Life & Sport</p>
-                <p className="text-sm text-gray-600">"I'm overwhelmed juggling everything..."</p>
-              </div>
-              <div className="bg-card rounded-2xl p-6 border-2 border-indigo-200 hover:border-indigo-400 hover:shadow-xl transition-all transform hover:-translate-y-1">
-                <p className="text-2xl mb-2">⚡</p>
-                <p className="text-lg font-bold text-gray-900 mb-2">Find Your Flow State</p>
-                <p className="text-sm text-gray-600">"Help me get in the zone..."</p>
-              </div>
-            </div>
           </div>
         ) : (
-          messages.map((message) => (
-            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-              <div className={`flex gap-4 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-700' : 'bg-gradient-to-br from-purple-400 to-purple-600'}`}>
-                  {message.role === 'user' ? (
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
-                      <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
-                    </svg>
-                  )}
-                </div>
-                <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`rounded-3xl px-6 py-4 shadow-xl ${message.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-md' : 'bg-card text-gray-900 border-2 border-accent/20 rounded-tl-md'}`}>
-                    {message.content ? (
-                      <p className="text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                    ) : (
-                      <div className="flex space-x-2">
-                        <div className="w-2.5 h-2.5 bg-accent rounded-full animate-bounce"></div>
-                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2.5 h-2.5 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="space-y-4">
+            {messages.map((message, index) => {
+              const isUser = message.role === 'user';
+              const showAvatar = !isUser && (index === 0 || messages[index - 1]?.role === 'user');
+
+              return (
+                <div
+                  key={message.id}
+                  className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-message-in`}
+                >
+                  <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {/* Coach Avatar - Only show for first message in AI group */}
+                    {!isUser && (
+                      <div className={`flex-shrink-0 ${showAvatar ? '' : 'invisible'}`}>
+                        <div className="coach-avatar">
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </div>
                       </div>
                     )}
+
+                    {/* Message Bubble */}
+                    <div className={`message-bubble ${isUser ? 'message-user' : 'message-ai'}`}>
+                      {message.content ? (
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      ) : (
+                        /* Streaming indicator - pulsing line instead of bouncing dots */
+                        <div className="py-2">
+                          <div className="streaming-indicator" />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className={`text-sm mt-2 px-2 font-medium ${message.role === 'user' ? 'text-blue-600' : 'text-accent'}`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
                 </div>
-              </div>
-            </div>
-          ))
+              );
+            })}
+          </div>
         )}
-        <div ref={messagesEndRef} className="h-4" />
+        <div ref={messagesEndRef} className="h-6" />
 
         {/* Structured Response Widgets */}
         {currentMetadata && (
-          <div className="px-4">
+          <div className="space-y-4 px-0 md:px-4">
             {/* Action Plan Widget */}
             {(currentMetadata.action_plan.today.length > 0 ||
               currentMetadata.action_plan.this_week.length > 0 ||
@@ -723,38 +713,38 @@ export function ChatInterface() {
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t-2 border-accent/20 bg-card/90 backdrop-blur-sm p-6 shadow-2xl">
-        <div className="max-w-5xl mx-auto">
+      {/* Input Dock */}
+      <div className="input-dock">
+        <div className="max-w-3xl mx-auto">
           {/* Audio visualizer when listening */}
           {isListening && (
-            <div className="mb-5 flex justify-center">
+            <div className="mb-3 flex justify-center">
               <AudioVisualizer
                 volume={volume}
                 isActive={isListening}
-                bars={16}
-                className="w-full max-w-md"
+                bars={12}
+                className="w-full max-w-sm"
               />
             </div>
           )}
 
           {/* Live transcript display */}
           {transcript && voiceMode && (
-            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-2xl shadow-md">
-              <p className="text-base text-blue-900">
-                <span className="font-bold">You said:</span> {transcript}
+            <div className="mb-3 p-3 bg-accent-muted border border-accent/30 rounded-lg">
+              <p className="text-sm text-foreground">
+                <span className="font-medium text-accent">Listening:</span> {transcript}
               </p>
             </div>
           )}
 
-          <div className="flex gap-4">
+          <div className="flex gap-3 items-end">
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={voiceMode ? "🎤 Voice mode active - click mic to speak" : "What's on your mind? I'm here to help..."}
-              className="flex-1 resize-none border-3 border-accent/20 rounded-3xl px-6 py-4 text-lg focus:outline-none focus:border-accent focus:ring-4 focus:ring-purple-200 transition-all disabled:bg-muted shadow-lg placeholder:text-muted-foreground"
-              rows={2}
+              placeholder={voiceMode ? "Voice mode active - tap mic to speak" : "What's on your mind?"}
+              className="input-field"
+              rows={1}
               disabled={isLoading || voiceMode}
             />
 
@@ -772,19 +762,19 @@ export function ChatInterface() {
             <button
               onClick={sendMessage}
               disabled={isLoading || !inputValue.trim() || voiceMode}
-              className="px-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-3xl hover:from-blue-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 disabled:shadow-none disabled:scale-100 flex items-center justify-center gap-3"
+              className="input-button input-button-send"
+              aria-label="Send message"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              <span className="hidden sm:inline">Send</span>
             </button>
           </div>
 
           {/* Voice error display */}
           {voiceError && (
-            <div className="mt-4 p-4 bg-muted-foreground/10 border-2 border-muted-foreground rounded-2xl text-base text-muted-foreground shadow-md">
-              <span className="font-bold">Voice error:</span> {voiceError.message}
+            <div className="mt-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive">
+              <span className="font-medium">Voice error:</span> {voiceError.message}
             </div>
           )}
         </div>

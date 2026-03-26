@@ -27,6 +27,17 @@ yarn-error.log*
 .env*.local
 !.env.example
 
+# Vercel environment files (contain secrets - NEVER commit)
+vercel-*.env
+*.env.production
+*.env.staging
+apps/web/vercel-*.env
+apps/mobile/vercel-*.env
+
+# Temporary files
+.temp/
+*.temp
+
 # Turbo
 .turbo
 

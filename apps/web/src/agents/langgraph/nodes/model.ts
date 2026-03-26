@@ -7,10 +7,12 @@
  */
 
 import { ChatOpenAI } from '@langchain/openai';
-import { SystemMessage, AIMessage } from '@langchain/core/messages';
+import { ChatAnthropic } from '@langchain/anthropic';
+import { SystemMessage, AIMessage, type BaseMessage } from '@langchain/core/messages';
 import type { ConversationState, ProtocolPhase } from '../state';
 import { allTools } from '../tools';
 import { buildContextPromptSection } from './context';
+import type { Runnable } from '@langchain/core/runnables';
 
 // System prompt for the 5-step Discovery-First protocol
 const BASE_SYSTEM_PROMPT = `You are a sports psychology AI coach trained in evidence-based mental performance techniques. You help collegiate athletes develop mental skills, manage performance anxiety, build confidence, and optimize their psychological preparation for competition.
@@ -205,74 +207,160 @@ function getPhaseGuidance(phase: ProtocolPhase, turnCount: number): string {
   }
 }
 
-// Lazy-initialized model with tools
-let modelWithToolsInstance: ChatOpenAI | null = null;
+// Lazy-initialized models with tools
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let openaiModelInstance: Runnable<any, any> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let anthropicModelInstance: Runnable<any, any> | null = null;
 
-function getModelWithTools(): ChatOpenAI {
-  if (!modelWithToolsInstance) {
+type ModelProvider = 'openai' | 'anthropic';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getOpenAIModel(): Runnable<any, any> {
+  if (!openaiModelInstance) {
     const model = new ChatOpenAI({
       model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
       temperature: 0.7,
       maxTokens: 2048,
       streaming: true,
     });
-
-    // Bind all tools: 10 athlete + 6 analytics + 3 structured output = 19 tools
-    modelWithToolsInstance = model.bindTools(allTools) as ChatOpenAI;
+    openaiModelInstance = model.bindTools(allTools);
   }
-  return modelWithToolsInstance;
+  return openaiModelInstance;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getAnthropicModel(): Runnable<any, any> {
+  if (!anthropicModelInstance) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+    }
+    const model = new ChatAnthropic({
+      anthropicApiKey: apiKey,
+      model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+      temperature: 0.7,
+      maxTokens: 2048,
+      streaming: true,
+    });
+    anthropicModelInstance = model.bindTools(allTools);
+  }
+  return anthropicModelInstance;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getModelWithTools(provider: ModelProvider = 'openai'): Runnable<any, any> {
+  if (provider === 'anthropic') {
+    return getAnthropicModel();
+  }
+  return getOpenAIModel();
+}
+
+function hasAnthropicKey(): boolean {
+  return !!process.env.ANTHROPIC_API_KEY;
 }
 
 /**
- * Call model node - invokes GPT-4 with tools
+ * Try invoking a model and return the response
+ */
+async function tryInvokeModel(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  model: Runnable<any, any>,
+  messagesForModel: BaseMessage[],
+  providerName: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<{ response: any; duration: number }> {
+  const startTime = Date.now();
+  console.log(`[LANGGRAPH:MODEL] Calling ${providerName} model...`);
+
+  const response = await model.invoke(messagesForModel);
+  const duration = Date.now() - startTime;
+
+  // Handle content that might be string or array (Anthropic returns array)
+  const contentStr = typeof response.content === 'string'
+    ? response.content
+    : Array.isArray(response.content)
+      ? response.content.map((c: { text?: string }) => c.text || '').join('')
+      : '';
+
+  console.log(`[LANGGRAPH:MODEL] ${providerName} response received:`, {
+    hasToolCalls: (response.tool_calls?.length || 0) > 0,
+    toolCalls: response.tool_calls?.map((tc: { name: string }) => tc.name),
+    contentLength: contentStr.length,
+    contentPreview: contentStr.substring(0, 100),
+    duration: `${duration}ms`,
+  });
+
+  return { response, duration };
+}
+
+/**
+ * Call model node - invokes LLM with tools
+ * Uses OpenAI as primary, falls back to Anthropic if OpenAI fails
  */
 export async function callModelNode(
   state: ConversationState
 ): Promise<Partial<ConversationState>> {
-  const startTime = Date.now();
+  const systemPrompt = buildSystemPrompt(state);
 
+  // Build messages array with system prompt
+  const messagesForModel = [
+    new SystemMessage({ content: systemPrompt }),
+    ...state.messages,
+  ];
+
+  // Log key availability for debugging
+  console.log('[LANGGRAPH:MODEL] Environment check:', {
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    openAIKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+    anthropicKeyLength: process.env.ANTHROPIC_API_KEY?.length || 0,
+  });
+
+  // Try OpenAI first
   try {
-    const model = getModelWithTools();
-    const systemPrompt = buildSystemPrompt(state);
-
-    // Build messages array with system prompt
-    const messagesForModel = [
-      new SystemMessage({ content: systemPrompt }),
-      ...state.messages,
-    ];
-
-    // Invoke the model
-    const response = await model.invoke(messagesForModel);
-
-    const duration = Date.now() - startTime;
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[LANGGRAPH:MODEL]', {
-        hasToolCalls: (response.tool_calls?.length || 0) > 0,
-        toolCalls: response.tool_calls?.map((tc) => tc.name),
-        contentLength: (response.content as string)?.length || 0,
-        duration: `${duration}ms`,
-      });
-    }
-
-    // Increment turn count
-    const newTurnCount = state.turnCountInPhase + 1;
+    const openaiModel = getModelWithTools('openai');
+    const { response } = await tryInvokeModel(openaiModel, messagesForModel, 'OpenAI');
 
     return {
       messages: [response],
-      turnCountInPhase: newTurnCount,
+      turnCountInPhase: state.turnCountInPhase + 1,
     };
-  } catch (error) {
-    console.error('[LANGGRAPH:MODEL] Model invocation failed:', error);
+  } catch (openaiError) {
+    console.error('[LANGGRAPH:MODEL] OpenAI failed:', openaiError);
+    console.error('[LANGGRAPH:MODEL] OpenAI error type:', openaiError instanceof Error ? openaiError.constructor.name : typeof openaiError);
 
-    // Return fallback response
+    // If OpenAI fails and we have Anthropic key, try Anthropic as fallback
+    if (hasAnthropicKey()) {
+      console.log('[LANGGRAPH:MODEL] Falling back to Anthropic...');
+      try {
+        const anthropicModel = getModelWithTools('anthropic');
+        console.log('[LANGGRAPH:MODEL] Anthropic model created successfully');
+        const { response } = await tryInvokeModel(anthropicModel, messagesForModel, 'Anthropic');
+        console.log('[LANGGRAPH:MODEL] Anthropic invocation successful');
+
+        return {
+          messages: [response],
+          turnCountInPhase: state.turnCountInPhase + 1,
+        };
+      } catch (anthropicError) {
+        console.error('[LANGGRAPH:MODEL] Anthropic also failed:', anthropicError);
+        console.error('[LANGGRAPH:MODEL] Anthropic error type:', anthropicError instanceof Error ? anthropicError.constructor.name : typeof anthropicError);
+        console.error('[LANGGRAPH:MODEL] Anthropic error stack:', anthropicError instanceof Error ? anthropicError.stack : 'no stack');
+      }
+    } else {
+      console.log('[LANGGRAPH:MODEL] No Anthropic API key configured for fallback');
+    }
+
+    // Both providers failed or Anthropic not available - return fallback response
+    console.error('[LANGGRAPH:MODEL] Both providers failed, returning fallback message');
     return {
       messages: [
         new AIMessage({
           content: "I'm here to help, but I'm having a technical issue right now. Please try again in a moment, or if this is urgent, reach out to your coach directly.",
         }),
       ],
-      error: `Model invocation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error: `Model invocation failed: ${openaiError instanceof Error ? openaiError.message : 'Unknown error'}`,
     };
   }
 }

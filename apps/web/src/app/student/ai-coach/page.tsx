@@ -19,6 +19,7 @@ import {
   Search,
   ChevronLeft,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
@@ -127,7 +128,11 @@ function AICoachPageContent() {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  // Voice integration
+  // Track if we're in voice mode for response handling
+  const isVoiceModeRef = useRef(false);
+  const pendingVoiceResponseRef = useRef<string>('');
+
+  // Voice integration with full flow: STT → AI → TTS
   const {
     voiceState,
     isListening,
@@ -135,34 +140,137 @@ function AICoachPageContent() {
     transcript,
     error: voiceError,
     toggleVoice,
+    speakResponse,
   } = useVoiceChat({
     sessionId,
     athleteId: user?.id || '',
     onTranscript: (text, isFinal) => {
-      if (isFinal && text.trim()) {
-        const userMessage: Message = {
-          id: `msg_${Date.now()}`,
-          role: 'user',
-          content: text,
-          timestamp: new Date(),
-          source: 'voice',
-        };
-        setMessages((prev) => [...prev, userMessage]);
+      // Just log interim transcripts - we handle final in onAudioComplete
+      if (!isFinal) {
+        console.log('[Voice] Interim transcript:', text);
       }
     },
-    onResponse: (text) => {
-      const assistantMessage: Message = {
-        id: `msg_${Date.now()}_assistant`,
-        role: 'assistant',
+    onAudioComplete: async (text) => {
+      // Called when voice transcription is complete
+      // Send to AI and speak the response
+      if (!text.trim() || !user?.id) return;
+
+      console.log('[Voice] Audio complete, sending to AI:', text);
+      isVoiceModeRef.current = true;
+      pendingVoiceResponseRef.current = '';
+
+      // Add user message
+      const userMessage: Message = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
         content: text,
         timestamp: new Date(),
         source: 'voice',
-        hasAudio: true,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, userMessage]);
+      setIsLoading(true);
+
+      try {
+        // Create assistant message placeholder
+        const assistantId = `msg_${Date.now()}_assistant`;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantId,
+            role: 'assistant',
+            content: '',
+            timestamp: new Date(),
+            source: 'voice',
+            hasAudio: true,
+          },
+        ]);
+
+        // Stream the response
+        const response = await fetch('/api/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message: text,
+            athlete_id: user.id,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to get response');
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) throw new Error('No response body');
+
+        let buffer = '';
+        let fullResponse = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') break;
+              if (!data) continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                if (parsed.type === 'token' || parsed.type === 'content') {
+                  const content = parsed.type === 'token' ? parsed.data.content : parsed.data;
+                  fullResponse += content;
+
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const lastIndex = updated.length - 1;
+                    if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
+                      updated[lastIndex] = {
+                        ...updated[lastIndex],
+                        content: fullResponse,
+                      };
+                    }
+                    return updated;
+                  });
+                }
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+
+        // Speak the full response using TTS
+        if (fullResponse.trim()) {
+          console.log('[Voice] Speaking response:', fullResponse.substring(0, 50) + '...');
+          await speakResponse(fullResponse, 'supportive');
+        }
+
+      } catch (error) {
+        console.error('[Voice] Error:', error);
+        setMessages((prev) => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg?.role === 'assistant' && lastMsg.content === '') {
+            lastMsg.content = "I'm having trouble connecting right now. Let's try again in a moment.";
+          }
+          return updated;
+        });
+      } finally {
+        setIsLoading(false);
+        isVoiceModeRef.current = false;
+      }
     },
     onError: (error) => {
       console.error('Voice error:', error);
+      isVoiceModeRef.current = false;
     },
   });
 
@@ -222,6 +330,9 @@ function AICoachPageContent() {
             source: 'text' as MessageSource,
           }));
           setMessages(loadedMessages);
+        } else if (response.status === 404) {
+          // New session - no messages yet, this is expected
+          setMessages([]);
         }
       } catch (error) {
         console.error('Failed to load chat history:', error);
@@ -589,7 +700,7 @@ function AICoachPageContent() {
         </div>
       </aside>
 
-      <div className="max-w-4xl mx-auto h-screen flex flex-col">
+      <div className="max-w-4xl mx-auto h-[100dvh] flex flex-col">
         {/* Header */}
         <header className="flex-shrink-0 p-4 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="flex items-center justify-between">
@@ -701,9 +812,7 @@ function AICoachPageContent() {
                 );
               })}
 
-              {isLoading && messages[messages.length - 1]?.content === '' && (
-                <TypingIndicator />
-              )}
+              {/* TypingIndicator removed - ChatBubble handles streaming state */}
             </>
           )}
           <div ref={messagesEndRef} className="h-4" />
@@ -756,6 +865,12 @@ function AICoachPageContent() {
                 placeholder={voiceMode ? 'Voice mode active...' : "What's on your mind?"}
                 disabled={isLoading || voiceMode}
                 rows={1}
+                // Mobile keyboard optimization
+                enterKeyHint="send"
+                inputMode="text"
+                autoComplete="off"
+                autoCorrect="on"
+                autoCapitalize="sentences"
                 className={cn(
                   'w-full resize-none rounded-xl border border-border bg-background px-4 py-3 pr-12',
                   'text-sm placeholder:text-muted-foreground',
@@ -770,8 +885,13 @@ function AICoachPageContent() {
                 disabled={isLoading || !inputValue.trim() || voiceMode}
                 size="icon"
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                aria-label={isLoading ? 'Sending message...' : 'Send message'}
               >
-                <Send className="w-4 h-4" />
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>

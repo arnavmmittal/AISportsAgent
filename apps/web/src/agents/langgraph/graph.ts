@@ -265,7 +265,21 @@ export async function* streamConversationGraph(
   userId: string,
   sport?: string | null
 ) {
-  const graph = await getConversationGraph();
+  console.log('[LANGGRAPH:STREAM] Starting stream for session:', sessionId);
+
+  let graph;
+  try {
+    graph = await getConversationGraph();
+    console.log('[LANGGRAPH:STREAM] Graph compiled successfully');
+  } catch (error) {
+    console.error('[LANGGRAPH:STREAM] Failed to compile graph:', error);
+    yield {
+      type: 'token',
+      data: { content: "I'm having trouble connecting. Please try again in a moment." },
+    };
+    yield { type: 'done', data: { error: 'Graph compilation failed' } };
+    return;
+  }
 
   // Create initial state
   const initialState = {
@@ -280,33 +294,89 @@ export async function* streamConversationGraph(
     },
   };
 
+  console.log('[LANGGRAPH:STREAM] Starting streamEvents with config:', config);
+
   // Stream events
-  const stream = graph.streamEvents(initialState, {
-    ...config,
-    version: 'v2',
-  });
+  let stream;
+  try {
+    stream = graph.streamEvents(initialState, {
+      ...config,
+      version: 'v2',
+    });
+  } catch (error) {
+    console.error('[LANGGRAPH:STREAM] Failed to create stream:', error);
+    yield {
+      type: 'token',
+      data: { content: "I'm having trouble processing your message. Please try again." },
+    };
+    yield { type: 'done', data: { error: 'Stream creation failed' } };
+    return;
+  }
+
+  let eventCount = 0;
+  let tokenCount = 0;
 
   for await (const event of stream) {
-    // Debug: Log all events in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[LANGGRAPH:STREAM_EVENT]', event.event, event.name || '');
-    }
+    eventCount++;
+    // Debug: Log all events (always enabled for debugging)
+    console.log('[LANGGRAPH:STREAM_EVENT]', {
+      eventNum: eventCount,
+      event: event.event,
+      name: event.name || '',
+      dataKeys: event.data ? Object.keys(event.data) : [],
+    });
 
     // Yield different event types
     if (event.event === 'on_llm_stream') {
       // Token streaming from the model
       const chunk = event.data?.chunk;
       if (chunk?.content) {
-        yield {
-          type: 'token',
-          data: { content: chunk.content },
-        };
+        const content = typeof chunk.content === 'string'
+          ? chunk.content
+          : Array.isArray(chunk.content)
+            ? chunk.content.map((c: { text?: string }) => c.text || '').join('')
+            : '';
+        if (content) {
+          tokenCount++;
+          yield {
+            type: 'token',
+            data: { content },
+          };
+        }
       }
     } else if (event.event === 'on_chat_model_stream') {
       // Alternative event name for chat model streaming
       const chunk = event.data?.chunk;
-      const content = chunk?.content || chunk?.text || '';
+      // Handle different chunk structures
+      let content = '';
+      if (chunk?.content) {
+        content = typeof chunk.content === 'string'
+          ? chunk.content
+          : Array.isArray(chunk.content)
+            ? chunk.content.map((c: { text?: string }) => c.text || '').join('')
+            : '';
+      } else if (chunk?.text) {
+        content = chunk.text;
+      } else if (chunk?.message?.content) {
+        content = typeof chunk.message.content === 'string'
+          ? chunk.message.content
+          : '';
+      }
       if (content) {
+        tokenCount++;
+        yield {
+          type: 'token',
+          data: { content },
+        };
+      }
+    } else if (event.event === 'on_chat_model_end') {
+      // Fallback: Get content from final message if streaming didn't work
+      const output = event.data?.output;
+      const content = output?.content || output?.message?.content;
+      if (content && typeof content === 'string' && tokenCount === 0) {
+        // Only use this fallback if we haven't received any tokens yet
+        console.log('[LANGGRAPH:STREAM] Got content from on_chat_model_end (fallback):', content.substring(0, 100) + '...');
+        tokenCount++;
         yield {
           type: 'token',
           data: { content },
@@ -368,8 +438,44 @@ export async function* streamConversationGraph(
     }
   }
 
+  console.log('[LANGGRAPH:STREAM] Stream completed:', {
+    totalEvents: eventCount,
+    tokensYielded: tokenCount,
+  });
+
   // Get final state
   const finalState = await graph.getState(config);
+
+  // Fallback: If no tokens were yielded but we have messages in state, yield the last AI message
+  if (tokenCount === 0 && finalState.values?.messages?.length > 0) {
+    const messages = finalState.values.messages;
+    // Find the last AI message
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      // Check if it's an AI message (has content but no role 'user')
+      if (msg.content && msg._getType?.() === 'ai') {
+        console.log('[LANGGRAPH:STREAM] Yielding fallback from final state:', msg.content.substring(0, 100));
+        yield {
+          type: 'token',
+          data: { content: msg.content },
+        };
+        tokenCount++;
+        break;
+      }
+    }
+  }
+
+  // If still no tokens, yield error message
+  if (tokenCount === 0) {
+    console.error('[LANGGRAPH:STREAM] No tokens yielded, checking for error in state');
+    const errorMsg = finalState.values?.error;
+    if (errorMsg) {
+      yield {
+        type: 'token',
+        data: { content: "I'm having trouble responding right now. Please try again in a moment." },
+      };
+    }
+  }
 
   yield {
     type: 'done',

@@ -44,8 +44,17 @@ export async function POST(request: NextRequest) {
     console.log('[Voice API] Transcribing audio:', file.name, file.size, 'bytes');
 
     // Convert File to the format OpenAI expects
+    // For edge/serverless environments, we need to convert the File to a proper format
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Create a File-like object for OpenAI
+    const audioFile = new File([buffer], file.name || 'audio.webm', {
+      type: file.type || 'audio/webm',
+    });
+
     const transcription = await openai.audio.transcriptions.create({
-      file: file,
+      file: audioFile,
       model: 'whisper-1',
       language: language || undefined,
       response_format: 'verbose_json',

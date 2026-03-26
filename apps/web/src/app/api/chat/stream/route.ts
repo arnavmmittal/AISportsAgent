@@ -159,6 +159,29 @@ export async function POST(req: NextRequest) {
 
     console.log(`[LangGraph Chat] Processing message for athlete: ${athlete_id}, session: ${session_id}`);
 
+    // Check critical environment variables
+    const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+    const hasDBUrl = !!process.env.DATABASE_URL;
+    console.log(`[LangGraph Chat] Env check - OPENAI_API_KEY: ${hasOpenAIKey}, DATABASE_URL: ${hasDBUrl}`);
+
+    if (!hasOpenAIKey) {
+      console.error('[LangGraph Chat] OPENAI_API_KEY is missing!');
+      return new Response(
+        encoder.encode('data: ' + JSON.stringify({
+          type: 'error',
+          data: 'Server configuration error: OpenAI API key not configured'
+        }) + '\n\n'),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        }
+      );
+    }
+
     // Stream response using LangGraph
     const stream = new ReadableStream({
       async start(controller) {
@@ -208,16 +231,35 @@ export async function POST(req: NextRequest) {
           let fullResponse = '';
           let crisisData: { isCrisis: boolean; severity?: string; indicators?: string[] } | null = null;
 
-          // Stream from LangGraph
-          const graphStream = streamConversationGraph(
-            message,
-            session.id,
-            athlete_id,
-            user?.id || athlete_id,
-            session.Athlete?.sport
-          );
+          console.log('[Chat API] Starting LangGraph stream for session:', session.id);
 
+          // Stream from LangGraph
+          let graphStream;
+          try {
+            graphStream = streamConversationGraph(
+              message,
+              session.id,
+              athlete_id,
+              user?.id || athlete_id,
+              session.Athlete?.sport
+            );
+          } catch (streamInitError) {
+            console.error('[Chat API] Failed to initialize stream:', streamInitError);
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                type: 'token',
+                data: { content: "I'm having trouble connecting. Please try again." },
+              })}\n\n`)
+            );
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+            controller.close();
+            return;
+          }
+
+          let eventCount = 0;
           for await (const event of graphStream) {
+            eventCount++;
+            console.log('[Chat API] Received event:', event.type, eventCount);
             switch (event.type) {
               case 'token':
                 // Stream token to client
@@ -273,9 +315,12 @@ export async function POST(req: NextRequest) {
 
               case 'done':
                 // Stream completed
+                console.log('[Chat API] Stream completed event received');
                 break;
             }
           }
+
+          console.log('[Chat API] Stream loop finished. Events:', eventCount, 'Response length:', fullResponse.length);
 
           // Save assistant message to database
           const assistantMessageId = `msg_${Date.now()}_assistant`;
