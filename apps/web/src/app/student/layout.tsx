@@ -10,13 +10,6 @@ import { AppSidebar } from '@/components/shared/layout/AppSidebar';
 import { MobileBottomNav } from '@/components/shared/layout/MobileBottomNav';
 import { ATHLETE_NAV } from '@/config/navigation';
 
-/**
- * Student Portal Layout - v3.0 with shadcn Sidebar
- *
- * Desktop: Collapsible sidebar (icon mode) with keyboard shortcut (Ctrl+B)
- * Mobile: Fixed bottom tab bar + header with settings/sign-out
- */
-
 // Bottom nav shows first 5 items (excludes Settings)
 const mobileNavItems = ATHLETE_NAV.filter(item => item.href !== '/student/settings');
 
@@ -39,7 +32,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         aiCoachHref="/student/ai-coach"
       />
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen w-full overflow-auto">
         {/* Mobile Header */}
         <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card/95 backdrop-blur-sm border-b border-border z-40 flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
@@ -66,13 +59,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           </div>
         </header>
 
-        {/* Desktop Sidebar Trigger */}
-        <div className="hidden md:flex items-center h-12 px-2 border-b border-border">
-          <SidebarTrigger />
-        </div>
-
-        {/* Main Content */}
-        <main className="flex-1 pt-14 pb-20 md:pt-0 md:pb-0">
+        {/* Main Content — trigger floats top-left on desktop */}
+        <main className="flex-1 relative pt-14 pb-20 md:pt-0 md:pb-0">
+          <div className="hidden md:block absolute top-2 left-2 z-10">
+            <SidebarTrigger />
+          </div>
           {children}
         </main>
 
