@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm install -g pnpm@9.15.4 && pnpm install --no-frozen-lockfile --filter web...",
   "crons": [
     {
       "path": "/api/cron/escalation",
