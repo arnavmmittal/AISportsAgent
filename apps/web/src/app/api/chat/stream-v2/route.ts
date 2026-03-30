@@ -64,8 +64,8 @@ export async function POST(req: NextRequest) {
     // Check for internal voice service authentication
     const voiceServiceKey = req.headers.get('x-voice-service-key');
     const isVoiceService =
-      voiceServiceKey &&
-      voiceServiceKey === (process.env.VOICE_SERVICE_KEY || 'dev-voice-service-key');
+      process.env.VOICE_SERVICE_KEY &&
+      voiceServiceKey === process.env.VOICE_SERVICE_KEY;
 
     // Verify authentication
     let user = null;
@@ -93,6 +93,15 @@ export async function POST(req: NextRequest) {
     const { message, athlete_id } = validatedData;
     // Generate session_id if not provided (matches v1 behavior)
     const session_id = validatedData.session_id || crypto.randomUUID();
+
+    // Rate limiting: prevent rapid-fire API abuse
+    if (!isVoiceService && user) {
+      const { checkRateLimit } = await import('@/middleware/rate-limit');
+      const rateResult = await checkRateLimit(user.id, user.role as 'ATHLETE' | 'COACH' | 'ADMIN', user.schoolId);
+      if (!rateResult.allowed) {
+        return createSSEResponse(formatSSE('error', `Rate limit exceeded. Retry in ${rateResult.retryAfter}s`), 429);
+      }
+    }
 
     // Only check cost limits and permissions for regular user requests
     if (!isVoiceService && user) {

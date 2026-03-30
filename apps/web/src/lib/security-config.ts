@@ -9,7 +9,7 @@
 
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production';
-const isStaging = process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'staging';
+const isStaging = process.env.VERCEL_ENV === 'preview' || process.env.NEXT_PUBLIC_ENV === 'staging';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**

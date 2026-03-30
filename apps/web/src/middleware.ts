@@ -64,10 +64,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/coach');
   const isPublicRoute = pathname.startsWith('/_next') || pathname.startsWith('/api');
 
-  // Note: Role-based redirects are handled by signin page via /api/auth/user-role
-  // Middleware only handles authentication check, not role-based access
-  // This avoids Supabase REST API table name issues with Prisma's quoted names
-  const role: string | null = null;
+  // Get role from Supabase user_metadata (set during signup, no Prisma needed)
+  const role: string | null = user?.user_metadata?.role || null;
 
   // Redirect authenticated users away from home page to their dashboard
   if (pathname === '/' && user && role) {

@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
   try {
     // Check for internal voice service authentication
     const voiceServiceKey = req.headers.get('x-voice-service-key');
-    const isVoiceService = voiceServiceKey &&
-      voiceServiceKey === (process.env.VOICE_SERVICE_KEY || 'dev-voice-service-key');
+    const isVoiceService = process.env.VOICE_SERVICE_KEY &&
+      voiceServiceKey === process.env.VOICE_SERVICE_KEY;
 
     // Verify authentication (supports both JWT, session, and internal service key)
     let user = null;
@@ -94,6 +94,18 @@ export async function POST(req: NextRequest) {
     }
 
     const { session_id, message, athlete_id } = validatedData;
+
+    // Rate limiting: prevent rapid-fire API abuse
+    if (!isVoiceService && user) {
+      const { checkRateLimit } = await import('@/middleware/rate-limit');
+      const rateResult = await checkRateLimit(user.id, user.role as 'ATHLETE' | 'COACH' | 'ADMIN', user.schoolId);
+      if (!rateResult.allowed) {
+        return new Response(
+          encoder.encode('data: ' + JSON.stringify({ type: 'error', data: `Rate limit exceeded. Retry in ${rateResult.retryAfter}s` }) + '\n\n'),
+          { status: 429, headers: { 'Content-Type': 'text/event-stream', 'Retry-After': rateResult.retryAfter!.toString() } }
+        );
+      }
+    }
 
     // Only check cost limits and permissions for regular user requests (not voice service)
     if (!isVoiceService && user) {

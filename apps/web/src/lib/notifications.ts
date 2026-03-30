@@ -6,7 +6,7 @@
  * For production: Add email (Resend) and SMS (Twilio) integrations
  */
 
-import * as Sentry from '@/lib/sentry-stub';
+import * as Sentry from '@sentry/nextjs';
 
 export type NotificationChannel = 'email' | 'sms' | 'dashboard';
 export type CrisisSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
