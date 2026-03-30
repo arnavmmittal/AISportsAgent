@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install -g pnpm@8.15.0 && pnpm install --no-frozen-lockfile --filter web...",
+  "installCommand": "npm install --legacy-peer-deps",
   "crons": [
     {
       "path": "/api/cron/escalation",
