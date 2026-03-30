@@ -75,8 +75,8 @@ pnpm prisma:seed
 ```
 
 This creates:
-- 1 coach account (coach@uw.edu / Coach2024!)
-- 50 athlete accounts (athlete1-50@uw.edu / Athlete2024!)
+- 3 coach accounts (coach1-3@uw.edu / see pilot-credentials.csv)
+- 50 athlete accounts (athlete1-50@uw.edu / see pilot-credentials.csv)
 - 30 days of mood logs per athlete
 - Chat sessions with psychological insights
 - Goals, interventions, and predictions

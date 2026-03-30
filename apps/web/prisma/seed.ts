@@ -143,7 +143,7 @@ async function main() {
 
   // Create demo coach
   console.log('👨‍🏫 Creating demo coach...');
-  const coachPasswordPlain = 'Coach2024!';
+  const coachPasswordPlain = 'SeedPass_Coach!';
   const coachPassword = await hash(coachPasswordPlain, 10);
 
   // Create Supabase Auth user for coach FIRST to get the UUID
@@ -210,7 +210,7 @@ async function main() {
     Lacrosse: ['Attack', 'Midfield', 'Defense', 'Goalie'],
   };
 
-  const athletePasswordPlain = 'Athlete2024!';
+  const athletePasswordPlain = 'SeedPass_Athlete!';
   const athletePassword = await hash(athletePasswordPlain, 10);
 
   // First and last names for realistic athlete names
@@ -1167,8 +1167,8 @@ async function main() {
 
   console.log('\n👥 USERS & RELATIONSHIPS:');
   console.log(`   • 1 School (${school.name})`);
-  console.log(`   • 1 Coach (coach@uw.edu / Coach2024!)`);
-  console.log(`   • 50 Athletes across 12 sports (athlete1@uw.edu to athlete50@uw.edu / Athlete2024!)`);
+  console.log(`   • 1 Coach (coach@uw.edu / SeedPass_Coach!)`);
+  console.log(`   • 50 Athletes across 12 sports (athlete1@uw.edu to athlete50@uw.edu / SeedPass_Athlete!)`);
   console.log(`   • 50 Coach-Athlete Relationships (all with consent granted)`);
 
   console.log('\n📈 MOOD & READINESS DATA:');
@@ -1210,8 +1210,8 @@ async function main() {
 
   console.log('\n' + '─'.repeat(60));
   console.log('🔐 LOGIN CREDENTIALS:');
-  console.log('   Coach: coach@uw.edu / Coach2024!');
-  console.log('   Athletes: athlete1@uw.edu through athlete50@uw.edu / Athlete2024!');
+  console.log('   Coach: coach@uw.edu / SeedPass_Coach!');
+  console.log('   Athletes: athlete1@uw.edu through athlete50@uw.edu / SeedPass_Athlete!');
 
   console.log('\n' + '═'.repeat(60));
   console.log('🎉 ALL DATA READY FOR COMPREHENSIVE APP TESTING!');

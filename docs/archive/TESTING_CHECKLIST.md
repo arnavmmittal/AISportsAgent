@@ -57,14 +57,14 @@ pnpm start
 ### Test 1.1: Login with Seed Account
 - [ ] Open app on device
 - [ ] Should see login screen
-- [ ] Enter `athlete1@uw.edu` / `Athlete2024!`
+- [ ] Enter `athlete1@uw.edu` / `See pilot-credentials.csv`
 - [ ] Tap "Sign In"
 - [ ] **EXPECTED:** Navigate to athlete dashboard
 - [ ] **VERIFY:** Welcome message shows "Welcome back, [Athlete Name]"
 
 ### Test 1.2: Coach Login
 - [ ] Logout (Settings → Logout)
-- [ ] Enter `coach@uw.edu` / `Coach2024!`
+- [ ] Enter `coach@uw.edu` / `See pilot-credentials.csv`
 - [ ] Tap "Sign In"
 - [ ] **EXPECTED:** Navigate to coach dashboard (different UI)
 - [ ] **VERIFY:** Shows team stats, athlete roster

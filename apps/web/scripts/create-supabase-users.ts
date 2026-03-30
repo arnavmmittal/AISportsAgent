@@ -45,7 +45,7 @@ async function createSupabaseUsers() {
     for (const user of users) {
       try {
         // Determine password based on role
-        const password = user.role === 'COACH' ? 'Coach2024!' : 'Athlete2024!';
+        const password = user.role === 'COACH' ? 'SeedPass_Coach!' : 'SeedPass_Athlete!';
 
         // Create user in Supabase Auth
         const { data, error } = await supabase.auth.admin.createUser({
