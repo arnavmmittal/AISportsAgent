@@ -208,14 +208,14 @@ function getPhaseGuidance(phase: ProtocolPhase, turnCount: number): string {
 }
 
 // Lazy-initialized models with tools
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let openaiModelInstance: Runnable<any, any> | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let anthropicModelInstance: Runnable<any, any> | null = null;
 
 type ModelProvider = 'openai' | 'anthropic';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function getOpenAIModel(): Runnable<any, any> {
   if (!openaiModelInstance) {
     const model = new ChatOpenAI({
@@ -229,7 +229,7 @@ function getOpenAIModel(): Runnable<any, any> {
   return openaiModelInstance;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function getAnthropicModel(): Runnable<any, any> {
   if (!anthropicModelInstance) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -248,7 +248,7 @@ function getAnthropicModel(): Runnable<any, any> {
   return anthropicModelInstance;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function getModelWithTools(provider: ModelProvider = 'openai'): Runnable<any, any> {
   if (provider === 'anthropic') {
     return getAnthropicModel();
@@ -264,11 +264,11 @@ function hasAnthropicKey(): boolean {
  * Try invoking a model and return the response
  */
 async function tryInvokeModel(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   model: Runnable<any, any>,
   messagesForModel: BaseMessage[],
   providerName: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
 ): Promise<{ response: any; duration: number }> {
   const startTime = Date.now();
   console.log(`[LANGGRAPH:MODEL] Calling ${providerName} model...`);

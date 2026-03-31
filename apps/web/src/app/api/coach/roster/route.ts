@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     for (const athlete of athletes) {
       try {
         // Check if user already exists
-        let existingUser = await prisma.user.findUnique({
+        const existingUser = await prisma.user.findUnique({
           where: { email: athlete.email },
         });
 

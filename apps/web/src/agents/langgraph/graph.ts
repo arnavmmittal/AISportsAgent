@@ -169,7 +169,7 @@ function buildConversationGraph() {
 }
 
 // Compiled graph (singleton)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let compiledGraph: any = null;
 let graphInitPromise: Promise<any> | null = null;
 
