@@ -9,12 +9,9 @@ import {
   Platform,
   StyleSheet,
   ActivityIndicator,
-  Animated,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { Message } from '@flow-sports-coach/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
 import { sendChatMessage } from '../../lib/apiWithFallback';
@@ -34,18 +31,10 @@ export default function ChatScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [voiceConnected, setVoiceConnected] = useState(false);
-  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [crisisAlert, setCrisisAlert] = useState<any>(null);
 
   const flatListRef = useRef<FlatList>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const micPulseAnim = useRef(new Animated.Value(1)).current;
   const voiceClient = useRef<VoiceWebSocketClient | null>(null);
-
-  // Animated values for typing dots
-  const dot1Anim = useRef(new Animated.Value(0)).current;
-  const dot2Anim = useRef(new Animated.Value(0)).current;
-  const dot3Anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     async function init() {
@@ -56,56 +45,12 @@ export default function ChatScreen() {
           return;
         }
         setUserId(id);
-
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }).start();
       } catch (error: any) {
         setInitError(error.message || 'Failed to initialize');
       }
     }
     init();
   }, []);
-
-  // Animate typing dots when loading
-  useEffect(() => {
-    if (isLoading) {
-      const createDotAnimation = (dotAnim: Animated.Value, delay: number) => {
-        return Animated.loop(
-          Animated.sequence([
-            Animated.delay(delay),
-            Animated.timing(dotAnim, {
-              toValue: -8,
-              duration: 400,
-              useNativeDriver: true,
-            }),
-            Animated.timing(dotAnim, {
-              toValue: 0,
-              duration: 400,
-              useNativeDriver: true,
-            }),
-          ])
-        );
-      };
-
-      const animations = Animated.parallel([
-        createDotAnimation(dot1Anim, 0),
-        createDotAnimation(dot2Anim, 150),
-        createDotAnimation(dot3Anim, 300),
-      ]);
-
-      animations.start();
-
-      return () => {
-        animations.stop();
-        dot1Anim.setValue(0);
-        dot2Anim.setValue(0);
-        dot3Anim.setValue(0);
-      };
-    }
-  }, [isLoading]);
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading || !userId) return;
@@ -121,7 +66,6 @@ export default function ChatScreen() {
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
       const assistantId = `msg_${Date.now()}_assistant`;
@@ -161,14 +105,11 @@ export default function ChatScreen() {
           try {
             const parsed = JSON.parse(data);
 
-            // Handle different event types from OpenAI streaming
             if (parsed.type === 'session') {
-              // Update session ID if provided by backend
               if (parsed.data?.sessionId) {
                 setSessionId(parsed.data.sessionId);
               }
             } else if (parsed.type === 'token' || parsed.type === 'content') {
-              // Handle both new token streaming and legacy content events
               await new Promise(resolve => setTimeout(resolve, 20));
 
               setMessages((prev) => {
@@ -183,16 +124,12 @@ export default function ChatScreen() {
                 return updated;
               });
             } else if (parsed.type === 'crisis_alert' || parsed.type === 'crisis_check') {
-              // Crisis detected - show resources modal
               setCrisisAlert({
                 final_risk_level: parsed.data.severity || parsed.data.final_risk_level || 'HIGH',
                 message: parsed.data.message || 'We noticed your message may indicate distress. Professional support is available 24/7.',
               });
-              // Haptic feedback for crisis alert
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             } else if (parsed.type === 'done') {
               // Stream complete
-              console.log('✅ Stream complete');
             }
           } catch (e) {
             // Ignore parse errors
@@ -225,7 +162,6 @@ export default function ChatScreen() {
   }, [messages]);
 
   const startNewChat = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setMessages([]);
     setSessionId(`session_${Date.now()}`);
   };
@@ -239,8 +175,6 @@ export default function ChatScreen() {
         sessionId,
         athleteId: userId,
         onTranscript: (transcript) => {
-          console.log('📝 Transcript received:', transcript);
-          // Add user message with transcript
           const userMessage: Message = {
             id: `msg_${Date.now()}`,
             sessionId,
@@ -251,9 +185,7 @@ export default function ChatScreen() {
           setMessages((prev) => [...prev, userMessage]);
         },
         onResponse: (response) => {
-          console.log('💬 Response received:', response);
-          setIsProcessingVoice(false); // Clear loading state when response arrives
-          // Add assistant message with response
+          setIsProcessingVoice(false);
           const assistantMessage: Message = {
             id: `msg_${Date.now()}_assistant`,
             sessionId,
@@ -262,103 +194,56 @@ export default function ChatScreen() {
             createdAt: new Date(),
           };
           setMessages((prev) => [...prev, assistantMessage]);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
         onError: (error) => {
-          console.log('Voice not available:', error);
-          setIsProcessingVoice(false); // Clear loading state on error
-          setVoiceError(error);
-          // Don't show alert for connection errors - voice is optional
+          setIsProcessingVoice(false);
         },
         onCrisisAlert: (severity, message) => {
-          console.warn('⚠️ Crisis alert:', severity, message);
           Alert.alert('Support Resources Available', message, [
             { text: 'OK', style: 'default' },
           ]);
         },
         onConnectionChange: (connected) => {
           setVoiceConnected(connected);
-          console.log(`🔌 Voice connection: ${connected ? 'Connected' : 'Disconnected'}`);
         },
       });
 
       await client.connect();
       voiceClient.current = client;
-      console.log('✅ Voice client initialized and connected');
     } catch (error: any) {
-      console.log('Voice client initialization skipped (optional feature):', error);
-      setVoiceError(error.message || 'Voice service unavailable');
-      // Don't alert - voice is optional and will be handled when user tries to use it
+      // Voice is optional
     }
   };
 
   const toggleRecording = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
     if (isRecording) {
-      // Stop recording
       try {
-        console.log('🛑 Stopping voice recording...');
         setIsRecording(false);
-        setIsProcessingVoice(true); // Start processing state
-        Animated.timing(micPulseAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
-
+        setIsProcessingVoice(true);
         if (voiceClient.current) {
           await voiceClient.current.stopRecording();
-          console.log('✅ Voice recording stopped and sent');
         }
       } catch (error: any) {
-        console.error('Error stopping recording:', error);
-        setIsProcessingVoice(false); // Clear processing state on error
+        setIsProcessingVoice(false);
         Alert.alert('Recording Error', 'Failed to stop recording. Please try again.');
       }
     } else {
-      // Start recording
       try {
-        console.log('🎤 Starting voice recording...');
-
-        // Initialize voice client if not connected
         if (!voiceClient.current || !voiceConnected) {
           await initializeVoiceClient();
         }
-
         if (!voiceClient.current) {
           throw new Error('Voice client not initialized');
         }
-
         await voiceClient.current.startRecording();
         setIsRecording(true);
-
-        // Pulsing animation
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(micPulseAnim, {
-              toValue: 1.3,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(micPulseAnim, {
-              toValue: 1,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-
-        console.log('✅ Voice recording started');
       } catch (error: any) {
-        console.log('Voice recording not available:', error);
         setIsRecording(false);
         Alert.alert('Voice Not Available', 'Voice input is currently unavailable. Please use text input instead.');
       }
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (voiceClient.current) {
@@ -377,23 +262,14 @@ export default function ChatScreen() {
         title="Initialization Error"
         message={initError}
         actionLabel="Try Again"
-        onAction={() => window.location.reload()}
+        onAction={() => {}}
       />
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Crisis Resources Modal */}
       <CrisisResourcesModal crisis={crisisAlert} onClose={() => setCrisisAlert(null)} />
-
-      {/* Dark gradient background */}
-      <LinearGradient
-        colors={[Colors.background, Colors.card, Colors.cardElevated]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -402,74 +278,43 @@ export default function ChatScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <LinearGradient
-            colors={[Colors.primary, Colors.secondary, Colors.accent]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.headerGradient}
-          >
-            <View style={styles.headerContent}>
-              <View style={styles.headerLeft}>
-                <View style={styles.aiIconContainer}>
-                  <LinearGradient
-                    colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
-                    style={styles.aiIconGradient}
-                  >
-                    <Ionicons name="chatbubbles" size={24} color="#fff" />
-                  </LinearGradient>
-                </View>
-                <View>
-                  <Text style={styles.headerTitle}>AI Coach</Text>
-                  <Text style={styles.headerSubtitle}>Always here to help</Text>
-                </View>
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <View style={styles.aiIcon}>
+                <Ionicons name="chatbubble-ellipses" size={22} color="#fff" />
               </View>
-              <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
-                  style={styles.newChatGradient}
-                >
-                  <Ionicons name="add" size={24} color="#fff" />
-                </LinearGradient>
-              </TouchableOpacity>
+              <View>
+                <Text style={styles.headerTitle}>AI Coach</Text>
+                <Text style={styles.headerSubtitle}>Always here to help</Text>
+              </View>
             </View>
-          </LinearGradient>
+            <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
+              <Ionicons name="add" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Messages */}
-        <Animated.View style={[styles.messagesContainer, { opacity: fadeAnim }]}>
+        <View style={styles.messagesContainer}>
           {messages.length === 0 ? (
             <View style={styles.emptyState}>
-              <LinearGradient
-                colors={[Colors.primary, Colors.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.emptyIconContainer}
-              >
-                <Ionicons name="chatbubbles" size={56} color="#fff" />
-              </LinearGradient>
-
-              <Text style={styles.emptyTitle}>Ready to talk? 💬</Text>
-
+              <Ionicons name="chatbubble-ellipses" size={48} color={Colors.accent} />
+              <Text style={styles.emptyTitle}>Ready to talk?</Text>
               <Text style={styles.emptyMessage}>
                 I'm your AI mental performance coach. Share what's on your mind, and let's work through it together.
               </Text>
-
               <View style={styles.suggestionsGrid}>
                 {[
-                  { emoji: '🎯', text: 'Pre-game anxiety tips', prompt: "I get anxious before games..." },
-                  { emoji: '💪', text: 'Build confidence', prompt: "How do I believe in myself more?" },
-                  { emoji: '🧘', text: 'Stress management', prompt: "I'm feeling overwhelmed..." },
-                  { emoji: '⚡', text: 'Get in the zone', prompt: "Help me find my flow state..." },
+                  { text: 'Pre-game anxiety tips', prompt: "I get anxious before games..." },
+                  { text: 'Build confidence', prompt: "How do I believe in myself more?" },
+                  { text: 'Stress management', prompt: "I'm feeling overwhelmed..." },
+                  { text: 'Get in the zone', prompt: "Help me find my flow state..." },
                 ].map((suggestion, index) => (
                   <TouchableOpacity
                     key={index}
                     style={styles.suggestionCard}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setInputValue(suggestion.prompt);
-                    }}
+                    onPress={() => setInputValue(suggestion.prompt)}
                   >
-                    <Text style={styles.suggestionEmoji}>{suggestion.emoji}</Text>
                     <Text style={styles.suggestionText}>{suggestion.text}</Text>
                   </TouchableOpacity>
                 ))}
@@ -487,15 +332,6 @@ export default function ChatScreen() {
                     item.role === 'user' ? styles.messageRowUser : styles.messageRowAssistant,
                   ]}
                 >
-                  {item.role === 'assistant' && (
-                    <LinearGradient
-                      colors={[Colors.primary, Colors.secondary]}
-                      style={styles.avatar}
-                    >
-                      <Ionicons name="chatbubbles" size={20} color="#fff" />
-                    </LinearGradient>
-                  )}
-
                   <View
                     style={[
                       styles.messageBubble,
@@ -503,53 +339,29 @@ export default function ChatScreen() {
                     ]}
                   >
                     {item.content ? (
-                      <Text style={[
-                        styles.messageText,
-                        item.role === 'user' && styles.userMessageText
-                      ]}>
+                      <Text
+                        style={[
+                          styles.messageText,
+                          item.role === 'user' && styles.userMessageText,
+                        ]}
+                      >
                         {item.content}
                       </Text>
                     ) : (
                       <View style={styles.typingIndicator}>
-                        <Animated.View
-                          style={[
-                            styles.typingDot,
-                            { backgroundColor: '#a78bfa', transform: [{ translateY: dot1Anim }] }
-                          ]}
-                        />
-                        <Animated.View
-                          style={[
-                            styles.typingDot,
-                            { backgroundColor: '#c4b5fd', transform: [{ translateY: dot2Anim }] }
-                          ]}
-                        />
-                        <Animated.View
-                          style={[
-                            styles.typingDot,
-                            { backgroundColor: '#ddd6fe', transform: [{ translateY: dot3Anim }] }
-                          ]}
-                        />
+                        <Text style={styles.typingText}>...</Text>
                       </View>
                     )}
                   </View>
-
-                  {item.role === 'user' && (
-                    <LinearGradient
-                      colors={['#3b82f6', '#60a5fa']}
-                      style={styles.avatar}
-                    >
-                      <Ionicons name="person" size={20} color="#fff" />
-                    </LinearGradient>
-                  )}
                 </View>
               )}
               contentContainerStyle={styles.messagesList}
               showsVerticalScrollIndicator={false}
             />
           )}
-        </Animated.View>
+        </View>
 
-        {/* Input Area - ChatGPT Style */}
+        {/* Input Area */}
         <View style={styles.inputWrapper}>
           <View style={styles.inputContainer}>
             <TextInput
@@ -557,61 +369,46 @@ export default function ChatScreen() {
               value={inputValue}
               onChangeText={setInputValue}
               placeholder="Message AI Coach..."
-              placeholderTextColor="rgba(255,255,255,0.4)"
+              placeholderTextColor={Colors.gray400}
               multiline
               maxLength={2000}
               editable={!isLoading && !isProcessingVoice}
             />
 
             <View style={styles.inputButtons}>
-              {/* Voice/Mic button */}
-              <Animated.View
+              {/* Voice button */}
+              <TouchableOpacity
                 style={[
-                  styles.voiceButtonWrapper,
-                  { transform: [{ scale: micPulseAnim }] }
+                  styles.voiceButton,
+                  isRecording && styles.voiceButtonRecording,
                 ]}
+                onPress={toggleRecording}
+                disabled={isLoading || isProcessingVoice}
               >
-                <TouchableOpacity
-                  style={[
-                    styles.voiceButton,
-                    isRecording && styles.voiceButtonRecording
-                  ]}
-                  onPress={toggleRecording}
-                  disabled={isLoading || isProcessingVoice}
-                >
-                  {isProcessingVoice ? (
-                    <ActivityIndicator color="#8b5cf6" size="small" />
-                  ) : (
-                    <Ionicons
-                      name={isRecording ? "stop-circle" : "mic"}
-                      size={22}
-                      color={isRecording ? '#ec4899' : ((isLoading || isProcessingVoice) ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)')}
-                    />
-                  )}
-                </TouchableOpacity>
-              </Animated.View>
+                {isProcessingVoice ? (
+                  <ActivityIndicator color={Colors.accent} size="small" />
+                ) : (
+                  <Ionicons
+                    name={isRecording ? 'stop-circle' : 'mic'}
+                    size={22}
+                    color={isRecording ? Colors.error : Colors.accent}
+                  />
+                )}
+              </TouchableOpacity>
 
               {/* Send button */}
               <TouchableOpacity
-                style={[styles.sendButton, !inputValue.trim() && styles.sendButtonDisabled]}
+                style={[
+                  styles.sendButton,
+                  !inputValue.trim() && styles.sendButtonDisabled,
+                ]}
                 onPress={sendMessage}
                 disabled={!inputValue.trim() || isLoading}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <LinearGradient
-                    colors={
-                      !inputValue.trim()
-                        ? ['rgba(139, 92, 246, 0.3)', 'rgba(217, 70, 239, 0.3)']
-                        : ['#8b5cf6', '#d946ef']
-                    }
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.sendButtonGradient}
-                  >
-                    <Ionicons name="arrow-up" size={20} color="#fff" />
-                  </LinearGradient>
+                  <Ionicons name="arrow-up" size={20} color="#fff" />
                 )}
               </TouchableOpacity>
             </View>
@@ -625,6 +422,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -632,13 +430,7 @@ const styles = StyleSheet.create({
   // Header
   header: {
     paddingTop: 60,
-    shadowColor: '#8b5cf6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  headerGradient: {
+    backgroundColor: Colors.primary,
     paddingBottom: Spacing.lg,
   },
   headerContent: {
@@ -652,41 +444,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
-  aiIconContainer: {
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  aiIconGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  aiIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
   headerTitle: {
     fontSize: Typography.xl,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#fff',
   },
   headerSubtitle: {
     fontSize: Typography.sm,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
+    color: 'rgba(255,255,255,0.7)',
   },
   newChatButton: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  newChatGradient: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   // Messages
   messagesContainer: {
@@ -702,29 +483,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
   },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-    shadowColor: '#8b5cf6',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 12,
-  },
   emptyTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#fff',
-    marginBottom: Spacing.md,
+    fontSize: 24,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   emptyMessage: {
     fontSize: Typography.base,
-    color: 'rgba(255,255,255,0.7)',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: Spacing.xxxl,
@@ -737,54 +506,41 @@ const styles = StyleSheet.create({
   },
   suggestionCard: {
     width: '48%',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: Colors.border,
     alignItems: 'center',
-  },
-  suggestionEmoji: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
   },
   suggestionText: {
     fontSize: Typography.sm,
-    color: '#fff',
+    color: Colors.textPrimary,
     fontWeight: '600',
     textAlign: 'center',
   },
   messageRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-    alignItems: 'flex-end',
+    marginBottom: Spacing.md,
   },
   messageRowUser: {
-    flexDirection: 'row-reverse',
+    justifyContent: 'flex-end',
   },
   messageRowAssistant: {
-    flexDirection: 'row',
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '75%',
+    maxWidth: '80%',
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
   },
   userBubble: {
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.gray700,
+    borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: Colors.primary,
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: Typography.base,
@@ -792,35 +548,33 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   userMessageText: {
-    color: '#fff',
+    color: Colors.gray100,
   },
   typingIndicator: {
-    flexDirection: 'row',
-    gap: 6,
     paddingVertical: 4,
   },
-  typingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  typingText: {
+    fontSize: Typography.lg,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 2,
   },
-  // Input - ChatGPT Style
+  // Input
   inputWrapper: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    paddingBottom: Platform.OS === 'ios' ? Spacing.xxxl + 60 : Spacing.lg, // Extra padding for tab bar
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    paddingBottom: Platform.OS === 'ios' ? Spacing.xxxl + 60 : Spacing.lg,
+    backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: Colors.border,
   },
   inputContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: Colors.card,
     borderRadius: 24,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: Colors.border,
     alignItems: 'flex-end',
   },
   input: {
@@ -828,7 +582,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
     maxHeight: 120,
     fontSize: Typography.base,
-    color: '#fff',
+    color: Colors.textPrimary,
     paddingTop: 10,
     paddingBottom: 10,
   },
@@ -836,9 +590,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.xs,
     alignItems: 'center',
-  },
-  voiceButtonWrapper: {
-    // Wrapper for animation
   },
   voiceButton: {
     width: 36,
@@ -848,24 +599,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   voiceButtonRecording: {
-    backgroundColor: 'rgba(236, 72, 153, 0.2)', // Pink glow when recording
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(236, 72, 153, 0.4)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   sendButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    overflow: 'hidden',
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-  sendButtonGradient: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    backgroundColor: Colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    opacity: 0.4,
   },
 });

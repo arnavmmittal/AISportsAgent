@@ -369,7 +369,7 @@ export default function SettingsScreen() {
               >
                 <SettingItem
                   icon="eye-outline"
-                  iconColor="#a78bfa"
+                  iconColor={Colors.accent}
                   title="Share Chat Summaries"
                   subtitle={
                     consentChatSummaries
@@ -380,7 +380,7 @@ export default function SettingsScreen() {
                     <Switch
                       value={consentChatSummaries}
                       onValueChange={handleChatSummaryToggle}
-                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#8b5cf6' }}
+                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: Colors.accent }}
                       thumbColor={consentChatSummaries ? '#fff' : '#f4f3f4'}
                       ios_backgroundColor="rgba(255,255,255,0.2)"
                     />
@@ -420,7 +420,7 @@ export default function SettingsScreen() {
           >
             <SettingItem
               icon="person-outline"
-              iconColor="#f472b6"
+              iconColor={Colors.accent}
               title="Edit Profile"
               subtitle={profile ? `${profile.name} • ${profile.sport || 'No sport'}` : 'Update your information'}
               onPress={handleProfileEdit}
@@ -485,14 +485,14 @@ export default function SettingsScreen() {
             <View style={styles.separator} />
             <SettingItem
               icon="chatbubble-outline"
-              iconColor="#ec4899"
+              iconColor={Colors.accent}
               title="Chat Messages"
               subtitle={notifications.chatMessages ? 'Get notified about messages' : 'No chat notifications'}
               rightComponent={
                 <Switch
                   value={notifications.chatMessages}
                   onValueChange={(value) => updateNotification('chatMessages', value)}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#ec4899' }}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: Colors.accent }}
                   thumbColor={notifications.chatMessages ? '#fff' : '#f4f3f4'}
                   ios_backgroundColor="rgba(255,255,255,0.2)"
                 />
@@ -510,7 +510,7 @@ export default function SettingsScreen() {
           >
             <SettingItem
               icon={isDarkMode ? "moon" : "sunny"}
-              iconColor={isDarkMode ? "#a78bfa" : "#f59e0b"}
+              iconColor={isDarkMode ? Colors.accent : "#f59e0b"}
               title="Dark Mode"
               subtitle={isDarkMode ? 'Reduce eye strain in low light' : 'Switch to dark theme'}
               rightComponent={
@@ -520,7 +520,7 @@ export default function SettingsScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     toggleTheme();
                   }}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#a78bfa' }}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: Colors.accent }}
                   thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
                   ios_backgroundColor="rgba(255,255,255,0.2)"
                 />
@@ -569,7 +569,7 @@ export default function SettingsScreen() {
             <View style={styles.separator} />
             <SettingItem
               icon="shield-outline"
-              iconColor="#a78bfa"
+              iconColor={Colors.accent}
               title="Privacy Policy"
               onPress={() => Alert.alert('Coming Soon', 'Privacy policy will be available soon')}
             />
@@ -700,13 +700,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 60,
-    shadowColor: '#8b5cf6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  headerGradient: {
+    backgroundColor: Colors.primary,
     paddingBottom: Spacing.lg,
   },
   headerContent: {
@@ -837,7 +831,7 @@ const styles = StyleSheet.create({
   modalSaveButton: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    backgroundColor: '#8b5cf6',
+    backgroundColor: Colors.accent,
     borderRadius: BorderRadius.lg,
   },
   modalSaveText: {
