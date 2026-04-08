@@ -3,16 +3,16 @@
  * Flow Sports Coach - Premium Athletic Design System (Lovable)
  */
 
-// Dark theme colors (default)
+// Dark theme colors (default) — synced with web globals.css dark mode
 const darkColors = {
-  // Primary - Deep Blue (Trust, Focus, Professionalism)
-  primary: '#1E40AF',
-  primaryLight: '#3B82F6',
-  primaryDark: '#1E3A8A',
+  // Primary - Deep Navy (Trust, Stability, Performance)
+  primary: '#1A3A6B',
+  primaryLight: '#2A5A9B',
+  primaryDark: '#0F2647',
 
-  // Secondary/Accent
-  secondary: '#3B82F6',
-  accent: '#5BA3F5',
+  // Secondary/Accent - Electric Teal (Growth, Progress, Energy)
+  secondary: '#2A5A9B',
+  accent: '#14B8A6',
 
   // Chrome Silver
   chrome: '#BFBFBF',
@@ -30,15 +30,15 @@ const darkColors = {
   gray800: '#1E293B',
   gray900: '#0F1419',
 
-  // Semantic - Professional palette (blue/silver/steel)
-  success: '#3B82F6', // secondary (bright blue) - was green
-  successLight: '#DBEAFE',
-  warning: '#94A3B8', // muted-foreground (steel gray) - was orange
-  warningLight: '#CBD5E1',
-  error: '#94A3B8', // muted-foreground (steel gray) - was red
-  errorLight: '#CBD5E1',
-  info: '#3B82F6',
-  infoLight: '#DBEAFE',
+  // Semantic - Proper status colors matching web
+  success: '#22C55E',
+  successLight: '#052E16',
+  warning: '#EAB308',
+  warningLight: '#422006',
+  error: '#EF4444',
+  errorLight: '#450A0A',
+  info: '#38BDF8',
+  infoLight: '#082F49',
 
   // Backgrounds - Dark
   background: '#0F1419',
@@ -57,16 +57,16 @@ const darkColors = {
   textInverse: '#0F1419',
 };
 
-// Light theme colors
+// Light theme colors — synced with web globals.css light mode
 const lightColors = {
-  // Primary - Deep Blue
-  primary: '#1E40AF',
-  primaryLight: '#3B82F6',
-  primaryDark: '#1E3A8A',
+  // Primary - Deep Navy
+  primary: '#1A3A6B',
+  primaryLight: '#2A5A9B',
+  primaryDark: '#0F2647',
 
-  // Secondary/Accent
-  secondary: '#3B82F6',
-  accent: '#5BA3F5',
+  // Secondary/Accent - Electric Teal
+  secondary: '#2A5A9B',
+  accent: '#14B8A6',
 
   // Chrome Silver
   chrome: '#BFBFBF',
@@ -84,15 +84,15 @@ const lightColors = {
   gray800: '#1E293B',
   gray900: '#0F1419',
 
-  // Semantic - Professional palette (blue/silver/steel)
-  success: '#3B82F6', // secondary (bright blue) - was green
-  successLight: '#DBEAFE',
-  warning: '#94A3B8', // muted-foreground (steel gray) - was orange
-  warningLight: '#CBD5E1',
-  error: '#94A3B8', // muted-foreground (steel gray) - was red
-  errorLight: '#CBD5E1',
-  info: '#3B82F6',
-  infoLight: '#DBEAFE',
+  // Semantic - Proper status colors matching web
+  success: '#16A34A',
+  successLight: '#DCFCE7',
+  warning: '#CA8A04',
+  warningLight: '#FEF9C3',
+  error: '#DC2626',
+  errorLight: '#FEE2E2',
+  info: '#0284C7',
+  infoLight: '#E0F2FE',
 
   // Backgrounds - Light
   background: '#FFFFFF',
@@ -179,14 +179,14 @@ export const Shadows = {
   },
   // Blue glow effects for Lovable design
   blueGlow: {
-    shadowColor: '#1E40AF', // Primary blue
+    shadowColor: '#1A3A6B', // Primary navy
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 15,
     elevation: 8,
   },
   blueGlowSmall: {
-    shadowColor: '#1E40AF', // Primary blue
+    shadowColor: '#1A3A6B', // Primary navy
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
