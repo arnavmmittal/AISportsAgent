@@ -16,8 +16,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, verifyOwnership } from '@/lib/auth-helpers';
 import {
-  analyzePerformanceCorrelations,
-  analyzeTeamPerformanceCorrelations,
+  calculateAthleteCorrelations,
+  calculateTeamCorrelations,
 } from '@/lib/analytics/performance-correlation';
 import { prisma } from '@/lib/prisma';
 
@@ -52,15 +52,15 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        const teamAnalysis = await analyzeTeamPerformanceCorrelations(schoolId, undefined, days);
+        const teamAnalysis = await calculateTeamCorrelations(user!.id);
 
         return NextResponse.json({
           success: true,
           data: {
             type: 'team',
-            teamSize: teamAnalysis.teamSize,
-            correlations: teamAnalysis.avgCorrelations,
-            consistentFactors: teamAnalysis.consistentFactors,
+            totalGames: teamAnalysis.totalGames,
+            correlations: teamAnalysis.correlations,
+            winRateByReadiness: teamAnalysis.winRateByReadiness,
             dateRange: {
               from: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
               to: new Date(),
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
         });
       } else if (user!.role === 'ATHLETE') {
         // Athletes get their own analysis when no athleteId specified
-        const analysis = await analyzePerformanceCorrelations(user!.id, days);
+        const analysis = await calculateAthleteCorrelations(user!.id, { startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000) });
         return NextResponse.json({
           success: true,
           data: analysis,
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
     // ADMINs can access all analytics
 
     // Run individual correlation analysis
-    const analysis = await analyzePerformanceCorrelations(athleteId, days);
+    const analysis = await calculateAthleteCorrelations(athleteId, { startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000) });
 
     return NextResponse.json({
       success: true,

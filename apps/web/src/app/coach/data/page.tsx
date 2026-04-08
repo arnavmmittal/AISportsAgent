@@ -3,7 +3,9 @@
  *
  * Consolidated data management for coaches:
  * - Import: ESPN auto-sync + CSV upload
+ * - Log Game: Manual game outcome entry with performance ratings
  * - Outcomes: Game/practice results with mood correlation
+ * - Insights: AI-generated performance insights + correlation analysis
  * - Reports: Generate and export custom reports
  *
  * Purpose: "Manage all my DATA"
@@ -33,12 +35,23 @@ import {
   AlertCircle,
   Zap,
   BarChart3,
+  Brain,
+  PlusCircle,
 } from 'lucide-react';
 import { Button } from '@/components/shared/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/shared/ui/card';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/shared/ui/table';
+import { Slider } from '@/components/shared/ui/slider';
 import { cn } from '@/lib/utils';
 
-type DataTab = 'import' | 'outcomes' | 'reports';
+type DataTab = 'import' | 'log-game' | 'outcomes' | 'insights' | 'reports';
 
 interface PerformanceOutcome {
   id: string;
@@ -63,6 +76,29 @@ interface Report {
   readinessAvg: number;
 }
 
+interface CorrelationResult {
+  factor: string;
+  correlation: number;
+  strength: 'strong' | 'moderate' | 'weak' | 'none';
+  sampleSize: number;
+}
+
+interface TeamCorrelationResult {
+  correlations: CorrelationResult[];
+  winRateByReadiness: {
+    high: { rate: number; count: number };
+    medium: { rate: number; count: number };
+    low: { rate: number; count: number };
+  };
+  totalGames: number;
+}
+
+interface RosterAthlete {
+  athleteId: string;
+  name: string;
+  sport: string;
+}
+
 function DataHubContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -72,18 +108,46 @@ function DataHubContent() {
 
   // Import state
   const [isImporting, setIsImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; errors: number } | null>(null);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    skipped: number;
+    errors: number;
+  } | null>(null);
   const [availableSports, setAvailableSports] = useState<string[]>([]);
   const [selectedSport, setSelectedSport] = useState<string>('');
   const [daysBack, setDaysBack] = useState(30);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+
+  // Log Game state
+  const [roster, setRoster] = useState<RosterAthlete[]>([]);
+  const [logForm, setLogForm] = useState({
+    athleteId: '',
+    date: new Date().toISOString().split('T')[0],
+    opponent: '',
+    gameResult: '' as '' | 'WIN' | 'LOSS' | 'DRAW',
+    overallRating: 5,
+    notes: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // Outcomes state
   const [outcomes, setOutcomes] = useState<PerformanceOutcome[]>([]);
   const [outcomesLoading, setOutcomesLoading] = useState(false);
   const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [outcomeStats, setOutcomeStats] = useState({ total: 0, wins: 0, losses: 0, avgRating: 0 });
+  const [outcomeStats, setOutcomeStats] = useState({
+    total: 0,
+    wins: 0,
+    losses: 0,
+    avgRating: 0,
+  });
+
+  // Insights state
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [aiInsights, setAiInsights] = useState<string[]>([]);
+  const [teamCorrelations, setTeamCorrelations] =
+    useState<TeamCorrelationResult | null>(null);
 
   // Reports state
   const [reports, setReports] = useState<Report[]>([]);
@@ -114,6 +178,29 @@ function DataHubContent() {
     loadImportInfo();
   }, []);
 
+  // Load roster for Log Game tab
+  useEffect(() => {
+    const loadRoster = async () => {
+      try {
+        const response = await fetch('/api/athletes');
+        if (response.ok) {
+          const data = await response.json();
+          const athletes = (data.athletes || data || []).map((a: any) => ({
+            athleteId: a.userId || a.athleteId || a.id,
+            name: a.User?.name || a.name || 'Unknown',
+            sport: a.sport || '',
+          }));
+          setRoster(athletes);
+        }
+      } catch (error) {
+        console.error('Error loading roster:', error);
+      }
+    };
+    if (activeTab === 'log-game') {
+      loadRoster();
+    }
+  }, [activeTab]);
+
   // Load outcomes
   const loadOutcomes = useCallback(async () => {
     try {
@@ -121,7 +208,9 @@ function DataHubContent() {
       const params = new URLSearchParams();
       if (outcomeFilter !== 'all') params.set('outcomeType', outcomeFilter);
 
-      const response = await fetch(`/api/performance-outcomes?${params.toString()}`);
+      const response = await fetch(
+        `/api/performance-outcomes?${params.toString()}`
+      );
       if (!response.ok) throw new Error('Failed to load outcomes');
 
       const data = await response.json();
@@ -134,12 +223,20 @@ function DataHubContent() {
 
       // Calculate stats
       const total = transformedOutcomes.length;
-      const wins = transformedOutcomes.filter((o: PerformanceOutcome) => o.gameResult === 'WIN').length;
-      const losses = transformedOutcomes.filter((o: PerformanceOutcome) => o.gameResult === 'LOSS').length;
+      const wins = transformedOutcomes.filter(
+        (o: PerformanceOutcome) => o.gameResult === 'WIN'
+      ).length;
+      const losses = transformedOutcomes.filter(
+        (o: PerformanceOutcome) => o.gameResult === 'LOSS'
+      ).length;
       const ratings = transformedOutcomes
         .map((o: PerformanceOutcome) => o.overallRating)
         .filter((r: number | null): r is number => r !== null);
-      const avgRating = ratings.length > 0 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length : 0;
+      const avgRating =
+        ratings.length > 0
+          ? ratings.reduce((a: number, b: number) => a + b, 0) /
+            ratings.length
+          : 0;
 
       setOutcomeStats({ total, wins, losses, avgRating });
     } catch (error) {
@@ -154,6 +251,31 @@ function DataHubContent() {
       loadOutcomes();
     }
   }, [activeTab, loadOutcomes]);
+
+  // Load insights
+  const loadInsights = useCallback(async () => {
+    try {
+      setInsightsLoading(true);
+      const response = await fetch(
+        '/api/performance-outcomes?includeInsights=true&limit=100'
+      );
+      if (!response.ok) throw new Error('Failed to load insights');
+
+      const data = await response.json();
+      setAiInsights(data.insights || []);
+      setTeamCorrelations(data.correlations || null);
+    } catch (error) {
+      console.error('Error loading insights:', error);
+    } finally {
+      setInsightsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'insights') {
+      loadInsights();
+    }
+  }, [activeTab, loadInsights]);
 
   // ESPN Import
   const handleESPNImport = async () => {
@@ -174,7 +296,9 @@ function DataHubContent() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Import failed');
 
-      setImportResult(data.summary || { imported: data.imported || 0, skipped: 0, errors: 0 });
+      setImportResult(
+        data.summary || { imported: data.imported || 0, skipped: 0, errors: 0 }
+      );
     } catch (error) {
       console.error('Import error:', error);
       setImportResult({ imported: 0, skipped: 0, errors: 1 });
@@ -202,13 +326,62 @@ function DataHubContent() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Upload failed');
 
-      setImportResult(data.summary || { imported: data.imported || 0, skipped: 0, errors: 0 });
+      setImportResult(
+        data.summary || { imported: data.imported || 0, skipped: 0, errors: 0 }
+      );
       setCsvFile(null);
     } catch (error) {
       console.error('Upload error:', error);
       setImportResult({ imported: 0, skipped: 0, errors: 1 });
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  // Log Game Submit
+  const handleLogGame = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!logForm.athleteId || !logForm.gameResult) return;
+
+    try {
+      setIsSubmitting(true);
+      setSubmitSuccess(false);
+
+      const response = await fetch('/api/performance-outcomes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          athleteId: logForm.athleteId,
+          date: new Date(logForm.date).toISOString(),
+          outcomeType: 'GAME',
+          opponent: logForm.opponent || undefined,
+          gameResult: logForm.gameResult,
+          overallRating: logForm.overallRating,
+          notes: logForm.notes || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to log game');
+      }
+
+      setSubmitSuccess(true);
+      setLogForm({
+        athleteId: '',
+        date: new Date().toISOString().split('T')[0],
+        opponent: '',
+        gameResult: '',
+        overallRating: 5,
+        notes: '',
+      });
+
+      // Reload outcomes
+      loadOutcomes();
+    } catch (error) {
+      console.error('Log game error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -234,9 +407,10 @@ function DataHubContent() {
   };
 
   // Filter outcomes by search
-  const filteredOutcomes = outcomes.filter((o) =>
-    o.athleteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    o.opponent?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredOutcomes = outcomes.filter(
+    (o) =>
+      o.athleteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.opponent?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -251,16 +425,18 @@ function DataHubContent() {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Data Hub</h1>
               <p className="text-sm text-muted-foreground">
-                Import, export, and manage your team's performance data
+                Import, log, and analyze your team&apos;s performance data
               </p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mt-6">
+          <div className="flex gap-2 mt-6 flex-wrap">
             {[
               { key: 'import', label: 'Import Data', icon: Upload },
+              { key: 'log-game', label: 'Log Game', icon: PlusCircle },
               { key: 'outcomes', label: 'Outcomes', icon: Trophy },
+              { key: 'insights', label: 'Insights', icon: Brain },
               { key: 'reports', label: 'Reports', icon: FileText },
             ].map(({ key, label, icon: Icon }) => (
               <button
@@ -303,7 +479,9 @@ function DataHubContent() {
 
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Sport</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Sport
+                      </label>
                       <select
                         value={selectedSport}
                         onChange={(e) => setSelectedSport(e.target.value)}
@@ -311,13 +489,17 @@ function DataHubContent() {
                       >
                         <option value="">All Sports</option>
                         {availableSports.map((sport) => (
-                          <option key={sport} value={sport}>{sport}</option>
+                          <option key={sport} value={sport}>
+                            {sport}
+                          </option>
                         ))}
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-1">Days Back</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Days Back
+                      </label>
                       <select
                         value={daysBack}
                         onChange={(e) => setDaysBack(Number(e.target.value))}
@@ -367,7 +549,9 @@ function DataHubContent() {
                   <div
                     className={cn(
                       'border-2 border-dashed rounded-lg p-6 text-center transition-colors',
-                      csvFile ? 'border-green-500 bg-green-500/5' : 'border-border hover:border-primary/50'
+                      csvFile
+                        ? 'border-green-500 bg-green-500/5'
+                        : 'border-border hover:border-primary/50'
                     )}
                   >
                     {csvFile ? (
@@ -387,12 +571,16 @@ function DataHubContent() {
                         <p className="text-sm text-muted-foreground">
                           Click to upload or drag and drop
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">CSV files only</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          CSV files only
+                        </p>
                         <input
                           type="file"
                           accept=".csv"
                           className="hidden"
-                          onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                          onChange={(e) =>
+                            setCsvFile(e.target.files?.[0] || null)
+                          }
                         />
                       </label>
                     )}
@@ -422,10 +610,14 @@ function DataHubContent() {
 
             {/* Import Result */}
             {importResult && (
-              <Card className={cn(
-                'border-2',
-                importResult.errors > 0 ? 'border-red-500/50' : 'border-green-500/50'
-              )}>
+              <Card
+                className={cn(
+                  'border-2',
+                  importResult.errors > 0
+                    ? 'border-red-500/50'
+                    : 'border-green-500/50'
+                )}
+              >
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-4">
                     {importResult.errors > 0 ? (
@@ -436,7 +628,8 @@ function DataHubContent() {
                     <div>
                       <h3 className="font-semibold">Import Complete</h3>
                       <p className="text-sm text-muted-foreground">
-                        {importResult.imported} imported, {importResult.skipped} skipped, {importResult.errors} errors
+                        {importResult.imported} imported, {importResult.skipped}{' '}
+                        skipped, {importResult.errors} errors
                       </p>
                     </div>
                   </div>
@@ -454,19 +647,266 @@ function DataHubContent() {
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <Trophy className="w-5 h-5 text-amber-500 mb-2" />
                     <h4 className="font-medium">Game Results</h4>
-                    <p className="text-muted-foreground">Win/loss, scores, opponent</p>
+                    <p className="text-muted-foreground">
+                      Win/loss, scores, opponent
+                    </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <BarChart3 className="w-5 h-5 text-blue-500 mb-2" />
                     <h4 className="font-medium">Player Stats</h4>
-                    <p className="text-muted-foreground">Points, assists, rebounds, etc.</p>
+                    <p className="text-muted-foreground">
+                      Points, assists, rebounds, etc.
+                    </p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <TrendingUp className="w-5 h-5 text-green-500 mb-2" />
                     <h4 className="font-medium">Auto-Correlation</h4>
-                    <p className="text-muted-foreground">Links with mood logs for insights</p>
+                    <p className="text-muted-foreground">
+                      Links with mood logs for insights
+                    </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* LOG GAME TAB */}
+        {activeTab === 'log-game' && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PlusCircle className="w-5 h-5" />
+                  Log Game Outcome
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleLogGame} className="space-y-5">
+                  {/* Date */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={logForm.date}
+                      onChange={(e) =>
+                        setLogForm((f) => ({ ...f, date: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 rounded-lg border bg-background"
+                      required
+                    />
+                  </div>
+
+                  {/* Athlete Select */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Athlete
+                    </label>
+                    <select
+                      value={logForm.athleteId}
+                      onChange={(e) =>
+                        setLogForm((f) => ({
+                          ...f,
+                          athleteId: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-lg border bg-background"
+                      required
+                    >
+                      <option value="">Select athlete...</option>
+                      {roster.map((a) => (
+                        <option key={a.athleteId} value={a.athleteId}>
+                          {a.name}
+                          {a.sport ? ` (${a.sport})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Opponent */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Opponent
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Oregon State"
+                      value={logForm.opponent}
+                      onChange={(e) =>
+                        setLogForm((f) => ({
+                          ...f,
+                          opponent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-lg border bg-background"
+                    />
+                  </div>
+
+                  {/* Result */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Result
+                    </label>
+                    <select
+                      value={logForm.gameResult}
+                      onChange={(e) =>
+                        setLogForm((f) => ({
+                          ...f,
+                          gameResult: e.target.value as
+                            | ''
+                            | 'WIN'
+                            | 'LOSS'
+                            | 'DRAW',
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-lg border bg-background"
+                      required
+                    >
+                      <option value="">Select result...</option>
+                      <option value="WIN">Win</option>
+                      <option value="LOSS">Loss</option>
+                      <option value="DRAW">Tie / Draw</option>
+                    </select>
+                  </div>
+
+                  {/* Performance Rating Slider */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Performance Rating:{' '}
+                      <span className="text-primary font-bold">
+                        {logForm.overallRating}
+                      </span>
+                      /10
+                    </label>
+                    <Slider
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={[logForm.overallRating]}
+                      onValueChange={([v]) =>
+                        setLogForm((f) => ({ ...f, overallRating: v }))
+                      }
+                      className="mt-2"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>Poor</span>
+                      <span>Average</span>
+                      <span>Excellent</span>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Notes
+                    </label>
+                    <textarea
+                      placeholder="Optional notes about the game..."
+                      value={logForm.notes}
+                      onChange={(e) =>
+                        setLogForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg border bg-background resize-none"
+                    />
+                  </div>
+
+                  {/* Submit */}
+                  <Button
+                    type="submit"
+                    disabled={
+                      isSubmitting || !logForm.athleteId || !logForm.gameResult
+                    }
+                    className="w-full"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Logging...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Log Game Outcome
+                      </>
+                    )}
+                  </Button>
+
+                  {submitSuccess && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Game outcome logged successfully.
+                    </div>
+                  )}
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Recent Logged Outcomes */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Outcomes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {outcomes.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    No outcomes logged yet. Use the form above to log your first
+                    game.
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Athlete</TableHead>
+                        <TableHead>Opponent</TableHead>
+                        <TableHead>Result</TableHead>
+                        <TableHead>Rating</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {outcomes.slice(0, 10).map((o) => (
+                        <TableRow key={o.id}>
+                          <TableCell>
+                            {new Date(o.date).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>{o.athleteName}</TableCell>
+                          <TableCell>{o.opponent || '-'}</TableCell>
+                          <TableCell>
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full',
+                                o.gameResult === 'WIN'
+                                  ? 'bg-green-500/10 text-green-600'
+                                  : o.gameResult === 'LOSS'
+                                    ? 'bg-red-500/10 text-red-600'
+                                    : 'bg-muted text-muted-foreground'
+                              )}
+                            >
+                              {o.gameResult === 'WIN' && (
+                                <CheckCircle2 className="w-3 h-3" />
+                              )}
+                              {o.gameResult === 'LOSS' && (
+                                <XCircle className="w-3 h-3" />
+                              )}
+                              {o.gameResult === 'DRAW' && (
+                                <Minus className="w-3 h-3" />
+                              )}
+                              {o.gameResult || '-'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {o.overallRating != null
+                              ? `${o.overallRating}/10`
+                              : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -479,26 +919,34 @@ function DataHubContent() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-4">
-                  <p className="text-sm text-muted-foreground">Total Outcomes</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total Outcomes
+                  </p>
                   <p className="text-2xl font-bold">{outcomeStats.total}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4">
                   <p className="text-sm text-muted-foreground">Wins</p>
-                  <p className="text-2xl font-bold text-green-500">{outcomeStats.wins}</p>
+                  <p className="text-2xl font-bold text-green-500">
+                    {outcomeStats.wins}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4">
                   <p className="text-sm text-muted-foreground">Losses</p>
-                  <p className="text-2xl font-bold text-red-500">{outcomeStats.losses}</p>
+                  <p className="text-2xl font-bold text-red-500">
+                    {outcomeStats.losses}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4">
                   <p className="text-sm text-muted-foreground">Avg Rating</p>
-                  <p className="text-2xl font-bold">{outcomeStats.avgRating.toFixed(1)}</p>
+                  <p className="text-2xl font-bold">
+                    {outcomeStats.avgRating.toFixed(1)}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -538,26 +986,34 @@ function DataHubContent() {
                   <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="font-semibold mb-2">No Outcomes Yet</h3>
                   <p className="text-muted-foreground mb-4">
-                    Import game data to see performance outcomes here.
+                    Import game data or log outcomes to see them here.
                   </p>
-                  <Button onClick={() => handleTabChange('import')}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Import Data
+                  <Button onClick={() => handleTabChange('log-game')}>
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Log Game
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-3">
                 {filteredOutcomes.map((outcome) => (
-                  <Card key={outcome.id} className="hover:shadow-md transition-shadow">
+                  <Card
+                    key={outcome.id}
+                    className="hover:shadow-md transition-shadow"
+                  >
                     <CardContent className="py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className={cn(
-                            'w-10 h-10 rounded-full flex items-center justify-center',
-                            outcome.gameResult === 'WIN' ? 'bg-green-500/20' :
-                            outcome.gameResult === 'LOSS' ? 'bg-red-500/20' : 'bg-muted'
-                          )}>
+                          <div
+                            className={cn(
+                              'w-10 h-10 rounded-full flex items-center justify-center',
+                              outcome.gameResult === 'WIN'
+                                ? 'bg-green-500/20'
+                                : outcome.gameResult === 'LOSS'
+                                  ? 'bg-red-500/20'
+                                  : 'bg-muted'
+                            )}
+                          >
                             {outcome.gameResult === 'WIN' ? (
                               <CheckCircle2 className="w-5 h-5 text-green-500" />
                             ) : outcome.gameResult === 'LOSS' ? (
@@ -567,10 +1023,15 @@ function DataHubContent() {
                             )}
                           </div>
                           <div>
-                            <p className="font-medium">{outcome.athleteName}</p>
+                            <p className="font-medium">
+                              {outcome.athleteName}
+                            </p>
                             <p className="text-sm text-muted-foreground">
-                              {outcome.opponent ? `vs ${outcome.opponent}` : outcome.outcomeType}
-                              {outcome.homeAway && ` (${outcome.homeAway})`}
+                              {outcome.opponent
+                                ? `vs ${outcome.opponent}`
+                                : outcome.outcomeType}
+                              {outcome.homeAway &&
+                                ` (${outcome.homeAway})`}
                             </p>
                           </div>
                         </div>
@@ -579,7 +1040,9 @@ function DataHubContent() {
                             {new Date(outcome.date).toLocaleDateString()}
                           </p>
                           {outcome.overallRating && (
-                            <p className="font-semibold">{outcome.overallRating}/100</p>
+                            <p className="font-semibold">
+                              {outcome.overallRating}/10
+                            </p>
                           )}
                           {outcome.preEventMood && (
                             <p className="text-xs text-muted-foreground">
@@ -592,6 +1055,185 @@ function DataHubContent() {
                   </Card>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {/* INSIGHTS TAB */}
+        {activeTab === 'insights' && (
+          <div className="space-y-6">
+            {insightsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">
+                  Generating insights...
+                </span>
+              </div>
+            ) : !teamCorrelations ||
+              teamCorrelations.totalGames < 3 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Brain className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="font-semibold mb-2">Not Enough Data</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Log at least 3 game outcomes to see performance insights.
+                  </p>
+                  <Button onClick={() => handleTabChange('log-game')}>
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Log Game
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* AI Insights */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-primary" />
+                      AI Performance Insights
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {aiInsights.length > 0 ? (
+                      <ul className="space-y-3">
+                        {aiInsights.map((insight, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start gap-3 text-sm"
+                          >
+                            <div className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-primary">
+                                {i + 1}
+                              </span>
+                            </div>
+                            <span>{insight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No insights available yet.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Correlation Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Mental Readiness Correlations</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {teamCorrelations.correlations.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Factor</TableHead>
+                            <TableHead>Correlation</TableHead>
+                            <TableHead>Strength</TableHead>
+                            <TableHead>Sample Size</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {teamCorrelations.correlations.map((c) => (
+                            <TableRow key={c.factor}>
+                              <TableCell className="font-medium">
+                                {c.factor}
+                              </TableCell>
+                              <TableCell>
+                                <span
+                                  className={cn(
+                                    'font-mono',
+                                    c.correlation > 0
+                                      ? 'text-green-600'
+                                      : c.correlation < 0
+                                        ? 'text-red-600'
+                                        : 'text-muted-foreground'
+                                  )}
+                                >
+                                  {c.correlation > 0 ? '+' : ''}
+                                  {c.correlation.toFixed(2)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span
+                                  className={cn(
+                                    'text-xs font-medium px-2 py-0.5 rounded-full',
+                                    c.strength === 'strong'
+                                      ? 'bg-green-500/10 text-green-600'
+                                      : c.strength === 'moderate'
+                                        ? 'bg-amber-500/10 text-amber-600'
+                                        : c.strength === 'weak'
+                                          ? 'bg-blue-500/10 text-blue-600'
+                                          : 'bg-muted text-muted-foreground'
+                                  )}
+                                >
+                                  {c.strength}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                n={c.sampleSize}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No correlation data available. Ensure athletes have mood
+                        logs on game days.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Win Rate by Readiness */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Win Rate by Readiness Level</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {[
+                      {
+                        label: 'High Readiness (75+)',
+                        data: teamCorrelations.winRateByReadiness.high,
+                        color: 'bg-green-500',
+                      },
+                      {
+                        label: 'Medium Readiness (60-74)',
+                        data: teamCorrelations.winRateByReadiness.medium,
+                        color: 'bg-amber-500',
+                      },
+                      {
+                        label: 'Low Readiness (<60)',
+                        data: teamCorrelations.winRateByReadiness.low,
+                        color: 'bg-red-500',
+                      },
+                    ].map(({ label, data, color }) => (
+                      <div key={label}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="font-medium">{label}</span>
+                          <span className="text-muted-foreground">
+                            {data.rate}% ({data.count} games)
+                          </span>
+                        </div>
+                        <div className="h-4 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={cn('h-full rounded-full', color)}
+                            style={{ width: `${data.rate}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    <p className="text-xs text-muted-foreground pt-2">
+                      Based on {teamCorrelations.totalGames} total games
+                      analyzed.
+                    </p>
+                  </CardContent>
+                </Card>
+              </>
             )}
           </div>
         )}
@@ -610,10 +1252,16 @@ function DataHubContent() {
               <CardContent className="space-y-4">
                 <div className="flex gap-4">
                   <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">Report Type</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Report Type
+                    </label>
                     <select
                       value={reportType}
-                      onChange={(e) => setReportType(e.target.value as 'weekly' | 'monthly')}
+                      onChange={(e) =>
+                        setReportType(
+                          e.target.value as 'weekly' | 'monthly'
+                        )
+                      }
                       className="w-full px-3 py-2 rounded-lg border bg-background"
                     >
                       <option value="weekly">Weekly Summary</option>
@@ -621,7 +1269,10 @@ function DataHubContent() {
                     </select>
                   </div>
                   <div className="flex items-end">
-                    <Button onClick={handleGenerateReport} disabled={isGeneratingReport}>
+                    <Button
+                      onClick={handleGenerateReport}
+                      disabled={isGeneratingReport}
+                    >
                       {isGeneratingReport ? (
                         <>
                           <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -658,10 +1309,14 @@ function DataHubContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-semibold">{report.title}</h3>
-                          <p className="text-sm text-muted-foreground">{report.dateRange}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {report.dateRange}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold">{report.readinessAvg}</span>
+                          <span className="text-2xl font-bold">
+                            {report.readinessAvg}
+                          </span>
                           <Button variant="outline" size="sm">
                             <Download className="w-4 h-4 mr-1" />
                             PDF
@@ -670,11 +1325,20 @@ function DataHubContent() {
                       </div>
                       {report.keyInsights.length > 0 && (
                         <div className="mt-3 pt-3 border-t">
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Key Insights:</p>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            Key Insights:
+                          </p>
                           <ul className="text-sm space-y-1">
-                            {report.keyInsights.slice(0, 2).map((insight, i) => (
-                              <li key={i} className="text-muted-foreground">• {insight}</li>
-                            ))}
+                            {report.keyInsights
+                              .slice(0, 2)
+                              .map((insight, i) => (
+                                <li
+                                  key={i}
+                                  className="text-muted-foreground"
+                                >
+                                  {insight}
+                                </li>
+                              ))}
                           </ul>
                         </div>
                       )}

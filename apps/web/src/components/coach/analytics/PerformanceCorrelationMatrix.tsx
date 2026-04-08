@@ -16,7 +16,13 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Badge } from '@/components/shared/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { TrendingUp, AlertCircle, CheckCircle, Info } from 'lucide-react';
-import type { PerformanceCorrelationAnalysis, CorrelationResult } from '@/lib/analytics/performance-correlation';
+import type { CorrelationResult } from '@/lib/analytics/performance-correlation';
+
+interface CorrelationAnalysisData {
+  correlations: CorrelationResult[];
+  topFactor: CorrelationResult | null;
+  recommendations: string[];
+}
 
 interface PerformanceCorrelationMatrixProps {
   athleteId: string;
@@ -24,7 +30,7 @@ interface PerformanceCorrelationMatrixProps {
 }
 
 export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: PerformanceCorrelationMatrixProps) {
-  const [analysis, setAnalysis] = useState<PerformanceCorrelationAnalysis | null>(null);
+  const [analysis, setAnalysis] = useState<CorrelationAnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +52,14 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
           throw new Error(result.error || 'Failed to analyze correlations');
         }
 
-        setAnalysis(result.data);
+        // Transform CorrelationResult[] to the expected shape
+        const correlations: CorrelationResult[] = Array.isArray(result.data) ? result.data : (result.data?.correlations || []);
+        const sorted = [...correlations].sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
+        setAnalysis({
+          correlations: sorted,
+          topFactor: sorted.length > 0 ? sorted[0] : null,
+          recommendations: [],
+        });
         setIsLoading(false);
       } catch (err) {
         console.error('Error fetching performance correlations:', err);
@@ -121,18 +134,17 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
 
   // Transform data for Recharts
   const chartData = correlations.map((c) => ({
-    metric: c.metric,
+    metric: c.factor,
     correlation: c.correlation,
     absCorrelation: Math.abs(c.correlation),
     color: c.correlation > 0 ? '#10b981' : '#ef4444',
-    isSignificant: c.isSignificant,
+    strength: c.strength,
     sampleSize: c.sampleSize,
   }));
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
-      const corr = correlations.find((c) => c.metric === data.metric)!;
 
       return (
         <div className="bg-card border border-border rounded-lg shadow-lg p-3 max-w-xs">
@@ -141,16 +153,11 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
             r = {data.correlation.toFixed(2)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Strength: {corr.strength.replace('_', ' ')}
+            Strength: {data.strength}
           </p>
           <p className="text-xs text-muted-foreground">
             Sample size: {data.sampleSize} paired observations
           </p>
-          {data.isSignificant && (
-            <Badge variant="outline" className="mt-2 text-xs bg-secondary/10 text-secondary border-secondary/20 dark:bg-secondary/10/20 dark:text-accent dark:border-secondary">
-              Statistically significant (p &lt; 0.05)
-            </Badge>
-          )}
         </div>
       );
     }
@@ -186,12 +193,11 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
               <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
               <div>
                 <p className="font-semibold text-sm">Top Performance Factor</p>
-                <p className="text-sm mt-1">{topFactor.insight}</p>
+                <p className="text-sm mt-1">
+                  {topFactor.factor} shows {topFactor.strength} {topFactor.correlation > 0 ? 'positive' : 'negative'} correlation (r={topFactor.correlation.toFixed(2)}) with performance
+                </p>
                 <div className="flex gap-2 mt-2">
                   {getStrengthBadge(topFactor.strength)}
-                  {topFactor.isSignificant && (
-                    <Badge variant="success">Significant</Badge>
-                  )}
                   <Badge variant="default">{topFactor.sampleSize} games</Badge>
                 </div>
               </div>
@@ -214,7 +220,7 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
             <ReferenceLine x={0} stroke="#6b7280" strokeWidth={2} />
             <Bar dataKey="correlation" radius={[0, 4, 4, 0]}>
               {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} opacity={entry.isSignificant ? 1 : 0.5} />
+                <Cell key={`cell-${index}`} fill={entry.color} opacity={entry.strength === 'strong' || entry.strength === 'moderate' ? 1 : 0.5} />
               ))}
             </Bar>
           </BarChart>
@@ -225,15 +231,12 @@ export function PerformanceCorrelationMatrix({ athleteId, days = 90 }: Performan
           <p className="text-sm font-semibold text-muted-foreground">Detailed Breakdown</p>
           {correlations.map((corr) => (
             <div
-              key={corr.metric}
+              key={corr.factor}
               className="flex items-center justify-between p-2 rounded hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium w-32">{corr.metric}</span>
+                <span className="text-sm font-medium w-32">{corr.factor}</span>
                 {getStrengthBadge(corr.strength)}
-                {corr.isSignificant && (
-                  <CheckCircle className="h-4 w-4 text-secondary" />
-                )}
               </div>
               <div className="text-right">
                 <span

@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCoach } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
-import { analyzeTeamPerformanceCorrelations, analyzePerformanceCorrelations } from '@/lib/analytics/performance-correlation';
+import { calculateTeamCorrelations, calculateAthleteCorrelations } from '@/lib/analytics/performance-correlation';
 import { calculateAthleteEffectivenessProfile } from '@/lib/analytics/intervention-effectiveness';
 
 export const dynamic = 'force-dynamic';
@@ -95,11 +95,11 @@ export async function GET(req: NextRequest) {
     }
 
     // 1. Get team-wide correlation analysis
-    const teamCorrelations = await analyzeTeamPerformanceCorrelations(user.schoolId, undefined, 90);
+    const teamCorrelations = await calculateTeamCorrelations(user.id);
 
-    // Find top correlated factor
-    const significantCorrelations = teamCorrelations.avgCorrelations
-      .filter((c) => c.isSignificant && Math.abs(c.correlation) >= 0.3)
+    // Find top correlated factors (moderate or strong)
+    const significantCorrelations = teamCorrelations.correlations
+      .filter((c) => c.strength !== 'none' && Math.abs(c.correlation) >= 0.3)
       .sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
 
     if (significantCorrelations.length > 0) {
@@ -108,36 +108,37 @@ export async function GET(req: NextRequest) {
       const impact = top.correlation > 0 ? 'better' : 'worse';
 
       insights.push({
-        id: `team-corr-${top.metric}`,
+        id: `team-corr-${top.factor}`,
         category: 'correlation',
         priority: 'high',
-        headline: `${top.metric} is ${Math.round(Math.abs(top.correlation) * 100)}% correlated with performance`,
-        detail: `Across your team, athletes with ${direction} ${top.metric.toLowerCase()} scores show ${impact} game performance.`,
+        headline: `${top.factor} is ${Math.round(Math.abs(top.correlation) * 100)}% correlated with performance`,
+        detail: `Across your team, athletes with ${direction} ${top.factor.toLowerCase()} scores show ${impact} game performance.`,
         metric: {
           value: (top.correlation > 0 ? '+' : '') + top.correlation.toFixed(2),
           label: 'Correlation (r)',
         },
-        confidence: top.isSignificant ? 0.95 : 0.7,
-        evidence: `Based on ${top.sampleSize} game-mood pairings with statistical significance (p < 0.05)`,
+        confidence: top.strength === 'strong' ? 0.95 : 0.7,
+        evidence: `Based on ${top.sampleSize} game-mood pairings`,
         actionable: top.correlation > 0
-          ? `Focus on boosting ${top.metric.toLowerCase()} across the team for better performance outcomes`
-          : `Address ${top.metric.toLowerCase()} concerns as they appear to negatively impact performance`,
+          ? `Focus on boosting ${top.factor.toLowerCase()} across the team for better performance outcomes`
+          : `Address ${top.factor.toLowerCase()} concerns as they appear to negatively impact performance`,
       });
     }
 
     // Add insights for each significant correlation factor
     for (const corr of significantCorrelations.slice(1, 4)) {
+      const direction = corr.correlation > 0 ? 'positive' : 'negative';
       insights.push({
-        id: `team-corr-${corr.metric}`,
+        id: `team-corr-${corr.factor}`,
         category: 'correlation',
         priority: 'medium',
-        headline: corr.insight,
-        detail: `${corr.strength.replace('_', ' ')} ${corr.direction} correlation between ${corr.metric.toLowerCase()} and performance`,
+        headline: `${corr.factor}: ${corr.strength} ${direction} correlation with performance`,
+        detail: `${corr.strength} ${direction} correlation between ${corr.factor.toLowerCase()} and performance`,
         metric: {
           value: (corr.correlation > 0 ? '+' : '') + corr.correlation.toFixed(2),
-          label: corr.metric,
+          label: corr.factor,
         },
-        confidence: corr.isSignificant ? 0.9 : 0.6,
+        confidence: corr.strength === 'strong' ? 0.9 : 0.6,
         evidence: `Based on ${corr.sampleSize} observations`,
       });
     }
@@ -148,40 +149,44 @@ export async function GET(req: NextRequest) {
 
       try {
         // Get individual correlation analysis
-        const athleteCorr = await analyzePerformanceCorrelations(athlete.id, 90);
+        const athleteCorrs = await calculateAthleteCorrelations(athlete.id, { startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) });
 
-        if (athleteCorr.topFactor && athleteCorr.topFactor.isSignificant) {
-          const factor = athleteCorr.topFactor;
-          const percentImpact = Math.round(Math.abs(factor.correlation) * 100);
+        // Find the strongest correlation factor
+        const topFactor = athleteCorrs
+          .filter((c) => c.strength !== 'none')
+          .sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation))[0];
+
+        if (topFactor && Math.abs(topFactor.correlation) >= 0.3) {
+          const percentImpact = Math.round(Math.abs(topFactor.correlation) * 100);
 
           // Generate specific insight based on sport and metric
           let specificInsight = '';
-          if (factor.metric.toLowerCase().includes('sleep')) {
+          if (topFactor.factor.toLowerCase().includes('sleep')) {
             specificInsight = `When ${athlete.name} gets good sleep, their performance improves by ~${percentImpact}%`;
-          } else if (factor.metric.toLowerCase().includes('confidence')) {
+          } else if (topFactor.factor.toLowerCase().includes('confidence')) {
             specificInsight = `${athlete.name}'s confidence level predicts ${percentImpact}% of their performance variation`;
-          } else if (factor.metric.toLowerCase().includes('stress')) {
+          } else if (topFactor.factor.toLowerCase().includes('stress')) {
             specificInsight = `Lower stress for ${athlete.name} = better performance (${percentImpact}% correlation)`;
-          } else if (factor.metric.toLowerCase().includes('mood')) {
-            specificInsight = `${athlete.name} performs ${factor.correlation > 0 ? 'better' : 'worse'} when mood is ${factor.correlation > 0 ? 'high' : 'low'}`;
+          } else if (topFactor.factor.toLowerCase().includes('mood')) {
+            specificInsight = `${athlete.name} performs ${topFactor.correlation > 0 ? 'better' : 'worse'} when mood is ${topFactor.correlation > 0 ? 'high' : 'low'}`;
           } else {
-            specificInsight = `${factor.metric} strongly predicts ${athlete.name}'s performance`;
+            specificInsight = `${topFactor.factor} strongly predicts ${athlete.name}'s performance`;
           }
 
           results.push({
             id: `athlete-corr-${athlete.id}`,
             category: 'correlation',
-            priority: Math.abs(factor.correlation) >= 0.5 ? 'high' : 'medium',
+            priority: Math.abs(topFactor.correlation) >= 0.5 ? 'high' : 'medium',
             headline: specificInsight,
-            detail: factor.insight,
+            detail: `${topFactor.strength} correlation between ${topFactor.factor.toLowerCase()} and performance`,
             athleteId: athlete.id,
             athleteName: athlete.name,
             metric: {
-              value: (factor.correlation > 0 ? '+' : '') + factor.correlation.toFixed(2),
-              label: factor.metric,
+              value: (topFactor.correlation > 0 ? '+' : '') + topFactor.correlation.toFixed(2),
+              label: topFactor.factor,
             },
             confidence: 0.85,
-            evidence: `Based on ${factor.sampleSize} games with mood logs within 24h`,
+            evidence: `Based on ${topFactor.sampleSize} games with mood logs within 24h`,
           });
         }
 
@@ -316,23 +321,26 @@ export async function GET(req: NextRequest) {
       avgCorrelation: significantCorrelations.length > 0
         ? significantCorrelations.reduce((sum, c) => sum + Math.abs(c.correlation), 0) / significantCorrelations.length
         : 0,
-      topCorrelatedFactor: significantCorrelations[0]?.metric || 'Insufficient data',
+      topCorrelatedFactor: significantCorrelations[0]?.factor || 'Insufficient data',
       atRiskCount,
       improvingCount,
       decliningCount,
     };
 
-    // 5. Add team-level pattern insights
-    if (teamCorrelations.consistentFactors.length > 0) {
+    // 5. Add team-level pattern insights based on strong correlations
+    const strongFactors = teamCorrelations.correlations
+      .filter((c) => c.strength === 'strong')
+      .map((c) => c.factor);
+    if (strongFactors.length > 0) {
       insights.push({
         id: 'team-consistent-factors',
         category: 'pattern',
         priority: 'high',
-        headline: `${teamCorrelations.consistentFactors.join(' and ')} consistently predict performance across your team`,
-        detail: `These factors show significant correlation for 70%+ of your athletes`,
+        headline: `${strongFactors.join(' and ')} consistently predict performance across your team`,
+        detail: `These factors show strong correlation with game outcomes`,
         confidence: 0.9,
-        evidence: `Analyzed ${teamCorrelations.teamSize} athletes with performance data`,
-        actionable: `Build team protocols around optimizing ${teamCorrelations.consistentFactors.join(' and ').toLowerCase()}`,
+        evidence: `Analyzed ${teamCorrelations.totalGames} games with performance data`,
+        actionable: `Build team protocols around optimizing ${strongFactors.join(' and ').toLowerCase()}`,
       });
     }
 

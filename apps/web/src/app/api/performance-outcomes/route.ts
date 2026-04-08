@@ -10,6 +10,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, verifySchoolAccess } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { startOfDay, endOfDay } from 'date-fns';
+import { calculateTeamCorrelations } from '@/lib/analytics/performance-correlation';
+import { generatePerformanceInsights } from '@/lib/analytics/insight-generator';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -84,11 +87,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Auto-fetch mood log from game day to attach readiness snapshot
+    const gameDate = new Date(data.date);
+    let preEventMood = data.preEventMood;
+    let preEventConfidence = data.preEventConfidence;
+    let preEventStress = data.preEventStress;
+    let preEventSleep = data.preEventSleep;
+
+    if (!preEventMood || !preEventConfidence) {
+      const moodLog = await prisma.moodLog.findFirst({
+        where: {
+          athleteId: data.athleteId,
+          createdAt: {
+            gte: startOfDay(gameDate),
+            lte: endOfDay(gameDate),
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (moodLog) {
+        preEventMood = preEventMood ?? moodLog.mood;
+        preEventConfidence = preEventConfidence ?? moodLog.confidence;
+        preEventStress = preEventStress ?? moodLog.stress;
+        preEventSleep = preEventSleep ?? (moodLog.sleep ?? undefined);
+      }
+    }
+
     // Create the performance outcome
     const outcome = await prisma.performanceOutcome.create({
       data: {
         athleteId: data.athleteId,
-        date: new Date(data.date),
+        date: gameDate,
         outcomeType: data.outcomeType,
         overallRating: data.overallRating,
         consistencyScore: data.consistencyScore,
@@ -100,10 +130,10 @@ export async function POST(request: NextRequest) {
         stakes: data.stakes || 'MEDIUM',
         homeAway: data.homeAway,
         gameResult: data.gameResult,
-        preEventMood: data.preEventMood,
-        preEventConfidence: data.preEventConfidence,
-        preEventStress: data.preEventStress,
-        preEventSleep: data.preEventSleep,
+        preEventMood,
+        preEventConfidence,
+        preEventStress,
+        preEventSleep,
         preEventHRV: data.preEventHRV,
         preEventRecovery: data.preEventRecovery,
         notes: data.notes,
@@ -186,6 +216,21 @@ export async function GET(request: NextRequest) {
       prisma.performanceOutcome.count({ where }),
     ]);
 
+    // Include correlation results and insights for coaches
+    let correlations = null;
+    let insights: string[] = [];
+    const includeInsights = searchParams.get('includeInsights') === 'true';
+
+    if (user.role === 'COACH' && includeInsights) {
+      try {
+        const teamData = await calculateTeamCorrelations(user.id);
+        correlations = teamData;
+        insights = await generatePerformanceInsights(teamData);
+      } catch (err) {
+        console.error('Correlation/insight generation error:', err);
+      }
+    }
+
     return NextResponse.json({
       outcomes,
       pagination: {
@@ -194,6 +239,8 @@ export async function GET(request: NextRequest) {
         offset,
         hasMore: offset + outcomes.length < total,
       },
+      ...(correlations && { correlations }),
+      ...(insights.length > 0 && { insights }),
     });
   } catch (error) {
     console.error('Performance outcomes fetch error:', error);
