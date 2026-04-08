@@ -26,10 +26,10 @@ export async function generateChatSummary(
   // Prepare conversation for GPT-4
   const conversationText = messages
     .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => `${m.role === 'user' ? 'Athlete' : 'AI Coach'}: ${m.content}`)
+    .map(m => `${m.role === 'user' ? 'Athlete' : 'Coach'}: ${m.content}`)
     .join('\n\n');
 
-  const systemPrompt = `You are an assistant helping to summarize mental performance coaching conversations between athletes and an AI sports psychology coach.
+  const systemPrompt = `You are an assistant helping to summarize mental performance coaching conversations between athletes and their coach.
 
 Your task is to create a concise, professional summary that:
 1. Captures the main topics discussed

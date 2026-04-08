@@ -20,7 +20,7 @@ interface AppSidebarProps {
   navItems: NavItem[];
   portalLabel: string;
   onSignOut: () => void;
-  /** Show "Talk to AI Coach" quick action in footer (student portal) */
+  /** Show "Talk to Coach" quick action in footer (student portal) */
   aiCoachHref?: string;
 }
 
@@ -89,12 +89,12 @@ export function AppSidebar({ navItems, portalLabel, onSignOut, aiCoachHref }: Ap
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                tooltip="Talk to AI Coach"
+                tooltip="Talk to Coach"
                 onClick={() => router.push(aiCoachHref)}
                 className="text-primary bg-primary/5 hover:bg-primary/10"
               >
                 <MessageSquare className="w-5 h-5" />
-                <span>Talk to AI Coach</span>
+                <span>Talk to Coach</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

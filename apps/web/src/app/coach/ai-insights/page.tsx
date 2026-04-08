@@ -228,7 +228,7 @@ function AIInsightsPageContent() {
                 <Brain className="w-8 h-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">AI Insights</h1>
+                <h1 className="text-3xl font-bold text-white">Insights</h1>
                 <p className="text-slate-400">
                   Machine learning-powered analytics for your team
                 </p>
@@ -445,7 +445,7 @@ function AIInsightsPageContent() {
                   No Conversation Data Yet
                 </h3>
                 <p className="text-slate-400 max-w-md mx-auto">
-                  Conversation insights appear when athletes chat with the AI coach.
+                  Conversation insights appear when athletes chat with the coach.
                   Encourage athletes to use the chat feature for mental performance support.
                 </p>
               </div>
@@ -523,7 +523,7 @@ function LoadingFallback() {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
         <RefreshCw className="w-8 h-8 text-primary animate-spin mx-auto mb-2" />
-        <p className="text-muted-foreground">Loading AI Insights...</p>
+        <p className="text-muted-foreground">Loading insights...</p>
       </div>
     </div>
   );

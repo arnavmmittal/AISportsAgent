@@ -89,7 +89,7 @@ export default function LandingPage() {
 
               <p className="mt-6 text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0">
                 Evidence-based mental performance support for collegiate athletes.
-                24/7 AI coaching, readiness tracking, and team-wide insights.
+                24/7 coaching, readiness tracking, and team-wide insights.
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -206,7 +206,7 @@ export default function LandingPage() {
             {[
               { value: '150+', label: 'Athletes Supported' },
               { value: '88%', label: 'Slump Prediction Accuracy' },
-              { value: '24/7', label: 'AI Coach Availability' },
+              { value: '24/7', label: 'Coach Availability' },
               { value: '4.8/5', label: 'Athlete Satisfaction' },
             ].map((stat) => (
               <div key={stat.label}>
@@ -233,8 +233,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard
               icon={MessageSquare}
-              title="AI Mental Skills Coach"
-              description="24/7 access to evidence-based sports psychology guidance through intelligent, voice-enabled conversations."
+              title="Mental Skills Coach"
+              description="24/7 access to evidence-based sports psychology guidance through voice-enabled conversations."
               color="primary"
             />
             <FeatureCard
@@ -258,13 +258,13 @@ export default function LandingPage() {
             <FeatureCard
               icon={Target}
               title="Goal Setting"
-              description="SMART goal framework with progress tracking and AI-powered accountability check-ins."
+              description="SMART goal framework with progress tracking and accountability check-ins."
               color="primary"
             />
             <FeatureCard
               icon={Shield}
               title="Crisis Detection"
-              description="AI-powered mental health monitoring with automatic escalation for at-risk situations."
+              description="Proactive mental health monitoring with automatic escalation for at-risk situations."
               color="destructive"
             />
           </div>
@@ -300,7 +300,7 @@ export default function LandingPage() {
 
                 <ul className="space-y-3 mb-8">
                   {[
-                    'Voice & text AI coaching',
+                    'Voice & text coaching',
                     'Daily mood check-ins',
                     'Pre-game visualization',
                     'Goal tracking & journaling',
@@ -452,7 +452,7 @@ export default function LandingPage() {
                 Ready to Elevate Your Mental Game?
               </h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-                Join the athletes and coaches who are gaining a mental edge with AI-powered sports psychology.
+                Join the athletes and coaches who are gaining a mental edge with evidence-based sports psychology.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

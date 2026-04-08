@@ -99,12 +99,12 @@ function SignInForm() {
             Welcome back to your mental performance hub
           </h1>
           <p className="text-muted-foreground mb-8">
-            Continue your journey to peak mental performance with AI-powered coaching and insights.
+            Continue your journey to peak mental performance.
           </p>
 
           <div className="space-y-4">
             {[
-              'Access your personalized AI coach anytime',
+              'Access your personalized coach anytime',
               'Track your readiness and mood trends',
               'Review your goals and progress',
             ].map((item) => (

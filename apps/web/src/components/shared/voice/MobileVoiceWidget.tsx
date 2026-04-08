@@ -132,7 +132,7 @@ export function MobileVoiceWidget({
               <div className="text-white/70 text-sm font-medium">
                 {voiceState === 'listening' && 'Listening...'}
                 {voiceState === 'processing' && 'Processing...'}
-                {voiceState === 'speaking' && 'AI Speaking...'}
+                {voiceState === 'speaking' && 'Speaking...'}
                 {voiceState === 'idle' && 'Tap to speak'}
                 {voiceState === 'error' && 'Error - Try again'}
               </div>
@@ -218,7 +218,7 @@ export function MobileVoiceWidget({
                   : voiceState === 'processing'
                   ? 'Processing your voice...'
                   : voiceState === 'speaking'
-                  ? 'AI is responding...'
+                  ? 'Responding...'
                   : voiceState === 'error'
                   ? 'Something went wrong. Tap to try again.'
                   : 'Tap the microphone to start speaking'}

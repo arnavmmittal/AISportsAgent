@@ -64,7 +64,7 @@ export function VoiceButton({
       case 'processing':
         return 'Processing...';
       case 'speaking':
-        return 'AI Speaking...';
+        return 'Speaking...';
       case 'error':
         return 'Error - Retry';
       default:

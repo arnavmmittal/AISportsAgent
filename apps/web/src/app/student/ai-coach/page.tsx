@@ -717,7 +717,7 @@ function AICoachPageContent() {
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h1 className="font-semibold text-foreground">AI Wellness Coach</h1>
+                <h1 className="font-semibold text-foreground">Flow Coach</h1>
                 <p className="text-xs text-muted-foreground">Private &amp; confidential</p>
               </div>
             </div>
@@ -768,7 +768,7 @@ function AICoachPageContent() {
                 Hey! Ready to chat?
               </h2>
               <p className="text-muted-foreground max-w-md mb-8">
-                I'm your AI mental performance coach. Whether it's pre-game nerves, confidence building, or just wanting to talk - I'm here for you.
+                Whether it's pre-game nerves, confidence building, or just wanting to talk — I'm here for you.
               </p>
 
               {/* Quick Prompts */}

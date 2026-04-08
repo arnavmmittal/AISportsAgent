@@ -871,7 +871,7 @@ function WellnessPageContent() {
                         Talk to Coach
                       </Button>
                       <Link href="/student/ai-coach?topic=support">
-                        <Button size="sm">Chat with AI Coach</Button>
+                        <Button size="sm">Chat with Coach</Button>
                       </Link>
                     </div>
                   </div>
@@ -1141,7 +1141,7 @@ function WellnessPageContent() {
               </div>
               <div className="flex-1 text-left">
                 <div className="font-medium text-foreground">Want to talk about it?</div>
-                <p className="text-sm text-muted-foreground">Chat with your AI coach</p>
+                <p className="text-sm text-muted-foreground">Chat with your coach</p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>

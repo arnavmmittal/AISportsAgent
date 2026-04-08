@@ -362,7 +362,7 @@ function DisengagedAthletesCard({ athletes }: { athletes: ChatInsightsData['dise
 
       <div className="mt-3 pt-3 border-t border-slate-700">
         <p className="text-xs text-slate-500">
-          Consider reaching out to re-engage these athletes with the AI coach.
+          Consider reaching out to re-engage these athletes with the coach.
         </p>
       </div>
     </div>
@@ -381,7 +381,7 @@ export function ChatInsightsPanel({ data }: ChatInsightsPanelProps) {
         <div>
           <h2 className="text-lg font-semibold text-white">Conversation Insights</h2>
           <p className="text-sm text-slate-400">
-            What your athletes are discussing with the AI coach
+            What your athletes are discussing with the coach
           </p>
         </div>
       </div>

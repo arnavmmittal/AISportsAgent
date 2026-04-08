@@ -393,14 +393,10 @@ function StudentHomePageContent() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-medium text-foreground flex items-center gap-2">
-                Talk to AI Coach
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/10 text-accent">
-                  <Brain size={10} />
-                  AI
-                </span>
+                Talk to Coach
               </div>
               <p className="text-sm text-muted-foreground truncate">
-                {stats.lastChatTopic ? `Last topic: ${stats.lastChatTopic}...` : '24/7 mental performance support'}
+                {stats.lastChatTopic ? `Last topic: ${stats.lastChatTopic}...` : 'Mental performance support'}
               </p>
             </div>
             <ChevronRight size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
@@ -513,11 +509,7 @@ function StudentHomePageContent() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-medium text-foreground">
-                  {insight.type === 'celebration' ? 'Congratulations!' : 'AI Insight'}
-                </span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/10 text-accent">
-                  <Brain size={10} />
-                  AI
+                  {insight.type === 'celebration' ? 'Congratulations!' : 'Insight'}
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">{insight.text}</p>

@@ -112,7 +112,7 @@ export function ChatBubble({
         className
       )}
       role="article"
-      aria-label={`${isUser ? 'Your message' : 'AI Coach'}: ${content.slice(0, 50)}...`}
+      aria-label={`${isUser ? 'Your message' : 'Flow Coach'}: ${content.slice(0, 50)}...`}
     >
       {/* Avatar */}
       <div
@@ -124,7 +124,7 @@ export function ChatBubble({
         {avatarUrl ? (
           <img
             src={avatarUrl}
-            alt={isUser ? userName || 'You' : 'AI Coach'}
+            alt={isUser ? userName || 'You' : 'Flow Coach'}
             className="w-full h-full rounded-full object-cover"
           />
         ) : isUser ? (
@@ -285,7 +285,7 @@ export function TypingIndicator({ className }: { className?: string }) {
         <Bot size={16} className="text-muted-foreground" />
       </div>
       <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
-        <div className="flex gap-1" role="status" aria-label="AI is typing">
+        <div className="flex gap-1" role="status" aria-label="Coach is typing">
           <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse-subtle [animation-delay:0ms]" />
           <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse-subtle [animation-delay:150ms]" />
           <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse-subtle [animation-delay:300ms]" />

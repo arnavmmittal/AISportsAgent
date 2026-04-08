@@ -22,7 +22,7 @@ const navItems = [
   { href: '/student/home', label: 'Home', icon: LayoutDashboard },
   { href: '/student/schedule', label: 'My Schedule', icon: Calendar },
   { href: '/student/assignments', label: 'My Assignments', icon: ClipboardList },
-  { href: '/student/ai-coach', label: 'AI Wellness Coach', icon: MessageSquare },
+  { href: '/student/ai-coach', label: 'Coach', icon: MessageSquare },
   { href: '/student/progress', label: 'My Progress', icon: Target },
   { href: '/student/settings', label: 'Settings', icon: Settings },
 ];

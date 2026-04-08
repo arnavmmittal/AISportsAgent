@@ -18,7 +18,7 @@ export function Header() {
   // Links for authenticated athletes
   const athleteLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
-    { href: '/chat', label: 'AI Coach', icon: '💬' },
+    { href: '/chat', label: 'Coach', icon: '💬' },
     { href: '/mood', label: 'Mood', icon: '📊' },
     { href: '/goals', label: 'Goals', icon: '🎯' },
     { href: '/assignments', label: 'Tasks', icon: '📋' },

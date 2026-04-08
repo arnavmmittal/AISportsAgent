@@ -106,12 +106,12 @@ function SignUpForm() {
             Start your mental performance journey
           </h1>
           <p className="text-muted-foreground mb-8">
-            Join thousands of athletes and coaches using AI-powered sports psychology to gain a competitive edge.
+            Join thousands of athletes and coaches using evidence-based sports psychology to gain a competitive edge.
           </p>
 
           <div className="space-y-4">
             {[
-              '24/7 access to AI mental skills coaching',
+              '24/7 access to mental skills coaching',
               'Daily readiness tracking and insights',
               'Evidence-based sports psychology frameworks',
               'Private, encrypted, and confidential',
@@ -139,7 +139,7 @@ function SignUpForm() {
           <div className="text-center lg:text-left mb-8">
             <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
             <p className="text-muted-foreground mt-2">
-              Get started with AI-powered mental performance
+              Get started with mental performance coaching
             </p>
           </div>
 

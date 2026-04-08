@@ -66,7 +66,7 @@ export default function NotificationPreferences() {
     {
       id: 'weeklyReport' as keyof NotificationSettings,
       label: 'Weekly Report',
-      description: 'Comprehensive weekly team summary with AI insights',
+      description: 'Comprehensive weekly team summary with insights',
       priority: 'low',
     },
   ];

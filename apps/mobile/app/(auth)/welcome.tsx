@@ -37,7 +37,7 @@ export default function Welcome() {
               <Text style={styles.roleIcon}>🏀</Text>
               <Text style={styles.roleTitle}>ATHLETE</Text>
               <Text style={styles.roleDescription}>
-                Get 24/7 mental performance support from AI coach
+                Get 24/7 mental performance support
               </Text>
             </TouchableOpacity>
 
@@ -75,7 +75,7 @@ export default function Welcome() {
           />
           <FeatureCard
             icon="💬"
-            title="AI Mental Skills Coach"
+            title="Mental Skills Coach"
             description="24/7 access to evidence-based sports psychology guidance."
           />
           <FeatureCard

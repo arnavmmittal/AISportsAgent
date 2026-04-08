@@ -74,11 +74,10 @@ export const ATHLETE_NAV: NavItem[] = [
     description: 'Your daily overview',
   },
   {
-    label: 'AI Coach',
+    label: 'Coach',
     href: '/student/ai-coach',
     icon: MessageCircle,
-    description: '24/7 mental performance support',
-    badge: 'AI',
+    description: 'Mental performance support',
     highlight: true,
   },
   {

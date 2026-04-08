@@ -85,7 +85,7 @@ export default function ConsentSettingsModal({
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-2">What are Weekly Chat Summaries?</h3>
             <p className="text-sm text-gray-600">
-              Every week, we create a summary of your conversations with the AI coach. This summary helps your coaching staff understand how you're doing and provide better support.
+              Every week, we create a summary of your coaching conversations. This summary helps your coaching staff understand how you're doing and provide better support.
             </p>
           </div>
 

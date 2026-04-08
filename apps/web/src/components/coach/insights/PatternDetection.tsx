@@ -200,7 +200,7 @@ export default function PatternDetection() {
       {/* Detected Patterns */}
       <DashboardSection
         title="🔍 Detected Patterns"
-        description="AI-powered anomaly detection and trend analysis"
+        description="Anomaly detection and trend analysis"
       >
         <div className="space-y-4">
           {patterns.map(pattern => (

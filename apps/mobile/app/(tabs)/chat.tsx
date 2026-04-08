@@ -284,8 +284,8 @@ export default function ChatScreen() {
                 <Ionicons name="chatbubble-ellipses" size={22} color="#fff" />
               </View>
               <View>
-                <Text style={styles.headerTitle}>AI Coach</Text>
-                <Text style={styles.headerSubtitle}>Always here to help</Text>
+                <Text style={styles.headerTitle}>Flow Coach</Text>
+                <Text style={styles.headerSubtitle}>Your mental edge</Text>
               </View>
             </View>
             <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
@@ -301,7 +301,7 @@ export default function ChatScreen() {
               <Ionicons name="chatbubble-ellipses" size={48} color={Colors.accent} />
               <Text style={styles.emptyTitle}>Ready to talk?</Text>
               <Text style={styles.emptyMessage}>
-                I'm your AI mental performance coach. Share what's on your mind, and let's work through it together.
+                Share what's on your mind — let's get to work.
               </Text>
               <View style={styles.suggestionsGrid}>
                 {[
@@ -368,7 +368,7 @@ export default function ChatScreen() {
               style={styles.input}
               value={inputValue}
               onChangeText={setInputValue}
-              placeholder="Message AI Coach..."
+              placeholder="What's on your mind..."
               placeholderTextColor={Colors.gray400}
               multiline
               maxLength={2000}
