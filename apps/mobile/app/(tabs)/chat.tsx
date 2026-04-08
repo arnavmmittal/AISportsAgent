@@ -163,7 +163,7 @@ export default function ChatScreen() {
 
   const startNewChat = () => {
     setMessages([]);
-    setSessionId(`session_${Date.now()}`);
+    setSessionId(undefined);
   };
 
   const initializeVoiceClient = async () => {
