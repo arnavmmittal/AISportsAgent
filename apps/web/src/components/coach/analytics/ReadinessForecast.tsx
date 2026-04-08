@@ -26,7 +26,14 @@ import {
   AreaChart,
 } from 'recharts';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, Info } from 'lucide-react';
-import type { ReadinessForecast } from '@/lib/analytics/forecasting';
+interface ReadinessForecast {
+  historicalData: { date: string; score: number }[];
+  forecast: { date: string; predictedScore: number; lowerBound: number; upperBound: number; confidence: string }[];
+  currentScore: number;
+  trend: 'improving' | 'declining' | 'stable';
+  riskFlags: string[];
+  recommendations: string[];
+}
 
 interface ReadinessForecastProps {
   athleteId: string;

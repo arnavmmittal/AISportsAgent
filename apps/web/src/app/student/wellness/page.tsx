@@ -63,7 +63,6 @@ import {
 } from '@/components/shared/athlete';
 import { MoodSlider, MoodQuickSelect } from '@/components/shared/athlete';
 import { toast } from 'sonner';
-import { isDemoMode, generateDemoAthleteDashboard, generateDemoMoodLogs, type DemoMoodLog } from '@/lib/demo-data';
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
@@ -173,7 +172,7 @@ function getMoodEmoji(value: number) {
 function WellnessPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const demoMode = isDemoMode(searchParams);
+  const demoMode = false;
   const [activeTab, setActiveTab] = useState<WellnessTab>(
     (searchParams.get('tab') as WellnessTab) || 'readiness'
   );
@@ -227,46 +226,8 @@ function WellnessPageContent() {
 
   // ── Effects ──
 
-  // Load demo data for readiness
-  const loadDemoReadinessData = useCallback(() => {
-    setIsLoadingReadiness(true);
-    setTimeout(() => {
-      const demoData = generateDemoAthleteDashboard();
-      setReadiness({
-        score: demoData.readiness.score,
-        dimensions: {
-          mood: demoData.readiness.dimensions.mood,
-          sleep: demoData.readiness.dimensions.sleep,
-          stress: demoData.readiness.dimensions.stress,
-          confidence: demoData.readiness.dimensions.engagement,
-        },
-        trend: demoData.readiness.trend,
-        change: demoData.readiness.change,
-      });
-      if (demoData.hasGameTomorrow) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(14, 0, 0, 0);
-        setUpcomingGame({
-          id: 'upcoming',
-          opponent: 'State University',
-          date: tomorrow,
-          location: 'Home Arena',
-          isHome: true,
-        });
-        setCountdown(formatTimeUntil(tomorrow));
-      }
-      setIsLoadingReadiness(false);
-    }, 400);
-  }, []);
-
   // Fetch readiness data from athlete dashboard API
   useEffect(() => {
-    if (demoMode) {
-      loadDemoReadinessData();
-      return;
-    }
-
     const fetchReadinessData = async () => {
       try {
         setIsLoadingReadiness(true);
@@ -316,7 +277,7 @@ function WellnessPageContent() {
     };
 
     fetchReadinessData();
-  }, [demoMode, loadDemoReadinessData]);
+  }, []);
 
   // Build history from pastWeekLogs when they change
   useEffect(() => {
@@ -386,34 +347,10 @@ function WellnessPageContent() {
     runPhase();
   }, [breathingActive]);
 
-  // Load demo mood logs
-  const loadDemoMoodLogs = useCallback(() => {
-    setIsLoadingHistory(true);
-    setTimeout(() => {
-      const demoLogs = generateDemoMoodLogs(7);
-      const transformedLogs: MoodLogData[] = demoLogs.map((log: DemoMoodLog) => ({
-        id: log.id,
-        date: log.date,
-        mood: log.mood,
-        confidence: log.confidence,
-        stress: log.stress,
-        energy: log.energy,
-        sleep: log.sleep,
-        notes: log.notes,
-      }));
-      setPastWeekLogs(transformedLogs);
-      setIsLoadingHistory(false);
-    }, 300);
-  }, []);
-
   // Load mood logs
   useEffect(() => {
-    if (demoMode) {
-      loadDemoMoodLogs();
-      return;
-    }
     loadPastWeekLogs();
-  }, [demoMode, loadDemoMoodLogs]);
+  }, []);
 
   const loadPastWeekLogs = async () => {
     try {

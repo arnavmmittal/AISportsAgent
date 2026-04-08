@@ -23,8 +23,17 @@ const ENABLE_COST_LIMITS = process.env.ENABLE_COST_LIMITS !== 'false';
 
 // OpenAI pricing (as of Dec 2024) - GPT-4 Turbo
 // https://openai.com/pricing
-const COST_PER_1K_PROMPT_TOKENS = 0.01; // $0.01 per 1K prompt tokens
-const COST_PER_1K_COMPLETION_TOKENS = 0.03; // $0.03 per 1K completion tokens
+const OPENAI_COST_PER_1K_PROMPT_TOKENS = 0.01; // $0.01 per 1K prompt tokens
+const OPENAI_COST_PER_1K_COMPLETION_TOKENS = 0.03; // $0.03 per 1K completion tokens
+
+// Anthropic pricing - Claude Sonnet
+// https://www.anthropic.com/pricing
+const ANTHROPIC_COST_PER_1K_PROMPT_TOKENS = 0.003; // $3/million = $0.003 per 1K prompt tokens
+const ANTHROPIC_COST_PER_1K_COMPLETION_TOKENS = 0.015; // $15/million = $0.015 per 1K completion tokens
+
+// Default pricing (uses Anthropic as primary)
+const COST_PER_1K_PROMPT_TOKENS = ANTHROPIC_COST_PER_1K_PROMPT_TOKENS;
+const COST_PER_1K_COMPLETION_TOKENS = ANTHROPIC_COST_PER_1K_COMPLETION_TOKENS;
 
 export interface UsageCheckResult {
   allowed: boolean;
@@ -273,7 +282,7 @@ export async function checkSchoolCostLimit(schoolId: string): Promise<UsageCheck
 /**
  * Log token usage to database
  *
- * Calculates cost based on OpenAI pricing and stores usage data.
+ * Calculates cost based on model-specific pricing (Anthropic or OpenAI).
  * This data is used for:
  * - Daily/monthly limit enforcement
  * - Cost monitoring and alerts
@@ -286,9 +295,12 @@ export async function logTokenUsage(usage: TokenUsageData): Promise<void> {
 
   const totalTokens = promptTokens + completionTokens;
 
-  // Calculate cost in USD
-  const promptCost = (promptTokens / 1000) * COST_PER_1K_PROMPT_TOKENS;
-  const completionCost = (completionTokens / 1000) * COST_PER_1K_COMPLETION_TOKENS;
+  // Calculate cost in USD based on model provider
+  const isAnthropic = model?.startsWith('claude');
+  const promptRate = isAnthropic ? ANTHROPIC_COST_PER_1K_PROMPT_TOKENS : OPENAI_COST_PER_1K_PROMPT_TOKENS;
+  const completionRate = isAnthropic ? ANTHROPIC_COST_PER_1K_COMPLETION_TOKENS : OPENAI_COST_PER_1K_COMPLETION_TOKENS;
+  const promptCost = (promptTokens / 1000) * promptRate;
+  const completionCost = (completionTokens / 1000) * completionRate;
   const totalCost = promptCost + completionCost;
 
   await prisma.tokenUsage.create({

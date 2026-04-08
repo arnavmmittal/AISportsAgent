@@ -15,10 +15,6 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { forecastReadinessTrend, type ReadinessForecast } from '@/lib/analytics/forecasting';
-import { predictBurnout, type BurnoutPrediction, type BurnoutHistoricalData } from '@/lib/algorithms/burnout';
-import { detectPatterns, type PatternDetectionResults, type PatternDetectionData } from '@/lib/algorithms/patterns';
-import { generateComprehensiveInsights, type DeepInsight } from '@/lib/analytics/deep-insights';
 
 // Types for the enriched context
 export interface AthleteInsight {
@@ -357,21 +353,12 @@ class AthleteContextService {
       ? Math.floor((now.getTime() - new Date(recentChatSessions[0].updatedAt).getTime()) / (24 * 60 * 60 * 1000))
       : null;
 
-    // NEW: Get 7-day readiness forecast (requires 14+ days of data)
-    const forecast = await this.getForecast(athleteId, readinessScores);
-
-    // NEW: Get burnout prediction (requires sufficient mood log data)
-    const burnout = await this.getBurnoutPrediction(extendedMoodLogs, readinessScores);
-
-    // NEW: Get pattern detection (anomalies, trends, cycles, correlations)
-    const patterns = this.getPatterns(extendedMoodLogs, readinessScores);
-
-    // NEW: Get technique effectiveness and mood trends from deep insights engine
-    const { techniqueEffectiveness, moodTrends } = await this.getDeepInsightsData(
-      athleteId,
-      athleteData.User.name,
-      thirtyDaysAgo
-    );
+    // Forecast, burnout, patterns, and deep insights modules removed
+    const forecast = null;
+    const burnout = null;
+    const patterns = null;
+    const techniqueEffectiveness: TechniqueEffectiveness[] = [];
+    const moodTrends = null;
 
     const enrichedContext: EnrichedAthleteContext = {
       athleteId,
@@ -881,33 +868,11 @@ class AthleteContextService {
    * Requires at least 14 days of historical readiness scores
    */
   private async getForecast(
-    athleteId: string,
-    readinessScores: Array<{ score: number; calculatedAt: Date }>
+    _athleteId: string,
+    _readinessScores: Array<{ score: number; calculatedAt: Date }>
   ): Promise<ForecastData | null> {
-    // Need at least 14 data points for reliable forecasting
-    if (readinessScores.length < 14) {
-      return null;
-    }
-
-    try {
-      const result: ReadinessForecast = await forecastReadinessTrend(athleteId, 30);
-
-      return {
-        trend: result.trend,
-        next7Days: result.forecast.map(f => ({
-          date: f.date,
-          score: f.predictedScore,
-          confidence: f.confidence,
-        })),
-        riskFlags: result.riskFlags,
-        recommendations: result.recommendations,
-        currentScore: result.currentScore,
-      };
-    } catch (error) {
-      // Forecasting requires data - gracefully return null if insufficient
-      console.warn('[AthleteContext] Forecasting failed:', error);
-      return null;
-    }
+    // Forecasting module removed
+    return null;
   }
 
   /**
@@ -915,7 +880,7 @@ class AthleteContextService {
    * Analyzes progressive decline, chronic stress, recovery capacity, emotional exhaustion
    */
   private async getBurnoutPrediction(
-    moodLogs: Array<{
+    _moodLogs: Array<{
       mood: number;
       confidence: number;
       stress: number;
@@ -923,55 +888,10 @@ class AthleteContextService {
       sleep: number | null;
       createdAt: Date;
     }>,
-    readinessScores: Array<{ score: number; calculatedAt: Date }>
+    _readinessScores: Array<{ score: number; calculatedAt: Date }>
   ): Promise<BurnoutData | null> {
-    // Need sufficient data for burnout prediction
-    if (moodLogs.length < 7 || readinessScores.length < 7) {
-      return null;
-    }
-
-    try {
-      // Assemble burnout historical data from mood logs and readiness scores
-      const burnoutData: BurnoutHistoricalData = {
-        readinessHistory: readinessScores.map(s => ({
-          date: s.calculatedAt.toISOString().split('T')[0],
-          score: s.score,
-        })),
-        psychologicalHistory: moodLogs.map(log => ({
-          date: log.createdAt.toISOString().split('T')[0],
-          mood: log.mood,
-          confidence: log.confidence,
-          stress: log.stress,
-          anxiety: log.stress, // Use stress as proxy for anxiety if not available
-        })),
-        physicalHistory: moodLogs
-          .filter(log => log.sleep !== null)
-          .map(log => ({
-            date: log.createdAt.toISOString().split('T')[0],
-            sleepHours: log.sleep || 7,
-            sleepQuality: log.sleep || 5,
-            fatigue: 10 - (log.energy || 5), // Invert energy to fatigue
-            soreness: 5, // Default if not available
-          })),
-      };
-
-      const result: BurnoutPrediction = predictBurnout(burnoutData);
-
-      return {
-        stage: result.currentStage,
-        probability: result.probability,
-        daysUntilRisk: result.daysUntilRisk,
-        warningNow: result.warningNow.slice(0, 3).map(w => ({
-          indicator: w.indicator,
-          severity: w.severity,
-          description: w.description,
-        })),
-        preventionStrategies: result.preventionStrategies.slice(0, 3),
-      };
-    } catch (error) {
-      console.warn('[AthleteContext] Burnout prediction failed:', error);
-      return null;
-    }
+    // Burnout prediction module removed
+    return null;
   }
 
   /**
@@ -979,7 +899,7 @@ class AthleteContextService {
    * Uses statistical methods (Z-score, Mann-Kendall, autocorrelation, Pearson)
    */
   private getPatterns(
-    moodLogs: Array<{
+    _moodLogs: Array<{
       mood: number;
       confidence: number;
       stress: number;
@@ -987,62 +907,10 @@ class AthleteContextService {
       sleep: number | null;
       createdAt: Date;
     }>,
-    readinessScores: Array<{ score: number; calculatedAt: Date }>
+    _readinessScores: Array<{ score: number; calculatedAt: Date }>
   ): PatternData | null {
-    // Need sufficient data for pattern detection
-    if (moodLogs.length < 7) {
-      return null;
-    }
-
-    try {
-      // Assemble pattern detection data
-      const patternData: PatternDetectionData = {
-        timeSeries: moodLogs.map(log => ({
-          date: log.createdAt.toISOString().split('T')[0],
-          readiness: readinessScores.find(
-            r => r.calculatedAt.toISOString().split('T')[0] === log.createdAt.toISOString().split('T')[0]
-          )?.score || 70,
-          mood: log.mood,
-          confidence: log.confidence,
-          stress: log.stress,
-          anxiety: log.stress, // Use stress as proxy
-          sleep: log.sleep || 7,
-        })),
-      };
-
-      const result: PatternDetectionResults = detectPatterns(patternData);
-
-      return {
-        anomalies: result.anomalies.slice(0, 3).map(a => ({
-          date: a.date,
-          metric: a.metric,
-          severity: a.severity,
-          context: a.context,
-        })),
-        trends: result.trends.slice(0, 3).map(t => ({
-          metric: t.metric,
-          direction: t.direction,
-          strength: t.strength,
-          description: t.description,
-        })),
-        cycles: result.cycles.slice(0, 2).map(c => ({
-          metric: c.metric,
-          period: c.period,
-          peakDays: c.peakDays,
-          lowDays: c.lowDays,
-        })),
-        correlations: result.correlations.slice(0, 3).map(c => ({
-          metric1: c.metric1,
-          metric2: c.metric2,
-          correlation: c.correlation,
-          insights: c.insights,
-        })),
-        summary: result.summary,
-      };
-    } catch (error) {
-      console.warn('[AthleteContext] Pattern detection failed:', error);
-      return null;
-    }
+    // Pattern detection module removed
+    return null;
   }
 
   /**
@@ -1055,99 +923,9 @@ class AthleteContextService {
     startDate: Date
   ): Promise<{ techniqueEffectiveness: TechniqueEffectiveness[]; moodTrends: MoodTrendData | null }> {
     try {
-      const deepInsights = await generateComprehensiveInsights(athleteId, athleteName, startDate);
-
-      // Extract technique effectiveness from intervention_outcome and counter_intuitive insights
-      const techniqueEffectiveness: TechniqueEffectiveness[] = deepInsights
-        .filter(
-          (insight) =>
-            insight.type === 'intervention_outcome' ||
-            (insight.type === 'counter_intuitive' && insight.interventionDetails)
-        )
-        .slice(0, 5) // Top 5 techniques
-        .map((insight) => {
-          const details = insight.interventionDetails;
-          if (details) {
-            const sign = details.improvement >= 0 ? '+' : '';
-            return {
-              technique: details.technique,
-              sportMetric: details.sportMetric,
-              improvement: `${sign}${details.improvement.toFixed(1)} ${details.metricUnit}`,
-              confidence: insight.evidence.confidence >= 0.7 ? 'high' : 'medium',
-              evidence: `Based on ${details.gamesWithTechnique} games with technique vs ${details.gamesWithout} without (p=${insight.evidence.statisticalNote.match(/p[=<][\d.]+/)?.[0] || '<0.1'})`,
-              recommendation: insight.actionable,
-            } as TechniqueEffectiveness;
-          }
-
-          // Fallback for counter_intuitive without detailed interventionDetails
-          return {
-            technique: insight.headline.split("'")[0] || 'Unknown technique',
-            improvement: insight.evidence.statisticalNote.includes('%')
-              ? insight.evidence.statisticalNote.match(/\d+%/)?.[0] || '+15%'
-              : '+improvement',
-            confidence: insight.evidence.confidence >= 0.7 ? 'high' : 'medium',
-            evidence: insight.evidence.statisticalNote,
-            recommendation: insight.actionable,
-          } as TechniqueEffectiveness;
-        });
-
-      // Extract mood trends from temporal insights
-      const moodTrendInsights = deepInsights.filter(
-        (insight) =>
-          insight.type === 'temporal' ||
-          insight.headline.toLowerCase().includes('mood') ||
-          insight.headline.toLowerCase().includes('weekly')
-      );
-
-      let moodTrends: MoodTrendData | null = null;
-      if (moodTrendInsights.length > 0) {
-        moodTrends = {};
-
-        for (const insight of moodTrendInsights) {
-          // Parse weekly pattern from headlines like "Mood is 2.1 points higher on Fridays vs Mondays"
-          const weeklyMatch = insight.headline.match(
-            /(\d+\.?\d*)\s*points?\s*higher\s*on\s*(\w+)s?\s*vs\s*(\w+)/i
-          );
-          if (weeklyMatch) {
-            moodTrends.weeklyPattern = {
-              bestDay: weeklyMatch[2],
-              worstDay: weeklyMatch[3],
-              difference: parseFloat(weeklyMatch[1]),
-            };
-          }
-
-          // Parse session impact from headlines about chat improving/decreasing mood
-          const sessionMatch = insight.headline.match(
-            /mood\s*(improves?|increases?|decreases?|drops?)\s*(\d+\.?\d*)?/i
-          );
-          if (sessionMatch) {
-            const direction = sessionMatch[1].toLowerCase().startsWith('i') ? 'improves' : 'decreases';
-            moodTrends.sessionImpact = {
-              moodChange: parseFloat(sessionMatch[2] || '1'),
-              direction,
-            };
-          }
-
-          // Parse recovery patterns
-          const recoveryMatch = insight.headline.match(/recover[sy]?\s*in\s*(\d+\.?\d*)\s*days?/i);
-          if (recoveryMatch) {
-            const days = parseFloat(recoveryMatch[1]);
-            moodTrends.recoveryTime = {
-              avgDays: days,
-              resilience: days <= 1 ? 'high' : days <= 3 ? 'medium' : 'low',
-            };
-          }
-        }
-
-        // If no patterns were extracted, return null
-        if (Object.keys(moodTrends).length === 0) {
-          moodTrends = null;
-        }
-      }
-
-      return { techniqueEffectiveness, moodTrends };
+      // Deep insights module removed
+      return { techniqueEffectiveness: [], moodTrends: null };
     } catch (error) {
-      console.warn('[AthleteContext] Deep insights extraction failed:', error);
       return { techniqueEffectiveness: [], moodTrends: null };
     }
   }

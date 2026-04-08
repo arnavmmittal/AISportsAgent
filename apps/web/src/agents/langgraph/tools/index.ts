@@ -28,12 +28,7 @@ export {
   analyticsTools,
   analyticsToolNames,
   // Individual analytics tools
-  forecastReadinessTrendTool,
-  predictBurnoutRiskTool,
   assessWellbeingRiskTool,
-  analyzeMultiModalPatternsTool,
-  detectBehavioralPatternsTool,
-  getEnhancedReadinessTool,
 } from './analytics-tools';
 
 export {

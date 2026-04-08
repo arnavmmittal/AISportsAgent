@@ -33,17 +33,6 @@ import {
   Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  isDemoMode,
-  generateDemoInsights,
-  generateDemoTeamSummary,
-  generateDemoChatInsights,
-  generateDemoTeamForecast,
-  type DemoInsight,
-  type DemoTeamSummary,
-  type DemoChatInsightsResponse,
-  type DemoTeamForecast,
-} from '@/lib/demo-data';
 import { ChatInsightsPanel } from '@/components/coach/insights/ChatInsightsPanel';
 
 interface InsightMetric {
@@ -126,7 +115,7 @@ interface ChatInsightsData {
 
 function AIInsightsPageContent() {
   const searchParams = useSearchParams();
-  const demoMode = isDemoMode(searchParams);
+  const demoMode = false;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,34 +127,8 @@ function AIInsightsPageContent() {
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   useEffect(() => {
-    if (demoMode) {
-      loadDemoData();
-    } else {
-      fetchInsights();
-    }
-  }, [demoMode]);
-
-  function loadDemoData() {
-    setLoading(true);
-    // Simulate loading delay for realistic feel
-    setTimeout(() => {
-      const demoInsights = generateDemoInsights();
-      const demoSummary = generateDemoTeamSummary();
-      const demoChatInsights = generateDemoChatInsights();
-      const demoForecast = generateDemoTeamForecast();
-
-      // Map demo insights to the page's Insight type
-      setInsights(demoInsights.map(i => ({
-        ...i,
-        category: i.category as Insight['category'],
-      })));
-      setTeamSummary(demoSummary);
-      setTeamForecast(demoForecast);
-      setChatInsights(demoChatInsights);
-      setGeneratedAt(new Date().toISOString());
-      setLoading(false);
-    }, 800);
-  }
+    fetchInsights();
+  }, []);
 
   async function fetchInsights() {
     setLoading(true);

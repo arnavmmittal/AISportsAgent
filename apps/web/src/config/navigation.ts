@@ -7,15 +7,12 @@
 
 import {
   LayoutDashboard,
-  Brain,
   Users,
   Activity,
-  Database,
   Settings,
   Home,
   MessageCircle,
   Heart,
-  Target,
   ClipboardList,
   BarChart3,
   LucideIcon,
@@ -30,37 +27,12 @@ export interface NavItem {
   highlight?: boolean;
 }
 
-/**
- * Coach Portal Navigation
- *
- * 6 primary pages with clear purposes:
- * 1. Dashboard - "What's happening RIGHT NOW?"
- * 2. AI Insights - "What should I KNOW and DO?" (THE SHOWCASE)
- * 3. Athletes - "Deep dive on INDIVIDUALS"
- * 4. Readiness - "Who's READY today?"
- * 5. Data Hub - "Manage my DATA"
- * 6. Settings - "Configure my ACCOUNT"
- */
 export const COACH_NAV: NavItem[] = [
   {
     label: 'Dashboard',
     href: '/coach/dashboard',
     icon: LayoutDashboard,
-    description: "What's happening right now",
-  },
-  {
-    label: 'AI Insights',
-    href: '/coach/ai-insights',
-    icon: Brain,
-    description: 'ML-powered analytics & recommendations',
-    badge: 'AI',
-    highlight: true,
-  },
-  {
-    label: 'ROI Dashboard',
-    href: '/coach/roi',
-    icon: BarChart3,
-    description: 'Demonstrate value to Athletic Directors',
+    description: 'Team overview and alerts',
   },
   {
     label: 'Athletes',
@@ -72,13 +44,19 @@ export const COACH_NAV: NavItem[] = [
     label: 'Readiness',
     href: '/coach/readiness',
     icon: Activity,
-    description: "Who's ready to perform today",
+    description: 'Team readiness heatmap',
   },
   {
-    label: 'Data Hub',
+    label: 'Performance',
     href: '/coach/data',
-    icon: Database,
-    description: 'Import, export, and manage data',
+    icon: BarChart3,
+    description: 'Game outcomes and correlations',
+  },
+  {
+    label: 'Assignments',
+    href: '/coach/assignments',
+    icon: ClipboardList,
+    description: 'Tasks for your athletes',
   },
   {
     label: 'Settings',
@@ -88,17 +66,6 @@ export const COACH_NAV: NavItem[] = [
   },
 ];
 
-/**
- * Athlete/Student Portal Navigation
- *
- * 6 primary pages with clear purposes:
- * 1. Home - Daily landing with readiness
- * 2. AI Coach - Chat (replaces Zoom meetings)
- * 3. Wellness - Readiness + mood check-in
- * 4. Goals - Track goals
- * 5. Assignments - Coach tasks
- * 6. Settings - Profile and privacy
- */
 export const ATHLETE_NAV: NavItem[] = [
   {
     label: 'Home',
@@ -115,28 +82,16 @@ export const ATHLETE_NAV: NavItem[] = [
     highlight: true,
   },
   {
-    label: 'Wellness',
+    label: 'Check-in',
     href: '/student/wellness',
     icon: Heart,
-    description: 'Readiness and mood tracking',
-  },
-  {
-    label: 'Goals',
-    href: '/student/goals',
-    icon: Target,
-    description: 'Set and track your goals',
+    description: 'Daily mood and readiness',
   },
   {
     label: 'Assignments',
     href: '/student/assignments',
     icon: ClipboardList,
     description: 'Tasks from your coach',
-  },
-  {
-    label: 'Settings',
-    href: '/student/settings',
-    icon: Settings,
-    description: 'Profile and preferences',
   },
 ];
 
@@ -157,13 +112,14 @@ export const COACH_REDIRECTS: Record<string, string> = {
   '/coach': '/coach/dashboard',
   '/coach/team-overview': '/coach/dashboard',
   '/coach/team': '/coach/athletes',
-  '/coach/predictions': '/coach/ai-insights',
-  '/coach/analytics': '/coach/ai-insights',
-  '/coach/insights': '/coach/ai-insights',
-  '/coach/outcomes': '/coach/data?tab=outcomes',
-  '/coach/performance/import': '/coach/data?tab=import',
+  '/coach/predictions': '/coach/dashboard',
+  '/coach/analytics': '/coach/dashboard',
+  '/coach/insights': '/coach/dashboard',
   '/coach/command-center': '/coach/dashboard',
   '/coach/roster': '/coach/athletes',
+  '/coach/roi': '/coach/dashboard',
+  '/coach/outcomes': '/coach/data',
+  '/coach/performance/import': '/coach/data',
 };
 
 /**
@@ -172,7 +128,10 @@ export const COACH_REDIRECTS: Record<string, string> = {
 export const ATHLETE_REDIRECTS: Record<string, string> = {
   '/student/dashboard': '/student/home',
   '/student/chat': '/student/ai-coach',
-  '/student/mood': '/student/wellness?tab=checkin',
-  '/student/readiness': '/student/wellness?tab=readiness',
-  '/student/progress': '/student/goals',
+  '/student/mood': '/student/wellness',
+  '/student/readiness': '/student/wellness',
+  '/student/progress': '/student/home',
+  '/student/goals': '/student/home',
+  '/student/visualization': '/student/home',
+  '/student/schedule': '/student/home',
 };

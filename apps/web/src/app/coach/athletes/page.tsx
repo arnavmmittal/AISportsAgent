@@ -15,9 +15,7 @@ import {
   FlaskConical,
 } from 'lucide-react';
 import Link from 'next/link';
-import { SportFilter } from '@/components/SportFilter';
 import { cn } from '@/lib/utils';
-import { isDemoMode, generateDemoAthletes } from '@/lib/demo-data';
 
 /**
  * Athletes Page (v3.0 Navigation Consolidation)
@@ -54,7 +52,7 @@ interface Athlete {
 
 function AthletesPageContent() {
   const searchParams = useSearchParams();
-  const demoMode = isDemoMode(searchParams);
+  const demoMode = false;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | RiskLevel>('all');
@@ -64,26 +62,8 @@ function AthletesPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (demoMode) {
-      loadDemoAthletes();
-    } else {
-      loadAthletes();
-    }
-  }, [selectedSports, demoMode]);
-
-  const loadDemoAthletes = () => {
-    setIsLoading(true);
-    // Simulate loading delay
-    setTimeout(() => {
-      const demoData = generateDemoAthletes(30);
-      // Filter by selected sports if any
-      const filtered = selectedSports.length > 0
-        ? demoData.filter(a => selectedSports.includes(a.sport))
-        : demoData;
-      setAthletes(filtered);
-      setIsLoading(false);
-    }, 500);
-  };
+    loadAthletes();
+  }, [selectedSports]);
 
   const loadAthletes = async () => {
     try {
@@ -274,8 +254,6 @@ function AthletesPageContent() {
                 className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground transition-shadow"
               />
             </div>
-
-            <SportFilter selectedSports={selectedSports} onSportsChange={setSelectedSports} />
 
             <div className="flex gap-2 flex-wrap">
               <button

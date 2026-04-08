@@ -173,15 +173,16 @@ export async function POST(req: NextRequest) {
 
     // Check critical environment variables
     const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+    const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
     const hasDBUrl = !!process.env.DATABASE_URL;
-    console.log(`[LangGraph Chat] Env check - OPENAI_API_KEY: ${hasOpenAIKey}, DATABASE_URL: ${hasDBUrl}`);
+    console.log(`[LangGraph Chat] Env check - ANTHROPIC_API_KEY: ${hasAnthropicKey}, OPENAI_API_KEY: ${hasOpenAIKey}, DATABASE_URL: ${hasDBUrl}`);
 
-    if (!hasOpenAIKey) {
-      console.error('[LangGraph Chat] OPENAI_API_KEY is missing!');
+    if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
+      console.error('[LangGraph Chat] No LLM API key configured!');
       return new Response(
         encoder.encode('data: ' + JSON.stringify({
           type: 'error',
-          data: 'Server configuration error: OpenAI API key not configured'
+          data: 'Server configuration error: No LLM API key configured'
         }) + '\n\n'),
         {
           status: 500,

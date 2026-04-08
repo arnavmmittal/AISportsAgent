@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-helpers';
-import { forecastReadinessTrend, type ReadinessForecast } from '@/lib/analytics/forecasting';
-import { predictBurnout, type BurnoutPrediction, type BurnoutHistoricalData } from '@/lib/algorithms/burnout';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -38,10 +36,6 @@ export async function GET(req: NextRequest) {
     let pendingAssignments: { id: string; title: string; dueDate: Date | null; description: string }[] = [];
     let athleteProfile: { name: string; Athlete: { sport: string; year: string } | null } | null = null;
     let readinessScores: Awaited<ReturnType<typeof prisma.readinessScore.findMany>> = [];
-
-    // Analytics data (may be null if insufficient data)
-    let forecastData: ReadinessForecast | null = null;
-    let burnoutData: BurnoutPrediction | null = null;
 
     const errors: string[] = [];
 
@@ -175,48 +169,6 @@ export async function GET(req: NextRequest) {
       errors.push(`readinessScores: ${e instanceof Error ? e.message : 'unknown'}`);
     }
 
-    // Fetch 7-day forecast (requires 14+ days of data)
-    try {
-      forecastData = await forecastReadinessTrend(athleteId, 30);
-    } catch (e) {
-      // Expected to fail if insufficient data - not a critical error
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[Dashboard] Forecast unavailable:', e instanceof Error ? e.message : 'unknown');
-      }
-    }
-
-    // Calculate burnout prediction (requires 7+ days of mood data)
-    if (thirtyDayMoodLogs.length >= 7) {
-      try {
-        const burnoutInput: BurnoutHistoricalData = {
-          readinessHistory: readinessScores.map((r) => ({
-            date: r.calculatedAt.toISOString().split('T')[0],
-            score: r.score,
-          })),
-          psychologicalHistory: thirtyDayMoodLogs.map((m) => ({
-            date: m.createdAt.toISOString().split('T')[0],
-            mood: m.mood,
-            confidence: m.confidence,
-            stress: m.stress,
-            anxiety: Math.round(m.stress * 0.8), // Approximate anxiety from stress
-          })),
-          physicalHistory: thirtyDayMoodLogs
-            .filter((m) => m.sleep !== null)
-            .map((m) => ({
-              date: m.createdAt.toISOString().split('T')[0],
-              sleepHours: (m.sleep ?? 5) * 0.9, // Convert 1-10 scale to ~4-9 hours
-              sleepQuality: m.sleep ?? 5,
-              fatigue: 10 - (m.energy ?? 5), // Invert energy to fatigue
-              soreness: 5, // Default moderate (no soreness data available)
-            })),
-        };
-        burnoutData = predictBurnout(burnoutInput);
-      } catch (e) {
-        console.error('[Dashboard] Burnout prediction failed:', e);
-        errors.push(`burnout: ${e instanceof Error ? e.message : 'unknown'}`);
-      }
-    }
-
     // If any critical errors occurred, return them in development
     if (errors.length > 0 && process.env.NODE_ENV !== 'production') {
       console.error('[Dashboard] Query errors:', errors);
@@ -242,39 +194,9 @@ export async function GET(req: NextRequest) {
     // For now, we'll use a simple heuristic based on day of week
     const hasGameTomorrow = isGameDay(new Date(now.getTime() + 24 * 60 * 60 * 1000));
 
-    // Build athlete-safe forecast data (if available)
-    const forecast = forecastData
-      ? {
-          trend: forecastData.trend,
-          currentScore: forecastData.currentScore,
-          next7Days: forecastData.forecast.slice(0, 7).map((f) => ({
-            date: f.date,
-            score: Math.round(f.predictedScore),
-            confidence: f.confidence,
-          })),
-          lowDays: forecastData.forecast
-            .slice(0, 7)
-            .filter((f) => f.predictedScore < 60)
-            .map((f) => ({
-              date: f.date,
-              score: Math.round(f.predictedScore),
-            })),
-          recommendation:
-            forecastData.recommendations[0] ||
-            (forecastData.trend === 'declining'
-              ? 'Consider scheduling extra recovery time this week.'
-              : 'Keep up your current routine!'),
-        }
-      : null;
-
-    // Build athlete-safe burnout data (hide probability - anxiety-inducing)
-    const burnout = burnoutData
-      ? {
-          stage: burnoutData.currentStage,
-          message: getBurnoutMessage(burnoutData.currentStage),
-          strategies: burnoutData.preventionStrategies.slice(0, 3),
-        }
-      : null;
+    // Forecast and burnout features removed (modules deleted)
+    const forecast = null;
+    const burnout = null;
 
     return NextResponse.json({
       success: true,

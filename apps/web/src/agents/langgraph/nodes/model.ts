@@ -296,7 +296,7 @@ async function tryInvokeModel(
 
 /**
  * Call model node - invokes LLM with tools
- * Uses OpenAI as primary, falls back to Anthropic if OpenAI fails
+ * Uses Anthropic as primary, falls back to OpenAI if Anthropic fails
  */
 export async function callModelNode(
   state: ConversationState
@@ -317,52 +317,56 @@ export async function callModelNode(
     anthropicKeyLength: process.env.ANTHROPIC_API_KEY?.length || 0,
   });
 
-  // Try OpenAI first
-  try {
-    const openaiModel = getModelWithTools('openai');
-    const { response } = await tryInvokeModel(openaiModel, messagesForModel, 'OpenAI');
+  // Try Anthropic first (primary)
+  if (hasAnthropicKey()) {
+    try {
+      const anthropicModel = getModelWithTools('anthropic');
+      console.log('[LANGGRAPH:MODEL] Anthropic model created successfully');
+      const { response } = await tryInvokeModel(anthropicModel, messagesForModel, 'Anthropic');
+      console.log('[LANGGRAPH:MODEL] Anthropic invocation successful');
 
-    return {
-      messages: [response],
-      turnCountInPhase: state.turnCountInPhase + 1,
-    };
-  } catch (openaiError) {
-    console.error('[LANGGRAPH:MODEL] OpenAI failed:', openaiError);
-    console.error('[LANGGRAPH:MODEL] OpenAI error type:', openaiError instanceof Error ? openaiError.constructor.name : typeof openaiError);
-
-    // If OpenAI fails and we have Anthropic key, try Anthropic as fallback
-    if (hasAnthropicKey()) {
-      console.log('[LANGGRAPH:MODEL] Falling back to Anthropic...');
-      try {
-        const anthropicModel = getModelWithTools('anthropic');
-        console.log('[LANGGRAPH:MODEL] Anthropic model created successfully');
-        const { response } = await tryInvokeModel(anthropicModel, messagesForModel, 'Anthropic');
-        console.log('[LANGGRAPH:MODEL] Anthropic invocation successful');
-
-        return {
-          messages: [response],
-          turnCountInPhase: state.turnCountInPhase + 1,
-        };
-      } catch (anthropicError) {
-        console.error('[LANGGRAPH:MODEL] Anthropic also failed:', anthropicError);
-        console.error('[LANGGRAPH:MODEL] Anthropic error type:', anthropicError instanceof Error ? anthropicError.constructor.name : typeof anthropicError);
-        console.error('[LANGGRAPH:MODEL] Anthropic error stack:', anthropicError instanceof Error ? anthropicError.stack : 'no stack');
-      }
-    } else {
-      console.log('[LANGGRAPH:MODEL] No Anthropic API key configured for fallback');
+      return {
+        messages: [response],
+        turnCountInPhase: state.turnCountInPhase + 1,
+      };
+    } catch (anthropicError) {
+      console.error('[LANGGRAPH:MODEL] Anthropic failed:', anthropicError);
+      console.error('[LANGGRAPH:MODEL] Anthropic error type:', anthropicError instanceof Error ? anthropicError.constructor.name : typeof anthropicError);
+      console.error('[LANGGRAPH:MODEL] Anthropic error stack:', anthropicError instanceof Error ? anthropicError.stack : 'no stack');
     }
-
-    // Both providers failed or Anthropic not available - return fallback response
-    console.error('[LANGGRAPH:MODEL] Both providers failed, returning fallback message');
-    return {
-      messages: [
-        new AIMessage({
-          content: "I'm here to help, but I'm having a technical issue right now. Please try again in a moment, or if this is urgent, reach out to your coach directly.",
-        }),
-      ],
-      error: `Model invocation failed: ${openaiError instanceof Error ? openaiError.message : 'Unknown error'}`,
-    };
+  } else {
+    console.log('[LANGGRAPH:MODEL] No Anthropic API key configured, skipping primary');
   }
+
+  // Fall back to OpenAI
+  if (process.env.OPENAI_API_KEY) {
+    console.log('[LANGGRAPH:MODEL] Falling back to OpenAI...');
+    try {
+      const openaiModel = getModelWithTools('openai');
+      const { response } = await tryInvokeModel(openaiModel, messagesForModel, 'OpenAI');
+
+      return {
+        messages: [response],
+        turnCountInPhase: state.turnCountInPhase + 1,
+      };
+    } catch (openaiError) {
+      console.error('[LANGGRAPH:MODEL] OpenAI also failed:', openaiError);
+      console.error('[LANGGRAPH:MODEL] OpenAI error type:', openaiError instanceof Error ? openaiError.constructor.name : typeof openaiError);
+    }
+  } else {
+    console.log('[LANGGRAPH:MODEL] No OpenAI API key configured for fallback');
+  }
+
+  // Both providers failed or no keys available - return fallback response
+  console.error('[LANGGRAPH:MODEL] Both providers failed, returning fallback message');
+  return {
+    messages: [
+      new AIMessage({
+        content: "I'm here to help, but I'm having a technical issue right now. Please try again in a moment, or if this is urgent, reach out to your coach directly.",
+      }),
+    ],
+    error: 'Model invocation failed: All providers exhausted',
+  };
 }
 
 /**

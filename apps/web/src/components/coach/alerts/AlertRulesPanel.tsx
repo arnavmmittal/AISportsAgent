@@ -8,7 +8,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   Bell,
   Plus,
@@ -29,10 +28,6 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { DashboardSection } from '../layouts/DashboardGrid';
-import {
-  generateDemoAlertRules,
-  type DemoAlertRule,
-} from '@/lib/demo-data';
 
 interface AlertRule {
   id: string;
@@ -391,9 +386,6 @@ interface AlertRulesPanelProps {
 }
 
 export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps) {
-  const searchParams = useSearchParams();
-  const isDemo = searchParams.get('demo') === 'true';
-
   const [rules, setRules] = useState<AlertRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -402,13 +394,6 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
   useEffect(() => {
     const fetchRules = async () => {
       setLoading(true);
-
-      if (isDemo) {
-        const demoData = generateDemoAlertRules();
-        setRules(demoData.rules as AlertRule[]);
-        setLoading(false);
-        return;
-      }
 
       try {
         const response = await fetch('/api/coach/alert-rules');
@@ -424,16 +409,9 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
     };
 
     fetchRules();
-  }, [isDemo]);
+  }, []);
 
   const handleToggleRule = async (ruleId: string, currentEnabled: boolean) => {
-    if (isDemo) {
-      setRules(prev => prev.map(r =>
-        r.id === ruleId ? { ...r, isEnabled: !currentEnabled } : r
-      ));
-      return;
-    }
-
     try {
       const response = await fetch(`/api/coach/alert-rules/${ruleId}`, {
         method: 'PATCH',
@@ -454,11 +432,6 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
   const handleDeleteRule = async (ruleId: string) => {
     if (!confirm('Are you sure you want to delete this rule?')) return;
 
-    if (isDemo) {
-      setRules(prev => prev.filter(r => r.id !== ruleId));
-      return;
-    }
-
     try {
       const response = await fetch(`/api/coach/alert-rules/${ruleId}`, {
         method: 'DELETE',
@@ -473,35 +446,6 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
   };
 
   const handleSaveRule = async (ruleData: Partial<AlertRule>) => {
-    if (isDemo) {
-      if (editingRule) {
-        setRules(prev => prev.map(r =>
-          r.id === editingRule.id ? { ...r, ...ruleData } : r
-        ));
-      } else {
-        const newRule: AlertRule = {
-          id: `rule-${Date.now()}`,
-          name: ruleData.name || '',
-          description: ruleData.description || null,
-          triggerType: ruleData.triggerType || 'READINESS_DROP',
-          threshold: ruleData.threshold || null,
-          thresholdString: ruleData.thresholdString || null,
-          comparisonOp: ruleData.comparisonOp || null,
-          timeWindowDays: ruleData.timeWindowDays || null,
-          minOccurrences: ruleData.minOccurrences || null,
-          channels: ruleData.channels || ['IN_APP'],
-          isEnabled: true,
-          createdAt: new Date().toISOString(),
-          lastTriggeredAt: null,
-          triggerCount: 0,
-        };
-        setRules(prev => [newRule, ...prev]);
-      }
-      setShowCreateModal(false);
-      setEditingRule(null);
-      return;
-    }
-
     try {
       const method = editingRule ? 'PATCH' : 'POST';
       const url = editingRule

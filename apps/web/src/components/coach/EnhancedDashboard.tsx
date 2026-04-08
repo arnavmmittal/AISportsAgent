@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   LineChart,
   Line,
@@ -17,7 +17,6 @@ import { AthleteActivityMonitor } from '@/components/coach/activity';
 import Link from 'next/link';
 import { Button } from '@/components/shared/ui/button';
 import { cn } from '@/lib/utils';
-import { isDemoMode, generateDemoAthletes, generateDemoDashboard } from '@/lib/demo-data';
 
 /**
  * EnhancedDashboard - Updated with Design System v2.0
@@ -88,8 +87,7 @@ interface InviteCodeData {
 
 export default function EnhancedDashboard({ userId }: { userId: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const demoMode = isDemoMode(searchParams);
+  const demoMode = false;
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [inviteCodeData, setInviteCodeData] = useState<InviteCodeData | null>(null);
@@ -99,102 +97,8 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
   const [sportFilter, setSportFilter] = useState<string>('');
   const [showInviteCode, setShowInviteCode] = useState(false);
 
-  // Generate demo data for dashboard
-  function loadDemoData() {
-    const demoAthletes = generateDemoAthletes(25);
-    const demoDashboard = generateDemoDashboard();
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-    // Create mock mood trend data
-    const moodTrend = days.map((_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      return {
-        date: date.toISOString(),
-        avgMood: 6.5 + Math.random() * 1.5 + (i === 2 ? -1 : 0), // Wednesday slump
-        avgConfidence: 7 + Math.random() * 1.2,
-        avgStress: 4 + Math.random() * 1.5 + (i === 2 ? 1.5 : 0),
-        count: 15 + Math.floor(Math.random() * 10),
-      };
-    });
-
-    // Create at-risk athletes from demo data
-    const atRiskAthletes = demoAthletes
-      .filter(a => a.riskLevel === 'critical' || a.riskLevel === 'warning')
-      .slice(0, 5)
-      .map(a => ({
-        id: a.id,
-        name: a.name,
-        sport: a.sport,
-        year: a.year,
-        recentMood: {
-          mood: a.moodScore || 4,
-          confidence: Math.max(2, (a.moodScore || 5) - 1),
-          stress: 10 - (a.moodScore || 5),
-        },
-      }));
-
-    // Create athlete readiness data
-    const athleteReadiness = demoAthletes
-      .filter(a => a.riskLevel !== 'no-data')
-      .slice(0, 8)
-      .map(a => ({
-        athlete: {
-          id: a.id,
-          name: a.name,
-          sport: a.sport,
-          teamPosition: a.year,
-        },
-        mood: a.moodScore || 7,
-        confidence: Math.min(10, (a.moodScore || 7) + 1),
-        stress: Math.max(1, 10 - (a.moodScore || 5)),
-        readiness: a.readinessScore || 70,
-        status: a.riskLevel === 'critical' ? 'at-risk' as const :
-                a.riskLevel === 'warning' ? 'fair' as const :
-                (a.readinessScore || 70) > 80 ? 'excellent' as const : 'good' as const,
-      }));
-
-    setDashboardData({
-      overview: {
-        totalAthletes: demoDashboard.totalAthletes,
-        athletesWithConsent: demoDashboard.totalAthletes - 4,
-        athletesWithoutConsent: 4,
-        atRiskCount: demoDashboard.atRiskCount,
-        crisisAlertsCount: demoDashboard.crisisAlerts,
-        timeRange: parseInt(timeRange),
-      },
-      teamMood: {
-        avgMood: 7.2,
-        avgConfidence: 7.5,
-        avgStress: 4.3,
-        totalLogs: 234,
-      },
-      moodTrend,
-      crisisAlerts: demoDashboard.recentAlerts.filter(a => a.severity === 'high'),
-      atRiskAthletes,
-      athleteReadiness,
-    });
-
-    setInviteCodeData({
-      inviteCode: 'DEMO-HUSKIES-2024',
-      coachName: 'Demo Coach',
-      sport: 'All Sports',
-      athleteCount: demoDashboard.totalAthletes,
-    });
-  }
-
   // Fetch dashboard data
   useEffect(() => {
-    if (demoMode) {
-      setLoading(true);
-      // Simulate loading delay
-      setTimeout(() => {
-        loadDemoData();
-        setLoading(false);
-      }, 600);
-      return;
-    }
-
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -225,7 +129,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
     };
 
     fetchData();
-  }, [timeRange, sportFilter, demoMode]);
+  }, [timeRange, sportFilter]);
 
   // Copy invite code to clipboard
   const copyInviteCode = () => {

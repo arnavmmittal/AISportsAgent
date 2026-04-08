@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, Moon, Sun, Settings, Loader2, Mail } from 'lucide-react';
+import { User, Bell, Shield, Key, AlertTriangle, Save, Copy, RefreshCw, Trash2, Moon, Sun, Settings, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/shared/ui/button';
@@ -9,8 +9,6 @@ import { Input } from '@/components/shared/ui/input';
 import { Label } from '@/components/shared/ui/label';
 import { Switch } from '@/components/shared/ui/switch';
 import { cn } from '@/lib/utils';
-import { WeeklyDigestPanel } from '@/components/coach/digest';
-
 /**
  * Coach Settings Page - Updated with Design System v2.0
  *
@@ -264,22 +262,6 @@ export default function CoachSettingsPage() {
                 )}
               </Button>
             </div>
-          </div>
-        </section>
-
-        {/* Email Digest & Notifications */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
-          <div className="p-4 border-b border-border flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-info" />
-            </div>
-            <div>
-              <h2 className="font-medium text-foreground">Email Digest & Notifications</h2>
-              <p className="text-sm text-muted-foreground">Configure weekly summaries and alerts</p>
-            </div>
-          </div>
-          <div className="p-4">
-            <WeeklyDigestPanel />
           </div>
         </section>
 

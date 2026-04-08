@@ -5,7 +5,6 @@ export const runtime = 'nodejs';
 
 import { prisma } from '@/lib/prisma';
 import { calculateReadiness } from '@/lib/analytics/readiness';
-import { getEnhancedReadinessForDisplay } from '@/lib/analytics/enhanced-readiness';
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,8 +55,7 @@ export async function GET(request: NextRequest) {
         let chatInsights = null;
 
         if (latestMood) {
-          const enhanced = await getEnhancedReadinessForDisplay(
-            user.id,
+          const result = calculateReadiness(
             {
               mood: latestMood.mood,
               confidence: latestMood.confidence,
@@ -69,10 +67,8 @@ export async function GET(request: NextRequest) {
             user.Athlete?.sport || 'Basketball'
           );
 
-          readinessScore = enhanced.overall;
-          baseReadiness = enhanced.baseReadiness;
-          chatContribution = enhanced.chatContribution;
-          chatInsights = enhanced.chatInsights;
+          readinessScore = result.overall;
+          baseReadiness = result.overall;
         }
 
         // Determine risk level
@@ -90,28 +86,12 @@ export async function GET(request: NextRequest) {
             riskLevel = 'good';
           }
 
-          // Prioritize chat-based risk flags over generic concerns
-          if (chatInsights && chatInsights.risks.length > 0) {
-            concern = chatInsights.risks[0]; // Show the first risk flag
-            // Escalate risk level if chat insights indicate critical issues
-            if (
-              chatInsights.risks.some(
-                (r) =>
-                  r.includes('fear of failure') ||
-                  r.includes('Anxious pre-game') ||
-                  r.includes('Declining')
-              )
-            ) {
-              riskLevel = riskLevel === 'good' ? 'warning' : riskLevel;
-            }
-          } else {
-            // Fallback to stress/sleep concerns
-            if (latestMood && latestMood.stress >= 8) {
-              concern = concern || `High stress level: ${latestMood.stress}/10`;
-            }
-            if (latestMood && latestMood.sleep && latestMood.sleep < 6) {
-              concern = concern || `Low sleep: ${latestMood.sleep} hours`;
-            }
+          // Stress/sleep concerns
+          if (latestMood && latestMood.stress >= 8) {
+            concern = concern || `High stress level: ${latestMood.stress}/10`;
+          }
+          if (latestMood && latestMood.sleep && latestMood.sleep < 6) {
+            concern = concern || `Low sleep: ${latestMood.sleep} hours`;
           }
         }
 

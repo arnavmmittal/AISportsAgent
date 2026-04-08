@@ -24,11 +24,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
 import { ReadinessGauge, type ReadinessLevel } from '@/components/shared/athlete/ReadinessGauge';
-import { PreGameCard } from '@/components/student/pre-game';
-import { ForecastWidget } from '@/components/athlete/ForecastWidget';
-import { EnergyStatusCard } from '@/components/athlete/EnergyStatusCard';
 import { useAuth } from '@/hooks/useAuth';
-import { isDemoMode, generateDemoAthleteDashboard } from '@/lib/demo-data';
 
 /**
  * Athlete Home Page - Daily landing dashboard
@@ -167,7 +163,7 @@ function getTimeUntilDue(dueDate: string): string {
 
 function StudentHomePageContent() {
   const searchParams = useSearchParams();
-  const demoMode = isDemoMode(searchParams);
+  const demoMode = false;
   const { user: authUser, isLoading: authLoading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -179,23 +175,8 @@ function StudentHomePageContent() {
     setRoutineCompletions(loadRoutineCompletions());
   }, []);
 
-  // Load demo data
-  const loadDemoData = useCallback(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const demoData = generateDemoAthleteDashboard();
-      setData(demoData);
-      setIsLoading(false);
-    }, 500);
-  }, []);
-
   // Fetch dashboard data
   const fetchDashboard = useCallback(async () => {
-    if (demoMode) {
-      loadDemoData();
-      return;
-    }
-
     if (!authUser) return;
 
     try {
@@ -225,7 +206,7 @@ function StudentHomePageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [authUser, demoMode, loadDemoData]);
+  }, [authUser]);
 
   useEffect(() => {
     fetchDashboard();
@@ -446,20 +427,6 @@ function StudentHomePageContent() {
           </Link>
         )}
 
-        {/* ─────────────────────────────────────────────────────────────────
-            PRE-GAME QUICK SESSION (if upcoming game)
-        ───────────────────────────────────────────────────────────────── */}
-        <PreGameCard className="animate-slide-up" />
-
-        {/* ─────────────────────────────────────────────────────────────────
-            ENERGY STATUS (Burnout Warning - only shows if not healthy)
-        ───────────────────────────────────────────────────────────────── */}
-        <EnergyStatusCard burnout={burnout} />
-
-        {/* ─────────────────────────────────────────────────────────────────
-            7-DAY READINESS FORECAST
-        ───────────────────────────────────────────────────────────────── */}
-        <ForecastWidget forecast={forecast} />
 
         {/* ─────────────────────────────────────────────────────────────────
             TODAY'S FOCUS

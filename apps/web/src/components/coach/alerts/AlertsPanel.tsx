@@ -8,7 +8,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   Bell,
   AlertTriangle,
@@ -22,10 +21,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { DashboardSection } from '../layouts/DashboardGrid';
-import {
-  generateDemoAlerts,
-  type DemoGeneratedAlert,
-} from '@/lib/demo-data';
 
 interface GeneratedAlert {
   id: string;
@@ -66,9 +61,6 @@ export default function AlertsPanel({
   maxAlerts = 10,
   onAlertClick,
 }: AlertsPanelProps) {
-  const searchParams = useSearchParams();
-  const isDemo = searchParams.get('demo') === 'true';
-
   const [alerts, setAlerts] = useState<GeneratedAlert[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -77,14 +69,6 @@ export default function AlertsPanel({
 
   const fetchAlerts = async () => {
     setLoading(true);
-
-    if (isDemo) {
-      const demoData = generateDemoAlerts();
-      setAlerts(demoData.alerts as GeneratedAlert[]);
-      setUnreadCount(demoData.unreadCount);
-      setLoading(false);
-      return;
-    }
 
     try {
       const response = await fetch('/api/coach/alerts?limit=' + maxAlerts);
@@ -102,18 +86,10 @@ export default function AlertsPanel({
 
   useEffect(() => {
     fetchAlerts();
-  }, [isDemo, maxAlerts]);
+  }, [maxAlerts]);
 
   const handleMarkAsRead = async (alertId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (isDemo) {
-      setAlerts(prev => prev.map(a =>
-        a.id === alertId ? { ...a, isRead: true } : a
-      ));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      return;
-    }
 
     try {
       const response = await fetch('/api/coach/alerts', {
@@ -134,12 +110,6 @@ export default function AlertsPanel({
   };
 
   const handleMarkAllAsRead = async () => {
-    if (isDemo) {
-      setAlerts(prev => prev.map(a => ({ ...a, isRead: true })));
-      setUnreadCount(0);
-      return;
-    }
-
     try {
       const response = await fetch('/api/coach/alerts', {
         method: 'POST',
@@ -158,15 +128,6 @@ export default function AlertsPanel({
 
   const handleDismiss = async (alertId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (isDemo) {
-      const alert = alerts.find(a => a.id === alertId);
-      setAlerts(prev => prev.filter(a => a.id !== alertId));
-      if (alert && !alert.isRead) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-      return;
-    }
 
     try {
       const response = await fetch('/api/coach/alerts', {
@@ -189,13 +150,6 @@ export default function AlertsPanel({
 
   const handleEvaluateRules = async () => {
     setEvaluating(true);
-
-    if (isDemo) {
-      // Simulate evaluation delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setEvaluating(false);
-      return;
-    }
 
     try {
       await fetch('/api/coach/alerts', {
