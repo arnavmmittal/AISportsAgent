@@ -45,7 +45,7 @@ export function StudentNavigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/student/home" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">AI</span>
             </div>
             <span className="font-bold text-xl text-gray-900 hidden sm:inline">Flow Sports Coach</span>
@@ -65,7 +65,7 @@ export function StudentNavigation() {
                   className={cn(
                     'flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all',
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                      ? 'bg-primary text-primary-foreground shadow-md'
                       : 'text-gray-700 hover:bg-gray-100'
                   )}
                 >
@@ -111,7 +111,7 @@ export function StudentNavigation() {
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-all',
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
+                      ? 'bg-primary text-primary-foreground shadow-md'
                       : 'text-gray-700 hover:bg-gray-100'
                   )}
                 >

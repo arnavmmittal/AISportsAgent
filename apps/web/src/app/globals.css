@@ -512,22 +512,13 @@
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   }
 
-  /* Gradient Backgrounds */
+  /* Solid Background Utilities */
   .gradient-primary {
-    @apply bg-gradient-to-br from-primary to-primary/80;
+    @apply bg-primary;
   }
 
   .gradient-success {
-    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 71% 35%) 100%);
-  }
-
-  /* Glow Effects */
-  .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.25);
-  }
-
-  .glow-success {
-    box-shadow: 0 0 20px hsl(var(--success) / 0.25);
+    background-color: hsl(var(--success));
   }
 
   /* Animation Utilities */
@@ -620,22 +611,6 @@
   50% { width: 60%; opacity: 1; }
 }
 
-/* Coach avatar pulse - subtle breathing effect */
-@keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.03); opacity: 0.9; }
-}
-
-/* Gentle floating animation for badges/callouts */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
 /* Message entry animation */
 @keyframes messageIn {
   from {
@@ -711,14 +686,12 @@
 /* Coach avatar */
 .coach-avatar {
   @apply w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0;
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  background-color: hsl(var(--primary));
 }
 
 .coach-avatar-large {
   @apply w-20 h-20 rounded-full flex items-center justify-center;
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-  animation: breathe 3s ease-in-out infinite;
-}
+  background-color: hsl(var(--primary));}
 
 /* [DEPRECATED] Legacy input dock — replaced by ChatInputDock + ChatInput components.
    Kept for backward compatibility. Remove in next cleanup cycle. */
@@ -785,12 +758,12 @@
 /* Drill card - primary color scheme */
 .drill-card {
   @apply rounded-xl p-5 mt-4;
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(220 60% 20%) 100%);
+  background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
 
 .dark .drill-card {
-  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(220 40% 12%) 100%);
+  background-color: hsl(var(--card));
   border: 1px solid hsl(var(--border));
 }
 

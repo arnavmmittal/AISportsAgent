@@ -1,6 +1,3 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Brain,
@@ -23,39 +20,18 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/button';
 
 /**
- * Landing Page - Professional Marketing Site
+ * Landing Page - Professional B2B SaaS Marketing Site
  *
  * Features:
- * - Hero with animated readiness gauge preview
+ * - Clean hero with static readiness preview
  * - Feature grid with icons
  * - Social proof (stats, testimonials)
  * - Research-backed methodology section
- * - CTA sections for athletes and coaches
+ * - Dual CTA for athletes and coaches
  */
 
 export default function LandingPage() {
-  const [animatedScore, setAnimatedScore] = useState(0);
-
-  // Animate the hero readiness score
-  useEffect(() => {
-    const target = 82;
-    const duration = 2000;
-    const steps = 60;
-    const increment = target / steps;
-    let current = 0;
-
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        setAnimatedScore(target);
-        clearInterval(timer);
-      } else {
-        setAnimatedScore(Math.round(current));
-      }
-    }, duration / steps);
-
-    return () => clearInterval(timer);
-  }, []);
+  const displayScore = 82;
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,8 +70,8 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
+        {/* Background */}
+        <div className="absolute inset-0 bg-primary/[0.03]" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -153,7 +129,7 @@ export default function LandingPage() {
                   </h3>
                 </div>
 
-                {/* Animated Gauge */}
+                {/* Readiness Gauge */}
                 <div className="relative w-48 h-48 mx-auto mb-6">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle
@@ -172,13 +148,12 @@ export default function LandingPage() {
                       stroke="hsl(var(--readiness-green))"
                       strokeWidth="8"
                       strokeLinecap="round"
-                      strokeDasharray={`${(animatedScore / 100) * 264} 264`}
-                      className="transition-all duration-100"
+                      strokeDasharray={`${(displayScore / 100) * 264} 264`}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-5xl font-bold text-foreground tabular-nums">
-                      {animatedScore}
+                      {displayScore}
                     </span>
                     <span className="text-sm text-muted-foreground">/ 100</span>
                   </div>
@@ -214,8 +189,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Floating badges */}
-              <div className="absolute -top-4 -right-4 card-elevated px-3 py-2 text-sm font-medium shadow-lg animate-float">
+              {/* Trend badge */}
+              <div className="absolute -top-4 -right-4 card-elevated px-3 py-2 text-sm font-medium shadow-md">
                 <TrendingUp className="w-4 h-4 text-success inline mr-1" />
                 +12% this week
               </div>
@@ -470,7 +445,7 @@ export default function LandingPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="card-elevated p-12 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
+            <div className="absolute inset-0 bg-primary/[0.03]" />
 
             <div className="relative">
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">

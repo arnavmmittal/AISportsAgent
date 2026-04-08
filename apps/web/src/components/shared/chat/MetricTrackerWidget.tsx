@@ -50,19 +50,19 @@ export function MetricTrackerWidget({
   return (
     <div className="bg-card border-2 border-blue-300 rounded-2xl p-6 mt-6 shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center shadow-md">
+        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-md">
           <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         </div>
-        <h3 className="font-black text-2xl bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+        <h3 className="font-black text-2xl text-foreground">
           Track Your Progress 📊
         </h3>
       </div>
 
       <div className="space-y-6">
         {metrics.map((metric, idx) => (
-          <div key={idx} className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border border-blue-200">
+          <div key={idx} className="bg-muted/50 rounded-xl p-5 border border-border">
             <label className="block text-base font-bold text-gray-800 mb-3">
               {metric.name}
             </label>
@@ -81,7 +81,7 @@ export function MetricTrackerWidget({
                 }
                 className="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
-              <div className="flex items-center justify-center min-w-[60px] h-14 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-md">
+              <div className="flex items-center justify-center min-w-[60px] h-14 bg-primary text-primary-foreground rounded-xl shadow-md">
                 <span className="font-black text-3xl">
                   {values[metric.name] || 5}
                 </span>
@@ -109,7 +109,7 @@ export function MetricTrackerWidget({
               className={`w-full px-5 py-3 rounded-xl font-bold text-base shadow-md transition-all ${
                 logged[metric.name]
                   ? 'bg-secondary/100 text-white cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-700 hover:shadow-lg hover:scale-[1.02]'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg'
               }`}
             >
               {logged[metric.name] ? (

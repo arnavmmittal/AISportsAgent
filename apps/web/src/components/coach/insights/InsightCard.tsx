@@ -46,7 +46,7 @@ const CATEGORY_CONFIG = {
   correlation: {
     icon: BarChart3,
     label: 'Performance Correlation',
-    gradient: 'from-blue-500/20 to-cyan-500/20',
+    bg: 'bg-blue-500/10',
     border: 'border-blue-500/30',
     iconBg: 'bg-blue-500/20',
     iconColor: 'text-blue-400',
@@ -55,7 +55,7 @@ const CATEGORY_CONFIG = {
   prediction: {
     icon: Brain,
     label: 'ML Prediction',
-    gradient: 'from-accent/20 to-primary/20',
+    bg: 'bg-accent/10',
     border: 'border-accent/30',
     iconBg: 'bg-accent/20',
     iconColor: 'text-accent',
@@ -64,7 +64,7 @@ const CATEGORY_CONFIG = {
   'effective-technique': {
     icon: Target,
     label: 'Effective Technique',
-    gradient: 'from-green-500/20 to-emerald-500/20',
+    bg: 'bg-green-500/10',
     border: 'border-green-500/30',
     iconBg: 'bg-green-500/20',
     iconColor: 'text-green-400',
@@ -73,7 +73,7 @@ const CATEGORY_CONFIG = {
   pattern: {
     icon: TrendingUp,
     label: 'Pattern Detected',
-    gradient: 'from-amber-500/20 to-orange-500/20',
+    bg: 'bg-amber-500/10',
     border: 'border-amber-500/30',
     iconBg: 'bg-amber-500/20',
     iconColor: 'text-amber-400',
@@ -82,7 +82,7 @@ const CATEGORY_CONFIG = {
   alert: {
     icon: AlertTriangle,
     label: 'Attention Needed',
-    gradient: 'from-red-500/20 to-rose-500/20',
+    bg: 'bg-red-500/10',
     border: 'border-red-500/30',
     iconBg: 'bg-red-500/20',
     iconColor: 'text-red-400',
@@ -91,7 +91,7 @@ const CATEGORY_CONFIG = {
   burnout: {
     icon: Flame,
     label: 'Burnout Risk',
-    gradient: 'from-orange-500/20 to-red-500/20',
+    bg: 'bg-orange-500/10',
     border: 'border-orange-500/30',
     iconBg: 'bg-orange-500/20',
     iconColor: 'text-orange-400',
@@ -100,7 +100,7 @@ const CATEGORY_CONFIG = {
   forecast: {
     icon: Calendar,
     label: 'Readiness Forecast',
-    gradient: 'from-sky-500/20 to-indigo-500/20',
+    bg: 'bg-sky-500/10',
     border: 'border-sky-500/30',
     iconBg: 'bg-sky-500/20',
     iconColor: 'text-sky-400',
@@ -109,7 +109,7 @@ const CATEGORY_CONFIG = {
   intervention: {
     icon: Lightbulb,
     label: 'Intervention',
-    gradient: 'from-yellow-500/20 to-amber-500/20',
+    bg: 'bg-yellow-500/10',
     border: 'border-yellow-500/30',
     iconBg: 'bg-yellow-500/20',
     iconColor: 'text-yellow-400',
@@ -118,7 +118,7 @@ const CATEGORY_CONFIG = {
   deep_insight: {
     icon: Sparkles,
     label: 'Deep Insight',
-    gradient: 'from-violet-500/20 to-fuchsia-500/20',
+    bg: 'bg-violet-500/10',
     border: 'border-violet-500/30',
     iconBg: 'bg-violet-500/20',
     iconColor: 'text-violet-400',
@@ -127,7 +127,7 @@ const CATEGORY_CONFIG = {
   intervention_outcome: {
     icon: Activity,
     label: 'Technique → Stats',
-    gradient: 'from-emerald-500/20 to-teal-500/20',
+    bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/40',
     iconBg: 'bg-emerald-500/20',
     iconColor: 'text-emerald-400',
@@ -136,7 +136,7 @@ const CATEGORY_CONFIG = {
 };
 
 const PRIORITY_STYLES = {
-  critical: 'ring-2 ring-red-500/50 animate-pulse',
+  critical: 'ring-2 ring-red-500/50',
   high: 'ring-2 ring-primary/30',
   medium: '',
   low: 'opacity-90',
@@ -165,8 +165,7 @@ export function InsightCard({
         config.border,
         PRIORITY_STYLES[priority],
         isClickable && 'cursor-pointer hover:scale-[1.02] hover:shadow-lg',
-        'bg-gradient-to-br',
-        config.gradient
+        config.bg
       )}
       onClick={onClick}
     >
@@ -266,8 +265,7 @@ export function FeaturedInsightCard({
       className={cn(
         'relative overflow-hidden rounded-2xl border-2 p-8',
         config.border,
-        'bg-gradient-to-br',
-        config.gradient
+        config.bg
       )}
     >
       {/* Large background icon */}

@@ -125,7 +125,7 @@ export function MobileVoiceWidget({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-gradient-to-br from-primary via-primary/90 to-primary/80 flex flex-col"
+            className="fixed inset-0 z-50 bg-primary flex flex-col"
           >
             {/* Header with close button */}
             <div className="flex items-center justify-between p-4">

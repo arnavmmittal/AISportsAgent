@@ -5,7 +5,7 @@ import { Brain } from 'lucide-react';
 export function ChatEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full px-6 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mb-6 shadow-lg">
+      <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-6 shadow-md">
         <Brain className="w-8 h-8 text-primary-foreground" />
       </div>
       <h2 className="text-2xl font-semibold text-foreground mb-2">

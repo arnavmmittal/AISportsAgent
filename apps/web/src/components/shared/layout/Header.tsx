@@ -60,7 +60,7 @@ export function Header() {
                 onClick={handleDashboardRedirect}
                 className="flex-shrink-0 flex items-center group"
               >
-                <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
+                <span className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
                   Flow Sports Coach
                 </span>
               </button>
@@ -93,7 +93,7 @@ export function Header() {
                   className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm">
+                    <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">
                       {user.name?.charAt(0).toUpperCase()}
                     </div>
                     <div className="text-left">
@@ -173,7 +173,7 @@ export function Header() {
             </div>
             <div className="pt-4 pb-3 border-t border-border">
               <div className="flex items-center px-4 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="ml-3">
@@ -210,7 +210,7 @@ export function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center group">
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
+            <span className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
               Flow Sports Coach
             </span>
           </Link>

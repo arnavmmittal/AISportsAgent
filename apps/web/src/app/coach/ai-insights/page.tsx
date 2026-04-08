@@ -217,7 +217,7 @@ function AIInsightsPageContent() {
         )}
 
         {/* Hero Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-8">
+        <div className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-700 p-8">
           <div className="absolute top-0 right-0 w-96 h-96 -mr-48 -mt-48 opacity-10">
             <Brain className="w-full h-full" />
           </div>
@@ -313,7 +313,7 @@ function AIInsightsPageContent() {
 
             {/* Team Forecast Overview */}
             {teamForecast && teamForecast.athletesWithDecline.length > 0 && (
-              <div className="rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6">
+              <div className="rounded-xl bg-slate-800 border border-slate-700 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-blue-500/20">

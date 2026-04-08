@@ -286,9 +286,9 @@ export function TypingIndicator({ className }: { className?: string }) {
       </div>
       <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
         <div className="flex gap-1" role="status" aria-label="AI is typing">
-          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
-          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
-          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
+          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse-subtle [animation-delay:0ms]" />
+          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse-subtle [animation-delay:150ms]" />
+          <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-pulse-subtle [animation-delay:300ms]" />
         </div>
       </div>
     </div>

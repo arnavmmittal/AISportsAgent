@@ -234,7 +234,7 @@ export default function StudentAssignmentsPage() {
         </Button>
 
         {/* Assignment Details Card */}
-        <Card className="border-2 border-accent/20 bg-gradient-to-br from-accent/10 to-accent/20">
+        <Card className="border-2 border-accent/20 bg-accent/10">
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-foreground">
@@ -304,7 +304,7 @@ export default function StudentAssignmentsPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !responseText.trim()}
-                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 {isSubmitting ? (
                   <>
@@ -391,7 +391,7 @@ export default function StudentAssignmentsPage() {
       )}
 
       {/* Tips Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+      <Card className="bg-muted/50 border-border">
         <CardContent className="pt-6">
           <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />
