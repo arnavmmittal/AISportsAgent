@@ -18,6 +18,11 @@ import {
   Moon,
   Sun,
   Loader2,
+  Eye,
+  EyeOff,
+  Lock,
+  CheckCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -488,38 +493,100 @@ export default function StudentSettingsPage() {
             </div>
             <div>
               <h2 className="font-medium text-foreground">Privacy & Data Sharing</h2>
-              <p className="text-sm text-muted-foreground">Control how your data is used and shared</p>
+              <p className="text-sm text-muted-foreground">Control how your data is shared with your coach</p>
             </div>
           </div>
-          <div className="p-4 space-y-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="consent-summaries" className="text-sm font-medium">
-                    Share Weekly Chat Summaries
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Allow your sports psychologist to view anonymized weekly summaries of your chat sessions
-                  </p>
+          <div className="p-4 space-y-5">
+            {/* Always Shared */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Always Shared with Your Coach</h3>
+              </div>
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 space-y-2.5">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Readiness Score</p>
+                    <p className="text-xs text-muted-foreground">
+                      Your daily readiness score helps your coach understand your overall preparedness.
+                    </p>
+                  </div>
                 </div>
-                <Switch
-                  id="consent-summaries"
-                  checked={privacy.consentChatSummaries}
-                  onCheckedChange={(checked: boolean) =>
-                    setPrivacy({ ...privacy, consentChatSummaries: checked })
-                  }
-                />
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Mood Trends</p>
+                    <p className="text-xs text-muted-foreground">
+                      Aggregated mood trends (not individual entries) so your coach can spot patterns over time.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Crisis Alerts</p>
+                    <p className="text-xs text-muted-foreground">
+                      If our system detects a potential crisis, your coach is automatically notified to ensure your safety. This cannot be turned off.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-info/5 border border-info/10">
+            {/* Optional Sharing */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <EyeOff className="w-4 h-4 text-info" />
+                <h3 className="text-sm font-semibold text-foreground">Optional Sharing</h3>
+              </div>
+              <div className="p-3 rounded-lg bg-info/5 border border-info/10">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5 pr-4">
+                    <Label htmlFor="consent-summaries" className="text-sm font-medium">
+                      Chat Topic Summaries
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Share anonymized weekly summaries of chat topics (e.g., &quot;focused on pre-game anxiety&quot;) with your coach. No message content is shared.
+                    </p>
+                  </div>
+                  <Switch
+                    id="consent-summaries"
+                    checked={privacy.consentChatSummaries}
+                    onCheckedChange={(checked: boolean) =>
+                      setPrivacy({ ...privacy, consentChatSummaries: checked })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Never Shared */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-destructive" />
+                <h3 className="text-sm font-semibold text-foreground">Never Shared</h3>
+              </div>
+              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10">
+                <div className="flex items-start gap-2.5">
+                  <Lock className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Chat Transcripts</p>
+                    <p className="text-xs text-muted-foreground">
+                      Your individual chat messages are private and encrypted. Your coach can never read your actual conversations. Only you can see your full chat history.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-muted/50 border border-border">
               <div className="flex gap-3">
-                <Shield className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+                <Shield className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Your Data is Protected</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    All data is encrypted and stored securely. Your sports psychologist only sees weekly chat summaries
-                    (not individual messages) when you grant consent. You can revoke access at any time and all summaries will be deleted.
+                    All data is encrypted and stored securely. You can change your sharing preferences at any time. When you revoke chat summary sharing, existing summaries are removed from coach access.
                   </p>
                 </div>
               </div>
@@ -528,7 +595,7 @@ export default function StudentSettingsPage() {
             <div className="flex justify-end pt-2">
               <Button variant="outline" onClick={handleSavePrivacy}>
                 <Save className="w-4 h-4 mr-2" />
-                Save Settings
+                Save Privacy Settings
               </Button>
             </div>
           </div>

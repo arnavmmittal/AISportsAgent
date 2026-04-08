@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeAndStore } from '@/lib/chat-analysis';
+import { requireAuth } from '@/lib/auth-helpers';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,9 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
+    const { authorized, response } = await requireAuth(request);
+    if (!authorized) return response;
+
     const body = await request.json();
     const { sessionId } = body;
 

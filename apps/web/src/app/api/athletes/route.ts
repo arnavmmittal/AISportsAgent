@@ -5,9 +5,13 @@ export const runtime = 'nodejs';
 
 import { prisma } from '@/lib/prisma';
 import { calculateReadiness } from '@/lib/analytics/readiness';
+import { requireCoach } from '@/lib/auth-helpers';
 
 export async function GET(request: NextRequest) {
   try {
+    const { authorized, response } = await requireCoach(request);
+    if (!authorized) return response;
+
     const searchParams = request.nextUrl.searchParams;
     const sports = searchParams.get('sports')?.split(',').filter(Boolean);
 
