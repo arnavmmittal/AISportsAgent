@@ -21,15 +21,13 @@
       "distribution": "internal",
       "channel": "staging",
       "ios": {
-        "simulator": false,
-        "buildNumber": "1.0.0"
+        "simulator": false
       },
       "android": {
-        "buildType": "apk",
-        "versionCode": 1
+        "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://staging.flowsportscoach.com",
+        "EXPO_PUBLIC_API_URL": "https://flowsportscoach-git-staging-arnav-mittals-projects-f6d6791a.vercel.app",
         "EXPO_PUBLIC_ENV": "staging"
       }
     },
@@ -38,12 +36,10 @@
       "channel": "production",
       "autoIncrement": true,
       "ios": {
-        "simulator": false,
-        "buildNumber": "1.0.0"
+        "simulator": false
       },
       "android": {
-        "buildType": "aab",
-        "versionCode": 1
+        "buildType": "app-bundle"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://app.flowsportscoach.com",
