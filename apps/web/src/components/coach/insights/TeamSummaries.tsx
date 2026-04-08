@@ -204,7 +204,7 @@ export default function TeamSummaries() {
       </div>
 
       {/* Report Header */}
-      <div className="p-5 bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-700 rounded-lg">
+      <div className="p-5 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/30 rounded-lg">
         <div className="flex items-start justify-between mb-3">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">

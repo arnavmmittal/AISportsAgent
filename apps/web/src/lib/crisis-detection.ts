@@ -22,7 +22,7 @@
  */
 
 import OpenAI from 'openai';
-import * as Sentry from '@/lib/sentry-stub';
+import * as Sentry from '@sentry/nextjs';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

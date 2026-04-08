@@ -133,12 +133,12 @@ pnpm start
 **For testing with real seed data:**
 
 **Coach:**
-- Email: `coach@uw.edu`
-- Password: `Coach2024!`
+- Email: `coach1@uw.edu` through `coach3@uw.edu`
+- Password: See `pilot-credentials.csv` (unique per user)
 
-**Athletes (20 accounts):**
-- Email: `athlete1@uw.edu` through `athlete20@uw.edu`
-- Password: `Athlete2024!`
+**Athletes (50 accounts):**
+- Email: `athlete1@uw.edu` through `athlete50@uw.edu`
+- Password: See `pilot-credentials.csv` (unique per user)
 - Examples:
   - `athlete1@uw.edu` - Basketball, Junior
   - `athlete5@uw.edu` - Soccer, Sophomore

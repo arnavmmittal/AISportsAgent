@@ -151,7 +151,7 @@ export default function IndividualInsights() {
       </div>
 
       {/* Athlete Summary Card */}
-      <div className="p-5 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-accent rounded-lg">
+      <div className="p-5 bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/30 rounded-lg">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">

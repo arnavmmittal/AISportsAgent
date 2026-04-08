@@ -55,11 +55,11 @@ const CATEGORY_CONFIG = {
   prediction: {
     icon: Brain,
     label: 'ML Prediction',
-    gradient: 'from-purple-500/20 to-pink-500/20',
-    border: 'border-purple-500/30',
-    iconBg: 'bg-purple-500/20',
-    iconColor: 'text-purple-400',
-    badge: 'bg-purple-500/20 text-purple-300',
+    gradient: 'from-accent/20 to-primary/20',
+    border: 'border-accent/30',
+    iconBg: 'bg-accent/20',
+    iconColor: 'text-accent',
+    badge: 'bg-accent/20 text-accent',
   },
   'effective-technique': {
     icon: Target,
@@ -360,7 +360,7 @@ export function InsightSummaryBar({
         </span>
       </div>
       <div className="flex items-center gap-2">
-        <Brain className="w-4 h-4 text-purple-400" />
+        <Brain className="w-4 h-4 text-accent" />
         <span className="text-sm text-slate-300">
           <strong className="text-white">{athletesAnalyzed}</strong> athletes analyzed
         </span>

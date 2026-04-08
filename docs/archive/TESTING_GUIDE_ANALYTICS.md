@@ -127,8 +127,8 @@ npx prisma db seed
 
 📊 Summary:
    - 1 School (University of Washington)
-   - 1 Coach (coach@uw.edu / Coach2024!)
-   - 20 Athletes (athlete1@uw.edu to athlete20@uw.edu / Athlete2024!)
+   - 1 Coach (coach@uw.edu / See pilot-credentials.csv)
+   - 20 Athletes (athlete1@uw.edu to athlete20@uw.edu / See pilot-credentials.csv)
    - 600 Mood Logs (30 days per athlete with high/low readiness patterns)
    - 100 Performance Metrics (10 games, 10 athletes) - CORRELATED WITH READINESS
 
@@ -178,7 +178,7 @@ Navigate to **MoodLog** table:
 
 2. **Login as coach:**
    - Navigate to `http://localhost:3000`
-   - Login: `coach@uw.edu` / `Coach2024!`
+   - Login: `coach@uw.edu` / `See pilot-credentials.csv`
 
 3. **Test CSV upload:**
    - Navigate to `/coach/performance/import`

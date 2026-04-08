@@ -8,14 +8,11 @@ Thanks for helping test Flow Sports Coach! This guide will walk you through test
 
 | Role | Email | Password |
 |------|-------|----------|
-| Coach | coach@uw.edu | Coach2024! |
-| Athlete | athlete1@uw.edu | Athlete2024! |
-| Athlete | athlete2@uw.edu | Athlete2024! |
-| Athlete | athlete3@uw.edu | Athlete2024! |
-| Athlete | athlete4@uw.edu | Athlete2024! |
-| Athlete | athlete5@uw.edu | Athlete2024! |
+| Coach | coach1@uw.edu | See pilot-credentials.csv |
+| Athlete | athlete1@uw.edu | See pilot-credentials.csv |
+| Athlete | athlete2@uw.edu | See pilot-credentials.csv |
 
-*There are 50 athlete accounts total (athlete1@uw.edu through athlete50@uw.edu) - all use the same password.*
+*Credentials are in `pilot-credentials.csv` (not committed to git). Each user has a unique password.*
 
 **School:** University of Washington (demo)
 

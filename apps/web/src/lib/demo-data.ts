@@ -140,7 +140,7 @@ export function generateDemoAthletes(count: number = 25): DemoAthlete[] {
     'no-data': Math.ceil(count * 0.08)  // ~8% no data
   };
 
-  let riskIndex = 0;
+  const riskIndex = 0;
   const riskLevels = Object.entries(riskDistribution).flatMap(([level, num]) =>
     Array(num).fill(level as DemoAthlete['riskLevel'])
   ).slice(0, count);

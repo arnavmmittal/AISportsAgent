@@ -50,14 +50,14 @@ export function Navigation() {
                       active
                         ? 'bg-blue-100 text-blue-700'
                         : item.highlight
-                        ? 'text-purple-600 hover:bg-purple-50'
+                        ? 'text-accent hover:bg-accent/10'
                         : 'text-gray-700 hover:bg-muted'
                     )}
                   >
                     <Icon className="w-4 h-4" />
                     {item.label}
                     {item.badge && !active && (
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-600">
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/15 text-accent">
                         <Sparkles className="w-3 h-3" />
                         {item.badge}
                       </span>
@@ -123,14 +123,14 @@ export function Navigation() {
                     active
                       ? 'bg-blue-100 text-blue-700'
                       : item.highlight
-                      ? 'text-purple-600'
+                      ? 'text-accent'
                       : 'text-gray-700 hover:bg-muted'
                   )}
                 >
                   <Icon className="w-5 h-5" />
                   {item.label}
                   {item.badge && !active && (
-                    <span className="ml-auto flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-600">
+                    <span className="ml-auto flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/15 text-accent">
                       <Sparkles className="w-3 h-3" />
                       {item.badge}
                     </span>

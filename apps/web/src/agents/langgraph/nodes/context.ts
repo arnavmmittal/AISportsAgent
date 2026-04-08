@@ -139,7 +139,7 @@ export function buildContextPromptSection(state: ConversationState): string {
     if (profile.effectiveInterventions && profile.effectiveInterventions.length > 0) {
       sections.push('');
       sections.push('## What Works for This Athlete');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       profile.effectiveInterventions.slice(0, 3).forEach((intervention: any) => {
         const effectScore = intervention.effectivenessScore || intervention.effectiveness || 'N/A';
         sections.push(`- ${intervention.protocol} (${effectScore}/10 effectiveness)`);

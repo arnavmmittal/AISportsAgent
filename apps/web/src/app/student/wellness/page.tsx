@@ -291,17 +291,21 @@ function WellnessPageContent() {
 
           // Check for upcoming game
           if (data.data.hasGameTomorrow) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(14, 0, 0, 0); // Default game time
+            const gameInfo = data.data.upcomingGame || {};
+            const gameDate = gameInfo.date ? new Date(gameInfo.date) : (() => {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              tomorrow.setHours(14, 0, 0, 0);
+              return tomorrow;
+            })();
             setUpcomingGame({
-              id: 'upcoming',
-              opponent: 'Opponent',
-              date: tomorrow,
-              location: 'Home Arena',
-              isHome: true,
+              id: gameInfo.id || 'upcoming',
+              opponent: gameInfo.opponent || 'Upcoming Game',
+              date: gameDate,
+              location: gameInfo.location || '',
+              isHome: gameInfo.isHome ?? true,
             });
-            setCountdown(formatTimeUntil(tomorrow));
+            setCountdown(formatTimeUntil(gameDate));
           }
         }
       } catch (error) {

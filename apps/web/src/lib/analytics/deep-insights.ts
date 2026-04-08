@@ -1766,7 +1766,7 @@ async function analyzeMoodTrends(
 
   // 3. Recovery pattern after bad days
   const lowMoodThreshold = 5;
-  let recoveryTimes: number[] = [];
+  const recoveryTimes: number[] = [];
 
   for (let i = 0; i < moodLogs.length; i++) {
     if (moodLogs[i].mood <= lowMoodThreshold) {

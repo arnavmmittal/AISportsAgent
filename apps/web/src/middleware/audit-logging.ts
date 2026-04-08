@@ -17,7 +17,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import * as Sentry from '@/lib/sentry-stub';
+import * as Sentry from '@sentry/nextjs';
 
 export interface AuditLogData {
   userId: string;

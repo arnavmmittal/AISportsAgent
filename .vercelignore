@@ -1,0 +1,8 @@
+node_modules
+.next
+apps/web/.next
+apps/web/node_modules
+apps/mobile
+ai-sports-mcp
+/services
+.git

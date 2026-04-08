@@ -446,7 +446,7 @@ Contact: support@flowsportscoach.com
         {/* Footer Note */}
         <div className="text-center text-sm text-muted-foreground pt-8 pb-4">
           <p className="flex items-center justify-center gap-2">
-            <Brain className="w-4 h-4 text-purple-400" />
+            <Brain className="w-4 h-4 text-accent" />
             Data is aggregated from {data.engagement.totalAthletes} athletes over the last 30 days
           </p>
           <p className="mt-1">

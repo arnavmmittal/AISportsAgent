@@ -10,7 +10,7 @@ import {
   DEMO_MESSAGES,
   simulateAIResponse,
 } from './demo';
-import type { MoodLog, Goal, Message } from '@sports-agent/types';
+import type { MoodLog, Goal, Message } from '@flow-sports-coach/types';
 
 // Track if backend is available
 let backendAvailable = true;
