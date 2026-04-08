@@ -72,7 +72,7 @@ export default function CoachPortalLayout({
                   isActive
                     ? 'bg-primary text-white'
                     : item.highlight
-                    ? 'text-purple-400 hover:bg-purple-500/10 hover:text-purple-300'
+                    ? 'text-accent hover:bg-accent/10 hover:text-accent'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 )}
               >
@@ -81,7 +81,7 @@ export default function CoachPortalLayout({
                   <>
                     <span className="text-sm font-medium flex-1">{item.label}</span>
                     {item.badge && !isActive && (
-                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-500/20 text-purple-300">
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/20 text-accent">
                         <Sparkles className="w-3 h-3" />
                         {item.badge}
                       </span>
@@ -94,7 +94,7 @@ export default function CoachPortalLayout({
                   <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
                     {item.label}
                     {item.badge && (
-                      <span className="ml-2 text-purple-300">({item.badge})</span>
+                      <span className="ml-2 text-accent">({item.badge})</span>
                     )}
                   </div>
                 )}

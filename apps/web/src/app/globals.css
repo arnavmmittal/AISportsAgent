@@ -626,6 +626,16 @@
   50% { transform: scale(1.03); opacity: 0.9; }
 }
 
+/* Gentle floating animation for badges/callouts */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
 /* Message entry animation */
 @keyframes messageIn {
   from {

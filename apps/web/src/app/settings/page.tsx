@@ -203,7 +203,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleSaveProfile}
               disabled={isSaving}
-              className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700"
+              className=""
             >
               {isSaving ? (
                 <>

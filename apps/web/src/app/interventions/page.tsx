@@ -237,7 +237,7 @@ export default function InterventionsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold text-foreground">
               Mental Techniques
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -246,7 +246,7 @@ export default function InterventionsPage() {
           </div>
           <Button
             onClick={() => setShowAddModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+            className="bg-primary text-primary-foreground"
           >
             <Plus className="w-4 h-4 mr-2" />
             Log Technique
@@ -269,10 +269,10 @@ export default function InterventionsPage() {
               <div className="text-sm text-green-600/70">Completed</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
+          <Card className="bg-gradient-to-br from-accent/5 to-accent/10 dark:from-accent/10 dark:to-accent/5 border-accent/20 dark:border-accent/30">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-purple-600">{summary?.withOutcomeData || 0}</div>
-              <div className="text-sm text-purple-600/70">With Outcomes</div>
+              <div className="text-3xl font-bold text-accent">{summary?.withOutcomeData || 0}</div>
+              <div className="text-sm text-accent/70">With Outcomes</div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
@@ -658,7 +658,7 @@ function AddInterventionModal({
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600">
+            <Button type="submit" className="flex-1">
               Log Technique
             </Button>
           </div>
@@ -784,7 +784,7 @@ function RecordOutcomeModal({
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600">
+            <Button type="submit" className="flex-1">
               Save Outcome
             </Button>
           </div>

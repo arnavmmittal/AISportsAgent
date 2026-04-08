@@ -215,7 +215,7 @@ export default function LandingPage() {
               </div>
 
               {/* Floating badges */}
-              <div className="absolute -top-4 -right-4 card-elevated px-3 py-2 text-sm font-medium shadow-lg animate-bounce">
+              <div className="absolute -top-4 -right-4 card-elevated px-3 py-2 text-sm font-medium shadow-lg animate-float">
                 <TrendingUp className="w-4 h-4 text-success inline mr-1" />
                 +12% this week
               </div>

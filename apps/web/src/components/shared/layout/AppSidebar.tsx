@@ -63,7 +63,7 @@ export function AppSidebar({ navItems, portalLabel, onSignOut, aiCoachHref }: Ap
                       onClick={() => router.push(item.href)}
                       className={
                         !isActive && item.highlight
-                          ? 'text-purple-400 hover:bg-purple-500/10 hover:text-purple-300'
+                          ? 'text-accent hover:bg-accent/10 hover:text-accent'
                           : undefined
                       }
                     >
@@ -71,7 +71,7 @@ export function AppSidebar({ navItems, portalLabel, onSignOut, aiCoachHref }: Ap
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                     {item.badge && !isActive && (
-                      <SidebarMenuBadge className="bg-purple-500/20 text-purple-300">
+                      <SidebarMenuBadge className="bg-accent/20 text-accent">
                         <Sparkles className="w-3 h-3 mr-0.5" />
                         {item.badge}
                       </SidebarMenuBadge>

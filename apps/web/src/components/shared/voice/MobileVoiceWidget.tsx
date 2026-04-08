@@ -105,7 +105,7 @@ export function MobileVoiceWidget({
               ? 'bg-gray-400 cursor-not-allowed'
               : isListening
               ? 'bg-red-500 animate-pulse'
-              : 'bg-gradient-to-br from-blue-500 to-purple-600',
+              : 'bg-primary',
             className
           )}
           aria-label="Voice input"
@@ -125,7 +125,7 @@ export function MobileVoiceWidget({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 flex flex-col"
+            className="fixed inset-0 z-50 bg-gradient-to-br from-primary via-primary/90 to-primary/80 flex flex-col"
           >
             {/* Header with close button */}
             <div className="flex items-center justify-between p-4">
@@ -191,7 +191,7 @@ export function MobileVoiceWidget({
                     voiceState === 'listening'
                       ? 'bg-red-500'
                       : voiceState === 'processing' || voiceState === 'speaking'
-                      ? 'bg-purple-600'
+                      ? 'bg-primary'
                       : voiceState === 'error'
                       ? 'bg-red-600'
                       : 'bg-white'
@@ -206,7 +206,7 @@ export function MobileVoiceWidget({
                   ) : isListening ? (
                     <Mic className="w-12 h-12 text-white" />
                   ) : (
-                    <Mic className="w-12 h-12 text-purple-600" />
+                    <Mic className="w-12 h-12 text-primary" />
                   )}
                 </motion.button>
               </div>

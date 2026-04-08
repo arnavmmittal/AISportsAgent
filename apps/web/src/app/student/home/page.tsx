@@ -395,7 +395,7 @@ function StudentHomePageContent() {
 
               {/* AI-calculated note */}
               <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                <Brain size={10} className="text-purple-400" />
+                <Brain size={10} className="text-accent" />
                 Calculated from your daily check-ins
               </p>
             </div>
@@ -413,7 +413,7 @@ function StudentHomePageContent() {
             <div className="flex-1 min-w-0">
               <div className="font-medium text-foreground flex items-center gap-2">
                 Talk to AI Coach
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-500">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/10 text-accent">
                   <Brain size={10} />
                   AI
                 </span>
@@ -548,7 +548,7 @@ function StudentHomePageContent() {
                 <span className="text-sm font-medium text-foreground">
                   {insight.type === 'celebration' ? 'Congratulations!' : 'AI Insight'}
                 </span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-500">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/10 text-accent">
                   <Brain size={10} />
                   AI
                 </span>
