@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import type { Message } from '@sports-agent/types';
+import type { Message } from '@flow-sports-coach/types';
 import { apiClient, getStoredUserId } from '../../lib/auth';
 import { sendChatMessage } from '../../lib/apiWithFallback';
 import { LoadingScreen, ErrorView } from '../../components/ui';

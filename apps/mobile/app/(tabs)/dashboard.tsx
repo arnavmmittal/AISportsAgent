@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { logout, getStoredUserId } from '../../lib/auth';
 import { getMoodLogs, getGoals } from '../../lib/apiWithFallback';
 import { apiClient } from '../../lib/auth';
-import type { MoodLog, Goal } from '@sports-agent/types';
+import type { MoodLog, Goal } from '@flow-sports-coach/types';
 import { Card, LoadingScreen, GradientCard } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
 import { BiometricOverview } from '../../components/biometrics/BiometricOverview';

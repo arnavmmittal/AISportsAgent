@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { createAPIClient } from '@sports-agent/api-client';
+import { createAPIClient } from '@flow-sports-coach/api-client';
 import config from '../config';
 import type { AuthResponse, User, AthleteSignupData, CoachSignupData } from '../types/auth';
 

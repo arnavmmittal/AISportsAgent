@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Message, MoodLog, Goal } from '@sports-agent/types';
+import type { Message, MoodLog, Goal } from '@flow-sports-coach/types';
 
 const KEYS = {
   CHAT_MESSAGES: 'chat_messages',

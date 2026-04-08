@@ -3,7 +3,7 @@
  * For testing and development when backend is unavailable
  */
 
-import type { User, MoodLog, Goal, Message } from '@sports-agent/types';
+import type { User, MoodLog, Goal, Message } from '@flow-sports-coach/types';
 
 export const DEMO_USER: User = {
   id: 'demo-user-offline',

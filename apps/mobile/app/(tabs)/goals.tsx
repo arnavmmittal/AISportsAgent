@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import type { Goal } from '@sports-agent/types';
+import type { Goal } from '@flow-sports-coach/types';
 import { apiClient, getStoredUserId, getStoredUserRole } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
 
