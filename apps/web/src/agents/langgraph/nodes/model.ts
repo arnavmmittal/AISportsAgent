@@ -129,6 +129,19 @@ function buildSystemPrompt(state: ConversationState): string {
     parts.push(contextSection);
   }
 
+  // Add sports psychology knowledge from RAG
+  if (state.ragContext && state.ragContext.length > 0) {
+    parts.push('');
+    parts.push('# Evidence-Based Sports Psychology Reference');
+    parts.push('Ground your response in the following research. Cite the source naturally when referencing techniques.');
+    parts.push('');
+    for (const chunk of state.ragContext) {
+      parts.push(`**[${chunk.source}]** — ${chunk.title}`);
+      parts.push(chunk.content);
+      parts.push('');
+    }
+  }
+
   // Add sport context
   if (state.sport) {
     parts.push('');

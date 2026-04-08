@@ -10,6 +10,7 @@ import { BaseMessage } from '@langchain/core/messages';
 import type { EnrichedAthleteContext } from '@/services/AthleteContextService';
 import type { ChatAnalysisResult } from '@/lib/chat-analysis';
 import type { WidgetMetadata } from './tools/structured-output-tools';
+import type { RetrievedChunk } from '@/lib/knowledge';
 
 // Protocol phases from the 5-step Discovery-First approach
 export type ProtocolPhase =
@@ -130,6 +131,12 @@ export const ConversationStateAnnotation = Annotation.Root({
     default: () => null,
   }),
 
+  // RAG-retrieved sports psychology knowledge chunks
+  ragContext: Annotation<RetrievedChunk[] | null>({
+    reducer: (_, y) => y,
+    default: () => null,
+  }),
+
   // Tool execution results (accumulates across turns)
   toolResults: Annotation<ToolResult[]>({
     reducer: (x, y) => [...(x || []), ...(y || [])],
@@ -189,6 +196,7 @@ export function createInitialState(
     turnCountInPhase: 0,
     enrichedContext: null,
     knowledgeContext: null,
+    ragContext: null,
     toolResults: [],
     responseMetadata: null,
     widgetMetadata: [],

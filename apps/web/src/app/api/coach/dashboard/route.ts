@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCoach } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+import { generateCoachNudges } from '@/lib/analytics/coach-nudges';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -216,7 +217,11 @@ export async function GET(request: NextRequest) {
       .filter((a) => a !== null)
       .sort((a, b) => (b?.readiness || 0) - (a?.readiness || 0)); // Sort by readiness descending
 
+    // Generate coach nudges (actionable insights)
+    const nudges = await generateCoachNudges(coach.userId);
+
     const dashboardData = {
+      nudges,
       overview: {
         totalAthletes,
         athletesWithConsent,

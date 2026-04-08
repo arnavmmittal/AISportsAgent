@@ -12,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Users, TrendingUp, AlertTriangle, Activity, Key, Copy, ChevronRight, Loader2, Brain, Sparkles, FlaskConical } from 'lucide-react';
+import { Users, TrendingUp, AlertTriangle, Activity, Key, Copy, ChevronRight, Loader2, Brain, Sparkles, FlaskConical, CheckCircle2 } from 'lucide-react';
 import { AthleteActivityMonitor } from '@/components/coach/activity';
 import Link from 'next/link';
 import { Button } from '@/components/shared/ui/button';
@@ -29,7 +29,15 @@ import { cn } from '@/lib/utils';
  * - Team invite code management
  */
 
+interface Nudge {
+  type: 'engagement' | 'readiness' | 'crisis' | 'trend';
+  priority: 'low' | 'medium' | 'high';
+  message: string;
+  athleteNames?: string[];
+}
+
 interface DashboardData {
+  nudges?: Nudge[];
   overview: {
     totalAthletes: number;
     athletesWithConsent: number;
@@ -220,7 +228,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
     );
   }
 
-  const { overview, teamMood, atRiskAthletes, athleteReadiness } = dashboardData;
+  const { overview, teamMood, atRiskAthletes, athleteReadiness, nudges } = dashboardData;
 
   return (
     <div className="min-h-screen bg-background">
@@ -290,6 +298,45 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
           </div>
         )}
 
+        {/* Action Items (Nudges) */}
+        <div className="card-elevated p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-primary" />
+            Action Items
+          </h2>
+          {nudges && nudges.length > 0 ? (
+            <div className="space-y-3">
+              {nudges.map((nudge, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <span
+                    className={cn(
+                      'mt-1.5 w-2.5 h-2.5 rounded-full flex-shrink-0',
+                      nudge.priority === 'high'
+                        ? 'bg-risk-red'
+                        : nudge.priority === 'medium'
+                          ? 'bg-risk-yellow'
+                          : 'bg-muted-foreground'
+                    )}
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{nudge.message}</p>
+                    {nudge.athleteNames && nudge.athleteNames.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {nudge.athleteNames.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <CheckCircle2 className="w-5 h-5 text-risk-green" />
+              <span>All clear — your team is on track</span>
+            </div>
+          )}
+        </div>
+
         {/* Filters */}
         <div className="card-elevated p-4 flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
@@ -329,7 +376,7 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
 
         {/* AI Insights Banner */}
         <Link href="/coach/ai-insights" className="block">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-accent/20 via-primary/20 to-info/20 border border-accent/30 p-5 hover:border-accent/50 transition-all group cursor-pointer">
+          <div className="relative overflow-hidden rounded-xl bg-accent/10 border border-accent/30 p-5 hover:border-accent/50 transition-all group cursor-pointer">
             <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 opacity-10">
               <Brain className="w-full h-full" />
             </div>

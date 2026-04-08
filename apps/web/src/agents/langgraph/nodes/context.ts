@@ -62,13 +62,32 @@ export async function loadContextNode(
       });
     }
 
-    return { enrichedContext };
+    // Retrieve relevant sports psychology knowledge via RAG
+    let ragContext = null;
+    try {
+      const { retrieveRelevantKnowledge } = await import('@/lib/knowledge');
+      const lastUserMessage = state.messages.filter(m => m._getType() === 'human').pop();
+      if (lastUserMessage) {
+        const knowledge = await retrieveRelevantKnowledge(
+          typeof lastUserMessage.content === 'string' ? lastUserMessage.content : '',
+          { topK: 4 }
+        );
+        if (knowledge.length > 0) {
+          ragContext = knowledge;
+        }
+      }
+    } catch (ragError) {
+      console.error('[LANGGRAPH:CONTEXT] RAG retrieval failed, continuing without:', ragError);
+    }
+
+    return { enrichedContext, ragContext };
   } catch (error) {
     console.error('[LANGGRAPH:CONTEXT] Failed to load enriched context:', error);
 
     // Continue without enriched context - agent will still work but be less personalized
     return {
       enrichedContext: null,
+      ragContext: null,
       error: state.error
         ? `${state.error}; Context loading failed`
         : `Context loading failed: ${error instanceof Error ? error.message : 'Unknown'}`,
