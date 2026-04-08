@@ -11,7 +11,6 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Slider from '@react-native-community/slider';
 import { getStoredUserId } from '../../lib/auth';
 import { createMoodLog } from '../../lib/apiWithFallback';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
@@ -28,6 +27,11 @@ interface SliderFieldProps {
 }
 
 function SliderField({ label, icon, value, onValueChange, min = 1, max = 10, step = 1, suffix = '/10' }: SliderFieldProps) {
+  const steps: number[] = [];
+  for (let i = min; i <= max; i += step) {
+    steps.push(Math.round(i * 10) / 10);
+  }
+
   return (
     <View style={styles.sliderCard}>
       <View style={styles.sliderHeader}>
@@ -37,17 +41,19 @@ function SliderField({ label, icon, value, onValueChange, min = 1, max = 10, ste
         </View>
         <Text style={styles.sliderValue}>{value}{suffix}</Text>
       </View>
-      <Slider
-        style={styles.slider}
-        minimumValue={min}
-        maximumValue={max}
-        step={step}
-        value={value}
-        onValueChange={onValueChange}
-        minimumTrackTintColor={Colors.accent}
-        maximumTrackTintColor={Colors.gray700}
-        thumbTintColor={Colors.accent}
-      />
+      <View style={styles.stepRow}>
+        {steps.map((s) => (
+          <TouchableOpacity
+            key={s}
+            style={[styles.stepDot, s === value && styles.stepDotActive]}
+            onPress={() => onValueChange(s)}
+          >
+            <Text style={[styles.stepDotText, s === value && styles.stepDotTextActive]}>
+              {Number.isInteger(s) ? s : s.toFixed(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       <View style={styles.sliderLabels}>
         <Text style={styles.sliderLabelText}>Low</Text>
         <Text style={styles.sliderLabelText}>High</Text>
@@ -147,13 +153,13 @@ export default function CheckinScreen() {
         />
 
         <SliderField
-          label="Sleep"
+          label="Sleep (hours)"
           icon="moon-outline"
           value={sleep}
           onValueChange={setSleep}
-          min={0}
+          min={3}
           max={12}
-          step={0.5}
+          step={1}
           suffix="h"
         />
 
@@ -275,9 +281,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.accent,
   },
-  slider: {
-    width: '100%',
-    height: 40,
+  stepRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: Spacing.sm,
+  },
+  stepDot: {
+    minWidth: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.backgroundSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  stepDotActive: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+  stepDotText: {
+    fontSize: Typography.xs,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  stepDotTextActive: {
+    color: '#fff',
   },
   sliderLabels: {
     flexDirection: 'row',

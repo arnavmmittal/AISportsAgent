@@ -82,10 +82,8 @@ function RootLayoutNav() {
           const data = response.notification.request.content.data;
           if (data.type === 'crisis_alert') {
             router.push('/(tabs)/chat');
-          } else if (data.type === 'assignment_reminder') {
-            router.push('/(tabs)/assignments');
-          } else if (data.type === 'goal_milestone') {
-            router.push('/(tabs)/goals');
+          } else {
+            router.push('/(tabs)/chat');
           }
         }
       );
@@ -108,7 +106,7 @@ function RootLayoutNav() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/welcome');
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(tabs)/dashboard');
+      router.replace('/(tabs)/chat');
     }
   }, [isAuthenticated]);
 

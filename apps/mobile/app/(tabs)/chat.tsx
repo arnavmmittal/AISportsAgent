@@ -25,7 +25,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState(`session_${Date.now()}`);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [userId, setUserId] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -57,7 +57,7 @@ export default function ChatScreen() {
 
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
-      sessionId,
+      sessionId: sessionId || '',
       role: 'user',
       content: inputValue,
       createdAt: new Date(),
@@ -73,7 +73,7 @@ export default function ChatScreen() {
         ...prev,
         {
           id: assistantId,
-          sessionId,
+          sessionId: sessionId || '',
           role: 'assistant',
           content: '',
           createdAt: new Date(),

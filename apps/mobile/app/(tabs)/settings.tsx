@@ -91,13 +91,14 @@ export default function SettingsScreen() {
 
   const loadConsentSettings = async () => {
     try {
-      // Fetch athlete consent settings from API
       const response = await apiClient.getConsentSettings();
-      setConsentChatSummaries(response.consent.consentChatSummaries);
-      setConsentCoachView(response.consent.consentCoachView);
+      const consent = response?.consent;
+      if (consent) {
+        setConsentChatSummaries(consent.consentChatSummaries ?? false);
+        setConsentCoachView(consent.consentCoachView ?? true);
+      }
     } catch (error) {
       console.error('Failed to load consent settings:', error);
-      // Don't show alert - just log the error
     } finally {
       setIsLoading(false);
     }

@@ -328,11 +328,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 56,
     borderWidth: 1.5,
-    borderColor: Colors.gray200,
+    borderColor: Colors.borderLight,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.gray50,
+    backgroundColor: Colors.cardElevated,
   },
   inputIcon: {
     marginRight: Spacing.sm,
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.gray200,
+    backgroundColor: Colors.borderLight,
   },
   dividerText: {
     marginHorizontal: Spacing.md,
@@ -385,8 +385,8 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: BorderRadius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.accent,
+    backgroundColor: Colors.cardElevated,
     gap: Spacing.sm,
     marginBottom: Spacing.lg,
   },

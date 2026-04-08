@@ -31,7 +31,7 @@ export default function Index() {
 
   // Redirect to appropriate screen
   // Unauthenticated users see welcome screen with login/signup options
-  return <Redirect href={isAuthenticated ? '/(tabs)/dashboard' : '/(auth)/welcome'} />;
+  return <Redirect href={isAuthenticated ? '/(tabs)/chat' : '/(auth)/welcome'} />;
 }
 
 const styles = StyleSheet.create({

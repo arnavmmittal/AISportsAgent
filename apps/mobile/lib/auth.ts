@@ -177,14 +177,6 @@ export async function initializeAuth() {
  * Get the appropriate route based on user role
  */
 export function getRoleBasedRoute(role: 'ATHLETE' | 'COACH' | 'ADMIN'): string {
-  switch (role) {
-    case 'ATHLETE':
-      return '/(tabs)/dashboard';
-    case 'COACH':
-      return '/(coach)/dashboard';  // TODO: Create coach dashboard
-    case 'ADMIN':
-      return '/(admin)/dashboard';  // TODO: Create admin dashboard
-    default:
-      return '/(tabs)/dashboard';
-  }
+  // Mobile is athlete-only — all roles land on the chat tab
+  return '/(tabs)/chat';
 }

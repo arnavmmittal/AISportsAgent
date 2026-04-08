@@ -334,11 +334,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 56,
     borderWidth: 1.5,
-    borderColor: Colors.gray200,
+    borderColor: Colors.borderLight,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.gray50,
+    backgroundColor: Colors.cardElevated,
   },
   inputIcon: {
     marginRight: Spacing.sm,
