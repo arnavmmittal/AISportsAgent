@@ -40,7 +40,7 @@ export default function EmptyState({
       {icon && (
         <div
           className={cn(
-            'rounded-full bg-slate-800 flex items-center justify-center text-slate-400 mb-4',
+            'rounded-full bg-card flex items-center justify-center text-muted-foreground mb-4',
             isCompact ? 'w-12 h-12 text-2xl' : 'w-16 h-16 text-4xl'
           )}
         >
@@ -51,7 +51,7 @@ export default function EmptyState({
       {/* Title */}
       <h3
         className={cn(
-          'font-semibold text-slate-200 mb-2',
+          'font-semibold text-foreground mb-2',
           isCompact ? 'text-base' : 'text-lg'
         )}
       >
@@ -62,7 +62,7 @@ export default function EmptyState({
       {description && (
         <p
           className={cn(
-            'text-slate-400 mb-6 max-w-md',
+            'text-muted-foreground mb-6 max-w-md',
             isCompact ? 'text-sm' : 'text-base'
           )}
         >

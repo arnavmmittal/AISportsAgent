@@ -188,11 +188,11 @@ export default function PatternDetection() {
         ].map(cat => (
           <div
             key={cat.type}
-            className="p-3 bg-slate-800/50 border border-slate-700 rounded-lg text-center"
+            className="p-3 bg-card/50 border border-border rounded-lg text-center"
           >
             <div className="text-2xl mb-1">{cat.icon}</div>
             <div className="text-2xl font-bold text-white mb-1">{cat.count}</div>
-            <div className="text-xs text-slate-400">{cat.label}</div>
+            <div className="text-xs text-muted-foreground">{cat.label}</div>
           </div>
         ))}
       </div>
@@ -211,7 +211,7 @@ export default function PatternDetection() {
                   ? 'bg-muted-foreground/20 border-muted-foreground'
                   : pattern.severity === 'warning'
                   ? 'bg-muted-foreground/20/20 border-muted-foreground'
-                  : 'bg-blue-900/20 border-blue-700'
+                  : 'bg-primary/10 border-primary/50'
               }`}
             >
               <div className="flex items-start justify-between mb-3">
@@ -230,15 +230,15 @@ export default function PatternDetection() {
                           ? 'bg-muted-foreground/20/50 text-chrome'
                           : pattern.severity === 'warning'
                           ? 'bg-muted-foreground/20/50 text-chrome'
-                          : 'bg-blue-900/50 text-blue-300'
+                          : 'bg-primary/20 text-primary'
                       }`}
                     >
                       {pattern.severity.toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-200 mb-3">{pattern.description}</p>
+                  <p className="text-sm text-foreground mb-3">{pattern.description}</p>
 
-                  <div className="flex items-center gap-4 text-xs text-slate-400 mb-3">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                     <span>Detected: {new Date(pattern.detectedAt).toLocaleString()}</span>
                     <span>•</span>
                     <span>{pattern.affectedAthletes} athlete{pattern.affectedAthletes !== 1 ? 's' : ''}</span>
@@ -248,11 +248,11 @@ export default function PatternDetection() {
 
                   {/* Evidence */}
                   <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-slate-400 uppercase mb-2">Evidence:</h4>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Evidence:</h4>
                     <ul className="space-y-1">
                       {pattern.evidence.map((item, idx) => (
-                        <li key={idx} className="text-sm text-slate-300 flex items-start">
-                          <span className="text-blue-400 mr-2">•</span>
+                        <li key={idx} className="text-sm text-muted-foreground flex items-start">
+                          <span className="text-primary mr-2">•</span>
                           {item}
                         </li>
                       ))}
@@ -260,16 +260,16 @@ export default function PatternDetection() {
                   </div>
 
                   {/* Implications */}
-                  <div className="p-3 bg-slate-900/50 rounded border border-slate-600 mb-3">
+                  <div className="p-3 bg-card rounded border border-border mb-3">
                     <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">
                       Implications:
                     </h4>
-                    <p className="text-sm text-slate-200">{pattern.implications}</p>
+                    <p className="text-sm text-foreground">{pattern.implications}</p>
                   </div>
 
                   {/* Recommended Action */}
-                  <div className="p-3 bg-blue-900/30 rounded border border-blue-600">
-                    <h4 className="text-xs font-semibold text-blue-400 uppercase mb-1">
+                  <div className="p-3 bg-primary/15 rounded border border-primary">
+                    <h4 className="text-xs font-semibold text-primary uppercase mb-1">
                       Recommended Action:
                     </h4>
                     <p className="text-sm text-white">{pattern.recommendedAction}</p>
@@ -284,45 +284,45 @@ export default function PatternDetection() {
       {/* Detection Methods */}
       <DashboardSection title="🤖 Pattern Detection Methods">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">Anomaly Detection</h4>
-            <p className="text-sm text-slate-300 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               Identifies unusual data points that deviate from expected patterns
             </p>
-            <ul className="space-y-1 text-xs text-slate-400">
+            <ul className="space-y-1 text-xs text-muted-foreground">
               <li>• Isolation Forest algorithm for multivariate anomalies</li>
               <li>• Statistical outlier detection (z-score, IQR methods)</li>
               <li>• Time-series anomaly detection for trends</li>
             </ul>
           </div>
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">Correlation Analysis</h4>
-            <p className="text-sm text-slate-300 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               Discovers relationships between variables across athlete population
             </p>
-            <ul className="space-y-1 text-xs text-slate-400">
+            <ul className="space-y-1 text-xs text-muted-foreground">
               <li>• Pearson & Spearman correlation coefficients</li>
               <li>• Lagged correlation for delayed effects</li>
               <li>• Partial correlation controlling for confounds</li>
             </ul>
           </div>
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">Trend Detection</h4>
-            <p className="text-sm text-slate-300 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               Identifies emerging patterns and directional changes over time
             </p>
-            <ul className="space-y-1 text-xs text-slate-400">
+            <ul className="space-y-1 text-xs text-muted-foreground">
               <li>• Mann-Kendall test for monotonic trends</li>
               <li>• Moving average crossover signals</li>
               <li>• Exponential smoothing for forecasting</li>
             </ul>
           </div>
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">Cluster Analysis</h4>
-            <p className="text-sm text-slate-300 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               Groups athletes with similar patterns for targeted interventions
             </p>
-            <ul className="space-y-1 text-xs text-slate-400">
+            <ul className="space-y-1 text-xs text-muted-foreground">
               <li>• K-means clustering for behavior segmentation</li>
               <li>• DBSCAN for density-based grouping</li>
               <li>• Hierarchical clustering for archetype discovery</li>

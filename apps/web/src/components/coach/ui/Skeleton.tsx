@@ -18,7 +18,7 @@ export default function Skeleton({
   rows,
   height,
 }: SkeletonProps) {
-  const baseStyles = 'animate-pulse bg-slate-700/50';
+  const baseStyles = 'animate-pulse bg-muted/50';
 
   if (variant === 'text' && rows) {
     return (
@@ -55,7 +55,7 @@ export default function Skeleton({
     return (
       <div
         className={cn(
-          'rounded-lg border border-slate-700 bg-slate-800/50 p-6 space-y-4',
+          'rounded-lg border border-border bg-card/50 p-6 space-y-4',
           className
         )}
       >
@@ -77,7 +77,7 @@ export default function Skeleton({
 // Skeleton for athlete card
 export function SkeletonAthleteCard() {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 space-y-4">
+    <div className="rounded-lg border border-border bg-card/50 p-4 space-y-4">
       {/* Header with avatar and name */}
       <div className="flex items-center gap-3">
         <Skeleton variant="avatar" />
@@ -106,7 +106,7 @@ export function SkeletonAthleteCard() {
 // Skeleton for stat card
 export function SkeletonStatCard() {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6 space-y-3">
+    <div className="rounded-lg border border-border bg-card/50 p-6 space-y-3">
       <div className="flex items-start justify-between">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="w-8 h-8 rounded-md" />
@@ -120,7 +120,7 @@ export function SkeletonStatCard() {
 // Skeleton for table row
 export function SkeletonTableRow({ columns = 4 }: { columns?: number }) {
   return (
-    <div className="flex items-center gap-4 p-4 border-b border-slate-700">
+    <div className="flex items-center gap-4 p-4 border-b border-border">
       {Array.from({ length: columns }).map((_, i) => (
         <Skeleton
           key={i}
@@ -137,9 +137,9 @@ export function SkeletonTableRow({ columns = 4 }: { columns?: number }) {
 // Skeleton for table
 export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800/50 overflow-hidden">
+    <div className="rounded-lg border border-border bg-card/50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-4 p-4 border-b border-slate-700 bg-slate-800/70">
+      <div className="flex items-center gap-4 p-4 border-b border-border bg-card/70">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton
             key={i}
@@ -162,7 +162,7 @@ export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; column
 // Skeleton for chart
 export function SkeletonChart({ height = 'h-64' }: { height?: string }) {
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6 space-y-4">
+    <div className="rounded-lg border border-border bg-card/50 p-6 space-y-4">
       <div className="flex items-center justify-between">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-8 w-24 rounded-md" />

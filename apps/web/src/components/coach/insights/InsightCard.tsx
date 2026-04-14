@@ -17,8 +17,6 @@ import {
   ChevronRight,
   Sparkles,
   BarChart3,
-  Flame,
-  Calendar,
   Lightbulb,
   Activity,
 } from 'lucide-react';
@@ -30,7 +28,7 @@ interface InsightMetric {
 }
 
 interface InsightCardProps {
-  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert' | 'burnout' | 'forecast' | 'intervention' | 'deep_insight' | 'intervention_outcome';
+  category: 'correlation' | 'prediction' | 'effective-technique' | 'pattern' | 'alert' | 'intervention' | 'deep_insight' | 'intervention_outcome';
   priority: 'high' | 'medium' | 'low' | 'critical';
   headline: string;
   detail: string;
@@ -46,11 +44,11 @@ const CATEGORY_CONFIG = {
   correlation: {
     icon: BarChart3,
     label: 'Performance Correlation',
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500/30',
-    iconBg: 'bg-blue-500/20',
-    iconColor: 'text-blue-400',
-    badge: 'bg-blue-500/20 text-blue-300',
+    bg: 'bg-primary/10',
+    border: 'border-primary/30',
+    iconBg: 'bg-primary/20',
+    iconColor: 'text-primary',
+    badge: 'bg-primary/20 text-primary',
   },
   prediction: {
     icon: Brain,
@@ -64,11 +62,11 @@ const CATEGORY_CONFIG = {
   'effective-technique': {
     icon: Target,
     label: 'Effective Technique',
-    bg: 'bg-green-500/10',
-    border: 'border-green-500/30',
-    iconBg: 'bg-green-500/20',
-    iconColor: 'text-green-400',
-    badge: 'bg-green-500/20 text-green-300',
+    bg: 'bg-success/10',
+    border: 'border-success/30',
+    iconBg: 'bg-success/20',
+    iconColor: 'text-success',
+    badge: 'bg-success/20 text-success',
   },
   pattern: {
     icon: TrendingUp,
@@ -82,38 +80,20 @@ const CATEGORY_CONFIG = {
   alert: {
     icon: AlertTriangle,
     label: 'Attention Needed',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/30',
-    iconBg: 'bg-red-500/20',
-    iconColor: 'text-red-400',
-    badge: 'bg-red-500/20 text-red-300',
-  },
-  burnout: {
-    icon: Flame,
-    label: 'Burnout Risk',
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/30',
-    iconBg: 'bg-orange-500/20',
-    iconColor: 'text-orange-400',
-    badge: 'bg-orange-500/20 text-orange-300',
-  },
-  forecast: {
-    icon: Calendar,
-    label: 'Readiness Forecast',
-    bg: 'bg-sky-500/10',
-    border: 'border-sky-500/30',
-    iconBg: 'bg-sky-500/20',
-    iconColor: 'text-sky-400',
-    badge: 'bg-sky-500/20 text-sky-300',
+    bg: 'bg-destructive/10',
+    border: 'border-destructive/30',
+    iconBg: 'bg-destructive/20',
+    iconColor: 'text-destructive',
+    badge: 'bg-destructive/20 text-destructive',
   },
   intervention: {
     icon: Lightbulb,
     label: 'Intervention',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
-    iconBg: 'bg-yellow-500/20',
-    iconColor: 'text-yellow-400',
-    badge: 'bg-yellow-500/20 text-yellow-300',
+    bg: 'bg-warning/10',
+    border: 'border-warning/30',
+    iconBg: 'bg-warning/20',
+    iconColor: 'text-warning',
+    badge: 'bg-warning/20 text-warning',
   },
   deep_insight: {
     icon: Sparkles,
@@ -136,7 +116,7 @@ const CATEGORY_CONFIG = {
 };
 
 const PRIORITY_STYLES = {
-  critical: 'ring-2 ring-red-500/50',
+  critical: 'ring-2 ring-destructive/50',
   high: 'ring-2 ring-primary/30',
   medium: '',
   low: 'opacity-90',
@@ -186,7 +166,7 @@ export function InsightCard({
             </span>
           </div>
           {athleteName && (
-            <span className="text-xs text-slate-400 bg-slate-800/50 px-2 py-1 rounded">
+            <span className="text-xs text-muted-foreground bg-card/50 px-2 py-1 rounded">
               {athleteName}
             </span>
           )}
@@ -204,19 +184,19 @@ export function InsightCard({
               {metric.value}
             </span>
             {metric.unit && (
-              <span className="text-lg text-slate-400">{metric.unit}</span>
+              <span className="text-lg text-muted-foreground">{metric.unit}</span>
             )}
-            <span className="text-sm text-slate-400 ml-2">{metric.label}</span>
+            <span className="text-sm text-muted-foreground ml-2">{metric.label}</span>
           </div>
         )}
 
         {/* Detail text */}
-        <p className="text-sm text-slate-300 mb-3">
+        <p className="text-sm text-muted-foreground mb-3">
           {detail}
         </p>
 
         {/* Evidence/confidence */}
-        <div className="flex items-center gap-4 text-xs text-slate-400 mb-3">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
           <span className="flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             {Math.round(confidence * 100)}% confidence
@@ -226,10 +206,10 @@ export function InsightCard({
 
         {/* Actionable recommendation */}
         {actionable && (
-          <div className="mt-3 pt-3 border-t border-slate-700/50">
+          <div className="mt-3 pt-3 border-t border-border/50">
             <div className="flex items-center gap-2 text-sm">
               <Zap className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <span className="text-slate-200">{actionable}</span>
+              <span className="text-foreground">{actionable}</span>
             </div>
           </div>
         )}
@@ -237,7 +217,7 @@ export function InsightCard({
         {/* Click indicator */}
         {isClickable && (
           <div className="absolute bottom-4 right-4">
-            <ChevronRight className="w-5 h-5 text-slate-400" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </div>
         )}
       </div>
@@ -298,20 +278,20 @@ export function FeaturedInsightCard({
               {metric.value}
             </span>
             {metric.unit && (
-              <span className="text-2xl text-slate-400">{metric.unit}</span>
+              <span className="text-2xl text-muted-foreground">{metric.unit}</span>
             )}
-            <span className="text-lg text-slate-400 ml-2">{metric.label}</span>
+            <span className="text-lg text-muted-foreground ml-2">{metric.label}</span>
           </div>
         )}
 
         {/* Detail */}
-        <p className="text-lg text-slate-300 mb-6 max-w-2xl">
+        <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
           {detail}
         </p>
 
         {/* Evidence */}
-        <div className="flex items-center gap-4 text-sm text-slate-400 mb-4">
-          <span className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-full">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+          <span className="flex items-center gap-2 bg-card/50 px-3 py-1.5 rounded-full">
             <Sparkles className="w-4 h-4 text-primary" />
             {Math.round(confidence * 100)}% confidence
           </span>
@@ -320,7 +300,7 @@ export function FeaturedInsightCard({
 
         {/* Actionable */}
         {actionable && (
-          <div className="flex items-start gap-3 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+          <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border/50">
             <Zap className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
               <span className="text-xs font-medium text-amber-400 uppercase tracking-wide">
@@ -350,30 +330,30 @@ export function InsightSummaryBar({
   effectiveTechniques: number;
 }) {
   return (
-    <div className="flex flex-wrap gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+    <div className="flex flex-wrap gap-4 p-4 bg-card/50 rounded-xl border border-border">
       <div className="flex items-center gap-2">
-        <BarChart3 className="w-4 h-4 text-blue-400" />
-        <span className="text-sm text-slate-300">
+        <BarChart3 className="w-4 h-4 text-primary" />
+        <span className="text-sm text-muted-foreground">
           <strong className="text-white">{correlationsFound}</strong> significant correlations
         </span>
       </div>
       <div className="flex items-center gap-2">
         <Brain className="w-4 h-4 text-accent" />
-        <span className="text-sm text-slate-300">
+        <span className="text-sm text-muted-foreground">
           <strong className="text-white">{athletesAnalyzed}</strong> athletes analyzed
         </span>
       </div>
       {atRiskCount > 0 && (
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-red-400" />
-          <span className="text-sm text-slate-300">
+          <AlertTriangle className="w-4 h-4 text-destructive" />
+          <span className="text-sm text-muted-foreground">
             <strong className="text-white">{atRiskCount}</strong> need attention
           </span>
         </div>
       )}
       <div className="flex items-center gap-2">
-        <Target className="w-4 h-4 text-green-400" />
-        <span className="text-sm text-slate-300">
+        <Target className="w-4 h-4 text-success" />
+        <span className="text-sm text-muted-foreground">
           <strong className="text-white">{effectiveTechniques}</strong> effective techniques
         </span>
       </div>

@@ -59,11 +59,11 @@ export default function PrivacyConsent() {
       {/* Privacy Policy */}
       <DashboardSection title="Privacy & FERPA Compliance">
         <div className="space-y-4">
-          <div className="p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
-            <h4 className="text-sm font-semibold text-blue-400 mb-2">
+          <div className="p-4 bg-primary/10 border border-primary/50 rounded-lg">
+            <h4 className="text-sm font-semibold text-primary mb-2">
               🔒 FERPA-Compliant Data Handling
             </h4>
-            <ul className="space-y-1 text-sm text-slate-300">
+            <ul className="space-y-1 text-sm text-muted-foreground">
               <li>• Athletes must explicitly consent before coaches can view detailed data</li>
               <li>• All data encrypted at rest and in transit</li>
               <li>• Access logs maintained for audit compliance</li>
@@ -71,14 +71,14 @@ export default function PrivacyConsent() {
             </ul>
           </div>
 
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">
               What Coaches Can See
             </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="font-semibold text-accent mb-1">With Consent:</p>
-                <ul className="space-y-1 text-slate-300">
+                <ul className="space-y-1 text-muted-foreground">
                   <li>• Readiness scores & trends</li>
                   <li>• Mood & stress logs</li>
                   <li>• Goal progress</li>
@@ -88,7 +88,7 @@ export default function PrivacyConsent() {
               </div>
               <div>
                 <p className="font-semibold text-muted-foreground mb-1">Without Consent:</p>
-                <ul className="space-y-1 text-slate-300">
+                <ul className="space-y-1 text-muted-foreground">
                   <li>• Name & sport only</li>
                   <li>• No wellness data</li>
                   <li>• No chat access</li>
@@ -117,7 +117,7 @@ export default function PrivacyConsent() {
             >
               <div>
                 <h4 className="text-sm font-semibold text-white mb-1">{athlete.name}</h4>
-                <p className="text-xs text-slate-400">{athlete.sport}</p>
+                <p className="text-xs text-muted-foreground">{athlete.sport}</p>
               </div>
               <div className="text-right">
                 <span
@@ -134,12 +134,12 @@ export default function PrivacyConsent() {
                   {athlete.status === 'denied' && '✗ Access Denied'}
                 </span>
                 {athlete.date && (
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Since {new Date(athlete.date).toLocaleDateString()}
                   </p>
                 )}
                 {athlete.status === 'pending' && (
-                  <button className="mt-2 text-xs text-blue-400 hover:text-blue-300">
+                  <button className="mt-2 text-xs text-primary hover:text-primary/80">
                     Send Reminder
                   </button>
                 )}
@@ -153,23 +153,23 @@ export default function PrivacyConsent() {
       <DashboardSection title="Data Retention Policy">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Data Retention Period
             </label>
-            <select className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500">
+            <select className="w-full px-4 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary">
               <option value="1-year">1 Year after graduation</option>
               <option value="2-years">2 Years after graduation</option>
               <option value="5-years">5 Years after graduation</option>
               <option value="indefinite">Indefinite (with consent)</option>
             </select>
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               How long to retain athlete data after they leave the program
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <input type="checkbox" id="autoDelete" className="rounded" defaultChecked />
-            <label htmlFor="autoDelete" className="text-sm text-slate-300">
+            <label htmlFor="autoDelete" className="text-sm text-muted-foreground">
               Automatically delete data when retention period expires
             </label>
           </div>

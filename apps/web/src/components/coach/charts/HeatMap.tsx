@@ -71,7 +71,7 @@ export default function HeatMap({
   return (
     <div className={cn('w-full overflow-x-auto', className)}>
       {title && (
-        <h4 className="text-sm font-medium text-slate-300 mb-4">{title}</h4>
+        <h4 className="text-sm font-medium text-muted-foreground mb-4">{title}</h4>
       )}
 
       <div className="inline-block min-w-full">
@@ -81,7 +81,7 @@ export default function HeatMap({
           {xLabels.map((label, index) => (
             <div
               key={index}
-              className="text-xs text-slate-400 text-center font-medium"
+              className="text-xs text-muted-foreground text-center font-medium"
               style={{ width: cellSize }}
             >
               {label}
@@ -94,7 +94,7 @@ export default function HeatMap({
           <div key={rowIndex} className="flex items-center mt-1">
             {/* Y-axis label */}
             <div
-              className="text-xs text-slate-400 text-right pr-2 font-medium"
+              className="text-xs text-muted-foreground text-right pr-2 font-medium"
               style={{ width: cellSize * 2 }}
             >
               {yLabels[rowIndex]}
@@ -127,26 +127,26 @@ export default function HeatMap({
 
         {/* Legend */}
         <div className="mt-4 flex items-center gap-4 text-xs">
-          <span className="text-slate-400">Readiness:</span>
+          <span className="text-muted-foreground">Readiness:</span>
           <div className="flex items-center gap-2">
             <div className="bg-secondary w-4 h-4 rounded-sm" />
-            <span className="text-slate-300">Optimal</span>
+            <span className="text-muted-foreground">Optimal</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="bg-accent w-4 h-4 rounded-sm" />
-            <span className="text-slate-300">Good</span>
+            <span className="text-muted-foreground">Good</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="bg-muted w-4 h-4 rounded-sm" />
-            <span className="text-slate-300">Moderate</span>
+            <span className="text-muted-foreground">Moderate</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="bg-muted-foreground w-4 h-4 rounded-sm" />
-            <span className="text-slate-300">Low</span>
+            <span className="text-muted-foreground">Low</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="bg-muted-foreground/70 w-4 h-4 rounded-sm" />
-            <span className="text-slate-300">Poor</span>
+            <span className="text-muted-foreground">Poor</span>
           </div>
         </div>
       </div>
@@ -269,7 +269,7 @@ export function CalendarHeatMap({
       <div className="inline-block">
         <div className="flex mb-2">
           {monthLabels.map((month, i) => (
-            <div key={i} className="text-xs text-slate-400 mr-12">
+            <div key={i} className="text-xs text-muted-foreground mr-12">
               {month}
             </div>
           ))}
@@ -285,7 +285,7 @@ export function CalendarHeatMap({
                     key={dayIndex}
                     className={cn(
                       'w-3 h-3 rounded-sm',
-                      day.value > 0 ? color : 'bg-slate-800'
+                      day.value > 0 ? color : 'bg-card'
                     )}
                     title={`${day.label}: ${day.value}`}
                   />

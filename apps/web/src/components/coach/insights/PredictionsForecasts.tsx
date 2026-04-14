@@ -24,22 +24,6 @@ export default function PredictionsForecasts() {
   // TODO: Replace with ML predictions from /api/coach/insights/predictions
   const predictions: Prediction[] = [
     {
-      id: 'p1',
-      type: 'risk',
-      title: 'Burnout Risk Alert: Mike Chen',
-      description: 'Based on 7-day declining readiness pattern, elevated stress, and sleep debt, ML model predicts 78% probability of burnout within next 10 days if no intervention occurs.',
-      confidence: 78,
-      timeframe: '10 days',
-      impact: 'high',
-      actionable: true,
-      suggestedActions: [
-        'Schedule immediate 1-on-1 check-in',
-        'Reduce training load 20-30% this week',
-        'Coordinate with academic advisor for finals support',
-        'Prescribe sleep optimization protocol',
-      ],
-    },
-    {
       id: 'p2',
       type: 'performance',
       title: 'Peak Performance Window: Sarah Johnson',
@@ -161,8 +145,8 @@ export default function PredictionsForecasts() {
                   : prediction.type === 'performance' && prediction.impact === 'high'
                   ? 'bg-secondary/20 border-secondary'
                   : prediction.type === 'intervention'
-                  ? 'bg-blue-900/20 border-blue-700'
-                  : 'bg-slate-800/50 border-slate-700'
+                  ? 'bg-primary/10 border-primary/50'
+                  : 'bg-card/50 border-border'
               }`}
             >
               <div className="flex items-start justify-between mb-3">
@@ -183,35 +167,35 @@ export default function PredictionsForecasts() {
                           ? 'bg-muted-foreground/20/50 text-chrome'
                           : prediction.impact === 'medium'
                           ? 'bg-muted-foreground/20/50 text-chrome'
-                          : 'bg-blue-900/50 text-blue-300'
+                          : 'bg-primary/20 text-primary'
                       }`}
                     >
                       {prediction.impact.toUpperCase()} IMPACT
                     </span>
                   </div>
-                  <p className="text-sm text-slate-200 mb-3">{prediction.description}</p>
+                  <p className="text-sm text-foreground mb-3">{prediction.description}</p>
 
-                  <div className="flex items-center gap-4 text-xs text-slate-400 mb-3">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                     <span className="flex items-center gap-1">
-                      <span className="text-blue-400">Confidence:</span>
+                      <span className="text-primary">Confidence:</span>
                       <span className="font-semibold text-white">{prediction.confidence}%</span>
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
-                      <span className="text-blue-400">Timeframe:</span>
+                      <span className="text-primary">Timeframe:</span>
                       <span className="text-white">{prediction.timeframe}</span>
                     </span>
                   </div>
 
                   {/* Confidence Bar */}
                   <div className="mb-4">
-                    <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${
                           prediction.confidence >= 80
                             ? 'bg-secondary/100'
                             : prediction.confidence >= 60
-                            ? 'bg-blue-500'
+                            ? 'bg-primary'
                             : 'bg-muted/100'
                         }`}
                         style={{ width: `${prediction.confidence}%` }}
@@ -221,14 +205,14 @@ export default function PredictionsForecasts() {
 
                   {/* Suggested Actions */}
                   {prediction.actionable && prediction.suggestedActions.length > 0 && (
-                    <div className="mt-3 p-3 bg-slate-900/50 rounded border border-slate-600">
-                      <h4 className="text-xs font-semibold text-slate-400 uppercase mb-2">
+                    <div className="mt-3 p-3 bg-card rounded border border-border">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
                         Suggested Actions:
                       </h4>
                       <ul className="space-y-1">
                         {prediction.suggestedActions.map((action, idx) => (
-                          <li key={idx} className="text-sm text-slate-300 flex items-start">
-                            <span className="text-blue-400 mr-2">→</span>
+                          <li key={idx} className="text-sm text-muted-foreground flex items-start">
+                            <span className="text-primary mr-2">→</span>
                             {action}
                           </li>
                         ))}
@@ -245,22 +229,22 @@ export default function PredictionsForecasts() {
       {/* Model Info */}
       <DashboardSection title="🤖 About These Predictions">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">
               Machine Learning Models Used
             </h4>
-            <ul className="space-y-1 text-sm text-slate-300">
+            <ul className="space-y-1 text-sm text-muted-foreground">
               <li>• Gradient Boosting (XGBoost) for risk prediction</li>
               <li>• LSTM neural networks for time-series forecasting</li>
               <li>• Random Forest for intervention success prediction</li>
               <li>• Ensemble methods for performance prediction</li>
             </ul>
           </div>
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">
               Data Sources & Features
             </h4>
-            <ul className="space-y-1 text-sm text-slate-300">
+            <ul className="space-y-1 text-sm text-muted-foreground">
               <li>• 30-day historical readiness, mood, stress patterns</li>
               <li>• Assignment completion rates & quality</li>
               <li>• Sleep duration & quality trends</li>
@@ -268,22 +252,22 @@ export default function PredictionsForecasts() {
               <li>• Archetype-specific behavioral patterns</li>
             </ul>
           </div>
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">
               Model Validation
             </h4>
-            <ul className="space-y-1 text-sm text-slate-300">
+            <ul className="space-y-1 text-sm text-muted-foreground">
               <li>• Cross-validated on 1000+ athlete-seasons</li>
               <li>• 82% accuracy for 7-day readiness forecasts</li>
-              <li>• 76% accuracy for burnout risk (14-day window)</li>
+              <li>• 76% accuracy for risk detection (14-day window)</li>
               <li>• Continuously retrained with new data</li>
             </ul>
           </div>
-          <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="p-4 bg-card/50 border border-border rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-2">
               Important Notes
             </h4>
-            <ul className="space-y-1 text-sm text-slate-300">
+            <ul className="space-y-1 text-sm text-muted-foreground">
               <li>• Predictions are probabilistic, not deterministic</li>
               <li>• Always combine AI insights with coach judgment</li>
               <li>• Models improve over time with more data</li>

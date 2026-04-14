@@ -106,7 +106,7 @@ export function TeamHeatmap({ coachId, days = 14 }: TeamHeatmapProps) {
       case 'OPTIMAL':
         return 'bg-secondary/100';
       case 'GOOD':
-        return 'bg-blue-500';
+        return 'bg-primary';
       case 'MODERATE':
         return 'bg-muted/100';
       case 'LOW':
@@ -114,12 +114,12 @@ export function TeamHeatmap({ coachId, days = 14 }: TeamHeatmapProps) {
       case 'POOR':
         return 'bg-muted-foreground/100';
       default:
-        return 'bg-gray-200';
+        return 'bg-muted';
     }
   };
 
   const getCellTextColor = (level: string) => {
-    return level === 'NO_DATA' ? 'text-gray-400' : 'text-white';
+    return level === 'NO_DATA' ? 'text-muted-foreground' : 'text-white';
   };
 
   const handleCellClick = (athleteId: string, date: string) => {
@@ -224,7 +224,7 @@ export function TeamHeatmap({ coachId, days = 14 }: TeamHeatmapProps) {
             <span>Optimal (85-100)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-blue-500 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-primary mr-2"></div>
             <span>Good (70-84)</span>
           </div>
           <div className="flex items-center">
@@ -240,7 +240,7 @@ export function TeamHeatmap({ coachId, days = 14 }: TeamHeatmapProps) {
             <span>Poor (&lt;45)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 rounded bg-gray-200 mr-2"></div>
+            <div className="w-4 h-4 rounded bg-muted mr-2"></div>
             <span>No data</span>
           </div>
         </div>

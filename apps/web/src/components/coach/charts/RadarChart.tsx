@@ -46,8 +46,8 @@ function CustomTooltip({ active, payload }: any) {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-lg">
-      <p className="text-sm font-medium text-slate-200 mb-2">
+    <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+      <p className="text-sm font-medium text-foreground mb-2">
         {payload[0]?.payload?.dimension}
       </p>
       <div className="space-y-1">
@@ -57,7 +57,7 @@ function CustomTooltip({ active, payload }: any) {
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-xs text-slate-300">{entry.name}:</span>
+            <span className="text-xs text-muted-foreground">{entry.name}:</span>
             <span className="text-xs font-semibold text-white">
               {entry.value}
             </span>
@@ -101,7 +101,7 @@ export default function RadarChart({
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               formatter={(value) => (
-                <span className="text-sm text-slate-300">{value}</span>
+                <span className="text-sm text-muted-foreground">{value}</span>
               )}
             />
           )}
@@ -145,7 +145,7 @@ export function ReadinessRadarChart({
   return (
     <div className="space-y-2">
       {athleteName && (
-        <h4 className="text-sm font-medium text-slate-300 text-center">
+        <h4 className="text-sm font-medium text-muted-foreground text-center">
           {athleteName}'s Readiness Profile
         </h4>
       )}
@@ -284,7 +284,7 @@ export function AthleteVsTeamRadar({
 
   return (
     <div className="space-y-2">
-      <h4 className="text-sm font-medium text-slate-300 text-center">
+      <h4 className="text-sm font-medium text-muted-foreground text-center">
         {athleteName} vs Team Average
       </h4>
       <RadarChart
@@ -328,7 +328,7 @@ export function MultiMetricRadar({
   return (
     <div className="space-y-2">
       {title && (
-        <h4 className="text-sm font-medium text-slate-300 text-center">{title}</h4>
+        <h4 className="text-sm font-medium text-muted-foreground text-center">{title}</h4>
       )}
       <RadarChart
         data={radarData}

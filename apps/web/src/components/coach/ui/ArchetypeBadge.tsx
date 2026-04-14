@@ -98,19 +98,19 @@ export default function ArchetypeBadge({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{badge}</TooltipTrigger>
-        <TooltipContent className="max-w-xs bg-slate-800 border-slate-700">
+        <TooltipContent className="max-w-xs bg-card border-border">
           <div className="space-y-2">
             <p className="text-sm font-medium text-white">
               {config.label}
             </p>
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-muted-foreground">
               {config.description}
             </p>
-            <div className="pt-2 border-t border-slate-700">
-              <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide">
+            <div className="pt-2 border-t border-border">
+              <p className="text-[10px] font-semibold text-primary uppercase tracking-wide">
                 Coaching Tip
               </p>
-              <p className="text-xs text-slate-300 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {config.coachingTip}
               </p>
             </div>

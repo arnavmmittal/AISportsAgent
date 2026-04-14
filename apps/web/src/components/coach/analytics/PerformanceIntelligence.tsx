@@ -271,7 +271,7 @@ export default function PerformanceIntelligence() {
               <TrendingUp className="w-4 h-4" />
               Likely to Excel
             </h4>
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-muted-foreground">
               {correlationData?.teamSize
                 ? `${Math.max(0, (correlationData.teamSize || 0) - atRiskAthletes.length)} athletes`
                 : 'Analyzing...'}
@@ -279,12 +279,12 @@ export default function PerformanceIntelligence() {
             </p>
           </div>
           <div className="p-4 bg-muted/20 border border-muted rounded-lg">
-            <h4 className="text-sm font-semibold text-chrome mb-2 flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-warning mb-2 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               Performance Risk ({atRiskAthletes.length})
             </h4>
             {atRiskAthletes.length > 0 ? (
-              <ul className="text-sm text-slate-300 space-y-1">
+              <ul className="text-sm text-muted-foreground space-y-1">
                 {atRiskAthletes.slice(0, 3).map((athlete) => (
                   <li key={athlete.id}>
                     {athlete.name} - {athlete.trend === 'declining' ? 'declining trend' : `readiness ${athlete.readinessScore}`}
@@ -295,7 +295,7 @@ export default function PerformanceIntelligence() {
                 )}
               </ul>
             ) : (
-              <p className="text-sm text-slate-300">No athletes currently at risk</p>
+              <p className="text-sm text-muted-foreground">No athletes currently at risk</p>
             )}
           </div>
         </div>

@@ -190,7 +190,7 @@ export function CoachDashboard() {
                 key={index}
                 className={`p-4 rounded-lg border-l-4 ${
                   rec.priority === 'high'
-                    ? 'bg-red-500/10 border-red-500'
+                    ? 'bg-destructive/10 border-destructive'
                     : rec.priority === 'medium'
                     ? 'bg-amber-500/10 border-amber-500'
                     : 'bg-primary/10 border-primary'
@@ -207,7 +207,7 @@ export function CoachDashboard() {
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded ${
                       rec.priority === 'high'
-                        ? 'bg-red-500/20 text-red-500'
+                        ? 'bg-destructive/15 text-destructive'
                         : rec.priority === 'medium'
                         ? 'bg-amber-500/20 text-amber-500'
                         : 'bg-primary/20 text-primary'
@@ -232,7 +232,7 @@ export function CoachDashboard() {
             {analytics.at_risk_athletes.map((athlete) => (
               <div
                 key={athlete.athlete_id}
-                className="p-4 bg-red-500/5 rounded-lg border border-red-500/20"
+                className="p-4 bg-destructive/5 rounded-lg border border-destructive/20"
               >
                 <div className="flex justify-between items-start">
                   <div>

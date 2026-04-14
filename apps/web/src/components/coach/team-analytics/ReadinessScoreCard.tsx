@@ -106,7 +106,7 @@ export function ReadinessScoreCard({
 
   const getTrendIcon = () => {
     if (!data.trend || data.trend === 'stable') {
-      return <Minus className="w-4 h-4 text-gray-500" />;
+      return <Minus className="w-4 h-4 text-muted-foreground" />;
     }
     return data.trend === 'improving'
       ? <TrendingUp className="w-4 h-4 text-secondary" />
@@ -120,12 +120,12 @@ export function ReadinessScoreCard({
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-gray-900">{data.athleteName}</h3>
+                <h3 className="font-semibold text-foreground">{data.athleteName}</h3>
                 {data.position && (
-                  <span className="text-sm text-gray-500">{data.position}</span>
+                  <span className="text-sm text-muted-foreground">{data.position}</span>
                 )}
               </div>
-              <p className="text-xs text-gray-600 mt-1">{config.description}</p>
+              <p className="text-xs text-muted-foreground mt-1">{config.description}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
@@ -151,11 +151,11 @@ export function ReadinessScoreCard({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl font-bold text-gray-900">
+            <CardTitle className="text-xl font-bold text-foreground">
               {data.athleteName}
             </CardTitle>
             {data.position && (
-              <p className="text-sm text-gray-600 mt-1">{data.position}</p>
+              <p className="text-sm text-muted-foreground mt-1">{data.position}</p>
             )}
           </div>
           <Badge className={`${config.badgeBg} ${config.badgeText}`}>
@@ -168,7 +168,7 @@ export function ReadinessScoreCard({
         {/* Readiness Score Display */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600 mb-1">Readiness Score</p>
+            <p className="text-sm text-muted-foreground mb-1">Readiness Score</p>
             <div className="flex items-baseline gap-2">
               <span className={`text-5xl font-bold ${config.text}`}>
                 {data.score}
@@ -178,7 +178,7 @@ export function ReadinessScoreCard({
             <p className={`text-sm font-medium ${config.text} mt-1`}>
               {config.label}
             </p>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {config.description}
             </p>
           </div>
@@ -193,7 +193,7 @@ export function ReadinessScoreCard({
                 stroke="currentColor"
                 strokeWidth="8"
                 fill="transparent"
-                className="text-gray-200"
+                className="text-border"
               />
               <circle
                 cx="48"
@@ -217,7 +217,7 @@ export function ReadinessScoreCard({
         {/* Score Trend */}
         {scoreChange !== null && (
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-600">Change from last game:</span>
+            <span className="text-muted-foreground">Change from last game:</span>
             <span className={scoreChange >= 0 ? 'text-secondary font-medium' : 'text-muted-foreground font-medium'}>
               {scoreChange >= 0 ? '+' : ''}{scoreChange.toFixed(1)} points
             </span>
@@ -226,7 +226,7 @@ export function ReadinessScoreCard({
 
         {/* Contributing Factors */}
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+          <h4 className="text-sm font-semibold text-foreground mb-3">
             Top Contributing Factors
           </h4>
           <div className="space-y-2">
@@ -238,17 +238,17 @@ export function ReadinessScoreCard({
                 <div key={index} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <Icon className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium text-gray-700">{factor.label}</span>
+                      <Icon className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium text-foreground">{factor.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">{factor.value.toFixed(1)}</span>
+                      <span className="text-muted-foreground">{factor.value.toFixed(1)}</span>
                       <span className={`font-medium ${config.text}`}>
                         +{factor.impact.toFixed(1)}
                       </span>
                     </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="w-full bg-muted rounded-full h-1.5">
                     <div
                       className={`h-1.5 rounded-full ${
                         data.level === 'GREEN' ? 'bg-secondary/100' :
@@ -264,7 +264,7 @@ export function ReadinessScoreCard({
         </div>
 
         {/* Game Date Info */}
-        <div className="pt-3 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+        <div className="pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
           <span>Game: {new Date(data.gameDate).toLocaleDateString()}</span>
           <span>Updated: {new Date(data.calculatedAt).toLocaleTimeString()}</span>
         </div>
@@ -273,7 +273,7 @@ export function ReadinessScoreCard({
         {onViewDetails && (
           <button
             onClick={onViewDetails}
-            className="w-full mt-2 px-4 py-2 bg-card border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-muted transition-colors"
+            className="w-full mt-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             View Athlete Details
           </button>

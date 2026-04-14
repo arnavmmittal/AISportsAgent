@@ -163,9 +163,9 @@ export default function DailyReadinessOverview() {
                     <h4 className="text-sm font-semibold text-white">
                       {alert.athlete}
                     </h4>
-                    <span className="text-xs text-slate-400">{alert.sport}</span>
+                    <span className="text-xs text-muted-foreground">{alert.sport}</span>
                   </div>
-                  <p className="text-sm text-slate-300 mb-2">{alert.alert}</p>
+                  <p className="text-sm text-muted-foreground mb-2">{alert.alert}</p>
                   <div className="flex items-center gap-4 text-xs">
                     <span
                       className={
@@ -176,7 +176,7 @@ export default function DailyReadinessOverview() {
                     >
                       Readiness: {alert.readiness}
                     </span>
-                    <span className="text-slate-400">
+                    <span className="text-muted-foreground">
                       Trend: {alert.trend}
                     </span>
                   </div>
@@ -195,14 +195,14 @@ export default function DailyReadinessOverview() {
         <div className="grid grid-cols-5 gap-3">
           {[
             { level: 'OPTIMAL', range: '90-100', count: 3, color: 'bg-secondary/100' },
-            { level: 'GOOD', range: '75-89', count: 8, color: 'bg-blue-500' },
+            { level: 'GOOD', range: '75-89', count: 8, color: 'bg-primary' },
             { level: 'MODERATE', range: '60-74', count: 4, color: 'bg-muted/100' },
             { level: 'LOW', range: '45-59', count: 2, color: 'bg-muted/100' },
             { level: 'POOR', range: '0-44', count: 0, color: 'bg-muted-foreground/100' },
           ].map((zone) => (
             <div
               key={zone.level}
-              className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg text-center"
+              className="p-4 bg-card/50 border border-border rounded-lg text-center"
             >
               <div
                 className={`w-12 h-12 ${zone.color} rounded-full mx-auto mb-2 flex items-center justify-center text-2xl font-bold text-white`}
@@ -212,7 +212,7 @@ export default function DailyReadinessOverview() {
               <h4 className="text-xs font-semibold text-white mb-1">
                 {zone.level}
               </h4>
-              <p className="text-xs text-slate-400">{zone.range}</p>
+              <p className="text-xs text-muted-foreground">{zone.range}</p>
             </div>
           ))}
         </div>

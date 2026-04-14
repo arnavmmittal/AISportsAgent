@@ -196,8 +196,8 @@ export default function AssignmentLibrary() {
             onClick={() => setSelectedCategory(category.id as AssignmentCategory)}
             className={`flex-shrink-0 px-4 py-2 rounded-lg border transition-all ${
               selectedCategory === category.id
-                ? 'bg-primary border-blue-500 text-white'
-                : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
+                ? 'bg-primary border-primary text-white'
+                : 'bg-card/50 border-border text-muted-foreground hover:bg-card'
             }`}
           >
             <span className="mr-2">{category.icon}</span>
@@ -213,7 +213,7 @@ export default function AssignmentLibrary() {
         placeholder="Search assignments by title or description..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+        className="w-full px-4 py-2 bg-card border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:border-primary"
       />
 
       {/* Assignment Templates */}
@@ -224,7 +224,7 @@ export default function AssignmentLibrary() {
           {filteredTemplates.map(template => (
             <div
               key={template.id}
-              className="p-5 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-800/70 transition-colors"
+              className="p-5 bg-card/50 border border-border rounded-lg hover:bg-card/70 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -235,29 +235,29 @@ export default function AssignmentLibrary() {
                         template.difficulty === 'Beginner'
                           ? 'bg-secondary/20/30 text-accent'
                           : template.difficulty === 'Intermediate'
-                          ? 'bg-blue-900/30 text-blue-400'
+                          ? 'bg-primary/15 text-primary'
                           : 'bg-accent/20/30 text-accent'
                       }`}
                     >
                       {template.difficulty}
                     </span>
                   </div>
-                  <p className="text-sm text-blue-400 mb-2">{template.framework}</p>
-                  <p className="text-sm text-slate-300 mb-3">{template.description}</p>
+                  <p className="text-sm text-primary mb-2">{template.framework}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
 
                   <div className="space-y-2 mb-3">
-                    <h4 className="text-xs font-semibold text-slate-400 uppercase">Objectives:</h4>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Objectives:</h4>
                     <ul className="space-y-1">
                       {template.objectives.map((objective, idx) => (
-                        <li key={idx} className="text-sm text-slate-300 flex items-start">
-                          <span className="text-blue-400 mr-2">•</span>
+                        <li key={idx} className="text-sm text-muted-foreground flex items-start">
+                          <span className="text-primary mr-2">•</span>
                           {objective}
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-slate-400">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>⏱️ {template.duration}</span>
                     <span>📚 {template.evidenceBase}</span>
                   </div>
@@ -265,18 +265,18 @@ export default function AssignmentLibrary() {
 
                 <div className="ml-4 text-right">
                   <div className="mb-4">
-                    <div className="text-sm text-slate-400 mb-1">Completion Rate</div>
+                    <div className="text-sm text-muted-foreground mb-1">Completion Rate</div>
                     <div className="text-2xl font-bold text-accent">
                       {template.completionRate}%
                     </div>
                   </div>
                   <div className="mb-4">
-                    <div className="text-sm text-slate-400 mb-1">Athlete Rating</div>
+                    <div className="text-sm text-muted-foreground mb-1">Athlete Rating</div>
                     <div className="text-lg font-semibold text-muted-foreground">
                       ⭐ {template.avgRating}/5
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 mb-3">
+                  <div className="text-xs text-muted-foreground mb-3">
                     {template.assignedCount} times assigned
                   </div>
                   <button className="w-full px-4 py-2 bg-primary hover:opacity-90 text-white text-sm rounded-md transition-colors">

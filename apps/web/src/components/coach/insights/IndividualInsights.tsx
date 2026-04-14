@@ -140,8 +140,8 @@ export default function IndividualInsights() {
             onClick={() => setSelectedAthlete(athlete.athleteId)}
             className={`flex-shrink-0 px-4 py-3 rounded-lg border transition-all ${
               selectedAthlete === athlete.athleteId
-                ? 'bg-primary border-blue-500 text-white'
-                : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
+                ? 'bg-primary border-primary text-white'
+                : 'bg-card/50 border-border text-muted-foreground hover:bg-card'
             }`}
           >
             <div className="text-sm font-semibold">{athlete.athleteName}</div>
@@ -158,7 +158,7 @@ export default function IndividualInsights() {
               {currentInsight.athleteName}
             </h2>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-400">{currentInsight.sport}</span>
+              <span className="text-sm text-muted-foreground">{currentInsight.sport}</span>
               <span className="text-sm">{currentInsight.archetype}</span>
             </div>
           </div>
@@ -166,11 +166,11 @@ export default function IndividualInsights() {
             <div className="text-3xl font-bold text-white mb-1">
               {currentInsight.currentReadiness}
             </div>
-            <div className="text-xs text-slate-400">Current Readiness</div>
+            <div className="text-xs text-muted-foreground">Current Readiness</div>
           </div>
         </div>
-        <p className="text-sm text-slate-200 leading-relaxed">{currentInsight.summary}</p>
-        <p className="text-xs text-slate-400 mt-3">
+        <p className="text-sm text-foreground leading-relaxed">{currentInsight.summary}</p>
+        <p className="text-xs text-muted-foreground mt-3">
           🤖 AI-generated summary based on 30-day behavioral patterns and validated psychology frameworks
         </p>
       </div>
@@ -186,11 +186,11 @@ export default function IndividualInsights() {
           {currentInsight.recentTrends.map((trend, idx) => (
             <div
               key={idx}
-              className="p-3 bg-slate-800/50 border-l-4 border-blue-500 rounded flex items-start justify-between"
+              className="p-3 bg-card/50 border-l-4 border-primary rounded flex items-start justify-between"
             >
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-white mb-1">{trend.metric}</h4>
-                <p className="text-xs text-slate-300">{trend.significance}</p>
+                <p className="text-xs text-muted-foreground">{trend.significance}</p>
               </div>
               <span
                 className={`ml-3 text-xl ${
@@ -198,7 +198,7 @@ export default function IndividualInsights() {
                     ? 'text-accent'
                     : trend.direction === 'down'
                     ? 'text-muted-foreground'
-                    : 'text-blue-400'
+                    : 'text-primary'
                 }`}
               >
                 {trend.direction === 'up' && '📈'}
@@ -219,7 +219,7 @@ export default function IndividualInsights() {
                 key={idx}
                 className="p-3 bg-secondary/20 border-l-4 border-secondary rounded"
               >
-                <p className="text-sm text-slate-200">{strength}</p>
+                <p className="text-sm text-foreground">{strength}</p>
               </li>
             ))}
           </ul>
@@ -236,7 +236,7 @@ export default function IndividualInsights() {
                     : 'bg-muted/20 border-muted'
                 }`}
               >
-                <p className="text-sm text-slate-200">{concern}</p>
+                <p className="text-sm text-foreground">{concern}</p>
               </li>
             ))}
           </ul>
@@ -249,11 +249,11 @@ export default function IndividualInsights() {
           {currentInsight.recommendations.map((rec, idx) => (
             <div
               key={idx}
-              className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg"
+              className="p-4 bg-card/50 border border-border rounded-lg"
             >
               <h4 className="text-base font-semibold text-white mb-2">{rec.title}</h4>
-              <p className="text-sm text-slate-200 mb-3">{rec.action}</p>
-              <p className="text-xs text-blue-400">📚 Evidence: {rec.evidence}</p>
+              <p className="text-sm text-foreground mb-3">{rec.action}</p>
+              <p className="text-xs text-primary">📚 Evidence: {rec.evidence}</p>
             </div>
           ))}
         </div>
@@ -268,7 +268,7 @@ export default function IndividualInsights() {
                 key={idx}
                 className="p-3 bg-accent/20 border-l-4 border-accent rounded"
               >
-                <p className="text-sm text-slate-200">{highlight}</p>
+                <p className="text-sm text-foreground">{highlight}</p>
               </li>
             ))}
           </ul>

@@ -24,8 +24,8 @@ export default function AthleteCard({ athlete, onClick, className }: AthleteCard
       className={cn(
         'rounded-lg border p-4 transition-all duration-200',
         hasConsent
-          ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 hover:border-slate-600'
-          : 'bg-slate-900/30 border-slate-800',
+          ? 'bg-card/50 border-border hover:bg-card/70 hover:border-border'
+          : 'bg-card/30 border-border',
         onClick && hasConsent && 'cursor-pointer',
         className
       )}
@@ -43,18 +43,18 @@ export default function AthleteCard({ athlete, onClick, className }: AthleteCard
           <h4 className="text-base font-semibold text-white truncate">
             {athlete.name}
           </h4>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             {athlete.sport} • {athlete.year}
           </p>
           {athlete.teamPosition && (
-            <p className="text-xs text-slate-500 mt-0.5">{athlete.teamPosition}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{athlete.teamPosition}</p>
           )}
         </div>
 
         {/* Consent indicator */}
         {!hasConsent && (
           <div className="flex-shrink-0">
-            <div className="text-xs px-2 py-1 bg-slate-800 text-slate-400 rounded-md flex items-center gap-1">
+            <div className="text-xs px-2 py-1 bg-card text-muted-foreground rounded-md flex items-center gap-1">
               <span>🔒</span>
               <span>No Access</span>
             </div>
@@ -65,9 +65,9 @@ export default function AthleteCard({ athlete, onClick, className }: AthleteCard
       {/* Metrics Row (only if consent) */}
       {hasConsent ? (
         <>
-          <div className="flex items-center gap-3 mb-3 pb-3 border-slate-700">
+          <div className="flex items-center gap-3 mb-3 pb-3 border-border">
             <div className="flex-1">
-              <p className="text-xs text-slate-400 mb-1">Risk</p>
+              <p className="text-xs text-muted-foreground mb-1">Risk</p>
               <RiskBadge level={athlete.riskLevel} size="sm" />
             </div>
           </div>
@@ -77,7 +77,7 @@ export default function AthleteCard({ athlete, onClick, className }: AthleteCard
             <div className="flex items-center justify-between">
               <ArchetypeBadge archetype={athlete.archetype} showTooltip={true} />
               {onClick && (
-                <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                <button className="text-xs text-primary hover:text-primary/80 font-medium">
                   View Profile →
                 </button>
               )}
@@ -86,10 +86,10 @@ export default function AthleteCard({ athlete, onClick, className }: AthleteCard
         </>
       ) : (
         <div className="py-4 text-center">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Athlete has not granted data access
           </p>
-          <button className="text-xs text-blue-500 hover:text-blue-400 mt-2">
+          <button className="text-xs text-primary hover:text-primary/80 mt-2">
             Request Access
           </button>
         </div>

@@ -121,8 +121,8 @@ export function TeamReadinessTable({
       return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
     }
     return sortDirection === 'asc'
-      ? <ArrowUp className="w-4 h-4 text-gray-700" />
-      : <ArrowDown className="w-4 h-4 text-gray-700" />;
+      ? <ArrowUp className="w-4 h-4 text-foreground" />
+      : <ArrowDown className="w-4 h-4 text-foreground" />;
   };
 
   // Export to CSV
@@ -166,10 +166,10 @@ export function TeamReadinessTable({
       {/* Header with filters and export */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Team Readiness Overview
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {sortedAndFilteredAthletes.length} of {athletes.length} athletes shown
           </p>
         </div>
@@ -177,13 +177,13 @@ export function TeamReadinessTable({
         <div className="flex flex-wrap gap-2">
           {/* Level filter buttons */}
           <div className="flex gap-1 items-center">
-            <Filter className="w-4 h-4 text-gray-500" />
+            <Filter className="w-4 h-4 text-muted-foreground" />
             <button
               onClick={() => setLevelFilter('ALL')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 levelFilter === 'ALL'
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-muted text-gray-700 hover:bg-gray-200'
+                  ? 'bg-foreground text-white'
+                  : 'bg-muted text-foreground hover:bg-muted'
               }`}
             >
               All ({athletes.length})
@@ -221,7 +221,7 @@ export function TeamReadinessTable({
             {levelFilter !== 'ALL' && (
               <button
                 onClick={() => setLevelFilter('ALL')}
-                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-muted rounded-md"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md"
                 title="Clear filter"
               >
                 <X className="w-4 h-4" />
@@ -246,7 +246,7 @@ export function TeamReadinessTable({
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow className="bg-muted/50">
               <TableHead
                 className="cursor-pointer hover:bg-muted select-none"
                 onClick={() => handleSort('name')}
@@ -291,7 +291,7 @@ export function TeamReadinessTable({
           <TableBody>
             {sortedAndFilteredAthletes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No athletes match the selected filter
                 </TableCell>
               </TableRow>
@@ -310,11 +310,11 @@ export function TeamReadinessTable({
                   >
                     <TableCell className="font-medium">
                       <div>
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-semibold text-foreground">
                           {athlete.athleteName}
                         </div>
                         {athlete.trend && (
-                          <div className="text-xs text-gray-500 mt-0.5">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             {athlete.trend === 'improving' && '↑ Improving'}
                             {athlete.trend === 'declining' && '↓ Declining'}
                             {athlete.trend === 'stable' && '→ Stable'}
@@ -323,10 +323,10 @@ export function TeamReadinessTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-gray-700">{athlete.position || 'N/A'}</span>
+                      <span className="text-foreground">{athlete.position || 'N/A'}</span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="text-2xl font-bold text-gray-900">
+                      <span className="text-2xl font-bold text-foreground">
                         {athlete.score}
                       </span>
                     </TableCell>
@@ -338,7 +338,7 @@ export function TeamReadinessTable({
                     <TableCell>
                       <div className="space-y-1">
                         {topFactors.map((factor, index) => (
-                          <div key={index} className="text-xs text-gray-600">
+                          <div key={index} className="text-xs text-muted-foreground">
                             <span className="font-medium">{factor.label}:</span>{' '}
                             {factor.value.toFixed(1)} (+{factor.impact.toFixed(1)})
                           </div>
@@ -354,7 +354,7 @@ export function TeamReadinessTable({
       </div>
 
       {/* Summary footer */}
-      <div className="flex items-center justify-between text-sm text-gray-600 px-2">
+      <div className="flex items-center justify-between text-sm text-muted-foreground px-2">
         <div>
           Game Date: <span className="font-medium">{new Date(gameDate).toLocaleDateString()}</span>
         </div>

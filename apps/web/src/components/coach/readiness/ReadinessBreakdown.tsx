@@ -215,8 +215,8 @@ export default function ReadinessBreakdown({
       </div>
 
       {/* Data Source Legend */}
-      <div className="border-t border-border p-4 bg-blue-50">
-        <div className="text-xs text-blue-800">
+      <div className="border-t border-border p-4 bg-primary/5">
+        <div className="text-xs text-primary">
           <div className="font-semibold mb-1">Data Sources:</div>
           <div className="space-y-1">
             <div>📅 Daily Log = Today's athlete-submitted mood log</div>

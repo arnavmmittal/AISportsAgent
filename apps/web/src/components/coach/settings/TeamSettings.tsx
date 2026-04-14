@@ -25,39 +25,39 @@ export default function TeamSettings() {
       <DashboardSection title="Basic Information">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Team Name
             </label>
             <input
               type="text"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary"
               placeholder="Enter team name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Institution
             </label>
             <input
               type="text"
               value={institution}
               onChange={(e) => setInstitution(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary"
               placeholder="Enter institution name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Current Season
             </label>
             <select
               value={season}
               onChange={(e) => setSeason(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary"
             >
               <option value="2024-2025">2024-2025</option>
               <option value="2025-2026">2025-2026</option>
@@ -78,11 +78,11 @@ export default function TeamSettings() {
           ].map((item, idx) => (
             <div
               key={idx}
-              className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-between"
+              className="p-4 bg-card/50 border border-border rounded-lg flex items-center justify-between"
             >
               <div>
                 <h4 className="text-sm font-semibold text-white">{item.sport}</h4>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {item.athletes} athlete{item.athletes !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -90,7 +90,7 @@ export default function TeamSettings() {
                 className={`text-xs font-medium px-3 py-1 rounded ${
                   item.status === 'active'
                     ? 'bg-secondary/20/30 text-accent'
-                    : 'bg-slate-700 text-slate-400'
+                    : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {item.status}

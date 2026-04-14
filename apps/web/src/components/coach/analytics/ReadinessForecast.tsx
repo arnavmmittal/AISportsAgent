@@ -136,7 +136,7 @@ export function ReadinessForecastChart({ athleteId, days = 30 }: ReadinessForeca
 
   const TrendIcon = trend === 'improving' ? TrendingUp : trend === 'declining' ? TrendingDown : Minus;
   const trendColor =
-    trend === 'improving' ? 'text-secondary' : trend === 'declining' ? 'text-muted-foreground' : 'text-gray-400';
+    trend === 'improving' ? 'text-secondary' : trend === 'declining' ? 'text-muted-foreground' : 'text-muted-foreground';
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -149,7 +149,7 @@ export function ReadinessForecastChart({ athleteId, days = 30 }: ReadinessForeca
             <p className="text-lg font-bold text-primary">{data.historical}</p>
           ) : (
             <>
-              <p className="text-lg font-bold text-blue-600">{data.forecast} (forecast)</p>
+              <p className="text-lg font-bold text-primary">{data.forecast} (forecast)</p>
               <p className="text-xs text-muted-foreground">
                 Range: {data.lowerBound} - {data.upperBound}
               </p>
@@ -268,15 +268,15 @@ export function ReadinessForecastChart({ athleteId, days = 30 }: ReadinessForeca
         {/* Legend */}
         <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
           <div className="flex items-center">
-            <div className="w-8 h-0.5 bg-indigo-500 mr-2"></div>
+            <div className="w-8 h-0.5 bg-primary mr-2"></div>
             <span>Historical (actual)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-8 h-0.5 border-b-2 border-dashed border-blue-500 mr-2"></div>
+            <div className="w-8 h-0.5 border-b-2 border-dashed border-primary mr-2"></div>
             <span>Forecast (predicted)</span>
           </div>
           <div className="flex items-center">
-            <div className="w-8 h-2 bg-blue-500 opacity-20 mr-2"></div>
+            <div className="w-8 h-2 bg-primary opacity-20 mr-2"></div>
             <span>Confidence bounds (±1 std dev)</span>
           </div>
         </div>

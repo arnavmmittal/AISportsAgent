@@ -72,13 +72,13 @@ export default function InterventionOutcomes() {
           ].map((intervention, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-4 bg-slate-800/50 border border-slate-700 rounded-lg"
+              className="flex items-center justify-between p-4 bg-card/50 border border-border rounded-lg"
             >
               <div>
                 <h4 className="text-sm font-semibold text-white">
                   {intervention.type}
                 </h4>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {intervention.count} interventions
                 </p>
               </div>
@@ -86,7 +86,7 @@ export default function InterventionOutcomes() {
                 <div className="text-2xl font-bold text-accent">
                   {intervention.success}%
                 </div>
-                <p className="text-xs text-slate-400">success rate</p>
+                <p className="text-xs text-muted-foreground">success rate</p>
               </div>
             </div>
           ))}
@@ -107,14 +107,14 @@ export default function InterventionOutcomes() {
           ].map((item, index) => (
             <div
               key={index}
-              className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg"
+              className="p-4 bg-card/50 border border-border rounded-lg"
             >
               <div className="flex items-start justify-between mb-2">
                 <h4 className="text-sm font-semibold text-white">{item.archetype}</h4>
-                <span className="text-lg font-bold text-blue-400">{item.rate}%</span>
+                <span className="text-lg font-bold text-primary">{item.rate}%</span>
               </div>
-              <p className="text-xs text-slate-400">
-                Most effective: <span className="text-slate-300">{item.best}</span>
+              <p className="text-xs text-muted-foreground">
+                Most effective: <span className="text-muted-foreground">{item.best}</span>
               </p>
             </div>
           ))}

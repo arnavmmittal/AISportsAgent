@@ -132,7 +132,7 @@ export default function NetworkGraph({
   return (
     <div
       ref={containerRef}
-      className={cn('w-full bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden', className)}
+      className={cn('w-full bg-card rounded-lg border border-border overflow-hidden', className)}
     >
       <svg width="100%" height={height} className="relative">
         {/* Render edges */}
@@ -207,7 +207,7 @@ export default function NetworkGraph({
 
       {/* Legend */}
       <div className="px-4 pb-4">
-        <div className="flex items-center gap-6 text-xs text-slate-400">
+        <div className="flex items-center gap-6 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-secondary" />
             <span>Athlete</span>
@@ -256,14 +256,14 @@ export function TeamChemistryNetwork({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-slate-300">Team Social Network</h4>
-        <div className="flex items-center gap-4 text-xs text-slate-400">
+        <h4 className="text-sm font-medium text-muted-foreground">Team Social Network</h4>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-muted/100" />
             <span>Leader</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <div className="w-3 h-3 rounded-full bg-primary" />
             <span>Team Member</span>
           </div>
         </div>
@@ -332,7 +332,7 @@ export function CliqueVisualization({
 
   return (
     <div className="space-y-4">
-      <h4 className="text-sm font-medium text-slate-300">Social Cliques</h4>
+      <h4 className="text-sm font-medium text-muted-foreground">Social Cliques</h4>
 
       <NetworkGraph
         nodes={allNodes}
@@ -346,15 +346,15 @@ export function CliqueVisualization({
         {cliques.map((clique) => (
           <div
             key={clique.id}
-            className="flex items-center gap-2 p-2 rounded-md bg-slate-800/50 border border-slate-700"
+            className="flex items-center gap-2 p-2 rounded-md bg-card/50 border border-border"
           >
             <div
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: clique.color }}
             />
             <div>
-              <div className="text-xs font-medium text-slate-200">{clique.name}</div>
-              <div className="text-[10px] text-slate-400">
+              <div className="text-xs font-medium text-foreground">{clique.name}</div>
+              <div className="text-[10px] text-muted-foreground">
                 {clique.members.length} members
               </div>
             </div>

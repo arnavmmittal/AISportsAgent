@@ -84,10 +84,10 @@ function formatThemeName(theme: string): string {
 
 // Get sentiment color
 function getSentimentColor(sentiment: number): string {
-  if (sentiment >= 0.3) return 'text-green-400';
-  if (sentiment >= 0) return 'text-blue-400';
+  if (sentiment >= 0.3) return 'text-success';
+  if (sentiment >= 0) return 'text-primary';
   if (sentiment >= -0.3) return 'text-amber-400';
-  return 'text-red-400';
+  return 'text-destructive';
 }
 
 // Get sentiment label
@@ -101,36 +101,36 @@ function getSentimentLabel(sentiment: number): string {
 // Team Sentiment Card
 function TeamSentimentCard({ data }: { data: ChatInsightsData }) {
   const trendIcon = data.teamSentiment.trend === 'improving'
-    ? <TrendingUp className="w-5 h-5 text-green-400" />
+    ? <TrendingUp className="w-5 h-5 text-success" />
     : data.teamSentiment.trend === 'declining'
-    ? <TrendingDown className="w-5 h-5 text-red-400" />
-    : <Minus className="w-5 h-5 text-slate-400" />;
+    ? <TrendingDown className="w-5 h-5 text-destructive" />
+    : <Minus className="w-5 h-5 text-muted-foreground" />;
 
   const trendColor = data.teamSentiment.trend === 'improving'
-    ? 'text-green-400'
+    ? 'text-success'
     : data.teamSentiment.trend === 'declining'
-    ? 'text-red-400'
-    : 'text-slate-400';
+    ? 'text-destructive'
+    : 'text-muted-foreground';
 
   // Simple sparkline using CSS
   const maxSentiment = Math.max(...data.sentimentHistory.map(d => Math.abs(d.avgSentiment)), 0.5);
   const sparklineHeight = 40;
 
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+    <div className="bg-card/50 rounded-xl border border-border p-5">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-sm font-medium text-slate-400 mb-1">Team Conversation Sentiment</h3>
+          <h3 className="text-sm font-medium text-muted-foreground mb-1">Team Conversation Sentiment</h3>
           <div className="flex items-baseline gap-2">
             <span className={cn('text-3xl font-bold', getSentimentColor(data.teamSentiment.current))}>
               {data.teamSentiment.current > 0 ? '+' : ''}{(data.teamSentiment.current * 100).toFixed(0)}
             </span>
-            <span className="text-slate-400 text-sm">/ 100</span>
+            <span className="text-muted-foreground text-sm">/ 100</span>
           </div>
         </div>
         <div className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-sm',
-          data.teamSentiment.trend === 'improving' ? 'bg-green-500/20' :
-          data.teamSentiment.trend === 'declining' ? 'bg-red-500/20' : 'bg-slate-700'
+          data.teamSentiment.trend === 'improving' ? 'bg-success/15' :
+          data.teamSentiment.trend === 'declining' ? 'bg-destructive/15' : 'bg-muted'
         )}>
           {trendIcon}
           <span className={trendColor}>
@@ -150,7 +150,7 @@ function TeamSentimentCard({ data }: { data: ChatInsightsData }) {
               key={idx}
               className={cn(
                 'flex-1 rounded-sm transition-all',
-                isPositive ? 'bg-green-500/60' : 'bg-red-500/60'
+                isPositive ? 'bg-success/60' : 'bg-destructive/60'
               )}
               style={{ height: `${Math.max(4, normalizedHeight)}px` }}
               title={`${day.date}: ${(day.avgSentiment * 100).toFixed(0)}`}
@@ -158,24 +158,24 @@ function TeamSentimentCard({ data }: { data: ChatInsightsData }) {
           );
         })}
       </div>
-      <div className="flex justify-between text-xs text-slate-500 mt-1">
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
         <span>14 days ago</span>
         <span>Today</span>
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-700">
+      <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-border">
         <div>
           <div className="text-lg font-semibold text-white">{data.stats.totalSessions}</div>
-          <div className="text-xs text-slate-400">Chat Sessions</div>
+          <div className="text-xs text-muted-foreground">Chat Sessions</div>
         </div>
         <div>
           <div className="text-lg font-semibold text-white">{data.stats.athletesWithChats}</div>
-          <div className="text-xs text-slate-400">Active Chatters</div>
+          <div className="text-xs text-muted-foreground">Active Chatters</div>
         </div>
         <div>
           <div className="text-lg font-semibold text-white">{data.stats.chatEngagementRate}%</div>
-          <div className="text-xs text-slate-400">Engagement</div>
+          <div className="text-xs text-muted-foreground">Engagement</div>
         </div>
       </div>
     </div>
@@ -185,7 +185,7 @@ function TeamSentimentCard({ data }: { data: ChatInsightsData }) {
 // Top Themes Card
 function TopThemesCard({ themes }: { themes: ChatInsightsData['topThemes'] }) {
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+    <div className="bg-card/50 rounded-xl border border-border p-5">
       <div className="flex items-center gap-2 mb-4">
         <Hash className="w-5 h-5 text-primary" />
         <h3 className="text-sm font-medium text-white">What Athletes Are Discussing</h3>
@@ -194,7 +194,7 @@ function TopThemesCard({ themes }: { themes: ChatInsightsData['topThemes'] }) {
       <div className="space-y-3">
         {themes.slice(0, 6).map((theme, idx) => (
           <div key={theme.theme} className="flex items-center gap-3">
-            <span className="text-slate-500 text-sm w-5">{idx + 1}.</span>
+            <span className="text-muted-foreground text-sm w-5">{idx + 1}.</span>
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-white font-medium text-sm">
@@ -204,18 +204,18 @@ function TopThemesCard({ themes }: { themes: ChatInsightsData['topThemes'] }) {
                   <ArrowUpRight className="w-3 h-3 text-amber-400" />
                 )}
                 {theme.trend === 'decreasing' && (
-                  <ArrowDownRight className="w-3 h-3 text-green-400" />
+                  <ArrowDownRight className="w-3 h-3 text-success" />
                 )}
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs text-slate-400">{theme.count} mentions</span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">{theme.count} mentions</span>
+                <span className="text-xs text-muted-foreground">
                   by {theme.athletes.length} athlete{theme.athletes.length > 1 ? 's' : ''}
                 </span>
               </div>
             </div>
             {/* Progress bar */}
-            <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className={cn(
                   'h-full rounded-full',
@@ -237,21 +237,21 @@ function TopThemesCard({ themes }: { themes: ChatInsightsData['topThemes'] }) {
 function ConcerningAthletesCard({ athletes }: { athletes: ChatInsightsData['concerningAthletes'] }) {
   if (athletes.length === 0) {
     return (
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+      <div className="bg-card/50 rounded-xl border border-border p-5">
         <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-5 h-5 text-green-400" />
+          <AlertTriangle className="w-5 h-5 text-success" />
           <h3 className="text-sm font-medium text-white">Athletes Needing Attention</h3>
         </div>
         <div className="text-center py-6">
-          <div className="text-green-400 text-sm">No concerning patterns detected</div>
-          <div className="text-slate-500 text-xs mt-1">Team conversations look healthy</div>
+          <div className="text-success text-sm">No concerning patterns detected</div>
+          <div className="text-muted-foreground text-xs mt-1">Team conversations look healthy</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+    <div className="bg-card/50 rounded-xl border border-border p-5">
       <div className="flex items-center gap-2 mb-4">
         <AlertTriangle className="w-5 h-5 text-amber-400" />
         <h3 className="text-sm font-medium text-white">Athletes Needing Attention</h3>
@@ -265,14 +265,14 @@ function ConcerningAthletesCard({ athletes }: { athletes: ChatInsightsData['conc
           <Link
             key={athlete.id}
             href={`/coach/athletes/${athlete.id}`}
-            className="block p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors group"
+            className="block p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
           >
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-white font-medium text-sm">{athlete.name}</span>
                   {athlete.sport && (
-                    <span className="text-xs text-slate-400">{athlete.sport}</span>
+                    <span className="text-xs text-muted-foreground">{athlete.sport}</span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1">
@@ -290,7 +290,7 @@ function ConcerningAthletesCard({ athletes }: { athletes: ChatInsightsData['conc
                 <div className={cn('text-sm font-medium', getSentimentColor(athlete.avgSentiment))}>
                   {athlete.avgSentiment > 0 ? '+' : ''}{(athlete.avgSentiment * 100).toFixed(0)}
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors" />
               </div>
             </div>
           </Link>
@@ -304,25 +304,25 @@ function ConcerningAthletesCard({ athletes }: { athletes: ChatInsightsData['conc
 function DisengagedAthletesCard({ athletes }: { athletes: ChatInsightsData['disengagedAthletes'] }) {
   if (athletes.length === 0) {
     return (
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+      <div className="bg-card/50 rounded-xl border border-border p-5">
         <div className="flex items-center gap-2 mb-4">
-          <UserX className="w-5 h-5 text-green-400" />
+          <UserX className="w-5 h-5 text-success" />
           <h3 className="text-sm font-medium text-white">Disengaged Athletes</h3>
         </div>
         <div className="text-center py-6">
-          <div className="text-green-400 text-sm">All athletes engaged recently</div>
-          <div className="text-slate-500 text-xs mt-1">Everyone has chatted within the last 7 days</div>
+          <div className="text-success text-sm">All athletes engaged recently</div>
+          <div className="text-muted-foreground text-xs mt-1">Everyone has chatted within the last 7 days</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-5">
+    <div className="bg-card/50 rounded-xl border border-border p-5">
       <div className="flex items-center gap-2 mb-4">
-        <UserX className="w-5 h-5 text-slate-400" />
+        <UserX className="w-5 h-5 text-muted-foreground" />
         <h3 className="text-sm font-medium text-white">Disengaged Athletes</h3>
-        <span className="ml-auto text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+        <span className="ml-auto text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
           {athletes.length} inactive
         </span>
       </div>
@@ -332,36 +332,36 @@ function DisengagedAthletesCard({ athletes }: { athletes: ChatInsightsData['dise
           <Link
             key={athlete.id}
             href={`/coach/athletes/${athlete.id}`}
-            className="flex items-center justify-between p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors group"
+            className="flex items-center justify-between p-2 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs text-slate-400">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
                 {athlete.name.split(' ').map(n => n[0]).join('')}
               </div>
               <div>
                 <div className="text-sm text-white">{athlete.name}</div>
                 {athlete.sport && (
-                  <div className="text-xs text-slate-500">{athlete.sport}</div>
+                  <div className="text-xs text-muted-foreground">{athlete.sport}</div>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-2">
               <div className={cn(
                 'text-xs px-2 py-0.5 rounded',
-                athlete.daysSinceChat >= 14 ? 'bg-red-500/20 text-red-400' :
+                athlete.daysSinceChat >= 14 ? 'bg-destructive/15 text-destructive' :
                 athlete.daysSinceChat >= 10 ? 'bg-amber-500/20 text-amber-400' :
-                'bg-slate-700 text-slate-400'
+                'bg-muted text-muted-foreground'
               )}>
                 {athlete.daysSinceChat}d ago
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors" />
             </div>
           </Link>
         ))}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-700">
-        <p className="text-xs text-slate-500">
+      <div className="mt-3 pt-3 border-t border-border">
+        <p className="text-xs text-muted-foreground">
           Consider reaching out to re-engage these athletes with the coach.
         </p>
       </div>
@@ -380,7 +380,7 @@ export function ChatInsightsPanel({ data }: ChatInsightsPanelProps) {
         </div>
         <div>
           <h2 className="text-lg font-semibold text-white">Conversation Insights</h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             What your athletes are discussing with the coach
           </p>
         </div>

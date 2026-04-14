@@ -48,8 +48,8 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 shadow-lg">
-      <p className="text-sm font-medium text-slate-200 mb-2">{label}</p>
+    <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+      <p className="text-sm font-medium text-foreground mb-2">{label}</p>
       <div className="space-y-1">
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2">
@@ -57,7 +57,7 @@ function CustomTooltip({ active, payload, label }: any) {
               className="w-3 h-3 rounded"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-xs text-slate-300">{entry.name}:</span>
+            <span className="text-xs text-muted-foreground">{entry.name}:</span>
             <span className="text-xs font-semibold text-white">{entry.value}</span>
           </div>
         ))}
@@ -122,7 +122,7 @@ export default function BarChart({
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               formatter={(value) => (
-                <span className="text-sm text-slate-300">{value}</span>
+                <span className="text-sm text-muted-foreground">{value}</span>
               )}
             />
           )}

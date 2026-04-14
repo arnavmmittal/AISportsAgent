@@ -131,7 +131,7 @@ export function NotificationBell() {
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-background transition-colors ${
-                    !notification.read ? 'bg-blue-50' : ''
+                    !notification.read ? 'bg-primary/5' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -141,7 +141,7 @@ export function NotificationBell() {
                           <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                         </div>
                       ) : (
-                        <div className="p-2 rounded-full bg-blue-100">
+                        <div className="p-2 rounded-full bg-primary/10">
                           <Bell className="h-4 w-4 text-primary" />
                         </div>
                       )}

@@ -164,20 +164,20 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-slate-900 rounded-xl border border-slate-700 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+      <div className="bg-background rounded-xl border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="text-lg font-semibold text-white">
             {editingRule ? 'Edit Alert Rule' : 'Create Alert Rule'}
           </h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
-            <X className="w-5 h-5 text-slate-400" />
+          <button onClick={onClose} className="p-1 hover:bg-card rounded">
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Rule Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Rule Name *
             </label>
             <input
@@ -185,14 +185,14 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Low Readiness Alert"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:border-primary"
               required
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Description
             </label>
             <input
@@ -200,20 +200,20 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-card border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:border-primary"
             />
           </div>
 
           {/* Trigger Type */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
               Trigger Type *
             </label>
             <div className="relative">
               <select
                 value={triggerType}
                 onChange={(e) => setTriggerType(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500 appearance-none"
+                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary appearance-none"
               >
                 {TRIGGER_TYPES.map(type => (
                   <option key={type.value} value={type.value}>
@@ -221,17 +221,17 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             </div>
             {selectedTrigger && (
-              <p className="text-xs text-slate-500 mt-1">{selectedTrigger.description}</p>
+              <p className="text-xs text-muted-foreground mt-1">{selectedTrigger.description}</p>
             )}
           </div>
 
           {/* Threshold (numeric) */}
           {selectedTrigger?.requiresThreshold && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Threshold Value *
               </label>
               <input
@@ -244,7 +244,7 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                   triggerType === 'SENTIMENT_DECLINE' ? 'e.g., -0.3 (sentiment)' :
                   'Enter value'
                 }
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:border-primary"
                 step={triggerType === 'SENTIMENT_DECLINE' ? '0.1' : '1'}
                 required
               />
@@ -254,14 +254,14 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
           {/* Threshold String (topic) */}
           {selectedTrigger?.requiresThresholdString && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Topic to Monitor *
               </label>
               <div className="relative">
                 <select
                   value={thresholdString}
                   onChange={(e) => setThresholdString(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500 appearance-none"
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary appearance-none"
                   required
                 >
                   <option value="">Select a topic...</option>
@@ -271,7 +271,7 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               </div>
             </div>
           )}
@@ -279,7 +279,7 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
           {/* Time Window */}
           {selectedTrigger?.requiresTimeWindow && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Time Window (days)
               </label>
               <input
@@ -289,7 +289,7 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                 placeholder="e.g., 7"
                 min="1"
                 max="90"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:border-primary"
               />
             </div>
           )}
@@ -297,7 +297,7 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
           {/* Min Occurrences */}
           {selectedTrigger?.requiresMinOccurrences && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
                 Minimum Count
               </label>
               <input
@@ -307,14 +307,14 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                 placeholder="e.g., 3"
                 min="1"
                 max="100"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:border-primary"
               />
             </div>
           )}
 
           {/* Notification Channels */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Notification Channels *
             </label>
             <div className="flex gap-3">
@@ -323,8 +323,8 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                 onClick={() => toggleChannel('IN_APP')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
                   channels.includes('IN_APP')
-                    ? 'border-blue-500 bg-blue-500/20 text-blue-400'
-                    : 'border-slate-700 bg-slate-800 text-slate-400'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-muted-foreground'
                 }`}
               >
                 <Bell className="w-4 h-4" />
@@ -335,8 +335,8 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                 onClick={() => toggleChannel('EMAIL')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
                   channels.includes('EMAIL')
-                    ? 'border-blue-500 bg-blue-500/20 text-blue-400'
-                    : 'border-slate-700 bg-slate-800 text-slate-400'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-muted-foreground'
                 }`}
               >
                 <Mail className="w-4 h-4" />
@@ -347,8 +347,8 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
                 onClick={() => toggleChannel('SMS')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
                   channels.includes('SMS')
-                    ? 'border-blue-500 bg-blue-500/20 text-blue-400'
-                    : 'border-slate-700 bg-slate-800 text-slate-400'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-muted-foreground'
                 }`}
               >
                 <Smartphone className="w-4 h-4" />
@@ -358,18 +358,18 @@ function CreateRuleModal({ isOpen, onClose, onSave, editingRule }: CreateRuleMod
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-300 hover:bg-slate-800 rounded-lg"
+              className="px-4 py-2 text-muted-foreground hover:bg-card rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name || channels.length === 0}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Check className="w-4 h-4" />
               {editingRule ? 'Save Changes' : 'Create Rule'}
@@ -511,7 +511,7 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
       <DashboardSection title="Alert Rules">
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-slate-800 rounded-lg animate-pulse" />
+            <div key={i} className="h-20 bg-card rounded-lg animate-pulse" />
           ))}
         </div>
       </DashboardSection>
@@ -525,7 +525,7 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
         action={
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary/80 text-white text-sm rounded-lg"
           >
             <Plus className="w-4 h-4" />
             Create Rule
@@ -534,11 +534,11 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
       >
         {rules.length === 0 ? (
           <div className="text-center py-8">
-            <Bell className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 mb-4">No alert rules configured</p>
+            <Bell className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+            <p className="text-muted-foreground mb-4">No alert rules configured</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="text-blue-400 hover:text-blue-300 text-sm"
+              className="text-primary hover:text-primary/80 text-sm"
             >
               Create your first rule
             </button>
@@ -550,14 +550,14 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
                 key={rule.id}
                 className={`p-4 rounded-lg border ${
                   rule.isEnabled
-                    ? 'bg-slate-800/50 border-slate-700'
-                    : 'bg-slate-800/30 border-slate-700/50 opacity-60'
+                    ? 'bg-card/50 border-border'
+                    : 'bg-card/30 border-border/50 opacity-60'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1">
                     <div className={`p-2 rounded-lg ${
-                      rule.isEnabled ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-700 text-slate-500'
+                      rule.isEnabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                     }`}>
                       {getTriggerIcon(rule.triggerType)}
                     </div>
@@ -565,31 +565,31 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
                       <h4 className="text-sm font-semibold text-white">
                         {rule.name}
                       </h4>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {formatTriggerLabel(rule)}
                       </p>
                       {rule.description && (
-                        <p className="text-xs text-slate-500 mt-1">{rule.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{rule.description}</p>
                       )}
                       <div className="flex items-center gap-3 mt-2">
                         <div className="flex items-center gap-1">
                           {rule.channels.includes('IN_APP') && (
-                            <Bell className="w-3 h-3 text-slate-500" />
+                            <Bell className="w-3 h-3 text-muted-foreground" />
                           )}
                           {rule.channels.includes('EMAIL') && (
-                            <Mail className="w-3 h-3 text-slate-500" />
+                            <Mail className="w-3 h-3 text-muted-foreground" />
                           )}
                           {rule.channels.includes('SMS') && (
-                            <Smartphone className="w-3 h-3 text-slate-500" />
+                            <Smartphone className="w-3 h-3 text-muted-foreground" />
                           )}
                         </div>
                         {rule.triggerCount > 0 && (
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-muted-foreground">
                             Triggered {rule.triggerCount} times
                           </span>
                         )}
                         {rule.lastTriggeredAt && (
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-muted-foreground">
                             Last: {new Date(rule.lastTriggeredAt).toLocaleDateString()}
                           </span>
                         )}
@@ -600,13 +600,13 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleRule(rule.id, rule.isEnabled)}
-                      className="p-1.5 hover:bg-slate-700 rounded"
+                      className="p-1.5 hover:bg-muted rounded"
                       title={rule.isEnabled ? 'Disable rule' : 'Enable rule'}
                     >
                       {rule.isEnabled ? (
                         <ToggleRight className="w-5 h-5 text-green-400" />
                       ) : (
-                        <ToggleLeft className="w-5 h-5 text-slate-500" />
+                        <ToggleLeft className="w-5 h-5 text-muted-foreground" />
                       )}
                     </button>
                     <button
@@ -614,17 +614,17 @@ export default function AlertRulesPanel({ className = '' }: AlertRulesPanelProps
                         setEditingRule(rule);
                         setShowCreateModal(true);
                       }}
-                      className="p-1.5 hover:bg-slate-700 rounded"
+                      className="p-1.5 hover:bg-muted rounded"
                       title="Edit rule"
                     >
-                      <Edit className="w-4 h-4 text-slate-400" />
+                      <Edit className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
                       onClick={() => handleDeleteRule(rule.id)}
-                      className="p-1.5 hover:bg-slate-700 rounded"
+                      className="p-1.5 hover:bg-muted rounded"
                       title="Delete rule"
                     >
-                      <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
+                      <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-400" />
                     </button>
                   </div>
                 </div>

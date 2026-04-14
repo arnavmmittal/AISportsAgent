@@ -126,7 +126,7 @@ export function InterventionQueueComponent({ coachId }: InterventionQueueProps) 
       case 'MEDIUM':
         return 'border-l-4 border-muted-foreground bg-muted/10 dark:bg-muted-foreground/10/20';
       default:
-        return 'border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20';
+        return 'border-l-4 border-primary bg-primary/5 dark:bg-primary/10';
     }
   };
 

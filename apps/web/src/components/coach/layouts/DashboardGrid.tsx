@@ -175,9 +175,9 @@ export function DashboardWidget({
   className?: string;
 }) {
   const variantStyles = {
-    default: 'bg-slate-800/50 border border-slate-700',
-    compact: 'bg-slate-800/30 border border-slate-700/50',
-    glass: 'bg-slate-900/30 backdrop-blur-sm border border-slate-700/30',
+    default: 'bg-card/50 border border-border',
+    compact: 'bg-card/30 border border-border/50',
+    glass: 'bg-card/80 backdrop-blur-sm border border-border/30',
   };
 
   return (
@@ -196,7 +196,7 @@ export function DashboardWidget({
               <h3 className="text-base font-semibold text-white">{title}</h3>
             )}
             {subtitle && (
-              <p className="text-sm text-slate-400 mt-1">{subtitle}</p>
+              <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
             )}
           </div>
           {action && <div>{action}</div>}
@@ -232,7 +232,7 @@ export function DashboardSection({
               <h2 className="text-xl font-bold text-white">{title}</h2>
             )}
             {description && (
-              <p className="text-sm text-slate-400 mt-1">{description}</p>
+              <p className="text-sm text-muted-foreground mt-1">{description}</p>
             )}
           </div>
           {action && <div className="flex-shrink-0">{action}</div>}

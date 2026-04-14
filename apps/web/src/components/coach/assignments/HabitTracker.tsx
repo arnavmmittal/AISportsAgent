@@ -156,17 +156,17 @@ export default function HabitTracker() {
           {teamHabits.map(habit => (
             <div
               key={habit.id}
-              className="p-5 bg-slate-800/50 border border-slate-700 rounded-lg"
+              className="p-5 bg-card/50 border border-border rounded-lg"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-semibold text-white">{habit.name}</h3>
-                    <span className="text-xs font-medium px-2 py-1 rounded bg-blue-900/30 text-blue-400">
+                    <span className="text-xs font-medium px-2 py-1 rounded bg-primary/15 text-primary">
                       {habit.category}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-slate-400 mb-3">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                     <span>Target: {habit.targetFrequency}</span>
                     <span>•</span>
                     <span>{habit.activeAthletes} athletes tracking</span>
@@ -174,16 +174,16 @@ export default function HabitTracker() {
 
                   {/* Progress Metrics */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="p-3 bg-slate-900/50 rounded">
-                      <div className="text-xs text-slate-400 mb-1">Avg Completion Rate</div>
+                    <div className="p-3 bg-card rounded">
+                      <div className="text-xs text-muted-foreground mb-1">Avg Completion Rate</div>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-slate-700 rounded-full h-2">
+                        <div className="flex-1 bg-muted rounded-full h-2">
                           <div
                             className={`h-2 rounded-full ${
                               habit.avgCompletionRate >= 80
                                 ? 'bg-secondary/100'
                                 : habit.avgCompletionRate >= 60
-                                ? 'bg-blue-500'
+                                ? 'bg-primary'
                                 : 'bg-muted/100'
                             }`}
                             style={{ width: `${habit.avgCompletionRate}%` }}
@@ -194,17 +194,17 @@ export default function HabitTracker() {
                         </span>
                       </div>
                     </div>
-                    <div className="p-3 bg-slate-900/50 rounded">
-                      <div className="text-xs text-slate-400 mb-1">Avg Streak</div>
-                      <div className="text-2xl font-bold text-blue-400">
-                        {habit.avgStreakDays} <span className="text-sm text-slate-400">days</span>
+                    <div className="p-3 bg-card rounded">
+                      <div className="text-xs text-muted-foreground mb-1">Avg Streak</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {habit.avgStreakDays} <span className="text-sm text-muted-foreground">days</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Top Performers */}
                   <div>
-                    <h5 className="text-xs font-semibold text-slate-400 uppercase mb-2">
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
                       Top Performers:
                     </h5>
                     <div className="flex flex-wrap gap-2">
@@ -239,11 +239,11 @@ export default function HabitTracker() {
           {athleteProgress.map((athlete, index) => (
             <div
               key={index}
-              className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg"
+              className="p-4 bg-card/50 border border-border rounded-lg"
             >
               <div className="flex items-center gap-2 mb-3">
                 <h4 className="text-sm font-semibold text-white">{athlete.athleteName}</h4>
-                <span className="text-xs text-slate-400">{athlete.sport}</span>
+                <span className="text-xs text-muted-foreground">{athlete.sport}</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -283,10 +283,10 @@ export default function HabitTracker() {
                         <div className="text-lg font-bold text-white">
                           🔥 {habit.currentStreak}
                         </div>
-                        <div className="text-xs text-slate-400">day streak</div>
+                        <div className="text-xs text-muted-foreground">day streak</div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{habit.completionRate}% complete</span>
                       <span>Last: {new Date(habit.lastCompleted).toLocaleDateString()}</span>
                     </div>
@@ -325,11 +325,11 @@ export default function HabitTracker() {
           ].map((item, idx) => (
             <div
               key={idx}
-              className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg"
+              className="p-4 bg-card/50 border border-border rounded-lg"
             >
               <h5 className="text-sm font-semibold text-white mb-2">{item.tip}</h5>
-              <p className="text-sm text-slate-300 mb-2">{item.description}</p>
-              <p className="text-xs text-blue-400">📚 {item.source}</p>
+              <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+              <p className="text-xs text-primary">📚 {item.source}</p>
             </div>
           ))}
         </div>

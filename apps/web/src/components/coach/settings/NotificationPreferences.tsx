@@ -76,11 +76,11 @@ export default function NotificationPreferences() {
       <DashboardSection title="Notification Channels">
         <div className="space-y-4">
           {/* Channel Headers */}
-          <div className="grid grid-cols-4 gap-4 pb-2 border-b border-slate-700">
+          <div className="grid grid-cols-4 gap-4 pb-2 border-b border-border">
             <div className="col-span-1"></div>
-            <div className="text-center text-xs font-semibold text-slate-400">EMAIL</div>
-            <div className="text-center text-xs font-semibold text-slate-400">PUSH</div>
-            <div className="text-center text-xs font-semibold text-slate-400">SMS</div>
+            <div className="text-center text-xs font-semibold text-muted-foreground">EMAIL</div>
+            <div className="text-center text-xs font-semibold text-muted-foreground">PUSH</div>
+            <div className="text-center text-xs font-semibold text-muted-foreground">SMS</div>
           </div>
 
           {/* Notification Rows */}
@@ -92,12 +92,12 @@ export default function NotificationPreferences() {
                   ? 'bg-muted-foreground/20/10 border-muted-foreground'
                   : type.priority === 'high'
                   ? 'bg-muted-foreground/20/10 border-muted-foreground'
-                  : 'bg-slate-800/50 border-slate-700'
+                  : 'bg-card/50 border-border'
               }`}
             >
               <div className="col-span-1">
                 <h4 className="text-sm font-semibold text-white mb-1">{type.label}</h4>
-                <p className="text-xs text-slate-400">{type.description}</p>
+                <p className="text-xs text-muted-foreground">{type.description}</p>
                 {type.priority === 'critical' && (
                   <span className="inline-block mt-2 text-xs font-medium px-2 py-1 rounded bg-muted-foreground/20/50 text-chrome">
                     CRITICAL
@@ -113,7 +113,7 @@ export default function NotificationPreferences() {
                       onChange={() => toggleSetting(type.id, channel)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
               ))}
@@ -125,34 +125,34 @@ export default function NotificationPreferences() {
       {/* Quiet Hours */}
       <DashboardSection title="Quiet Hours">
         <div className="space-y-4">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-muted-foreground">
             Suppress non-critical notifications during these hours
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Start Time
               </label>
               <input
                 type="time"
                 defaultValue="22:00"
-                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 End Time
               </label>
               <input
                 type="time"
                 defaultValue="08:00"
-                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2 bg-card border border-border rounded-lg text-white focus:outline-none focus:border-primary"
               />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="weekends" className="rounded" defaultChecked />
-            <label htmlFor="weekends" className="text-sm text-slate-300">
+            <label htmlFor="weekends" className="text-sm text-muted-foreground">
               Extend quiet hours on weekends
             </label>
           </div>

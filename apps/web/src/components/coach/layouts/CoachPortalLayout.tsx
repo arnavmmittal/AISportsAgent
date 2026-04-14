@@ -27,16 +27,16 @@ export default function CoachPortalLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-background">
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 h-full bg-slate-900 border-r border-slate-800 transition-all duration-300 z-50',
+          'fixed left-0 top-0 h-full bg-card border-r border-border transition-all duration-300 z-50',
           isSidebarCollapsed ? 'w-16' : 'w-64'
         )}
       >
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {!isSidebarCollapsed && (
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -44,13 +44,13 @@ export default function CoachPortalLayout({
               </div>
               <div>
                 <h1 className="text-sm font-bold text-white">Coach Portal</h1>
-                <p className="text-xs text-slate-400">Flow Sports Coach</p>
+                <p className="text-xs text-muted-foreground">Flow Sports Coach</p>
               </div>
             </div>
           )}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-2 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-md hover:bg-card text-muted-foreground hover:text-white transition-colors"
             aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isSidebarCollapsed ? '→' : '←'}
@@ -73,7 +73,7 @@ export default function CoachPortalLayout({
                     ? 'bg-primary text-white'
                     : item.highlight
                     ? 'text-accent hover:bg-accent/10 hover:text-accent'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    : 'text-muted-foreground hover:bg-card hover:text-white'
                 )}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
@@ -91,7 +91,7 @@ export default function CoachPortalLayout({
 
                 {/* Tooltip for collapsed state */}
                 {isSidebarCollapsed && (
-                  <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                  <div className="absolute left-full ml-2 px-3 py-2 bg-card text-white text-sm font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
                     {item.label}
                     {item.badge && (
                       <span className="ml-2 text-accent">({item.badge})</span>
@@ -104,7 +104,7 @@ export default function CoachPortalLayout({
         </nav>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
           {!isSidebarCollapsed ? (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
@@ -112,7 +112,7 @@ export default function CoachPortalLayout({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">Coach</p>
-                <p className="text-xs text-slate-400 truncate">Performance Staff</p>
+                <p className="text-xs text-muted-foreground truncate">Performance Staff</p>
               </div>
             </div>
           ) : (
@@ -131,14 +131,14 @@ export default function CoachPortalLayout({
         )}
       >
         {/* Top Bar */}
-        <header className="h-16 bg-slate-900/50 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-40">
+        <header className="h-16 bg-card/50 backdrop-blur-sm border-b border-border sticky top-0 z-40">
           <div className="h-full px-6 flex items-center justify-between">
             {/* Page title from nav */}
             <div>
               <h2 className="text-lg font-semibold text-white">
                 {COACH_NAV.find((item) => pathname === item.href || pathname?.startsWith(item.href + '/'))?.label || 'Dashboard'}
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 {COACH_NAV.find((item) => pathname === item.href || pathname?.startsWith(item.href + '/'))?.description}
               </p>
             </div>
@@ -146,13 +146,13 @@ export default function CoachPortalLayout({
             {/* Quick actions */}
             <div className="flex items-center gap-3">
               {/* Notifications */}
-              <button className="relative p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
+              <button className="relative p-2 rounded-lg hover:bg-card text-muted-foreground hover:text-white transition-colors">
                 <span className="text-xl">🔔</span>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
               </button>
 
               {/* Help */}
-              <button className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
+              <button className="p-2 rounded-lg hover:bg-card text-muted-foreground hover:text-white transition-colors">
                 <span className="text-xl">❓</span>
               </button>
             </div>
@@ -169,7 +169,7 @@ export default function CoachPortalLayout({
 // Simplified layout for pages that don't need sidebar (like fullscreen modals)
 export function CoachPortalSimpleLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-background">
       <div className="p-6">{children}</div>
     </div>
   );

@@ -43,7 +43,7 @@ export default function TabNavigation({
   return (
     <div className={cn('space-y-6', className)}>
       {/* Tab Bar */}
-      <div className={cn('border-b border-slate-700', variant === 'pills' && 'border-0')}>
+      <div className={cn('border-b border-border', variant === 'pills' && 'border-0')}>
         <nav className={cn('flex gap-2', variant === 'pills' && 'gap-1')}>
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -57,18 +57,18 @@ export default function TabNavigation({
                   // Default variant
                   variant === 'default' &&
                     (isActive
-                      ? 'text-white border-b-2 border-blue-500'
-                      : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent hover:border-slate-600'),
+                      ? 'text-white border-b-2 border-primary'
+                      : 'text-muted-foreground hover:text-foreground border-b-2 border-transparent hover:border-muted'),
                   // Pills variant
                   variant === 'pills' &&
                     (isActive
                       ? 'bg-primary text-white rounded-lg'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg'),
+                      : 'text-muted-foreground hover:text-white hover:bg-card rounded-lg'),
                   // Underline variant
                   variant === 'underline' &&
                     (isActive
-                      ? 'text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-500'
-                      : 'text-slate-400 hover:text-slate-200')
+                      ? 'text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary'
+                      : 'text-muted-foreground hover:text-foreground')
                 )}
               >
                 {tab.icon && <span className="text-lg">{tab.icon}</span>}
@@ -77,7 +77,7 @@ export default function TabNavigation({
                   <span
                     className={cn(
                       'px-2 py-0.5 text-xs font-bold rounded-full',
-                      isActive ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-300'
+                      isActive ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                     )}
                   >
                     {tab.badge}
@@ -110,7 +110,7 @@ export function ControlledTabs({
   className?: string;
 }) {
   return (
-    <div className={cn('border-b border-slate-700', variant === 'pills' && 'border-0', className)}>
+    <div className={cn('border-b border-border', variant === 'pills' && 'border-0', className)}>
       <nav className={cn('flex gap-2', variant === 'pills' && 'gap-1')}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -123,16 +123,16 @@ export function ControlledTabs({
                 'relative px-4 py-3 text-sm font-medium transition-all duration-200 flex items-center gap-2',
                 variant === 'default' &&
                   (isActive
-                    ? 'text-white border-b-2 border-blue-500'
-                    : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent hover:border-slate-600'),
+                    ? 'text-white border-b-2 border-primary'
+                    : 'text-muted-foreground hover:text-foreground border-b-2 border-transparent hover:border-muted'),
                 variant === 'pills' &&
                   (isActive
                     ? 'bg-primary text-white rounded-lg'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg'),
+                    : 'text-muted-foreground hover:text-white hover:bg-card rounded-lg'),
                 variant === 'underline' &&
                   (isActive
-                    ? 'text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-500'
-                    : 'text-slate-400 hover:text-slate-200')
+                    ? 'text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary'
+                    : 'text-muted-foreground hover:text-foreground')
               )}
             >
               {tab.icon && <span className="text-lg">{tab.icon}</span>}
@@ -141,7 +141,7 @@ export function ControlledTabs({
                 <span
                   className={cn(
                     'px-2 py-0.5 text-xs font-bold rounded-full',
-                    isActive ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-300'
+                    isActive ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                   )}
                 >
                   {tab.badge}
@@ -191,7 +191,7 @@ export function VerticalTabs({
                 'w-full px-4 py-3 text-left text-sm font-medium transition-all duration-200 flex items-center gap-3 rounded-lg',
                 isActive
                   ? 'bg-primary text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  : 'text-muted-foreground hover:text-white hover:bg-card'
               )}
             >
               {tab.icon && <span className="text-lg">{tab.icon}</span>}
@@ -200,7 +200,7 @@ export function VerticalTabs({
                 <span
                   className={cn(
                     'px-2 py-0.5 text-xs font-bold rounded-full',
-                    isActive ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-300'
+                    isActive ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                   )}
                 >
                   {tab.badge}
@@ -232,7 +232,7 @@ export function SegmentedControl({
   return (
     <div
       className={cn(
-        'inline-flex bg-slate-800 rounded-lg p-1 gap-1',
+        'inline-flex bg-card rounded-lg p-1 gap-1',
         className
       )}
     >
@@ -247,7 +247,7 @@ export function SegmentedControl({
               'px-4 py-2 text-sm font-medium transition-all duration-200 rounded-md flex items-center gap-2',
               isActive
                 ? 'bg-primary text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
+                : 'text-muted-foreground hover:text-white'
             )}
           >
             {option.icon && <span>{option.icon}</span>}

@@ -184,10 +184,10 @@ export default function AlertsPanel({
         };
       default:
         return {
-          bg: 'bg-blue-500/10',
-          border: 'border-blue-500/30',
-          icon: <Info className="w-4 h-4 text-blue-400" />,
-          badge: 'bg-blue-500/20 text-blue-400',
+          bg: 'bg-primary/10',
+          border: 'border-primary/30',
+          icon: <Info className="w-4 h-4 text-primary" />,
+          badge: 'bg-primary/10 text-primary',
         };
     }
   };
@@ -201,7 +201,7 @@ export default function AlertsPanel({
       <DashboardSection title="Alerts">
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-16 bg-slate-800 rounded-lg animate-pulse" />
+            <div key={i} className="h-16 bg-card rounded-lg animate-pulse" />
           ))}
         </div>
       </DashboardSection>
@@ -228,7 +228,7 @@ export default function AlertsPanel({
                 <button
                   onClick={handleEvaluateRules}
                   disabled={evaluating}
-                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded"
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-white hover:bg-muted rounded"
                   title="Re-evaluate all rules now"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${evaluating ? 'animate-spin' : ''}`} />
@@ -237,7 +237,7 @@ export default function AlertsPanel({
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700 rounded"
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground hover:text-white hover:bg-muted rounded"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
                     Mark All Read
@@ -254,8 +254,8 @@ export default function AlertsPanel({
               onClick={() => setFilter('all')}
               className={`px-3 py-1 text-sm rounded-full ${
                 filter === 'all'
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-muted text-white'
+                  : 'text-muted-foreground hover:text-white'
               }`}
             >
               All ({alerts.length})
@@ -264,8 +264,8 @@ export default function AlertsPanel({
               onClick={() => setFilter('unread')}
               className={`px-3 py-1 text-sm rounded-full ${
                 filter === 'unread'
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-muted text-white'
+                  : 'text-muted-foreground hover:text-white'
               }`}
             >
               Unread ({unreadCount})
@@ -275,11 +275,11 @@ export default function AlertsPanel({
 
         {filteredAlerts.length === 0 ? (
           <div className="text-center py-8">
-            <Bell className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400">
+            <Bell className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+            <p className="text-muted-foreground">
               {filter === 'unread' ? 'No unread alerts' : 'No alerts to show'}
             </p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Alerts are generated when your rules are triggered
             </p>
           </div>
@@ -300,27 +300,27 @@ export default function AlertsPanel({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h4 className={`text-sm font-medium ${
-                          alert.isRead ? 'text-slate-400' : 'text-white'
+                          alert.isRead ? 'text-muted-foreground' : 'text-white'
                         }`}>
                           {alert.title}
                         </h4>
                         {!alert.isRead && (
-                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="w-2 h-2 rounded-full bg-primary" />
                         )}
                       </div>
                       <p className={`text-xs ${
-                        alert.isRead ? 'text-slate-500' : 'text-slate-300'
+                        alert.isRead ? 'text-muted-foreground' : 'text-muted-foreground'
                       }`}>
                         {alert.message}
                       </p>
                       <div className="flex items-center gap-3 mt-2">
                         {alert.athleteName && (
-                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <User className="w-3 h-3" />
                             {alert.athleteName}
                           </span>
                         )}
-                        <span className="flex items-center gap-1 text-xs text-slate-500">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Clock className="w-3 h-3" />
                           {formatTimeAgo(alert.createdAt)}
                         </span>
@@ -334,18 +334,18 @@ export default function AlertsPanel({
                       {!alert.isRead && (
                         <button
                           onClick={(e) => handleMarkAsRead(alert.id, e)}
-                          className="p-1 hover:bg-slate-700 rounded"
+                          className="p-1 hover:bg-muted rounded"
                           title="Mark as read"
                         >
-                          <Check className="w-4 h-4 text-slate-400" />
+                          <Check className="w-4 h-4 text-muted-foreground" />
                         </button>
                       )}
                       <button
                         onClick={(e) => handleDismiss(alert.id, e)}
-                        className="p-1 hover:bg-slate-700 rounded"
+                        className="p-1 hover:bg-muted rounded"
                         title="Dismiss"
                       >
-                        <X className="w-4 h-4 text-slate-400 hover:text-red-400" />
+                        <X className="w-4 h-4 text-muted-foreground hover:text-red-400" />
                       </button>
                     </div>
                   </div>

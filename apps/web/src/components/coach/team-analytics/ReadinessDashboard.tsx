@@ -125,8 +125,8 @@ export function ReadinessDashboard({
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading team readiness data...</p>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading team readiness data...</p>
         </div>
       </div>
     );
@@ -137,7 +137,7 @@ export function ReadinessDashboard({
       <div className="flex items-center justify-center h-96">
         <div className="text-center max-w-md">
           <AlertTriangle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Data</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Failed to Load Data</h3>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={handleManualRefresh}>
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -151,7 +151,7 @@ export function ReadinessDashboard({
   if (!data) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-gray-500">No readiness data available</p>
+        <p className="text-muted-foreground">No readiness data available</p>
       </div>
     );
   }
@@ -164,16 +164,16 @@ export function ReadinessDashboard({
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Pre-Game Readiness</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">Pre-Game Readiness</h1>
+          <p className="text-muted-foreground mt-1">
             {data.sport} • {data.totalAthletes} athletes
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           {/* Game Date Selector */}
-          <div className="flex items-center gap-2 bg-card border border-gray-300 rounded-lg px-3 py-2">
-            <Calendar className="w-4 h-4 text-gray-500" />
+          <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
             <input
               type="date"
               value={gameDate}
@@ -199,7 +199,7 @@ export function ReadinessDashboard({
             className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
               autoRefresh
                 ? 'bg-secondary/20 text-secondary hover:bg-secondary/30'
-                : 'bg-muted text-gray-600 hover:bg-gray-200'
+                : 'bg-muted text-muted-foreground hover:bg-muted'
             }`}
           >
             <Clock className="w-3 h-3 inline mr-1" />
@@ -209,7 +209,7 @@ export function ReadinessDashboard({
       </div>
 
       {/* Last updated timestamp */}
-      <div className="text-xs text-gray-500 flex items-center gap-1">
+      <div className="text-xs text-muted-foreground flex items-center gap-1">
         <Clock className="w-3 h-3" />
         Last updated: {lastUpdated.toLocaleTimeString()}
       </div>
@@ -219,7 +219,7 @@ export function ReadinessDashboard({
         {/* Green (Ready) */}
         <Card className="border-l-4 border-secondary bg-secondary/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">
+            <CardTitle className="text-sm font-medium text-foreground">
               Ready to Compete
             </CardTitle>
             <CheckCircle className="w-5 h-5 text-secondary" />
@@ -228,7 +228,7 @@ export function ReadinessDashboard({
             <div className="text-3xl font-bold text-secondary">
               {data.greenCount}
             </div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {((data.greenCount / data.totalAthletes) * 100).toFixed(0)}% of team
             </p>
             <div className="mt-3 w-full bg-secondary/30 rounded-full h-2">
@@ -243,7 +243,7 @@ export function ReadinessDashboard({
         {/* Yellow (Monitor) */}
         <Card className="border-l-4 border-muted-foreground bg-muted/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">
+            <CardTitle className="text-sm font-medium text-foreground">
               Monitor Closely
             </CardTitle>
             <TrendingUp className="w-5 h-5 text-muted-foreground" />
@@ -252,7 +252,7 @@ export function ReadinessDashboard({
             <div className="text-3xl font-bold text-muted-foreground">
               {data.yellowCount}
             </div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {((data.yellowCount / data.totalAthletes) * 100).toFixed(0)}% of team
             </p>
             <div className="mt-3 w-full bg-muted/30 rounded-full h-2">
@@ -267,7 +267,7 @@ export function ReadinessDashboard({
         {/* Red (At-Risk) */}
         <Card className="border-l-4 border-muted-foreground bg-muted-foreground/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-700">
+            <CardTitle className="text-sm font-medium text-foreground">
               Intervention Needed
             </CardTitle>
             <AlertTriangle className="w-5 h-5 text-muted-foreground" />
@@ -276,7 +276,7 @@ export function ReadinessDashboard({
             <div className="text-3xl font-bold text-muted-foreground">
               {data.redCount}
             </div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {((data.redCount / data.totalAthletes) * 100).toFixed(0)}% of team
             </p>
             <div className="mt-3 w-full bg-muted-foreground/30 rounded-full h-2">
@@ -309,7 +309,7 @@ export function ReadinessDashboard({
               ))}
             </div>
             {atRiskAthletes.length > 4 && (
-              <p className="text-sm text-gray-600 mt-4 text-center">
+              <p className="text-sm text-muted-foreground mt-4 text-center">
                 + {atRiskAthletes.length - 4} more athletes shown in table below
               </p>
             )}
@@ -336,9 +336,9 @@ export function ReadinessDashboard({
 
       {/* Recommendations */}
       {(atRiskAthletes.length > 0 || monitorAthletes.length > 0) && (
-        <Card className="bg-blue-50 border-l-4 border-blue-500">
+        <Card className="bg-primary/5 border-l-4 border-primary">
           <CardHeader>
-            <CardTitle className="text-lg text-blue-900">Recommended Actions</CardTitle>
+            <CardTitle className="text-lg text-foreground">Recommended Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {atRiskAthletes.length > 0 && (
@@ -347,8 +347,8 @@ export function ReadinessDashboard({
                   <AlertTriangle className="w-5 h-5 text-muted-foreground mt-0.5" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">High Priority</h4>
-                  <p className="text-sm text-gray-700 mt-1">
+                  <h4 className="font-semibold text-foreground">High Priority</h4>
+                  <p className="text-sm text-foreground mt-1">
                     Schedule 1-on-1 conversations with {atRiskAthletes.length} at-risk athlete
                     {atRiskAthletes.length > 1 ? 's' : ''} before game day. Focus on stress management
                     and sleep optimization.
@@ -362,8 +362,8 @@ export function ReadinessDashboard({
                   <TrendingUp className="w-5 h-5 text-muted-foreground mt-0.5" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Monitor</h4>
-                  <p className="text-sm text-gray-700 mt-1">
+                  <h4 className="font-semibold text-foreground">Monitor</h4>
+                  <p className="text-sm text-foreground mt-1">
                     Check in with {monitorAthletes.length} athlete
                     {monitorAthletes.length > 1 ? 's' : ''} in yellow status during warm-up.
                     Quick mental state assessment recommended.
@@ -376,8 +376,8 @@ export function ReadinessDashboard({
                 <CheckCircle className="w-5 h-5 text-secondary mt-0.5" />
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900">Team Preparation</h4>
-                <p className="text-sm text-gray-700 mt-1">
+                <h4 className="font-semibold text-foreground">Team Preparation</h4>
+                <p className="text-sm text-foreground mt-1">
                   {data.greenCount} athletes are mentally ready. Focus team meeting on maintaining
                   positive momentum and executing game plan.
                 </p>

@@ -157,7 +157,7 @@ export default function SubmissionReview() {
           {submissions.map(submission => (
             <div
               key={submission.id}
-              className="p-5 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-800/70 transition-colors"
+              className="p-5 bg-card/50 border border-border rounded-lg hover:bg-card/70 transition-colors"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -165,13 +165,13 @@ export default function SubmissionReview() {
                     <h3 className="text-base font-semibold text-white">
                       {submission.athleteName}
                     </h3>
-                    <span className="text-xs text-slate-400">{submission.sport}</span>
+                    <span className="text-xs text-muted-foreground">{submission.sport}</span>
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         submission.responseQuality === 'excellent'
                           ? 'bg-secondary/20/30 text-accent'
                           : submission.responseQuality === 'good'
-                          ? 'bg-blue-900/30 text-blue-400'
+                          ? 'bg-primary/15 text-primary'
                           : 'bg-muted-foreground/20/30 text-muted-foreground'
                       }`}
                     >
@@ -183,20 +183,20 @@ export default function SubmissionReview() {
                   <h4 className="text-lg font-semibold text-white mb-1">
                     {submission.assignmentTitle}
                   </h4>
-                  <div className="flex items-center gap-3 text-xs text-slate-400 mb-3">
-                    <span className="text-blue-400">{submission.framework}</span>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                    <span className="text-primary">{submission.framework}</span>
                     <span>Submitted {submission.daysAgo} day{submission.daysAgo !== 1 ? 's' : ''} ago</span>
                     <span>{submission.wordCount} words</span>
                   </div>
 
                   {/* Key Insights */}
                   <div className="mb-3">
-                    <h5 className="text-xs font-semibold text-slate-400 uppercase mb-2">
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
                       Key Insights:
                     </h5>
                     <ul className="space-y-1">
                       {submission.keyInsights.map((insight, idx) => (
-                        <li key={idx} className="text-sm text-slate-300 flex items-start">
+                        <li key={idx} className="text-sm text-muted-foreground flex items-start">
                           <span className="text-accent mr-2">✓</span>
                           {insight}
                         </li>
@@ -209,19 +209,19 @@ export default function SubmissionReview() {
                     onClick={() => setSelectedSubmission(
                       selectedSubmission === submission.id ? null : submission.id
                     )}
-                    className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                    className="text-sm text-primary hover:text-primary/80 transition-colors"
                   >
                     {selectedSubmission === submission.id ? '▼ Hide Responses' : '▶ View Full Responses'}
                   </button>
 
                   {selectedSubmission === submission.id && (
-                    <div className="mt-4 space-y-4 p-4 bg-slate-900/50 rounded-lg border border-slate-600">
+                    <div className="mt-4 space-y-4 p-4 bg-card rounded-lg border border-border">
                       {submission.responses.map((response, idx) => (
                         <div key={idx}>
-                          <h6 className="text-sm font-semibold text-blue-400 mb-2">
+                          <h6 className="text-sm font-semibold text-primary mb-2">
                             {response.question}
                           </h6>
-                          <p className="text-sm text-slate-300 pl-3 border-l-2 border-blue-500">
+                          <p className="text-sm text-muted-foreground pl-3 border-l-2 border-primary">
                             {response.answer}
                           </p>
                         </div>
@@ -237,7 +237,7 @@ export default function SubmissionReview() {
                   <button className="px-4 py-2 bg-primary hover:opacity-90 text-white text-sm rounded-md transition-colors">
                     Mark Excellent
                   </button>
-                  <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-md transition-colors">
+                  <button className="px-4 py-2 bg-muted hover:bg-muted/80 text-white text-sm rounded-md transition-colors">
                     View History
                   </button>
                 </div>
@@ -277,18 +277,18 @@ export default function SubmissionReview() {
           ].map((template, idx) => (
             <div
               key={idx}
-              className={`p-4 rounded-lg border cursor-pointer hover:bg-slate-800/70 transition-colors ${
+              className={`p-4 rounded-lg border cursor-pointer hover:bg-card/70 transition-colors ${
                 template.color === 'green'
                   ? 'bg-secondary/20/10 border-secondary'
                   : template.color === 'blue'
-                  ? 'bg-blue-900/10 border-blue-700'
+                  ? 'bg-primary/10 border-primary/50'
                   : template.color === 'amber'
                   ? 'bg-muted-foreground/20/10 border-muted-foreground'
                   : 'bg-accent/20/10 border-accent'
               }`}
             >
               <h5 className="text-sm font-semibold text-white mb-2">{template.type}</h5>
-              <p className="text-xs text-slate-300 italic">&quot;{template.template}&quot;</p>
+              <p className="text-xs text-muted-foreground italic">&quot;{template.template}&quot;</p>
             </div>
           ))}
         </div>

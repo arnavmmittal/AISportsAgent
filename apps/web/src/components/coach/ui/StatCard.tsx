@@ -22,28 +22,28 @@ interface StatCardProps {
 
 const VARIANT_STYLES = {
   default: {
-    border: 'border-slate-700',
-    bg: 'bg-slate-800/50',
-    iconBg: 'bg-secondary/20',
-    iconColor: 'text-accent',
+    border: 'border-border',
+    bg: 'bg-card',
+    iconBg: 'bg-primary/10',
+    iconColor: 'text-primary',
   },
   success: {
-    border: 'border-secondary',
-    bg: 'bg-secondary/10',
-    iconBg: 'bg-secondary/20',
-    iconColor: 'text-accent',
+    border: 'border-success/30',
+    bg: 'bg-success/5',
+    iconBg: 'bg-success/10',
+    iconColor: 'text-success',
   },
   warning: {
-    border: 'border-muted',
-    bg: 'bg-muted/10',
-    iconBg: 'bg-muted/20',
-    iconColor: 'text-chrome',
+    border: 'border-warning/30',
+    bg: 'bg-warning/5',
+    iconBg: 'bg-warning/10',
+    iconColor: 'text-warning',
   },
   danger: {
-    border: 'border-muted-foreground',
-    bg: 'bg-muted-foreground/10',
-    iconBg: 'bg-muted-foreground/20',
-    iconColor: 'text-chrome',
+    border: 'border-destructive/30',
+    bg: 'bg-destructive/5',
+    iconBg: 'bg-destructive/10',
+    iconColor: 'text-destructive',
   },
 };
 
@@ -68,7 +68,7 @@ export default function StatCard({
         'rounded-lg border p-6 transition-all duration-200',
         styles.border,
         styles.bg,
-        isClickable && 'cursor-pointer hover:bg-slate-800/70 hover:border-slate-600',
+        isClickable && 'cursor-pointer hover:bg-muted/50 hover:border-muted-foreground/30',
         className
       )}
       onClick={onClick}
@@ -76,7 +76,7 @@ export default function StatCard({
       {/* Header with Icon and Title */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wide">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
             {title}
           </h3>
         </div>
@@ -95,7 +95,7 @@ export default function StatCard({
 
       {/* Main Value */}
       <div className="flex items-baseline gap-3 mb-2">
-        <span className="text-3xl font-bold text-white">{value}</span>
+        <span className="text-3xl font-bold text-foreground">{value}</span>
         {trend !== undefined && (
           <TrendArrow value={trend} inverse={trendInverse} size="md" />
         )}
@@ -103,7 +103,7 @@ export default function StatCard({
 
       {/* Subtitle */}
       {subtitle && (
-        <p className="text-sm text-slate-400">{subtitle}</p>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       )}
     </div>
   );
@@ -127,11 +127,11 @@ export function StatCardCompact({
         styles.bg
       )}
     >
-      <div className="text-xs font-medium text-slate-400 mb-1">
+      <div className="text-xs font-medium text-muted-foreground mb-1">
         {title}
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-xl font-bold text-white">{value}</span>
+        <span className="text-xl font-bold text-foreground">{value}</span>
         {trend !== undefined && (
           <TrendArrow value={trend} inverse={trendInverse} size="sm" />
         )}

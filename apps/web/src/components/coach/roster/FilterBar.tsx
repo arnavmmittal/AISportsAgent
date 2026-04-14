@@ -46,9 +46,9 @@ export default function FilterBar({
             placeholder="Search athletes by name or sport..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full px-4 py-2 pl-10 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 pl-10 bg-card/50 border border-border rounded-lg text-white placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
             🔍
           </span>
         </div>
@@ -56,7 +56,7 @@ export default function FilterBar({
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-muted hover:bg-muted text-white rounded-lg transition-colors flex items-center gap-2"
           >
             <span>Clear Filters</span>
             <span>✕</span>
@@ -70,7 +70,7 @@ export default function FilterBar({
         <select
           value={filters.sport || ''}
           onChange={(e) => updateFilter('sport', e.target.value || undefined)}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 bg-card border border-border rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">All Sports</option>
           <option value="Football">Football</option>
@@ -87,7 +87,7 @@ export default function FilterBar({
         <select
           value={filters.year || ''}
           onChange={(e) => updateFilter('year', e.target.value || undefined)}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 bg-card border border-border rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">All Years</option>
           <option value="FRESHMAN">Freshman</option>
@@ -101,7 +101,7 @@ export default function FilterBar({
         <select
           value={filters.riskLevel || ''}
           onChange={(e) => updateFilter('riskLevel', e.target.value || undefined)}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 bg-card border border-border rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">All Risk Levels</option>
           <option value="CRITICAL">Critical</option>
@@ -114,7 +114,7 @@ export default function FilterBar({
         <select
           value={filters.readinessZone || ''}
           onChange={(e) => updateFilter('readinessZone', e.target.value || undefined)}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 bg-card border border-border rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">All Readiness</option>
           <option value="OPTIMAL">Optimal (90+)</option>
@@ -128,7 +128,7 @@ export default function FilterBar({
         <select
           value={filters.archetype || ''}
           onChange={(e) => updateFilter('archetype', e.target.value || undefined)}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 bg-card border border-border rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">All Archetypes</option>
           <option value="OVERTHINKER">🤔 Overthinker</option>
@@ -145,7 +145,7 @@ export default function FilterBar({
         <select
           value={filters.consentGranted === undefined ? '' : filters.consentGranted.toString()}
           onChange={(e) => updateFilter('consentGranted', e.target.value === '' ? undefined : e.target.value === 'true')}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-1.5 bg-card border border-border rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">All Athletes</option>
           <option value="true">With Consent Only</option>
@@ -155,7 +155,7 @@ export default function FilterBar({
 
       {/* Results Count */}
       <div className="flex items-center justify-between text-sm">
-        <p className="text-slate-400">
+        <p className="text-muted-foreground">
           Showing <span className="text-white font-semibold">{filteredCount}</span> of{' '}
           <span className="text-white font-semibold">{totalCount}</span> athletes
         </p>

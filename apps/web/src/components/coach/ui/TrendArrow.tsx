@@ -38,7 +38,7 @@ function getTrendDirection(value: number): TrendDirection {
 }
 
 function getTrendColor(direction: TrendDirection, inverse: boolean): string {
-  if (direction === 'neutral') return 'text-chrome';
+  if (direction === 'neutral') return 'text-muted-foreground';
 
   if (inverse) {
     // For metrics where down is good (stress, risk)

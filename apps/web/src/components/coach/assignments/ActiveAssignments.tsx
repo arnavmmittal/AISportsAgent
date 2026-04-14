@@ -131,11 +131,11 @@ export default function ActiveAssignments() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-slate-900/50 border-slate-600 text-slate-300';
-      case 'in-progress': return 'bg-blue-900/20 border-blue-700 text-blue-300';
+      case 'pending': return 'bg-card border-border text-muted-foreground';
+      case 'in-progress': return 'bg-primary/10 border-primary/50 text-primary';
       case 'submitted': return 'bg-secondary/20 border-secondary text-accent';
       case 'overdue': return 'bg-muted-foreground/20 border-muted-foreground text-chrome';
-      default: return 'bg-slate-900/50 border-slate-600 text-slate-300';
+      default: return 'bg-card border-border text-muted-foreground';
     }
   };
 
@@ -199,8 +199,8 @@ export default function ActiveAssignments() {
             onClick={() => setFilterStatus(filter.id)}
             className={`flex-shrink-0 px-4 py-2 rounded-lg border transition-all ${
               filterStatus === filter.id
-                ? 'bg-primary border-blue-500 text-white'
-                : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800'
+                ? 'bg-primary border-primary text-white'
+                : 'bg-card/50 border-border text-muted-foreground hover:bg-card'
             }`}
           >
             <span className="mr-2">{filter.icon}</span>
@@ -228,15 +228,15 @@ export default function ActiveAssignments() {
                     <h3 className="text-sm font-semibold text-white">
                       {assignment.athleteName}
                     </h3>
-                    <span className="text-xs text-slate-400">{assignment.sport}</span>
+                    <span className="text-xs text-muted-foreground">{assignment.sport}</span>
                     <span className={`text-xs font-medium px-2 py-1 rounded ${
                       assignment.status === 'submitted'
                         ? 'bg-secondary/20/50 text-accent'
                         : assignment.status === 'overdue'
                         ? 'bg-muted-foreground/20/50 text-chrome'
                         : assignment.status === 'in-progress'
-                        ? 'bg-blue-900/50 text-blue-300'
-                        : 'bg-slate-700 text-slate-300'
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-muted text-muted-foreground'
                     }`}>
                       {getStatusIcon(assignment.status)} {assignment.status.replace('-', ' ').toUpperCase()}
                     </span>
@@ -244,23 +244,23 @@ export default function ActiveAssignments() {
                   <h4 className="text-base font-semibold text-white mb-1">
                     {assignment.assignmentTitle}
                   </h4>
-                  <p className="text-sm text-blue-400 mb-3">{assignment.framework}</p>
+                  <p className="text-sm text-primary mb-3">{assignment.framework}</p>
 
                   {/* Progress Bar */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-slate-400">Progress</span>
+                      <span className="text-xs text-muted-foreground">Progress</span>
                       <span className="text-xs font-semibold text-white">
                         {assignment.completedSessions}/{assignment.totalSessions} sessions
                       </span>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${
                           assignment.progress === 100
                             ? 'bg-secondary/100'
                             : assignment.progress >= 50
-                            ? 'bg-blue-500'
+                            ? 'bg-primary'
                             : 'bg-muted/100'
                         }`}
                         style={{ width: `${assignment.progress}%` }}
@@ -268,7 +268,7 @@ export default function ActiveAssignments() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-slate-400">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>Assigned: {new Date(assignment.assignedDate).toLocaleDateString()}</span>
                     <span className={assignment.daysRemaining < 0 ? 'text-muted-foreground' : assignment.daysRemaining <= 3 ? 'text-muted-foreground' : ''}>
                       Due: {new Date(assignment.dueDate).toLocaleDateString()}
@@ -296,7 +296,7 @@ export default function ActiveAssignments() {
                       Check Progress
                     </button>
                   )}
-                  <button className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-md transition-colors">
+                  <button className="px-3 py-1 bg-muted hover:bg-muted/80 text-white text-xs rounded-md transition-colors">
                     View Details
                   </button>
                 </div>

@@ -109,7 +109,7 @@ export default function ReadinessIndicator({
 
       {/* Label */}
       {showLabel && (
-        <span className={cn('text-slate-300', sizeConfig.text)}>
+        <span className={cn('text-muted-foreground', sizeConfig.text)}>
           {config.label}
         </span>
       )}

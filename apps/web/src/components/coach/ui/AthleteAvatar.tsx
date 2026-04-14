@@ -47,7 +47,7 @@ const SIZE_CONFIG = {
 
 const READINESS_STATUS_COLORS = {
   OPTIMAL: 'bg-secondary/100',
-  GOOD: 'bg-blue-500',
+  GOOD: 'bg-primary',
   MODERATE: 'bg-muted/100',
   LOW: 'bg-muted-foreground/100',
   POOR: 'bg-muted-foreground/20',
@@ -66,7 +66,7 @@ function getColorFromName(name: string): string {
     'bg-primary',
     'bg-accent',
     'bg-pink-600',
-    'bg-indigo-600',
+    'bg-primary',
     'bg-cyan-600',
     'bg-teal-600',
   ];
@@ -96,7 +96,7 @@ export default function AthleteAvatar({
         className={cn(
           'rounded-full overflow-hidden flex items-center justify-center font-semibold',
           sizeConfig.container,
-          showImage ? 'bg-slate-700' : bgColor,
+          showImage ? 'bg-muted' : bgColor,
           'text-white'
         )}
       >
@@ -117,7 +117,7 @@ export default function AthleteAvatar({
       {showStatus && readinessLevel && (
         <div
           className={cn(
-            'absolute bottom-0 right-0 rounded-full border-slate-900',
+            'absolute bottom-0 right-0 rounded-full border-background',
             sizeConfig.status,
             READINESS_STATUS_COLORS[readinessLevel]
           )}
@@ -146,7 +146,7 @@ export function AthleteAvatarGroup({
       {displayAthletes.map((athlete, index) => (
         <div
           key={index}
-          className="ring-2 ring-slate-900 rounded-full"
+          className="ring-2 ring-background rounded-full"
           style={{ zIndex: max - index }}
         >
           <AthleteAvatar
@@ -159,7 +159,7 @@ export function AthleteAvatarGroup({
       {remaining > 0 && (
         <div
           className={cn(
-            'rounded-full bg-slate-700 flex items-center justify-center font-semibold text-slate-300 ring-2 ring-slate-900',
+            'rounded-full bg-muted flex items-center justify-center font-semibold text-muted-foreground ring-2 ring-background',
             SIZE_CONFIG[size].container,
             SIZE_CONFIG[size].text
           )}
