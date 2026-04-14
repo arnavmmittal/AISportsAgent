@@ -172,7 +172,7 @@ export function MoodLogger() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full gradient-primary text-white py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all blue-glow-sm"
+            className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {isSubmitting ? 'Saving...' : 'Log Mood'}
           </button>

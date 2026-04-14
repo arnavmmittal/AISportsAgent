@@ -9,24 +9,25 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
+  Area,
+  AreaChart,
 } from 'recharts';
-import { Users, TrendingUp, AlertTriangle, Activity, Key, Copy, ChevronRight, Loader2, Brain, Sparkles, FlaskConical, CheckCircle2 } from 'lucide-react';
-import { AthleteActivityMonitor } from '@/components/coach/activity';
-import Link from 'next/link';
+import {
+  Users, TrendingUp, TrendingDown, AlertTriangle, Activity, Key, Copy,
+  ChevronRight, Loader2, CheckCircle2, ChevronDown, Brain,
+  AlertCircle, BarChart3, Zap, Shield, Target, Heart,
+} from 'lucide-react';
 import { Button } from '@/components/shared/ui/button';
+import { SpotlightCard } from '@/components/shared/ui/spotlight-card';
+import { AnimatedNumber } from '@/components/shared/ui/animated-number';
 import { cn } from '@/lib/utils';
 
 /**
- * EnhancedDashboard - Updated with Design System v2.0
+ * EnhancedDashboard — "Obsidian" design
  *
- * Features:
- * - Overview stats with semantic color tokens
- * - Mood trend chart
- * - At-risk athlete cards
- * - Today's readiness scores
- * - Team invite code management
+ * SpotlightCards with animated numbers, no gradients.
+ * Two-column: Athletes + Readiness | Quick Stats + Actions
  */
 
 interface Nudge {
@@ -93,34 +94,65 @@ interface InviteCodeData {
   athleteCount: number;
 }
 
+// --- Helpers ---
+
+function getInitials(name: string) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function getReadinessColor(score: number) {
+  if (score >= 80) return 'text-success';
+  if (score >= 65) return 'text-primary';
+  if (score >= 50) return 'text-warning';
+  return 'text-destructive';
+}
+
+function getReadinessBarColor(score: number) {
+  if (score >= 80) return 'bg-success';
+  if (score >= 65) return 'bg-primary';
+  if (score >= 50) return 'bg-warning';
+  return 'bg-destructive';
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'excellent': return { label: 'Excellent', cls: 'bg-success/15 text-success' };
+    case 'good': return { label: 'Good', cls: 'bg-primary/15 text-primary' };
+    case 'fair': return { label: 'Fair', cls: 'bg-warning/15 text-warning' };
+    case 'at-risk': return { label: 'At Risk', cls: 'bg-destructive/15 text-destructive' };
+    default: return { label: 'Unknown', cls: 'bg-muted text-muted-foreground' };
+  }
+}
+
+const TIME_RANGES = [
+  { value: '7', label: '7 days' },
+  { value: '14', label: '14 days' },
+  { value: '30', label: '30 days' },
+];
+
 export default function EnhancedDashboard({ userId }: { userId: string }) {
   const router = useRouter();
-  const demoMode = false;
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [inviteCodeData, setInviteCodeData] = useState<InviteCodeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('7');
-  const [sportFilter, setSportFilter] = useState<string>('');
   const [showInviteCode, setShowInviteCode] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  // Fetch dashboard data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const params = new URLSearchParams({ timeRange });
-        if (sportFilter) params.append('sport', sportFilter);
 
         const [dashboardRes, inviteRes] = await Promise.all([
           fetch(`/api/coach/dashboard?${params}`),
           fetch('/api/coach/invite-code'),
         ]);
 
-        if (!dashboardRes.ok || !inviteRes.ok) {
-          throw new Error('Failed to fetch data');
-        }
+        if (!dashboardRes.ok || !inviteRes.ok) throw new Error('Failed to fetch data');
 
         const dashboardJson = await dashboardRes.json();
         const inviteJson = await inviteRes.json();
@@ -135,18 +167,17 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [timeRange, sportFilter]);
+  }, [timeRange]);
 
-  // Copy invite code to clipboard
   const copyInviteCode = () => {
     if (inviteCodeData?.inviteCode) {
       navigator.clipboard.writeText(inviteCodeData.inviteCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
     }
   };
 
-  // Prepare chart data
   const chartData = dashboardData?.moodTrend?.map((d) => {
     const date = new Date(d.date);
     return {
@@ -157,514 +188,502 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
     };
   }) || [];
 
-  // Get status color based on readiness
-  const getStatusStyles = (status: string) => {
-    switch (status) {
-      case 'excellent':
-        return {
-          border: 'border-risk-green/30',
-          bg: 'bg-risk-green/5',
-          badge: 'bg-risk-green/20 text-risk-green',
-          text: 'text-risk-green',
-        };
-      case 'good':
-        return {
-          border: 'border-info/30',
-          bg: 'bg-info/5',
-          badge: 'bg-info/20 text-info',
-          text: 'text-info',
-        };
-      case 'fair':
-        return {
-          border: 'border-risk-yellow/30',
-          bg: 'bg-risk-yellow/5',
-          badge: 'bg-risk-yellow/20 text-risk-yellow',
-          text: 'text-risk-yellow',
-        };
-      case 'at-risk':
-        return {
-          border: 'border-risk-red/30',
-          bg: 'bg-risk-red/5',
-          badge: 'bg-risk-red/20 text-risk-red',
-          text: 'text-risk-red',
-        };
-      default:
-        return {
-          border: 'border-border',
-          bg: 'bg-muted/50',
-          badge: 'bg-muted text-muted-foreground',
-          text: 'text-muted-foreground',
-        };
-    }
-  };
-
+  // --- Loading ---
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
-          <p className="mt-4 text-muted-foreground font-medium">Loading dashboard...</p>
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 rounded-full border-4 border-muted" />
+            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
+          <p className="text-muted-foreground text-sm">Loading your command center...</p>
         </div>
       </div>
     );
   }
 
+  // --- Error ---
   if (error || !dashboardData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="card-elevated p-12 max-w-md text-center">
-          <AlertTriangle className="w-12 h-12 text-risk-red mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">
-            {error || 'No data available'}
-          </h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            There was a problem loading your dashboard data.
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="rounded-2xl border border-border bg-card p-10 max-w-md text-center shadow-elevated">
+          <div className="w-16 h-16 rounded-2xl bg-destructive/10 mx-auto mb-4 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+          </div>
+          <h2 className="text-lg font-bold text-foreground mb-1">{error || 'No data available'}</h2>
+          <p className="text-sm text-muted-foreground mb-4">There was a problem loading your dashboard.</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const { overview, teamMood, atRiskAthletes, athleteReadiness, nudges, crisisAlerts } = dashboardData;
+  const sortedReadiness = [...athleteReadiness].sort((a, b) => a.readiness - b.readiness);
+
+  // --- Empty State ---
+  if (overview.totalAthletes === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="rounded-2xl border border-border bg-card p-12 max-w-lg text-center shadow-elevated">
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 mx-auto mb-6 flex items-center justify-center">
+            <Brain className="w-10 h-10 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Welcome to Flow Coach</h2>
+          <p className="text-muted-foreground mb-6">
+            Share your invite code with athletes to get started. Once they join, you'll see their mental performance data here.
           </p>
-          <Button onClick={() => window.location.reload()}>
-            Try Again
+          <Button onClick={() => setShowInviteCode(true)}>
+            <Key className="w-4 h-4 mr-2" />
+            View Invite Code
           </Button>
         </div>
       </div>
     );
   }
 
-  const { overview, teamMood, atRiskAthletes, athleteReadiness, nudges } = dashboardData;
+  // Calculate team averages for rings
+  const avgReadiness = sortedReadiness.length > 0
+    ? Math.round(sortedReadiness.reduce((s, a) => s + a.readiness, 0) / sortedReadiness.length)
+    : 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
-                Coach Dashboard
-              </h1>
-              <p className="mt-1 text-muted-foreground">
-                Monitor your team's mental performance
-              </p>
-            </div>
-            <Button
-              onClick={() => setShowInviteCode(!showInviteCode)}
-              variant={showInviteCode ? 'default' : 'outline'}
-              className="flex items-center gap-2"
-            >
-              <Key className="w-4 h-4" />
-              My Invite Code
-            </Button>
+    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-fade-in">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">Your team at a glance</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1 p-1 bg-muted/60 rounded-lg">
+            {TIME_RANGES.map((r) => (
+              <button
+                key={r.value}
+                onClick={() => setTimeRange(r.value)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                  timeRange === r.value
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {r.label}
+              </button>
+            ))}
           </div>
-
-          {/* Invite Code Card */}
-          {showInviteCode && inviteCodeData && (
-            <div className="mt-6 card-elevated p-6 border-primary/20 animate-fade-in">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Key className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Your Team Invite Code</h3>
-                  <p className="text-sm text-muted-foreground">Share this code with your athletes</p>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <code className="flex-1 px-4 py-3 rounded-lg bg-muted border border-border font-mono text-xl font-bold text-foreground tracking-wider">
-                  {inviteCodeData.inviteCode}
-                </code>
-                <Button variant="outline" onClick={copyInviteCode} className="flex items-center gap-2">
-                  <Copy className="w-4 h-4" />
-                  Copy
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
-                <span>Sport: <strong className="text-foreground">{inviteCodeData.sport}</strong></span>
-                <span>Connected: <strong className="text-foreground">{inviteCodeData.athleteCount} athletes</strong></span>
-              </div>
-            </div>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowInviteCode(!showInviteCode)}
+          >
+            <Key className="w-4 h-4 mr-2" />
+            Invite
+          </Button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Demo Mode Banner */}
-        {demoMode && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3">
-            <FlaskConical className="w-5 h-5 text-amber-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-amber-200 font-medium">Demo Mode Active</p>
-              <p className="text-amber-300/70 text-sm">
-                Viewing sample data. Remove <code className="bg-amber-500/20 px-1 rounded">?demo=true</code> from URL to see real data.
+      {/* Invite Code (collapsible) */}
+      {showInviteCode && inviteCodeData && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 animate-scale-in">
+          <p className="text-sm text-muted-foreground mb-3">Share this code with your athletes to join your team</p>
+          <div className="flex items-center gap-3">
+            <code className="flex-1 px-4 py-2.5 rounded-lg bg-card border border-border font-mono text-lg font-bold text-foreground tracking-widest">
+              {inviteCodeData.inviteCode}
+            </code>
+            <Button variant="outline" size="sm" onClick={copyInviteCode}>
+              {copiedCode ? <CheckCircle2 className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              {copiedCode ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {inviteCodeData.sport} · {inviteCodeData.athleteCount} connected
+          </p>
+        </div>
+      )}
+
+      {/* ═════════════════════════════════════════════════════════
+         HERO STAT CARDS — SpotlightCard + AnimatedNumber
+         ═════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Team Readiness */}
+        <SpotlightCard className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Team Readiness</p>
+              <AnimatedNumber
+                value={avgReadiness}
+                className={cn('text-5xl mt-1', avgReadiness >= 70 ? 'text-foreground' : 'text-destructive')}
+              />
+              <p className="text-muted-foreground text-xs mt-1">out of 100</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Target className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+        </SpotlightCard>
+
+        {/* Total Athletes */}
+        <SpotlightCard className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Athletes</p>
+              <AnimatedNumber value={overview.totalAthletes} className="text-5xl mt-1 text-foreground" />
+              <p className="text-muted-foreground text-xs mt-1">{overview.athletesWithConsent} active</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Users className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+        </SpotlightCard>
+
+        {/* Team Mood */}
+        <SpotlightCard className="p-6" spotlightColor="hsl(152 69% 38% / 0.08)">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Avg Mood</p>
+              <AnimatedNumber value={teamMood.avgMood} decimals={1} className="text-5xl mt-1 text-foreground" />
+              <p className="text-muted-foreground text-xs mt-1">of 10 · {teamMood.totalLogs} logs</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Heart className="w-6 h-6 text-accent" />
+            </div>
+          </div>
+        </SpotlightCard>
+
+        {/* At Risk / Alerts */}
+        <SpotlightCard
+          className={cn('p-6', (overview.atRiskCount > 0 || overview.crisisAlertsCount > 0) && 'border-destructive/30')}
+          spotlightColor={overview.atRiskCount > 0 ? 'hsl(0 78% 62% / 0.08)' : 'hsl(24 95% 48% / 0.08)'}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Needs Attention</p>
+              <AnimatedNumber
+                value={overview.atRiskCount + overview.crisisAlertsCount}
+                className={cn('text-5xl mt-1', overview.atRiskCount > 0 ? 'text-destructive' : 'text-foreground')}
+              />
+              <p className="text-muted-foreground text-xs mt-1">
+                {overview.crisisAlertsCount > 0 ? `${overview.crisisAlertsCount} alert${overview.crisisAlertsCount !== 1 ? 's' : ''}` : 'all clear'}
               </p>
             </div>
-          </div>
-        )}
-
-        {/* Action Items (Nudges) */}
-        <div className="card-elevated p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            Action Items
-          </h2>
-          {nudges && nudges.length > 0 ? (
-            <div className="space-y-3">
-              {nudges.map((nudge, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <span
-                    className={cn(
-                      'mt-1.5 w-2.5 h-2.5 rounded-full flex-shrink-0',
-                      nudge.priority === 'high'
-                        ? 'bg-risk-red'
-                        : nudge.priority === 'medium'
-                          ? 'bg-risk-yellow'
-                          : 'bg-muted-foreground'
-                    )}
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{nudge.message}</p>
-                    {nudge.athleteNames && nudge.athleteNames.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {nudge.athleteNames.join(', ')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <CheckCircle2 className="w-5 h-5 text-risk-green" />
-              <span>All clear — your team is on track</span>
-            </div>
-          )}
-        </div>
-
-        {/* Filters */}
-        <div className="card-elevated p-4 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Time Range
-            </label>
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
-            >
-              <option value="7">Last 7 days</option>
-              <option value="14">Last 14 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="60">Last 60 days</option>
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Sport Filter
-            </label>
-            <select
-              value={sportFilter}
-              onChange={(e) => setSportFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-foreground"
-            >
-              <option value="">All Sports</option>
-              <option value="Basketball">Basketball</option>
-              <option value="Football">Football</option>
-              <option value="Soccer">Soccer</option>
-              <option value="Volleyball">Volleyball</option>
-              <option value="Baseball">Baseball</option>
-              <option value="Track">Track & Field</option>
-            </select>
-          </div>
-        </div>
-
-        {/* AI Insights Banner */}
-        <Link href="/coach/ai-insights" className="block">
-          <div className="relative overflow-hidden rounded-xl bg-accent/10 border border-accent/30 p-5 hover:border-accent/50 transition-all group cursor-pointer">
-            <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 opacity-10">
-              <Brain className="w-full h-full" />
-            </div>
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-accent/20">
-                  <Brain className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold text-white">AI-Powered Insights</h3>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-accent/30 text-accent flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      New
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-300 mt-0.5">
-                    Discover correlations, predictions, and what works for each athlete
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            <div className={cn(
+              'w-12 h-12 rounded-xl flex items-center justify-center',
+              overview.atRiskCount > 0 ? 'bg-destructive/10' : 'bg-success/10'
+            )}>
+              {overview.atRiskCount > 0
+                ? <AlertTriangle className="w-6 h-6 text-destructive" />
+                : <Shield className="w-6 h-6 text-success" />
+              }
             </div>
           </div>
-        </Link>
+        </SpotlightCard>
+      </div>
 
-        {/* Live Athlete Activity - shows who's chatting now */}
-        <AthleteActivityMonitor demo={demoMode} compact />
-
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Athletes */}
-          <div className="card-elevated p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Athletes</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{overview.totalAthletes}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {overview.athletesWithConsent} with consent
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
+      {/* ═════════════════════════════════════════════════════════
+         TWO-COLUMN LAYOUT: Main + Sidebar
+         ═════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+        {/* ── LEFT COLUMN ── */}
+        <div className="space-y-6 min-w-0">
+          {/* MY ATHLETES */}
+          <section className="animate-slide-up stagger-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">My Athletes</h2>
+              <button
+                onClick={() => router.push('/coach/athletes')}
+                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group"
+              >
+                All Athletes
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
             </div>
-          </div>
 
-          {/* Avg Team Mood */}
-          <div className="card-elevated p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Team Mood</p>
-                <p className="text-3xl font-bold text-foreground mt-1">
-                  {teamMood.avgMood.toFixed(1)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {teamMood.totalLogs} logs
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-risk-green/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-risk-green" />
-              </div>
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedReadiness.slice(0, 6).map((item, idx) => {
+                const badge = getStatusBadge(item.status);
+                const isAtRisk = item.status === 'at-risk' || item.status === 'fair';
 
-          {/* At-Risk Athletes */}
-          <div className="card-elevated p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">At-Risk Athletes</p>
-                <p className={cn(
-                  "text-3xl font-bold mt-1",
-                  overview.atRiskCount > 0 ? "text-risk-yellow" : "text-foreground"
-                )}>
-                  {overview.atRiskCount}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Need attention</p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-risk-yellow/10 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-risk-yellow" />
-              </div>
-            </div>
-          </div>
-
-          {/* Crisis Alerts */}
-          <div className="card-elevated p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Crisis Alerts</p>
-                <p className={cn(
-                  "text-3xl font-bold mt-1",
-                  overview.crisisAlertsCount > 0 ? "text-risk-red" : "text-foreground"
-                )}>
-                  {overview.crisisAlertsCount}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Unresolved</p>
-              </div>
-              <div className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center",
-                overview.crisisAlertsCount > 0 ? "bg-risk-red/10" : "bg-muted"
-              )}>
-                <Activity className={cn(
-                  "w-5 h-5",
-                  overview.crisisAlertsCount > 0 ? "text-risk-red" : "text-muted-foreground"
-                )} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mood Trend Chart */}
-        {chartData.length > 0 && (
-          <div className="card-elevated p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              Team Mental Performance Trends
-            </h2>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" className="text-muted-foreground" tick={{ fontSize: 12 }} />
-                  <YAxis domain={[0, 10]} className="text-muted-foreground" tick={{ fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="Mood"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))', r: 4 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Confidence"
-                    stroke="hsl(var(--risk-green))"
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--risk-green))', r: 4 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Stress"
-                    stroke="hsl(var(--risk-red))"
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--risk-red))', r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* At-Risk Athletes */}
-        {atRiskAthletes.length > 0 && (
-          <div className="card-elevated p-6 border-risk-yellow/20">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-risk-yellow" />
-              At-Risk Athletes
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {atRiskAthletes.map((athlete) => (
-                <div
-                  key={athlete.id}
-                  className="card-interactive p-4 border-risk-red/20"
-                  onClick={() => router.push(`/coach/athletes/${athlete.id}`)}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{athlete.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {athlete.sport} • {athlete.year}
-                      </p>
-                    </div>
-                    <span className="px-2 py-1 rounded bg-risk-red/10 text-risk-red text-xs font-medium">
-                      At Risk
-                    </span>
-                  </div>
-                  {athlete.recentMood && (
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Mood</span>
-                        <span className="font-medium text-foreground">{athlete.recentMood.mood}/10</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Confidence</span>
-                        <span className="font-medium text-foreground">{athlete.recentMood.confidence}/10</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Stress</span>
-                        <span className="font-medium text-risk-red">{athlete.recentMood.stress}/10</span>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/coach/athletes/${athlete.id}`);
-                      }}
-                    >
-                      View Profile
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-risk-red hover:bg-risk-red/90"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/coach/athletes/${athlete.id}`);
-                      }}
-                    >
-                      Check-In
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Today's Readiness */}
-        {athleteReadiness.length > 0 && (
-          <div className="card-elevated p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
-              Today's Readiness Scores
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {athleteReadiness.map((item) => {
-                const styles = getStatusStyles(item.status);
                 return (
                   <div
                     key={item.athlete.id}
                     onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
                     className={cn(
-                      "card-interactive p-4",
-                      styles.border,
-                      styles.bg
+                      'group rounded-xl border bg-card p-5 cursor-pointer transition-all duration-200 hover:shadow-elevated hover:-translate-y-0.5',
+                      isAtRisk && item.status === 'at-risk' && 'border-destructive/20 hover:border-destructive/40'
                     )}
+                    style={{ animationDelay: `${(idx + 5) * 50}ms` }}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{item.athlete.name}</h3>
-                        <p className="text-sm text-muted-foreground">{item.athlete.teamPosition}</p>
+                    <div className="flex items-start gap-4">
+                      <div className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 transition-transform group-hover:scale-105',
+                        item.status === 'at-risk' ? 'bg-destructive/10 text-destructive'
+                          : item.status === 'fair' ? 'bg-warning/10 text-warning'
+                          : 'bg-primary/10 text-primary'
+                      )}>
+                        {getInitials(item.athlete.name)}
                       </div>
-                      <span className={cn("text-2xl font-bold", styles.text)}>
-                        {item.readiness}
-                      </span>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {item.athlete.name}
+                          </h3>
+                          <span className={cn('px-2 py-0.5 rounded-md text-xs font-semibold shrink-0', badge.cls)}>
+                            {badge.label}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {item.athlete.sport}
+                          {item.athlete.teamPosition ? ` · ${item.athlete.teamPosition}` : ''}
+                        </p>
+
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={cn('h-full rounded-full transition-all duration-700', getReadinessBarColor(item.readiness))}
+                              style={{ width: `${item.readiness}%` }}
+                            />
+                          </div>
+                          <span className={cn('stat-value text-sm w-8 text-right', getReadinessColor(item.readiness))}>
+                            {item.readiness}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <span className={cn(
-                      "text-xs uppercase font-medium px-2 py-1 rounded inline-block",
-                      styles.badge
-                    )}>
-                      {item.status.replace('-', ' ')}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground float-right mt-1" />
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
 
-        {/* Empty State */}
-        {overview.totalAthletes === 0 && (
-          <div className="card-elevated p-12 text-center">
-            <Users className="w-16 h-16 text-muted-foreground/40 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Welcome to Your Coach Dashboard!
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Get started by sharing your invite code with athletes. Once they join and grant consent,
-              you'll see their mental performance metrics right here.
-            </p>
-            <Button onClick={() => setShowInviteCode(true)}>
-              <Key className="w-4 h-4 mr-2" />
-              View Invite Code
-            </Button>
+            {sortedReadiness.length > 6 && (
+              <button
+                onClick={() => router.push('/coach/athletes')}
+                className="mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                +{sortedReadiness.length - 6} more athletes
+              </button>
+            )}
+          </section>
+
+          {/* READINESS OVERVIEW */}
+          <section className="animate-slide-up stagger-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">Readiness Overview</h2>
+              <button
+                onClick={() => router.push('/coach/readiness')}
+                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group"
+              >
+                Full Readiness
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
+            <div className="rounded-xl border bg-card overflow-hidden">
+              <div className="divide-y divide-border">
+                {sortedReadiness.slice(0, 8).map((item) => (
+                  <div
+                    key={item.athlete.id}
+                    onClick={() => router.push(`/coach/athletes/${item.athlete.id}`)}
+                    className="flex items-center gap-4 px-5 py-3 hover:bg-muted/50 cursor-pointer transition-colors group"
+                  >
+                    <div className={cn(
+                      'w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-transform group-hover:scale-105',
+                      item.status === 'at-risk' ? 'bg-destructive/10 text-destructive'
+                        : item.status === 'fair' ? 'bg-warning/10 text-warning'
+                        : item.status === 'good' ? 'bg-primary/10 text-primary'
+                        : 'bg-success/10 text-success'
+                    )}>
+                      {getInitials(item.athlete.name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{item.athlete.name}</p>
+                      <p className="text-xs text-muted-foreground">{item.athlete.sport}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden hidden sm:block">
+                        <div
+                          className={cn('h-full rounded-full transition-all duration-700', getReadinessBarColor(item.readiness))}
+                          style={{ width: `${item.readiness}%` }}
+                        />
+                      </div>
+                      <span className={cn('stat-value text-sm w-8 text-right', getReadinessColor(item.readiness))}>
+                        {item.readiness}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* MOOD TRENDS — area chart, more visual */}
+          {chartData.length > 0 && (
+            <section className="rounded-xl border bg-card overflow-hidden">
+              <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Team Mood Trends</h2>
+                  <p className="text-xs text-muted-foreground">Last {timeRange} days</p>
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                      <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        }}
+                      />
+                      <Area type="monotone" dataKey="Mood" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="hsl(var(--primary))" fillOpacity={0.08} dot={false} />
+                      <Area type="monotone" dataKey="Confidence" stroke="hsl(var(--success))" strokeWidth={2} fill="hsl(var(--success))" fillOpacity={0.05} dot={false} />
+                      <Line type="monotone" dataKey="Stress" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} strokeDasharray="4 4" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex items-center gap-5 mt-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-1 rounded-full bg-primary" />Mood</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-1 rounded-full bg-success" />Confidence</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-1 rounded-full bg-destructive opacity-60" />Stress</span>
+                </div>
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* ── RIGHT SIDEBAR ── */}
+        <aside className="space-y-5">
+          {/* Confidence & Stress mini-cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border bg-card p-4 text-center">
+              <AnimatedNumber value={teamMood.avgConfidence} decimals={1} className="text-2xl text-foreground" />
+              <p className="text-xs text-muted-foreground font-medium mt-1">Confidence</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 text-center">
+              <AnimatedNumber value={teamMood.avgStress} decimals={1} className="text-2xl text-warning" />
+              <p className="text-xs text-muted-foreground font-medium mt-1">Stress</p>
+            </div>
           </div>
-        )}
+
+          {/* Action Items */}
+          <div className="rounded-xl border bg-card overflow-hidden animate-slide-up stagger-4">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" />
+              <h3 className="font-bold text-foreground text-sm">Action Items</h3>
+            </div>
+            <div className="divide-y divide-border">
+              {nudges && nudges.length > 0 ? (
+                nudges.slice(0, 5).map((nudge, idx) => (
+                  <div key={idx} className="px-5 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors">
+                    <span className={cn(
+                      'mt-1.5 w-2 h-2 rounded-full shrink-0',
+                      nudge.priority === 'high' ? 'bg-destructive animate-pulse-subtle'
+                        : nudge.priority === 'medium' ? 'bg-warning'
+                        : 'bg-muted-foreground'
+                    )} />
+                    <div className="min-w-0">
+                      <p className="text-sm text-foreground leading-snug">{nudge.message}</p>
+                      {nudge.athleteNames && nudge.athleteNames.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{nudge.athleteNames.join(', ')}</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-5 py-8 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-2">
+                    <CheckCircle2 className="w-6 h-6 text-success" />
+                  </div>
+                  <p className="text-sm font-medium text-foreground">All clear</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Team is on track</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Athletes Needing Attention */}
+          {atRiskAthletes.length > 0 && (
+            <div className="rounded-xl border border-destructive/20 bg-card overflow-hidden animate-slide-up stagger-5">
+              <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-destructive" />
+                <h3 className="font-bold text-foreground text-sm">Needs Attention</h3>
+                <span className="ml-auto px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-xs font-bold">
+                  {atRiskAthletes.length}
+                </span>
+              </div>
+              <div className="divide-y divide-border">
+                {atRiskAthletes.slice(0, 4).map((athlete) => (
+                  <div
+                    key={athlete.id}
+                    onClick={() => router.push(`/coach/athletes/${athlete.id}`)}
+                    className="px-5 py-3 flex items-center gap-3 hover:bg-muted/50 cursor-pointer transition-colors group"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center text-xs font-bold text-destructive shrink-0 transition-transform group-hover:scale-105">
+                      {getInitials(athlete.name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{athlete.name}</p>
+                      <p className="text-xs text-muted-foreground">{athlete.sport} · {athlete.year}</p>
+                    </div>
+                    {athlete.recentMood && (
+                      <div className="text-right shrink-0">
+                        <p className="text-xs text-destructive font-semibold tabular-nums">Stress: {athlete.recentMood.stress}</p>
+                        <p className="text-xs text-muted-foreground tabular-nums">Mood: {athlete.recentMood.mood}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-border">
+                <button
+                  onClick={() => router.push('/coach/athletes?filter=critical')}
+                  className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group"
+                >
+                  View all at-risk athletes
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Crisis Alerts */}
+          {crisisAlerts && crisisAlerts.length > 0 && (
+            <div className="rounded-xl border border-destructive/30 bg-card overflow-hidden">
+              <div className="px-5 py-4 border-b border-destructive/20 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                <h3 className="font-bold text-foreground text-sm">Crisis Alerts</h3>
+                <span className="ml-auto px-2.5 py-0.5 rounded-full bg-destructive/10 text-destructive text-xs font-bold">
+                  {crisisAlerts.length}
+                </span>
+              </div>
+              <div className="px-5 py-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {crisisAlerts.length} unresolved alert{crisisAlerts.length !== 1 ? 's' : ''} requiring review
+                </p>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => router.push('/coach/readiness?tab=alerts')}
+                >
+                  Review Alerts
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </aside>
       </div>
     </div>
   );
