@@ -1,51 +1,45 @@
 'use client';
 
 /**
- * Enhanced Mood Logger - MINIMUM FRICTION DESIGN
+ * Enhanced Mood Logger — D1-Optimized Subjective Monitoring
  *
- * Core principle: Quick path should be FASTER than before, not slower.
+ * Quick Mode: 3 taps + submit (5 seconds)
+ * Detailed Mode: Professional gradient sliders + physical readiness + context tags (30 seconds)
  *
- * Quick Mode (default): 3 taps + submit = done in 5 seconds
- * Detailed Mode (optional): Full sliders + context when they want to share more
- *
- * Addresses issues WITHOUT adding friction:
- * 1. Privacy emphasis → Small visual cue, not a paragraph
- * 2. "I'm not sure" → Just tap the middle option
- * 3. Context capture → Only prompts on significant changes (auto-detected)
- * 4. Varied questions → Subtle variation, same interaction pattern
+ * Changes from previous version:
+ * - Removed energy field (r > 0.85 with mood+sleep, adds friction without signal)
+ * - Added sleepQuality (1-10 quality, not just hours)
+ * - Added soreness (1-10 body soreness)
+ * - Added RPE (Rate of Perceived Exertion, post-session only)
+ * - Replaced freeform notes with context tags (queryable, correlatable)
+ * - Confidence is contextual (always shown in detailed, optional in quick)
+ * - Professional gradient styling (no emojis)
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import {
-  Sparkles,
   ChevronDown,
   Lock,
   Check,
   MessageCircle,
-  Sun,
-  CloudSun,
-  Cloud,
-  Frown,
-  Meh,
-  Smile,
-  Zap,
-  Battery,
-  BatteryLow,
+  ChevronUp,
 } from 'lucide-react';
 
-// ============================================================================
-// TYPES
-// ============================================================================
+// ─── Types ───────────────────────────────────────────────────────
 
-interface MoodLogData {
+interface MoodLogPayload {
+  athleteId: string;
   mood: number;
-  confidence: number;
   stress: number;
-  energy?: number;
+  confidence?: number;
+  sleepQuality?: number;
   sleep?: number;
+  soreness?: number;
+  rpe?: number;
   notes?: string;
+  tags: string;
   contextTags: string[];
 }
 
@@ -58,42 +52,50 @@ interface PreviousMoodLog {
 
 type QuickOption = 'low' | 'mid' | 'high';
 
-// Quick selection options (3 taps total)
 const QUICK_OPTIONS: Record<string, { low: number; mid: number; high: number }> = {
   mood: { low: 3, mid: 6, high: 8 },
-  confidence: { low: 3, mid: 6, high: 8 },
-  stress: { low: 3, mid: 5, high: 8 }, // Note: high stress = bad
+  stress: { low: 3, mid: 5, high: 8 },
 };
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
+// Context tags for D1 athletes — structured, queryable, correlatable
+const CONTEXT_TAGS = [
+  'Travel',
+  'Exam Week',
+  'Pre-Game',
+  'Post-Game',
+  'Injury Recovery',
+  'Personal Issue',
+  'Great Practice',
+  'Team Conflict',
+  'Rest Day',
+  'Competition Week',
+];
+
+// ─── Component ───────────────────────────────────────────────────
 
 export function EnhancedMoodLogger() {
   const { user } = useAuth();
   const [mode, setMode] = useState<'quick' | 'detailed'>('quick');
   const [quickSelections, setQuickSelections] = useState<{
     mood: QuickOption | null;
-    confidence: QuickOption | null;
     stress: QuickOption | null;
-  }>({
-    mood: null,
-    confidence: null,
-    stress: null,
-  });
+  }>({ mood: null, stress: null });
+
   const [detailedData, setDetailedData] = useState({
     mood: 6,
-    confidence: 6,
     stress: 4,
-    energy: 6,
-    sleep: undefined as number | undefined,
-    notes: '',
+    confidence: 6,
+    sleepQuality: 7,
+    sleepHours: undefined as number | undefined,
+    soreness: 3,
+    rpe: undefined as number | undefined,
   });
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   const [previousLog, setPreviousLog] = useState<PreviousMoodLog | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [significantChange, setSignificantChange] = useState<string | null>(null);
-  const [contextNote, setContextNote] = useState('');
 
   // Fetch previous log for change detection
   useEffect(() => {
@@ -104,27 +106,28 @@ export function EnhancedMoodLogger() {
       .catch(() => {});
   }, [user?.id]);
 
-  // Check for significant change when quick selections made
-  const checkSignificantChange = useCallback((field: 'mood' | 'confidence' | 'stress', selection: QuickOption) => {
+  const checkSignificantChange = useCallback((field: 'mood' | 'stress', selection: QuickOption) => {
     if (!previousLog) return;
-
-    const newValue = QUICK_OPTIONS[field][selection];
+    const newValue = QUICK_OPTIONS[field]![selection];
     const oldValue = previousLog[field];
-    const diff = Math.abs(newValue - oldValue);
-
-    if (diff >= 3) {
+    if (Math.abs(newValue - oldValue) >= 3) {
       const direction = newValue > oldValue ? 'better' : 'tougher';
-      const fieldLabel = field === 'mood' ? 'mood' : field === 'confidence' ? 'confidence' : 'stress level';
-      setSignificantChange(`Looks like ${fieldLabel} is ${direction} than last time.`);
+      setSignificantChange(`${field} seems ${direction} than last time.`);
     }
   }, [previousLog]);
 
-  const handleQuickSelect = (field: 'mood' | 'confidence' | 'stress', option: QuickOption) => {
+  const handleQuickSelect = (field: 'mood' | 'stress', option: QuickOption) => {
     setQuickSelections(prev => ({ ...prev, [field]: option }));
     checkSignificantChange(field, option);
   };
 
-  const isQuickComplete = quickSelections.mood && quickSelections.confidence && quickSelections.stress;
+  const isQuickComplete = quickSelections.mood && quickSelections.stress;
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -133,22 +136,28 @@ export function EnhancedMoodLogger() {
     setIsSubmitting(true);
 
     try {
-      let payload;
+      let payload: MoodLogPayload;
 
       if (mode === 'quick') {
         payload = {
           athleteId: user.id,
-          mood: QUICK_OPTIONS.mood[quickSelections.mood!],
-          confidence: QUICK_OPTIONS.confidence[quickSelections.confidence!],
-          stress: QUICK_OPTIONS.stress[quickSelections.stress!],
-          notes: contextNote || undefined,
+          mood: QUICK_OPTIONS.mood[quickSelections.mood!]!,
+          stress: QUICK_OPTIONS.stress[quickSelections.stress!]!,
           tags: '',
+          contextTags: selectedTags,
         };
       } else {
         payload = {
           athleteId: user.id,
-          ...detailedData,
+          mood: detailedData.mood,
+          stress: detailedData.stress,
+          confidence: detailedData.confidence,
+          sleepQuality: detailedData.sleepQuality,
+          sleep: detailedData.sleepHours,
+          soreness: detailedData.soreness,
+          rpe: detailedData.rpe,
           tags: '',
+          contextTags: selectedTags,
         };
       }
 
@@ -160,9 +169,9 @@ export function EnhancedMoodLogger() {
 
       if (response.ok) {
         setShowSuccess(true);
-        setQuickSelections({ mood: null, confidence: null, stress: null });
+        setQuickSelections({ mood: null, stress: null });
         setSignificantChange(null);
-        setContextNote('');
+        setSelectedTags([]);
         setTimeout(() => setShowSuccess(false), 2500);
       }
     } catch (error) {
@@ -183,18 +192,18 @@ export function EnhancedMoodLogger() {
   if (showSuccess) {
     return (
       <div className="max-w-md mx-auto p-6">
-        <div className="bg-card rounded-xl border border-green-500/30 p-8 text-center">
-          <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="w-8 h-8 text-success" />
+        <div className="bg-card rounded-xl border border-accent/30 p-8 text-center">
+          <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-accent" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">All set!</h2>
-          <p className="text-muted-foreground text-sm">Your check-in has been saved.</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">Check-in saved</h2>
+          <p className="text-muted-foreground text-sm">Your data is being analyzed.</p>
           <button
             onClick={() => window.location.href = '/chat'}
             className="mt-4 inline-flex items-center gap-2 text-sm text-primary hover:underline"
           >
             <MessageCircle className="w-4 h-4" />
-            Want to talk about how you're feeling?
+            Talk with your coach AI
           </button>
         </div>
       </div>
@@ -204,10 +213,10 @@ export function EnhancedMoodLogger() {
   return (
     <div className="max-w-md mx-auto p-6">
       <div className="bg-card rounded-xl border border-border p-6">
-        {/* Header - minimal */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-foreground">Quick Check-In</h2>
+            <h2 className="text-xl font-bold text-foreground">Daily Check-In</h2>
             <p className="text-muted-foreground text-sm">How are you right now?</p>
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -218,54 +227,41 @@ export function EnhancedMoodLogger() {
 
         {mode === 'quick' ? (
           <div className="space-y-6">
-            {/* Mood - 3 options */}
+            {/* Quick Mood */}
             <QuickSelect
               label="Mood"
               selected={quickSelections.mood}
               onSelect={(opt) => handleQuickSelect('mood', opt)}
               options={[
-                { value: 'low', label: 'Not great', icon: Frown, color: 'text-orange-400' },
-                { value: 'mid', label: 'Okay', icon: Meh, color: 'text-muted-foreground' },
-                { value: 'high', label: 'Good', icon: Smile, color: 'text-success' },
+                { value: 'low', label: 'Not great', color: 'border-destructive/50 bg-destructive/10 text-destructive' },
+                { value: 'mid', label: 'Okay', color: 'border-chart-3/50 bg-chart-3/10 text-chart-3' },
+                { value: 'high', label: 'Good', color: 'border-accent/50 bg-accent/10 text-accent' },
               ]}
             />
 
-            {/* Confidence - 3 options */}
-            <QuickSelect
-              label="Confidence"
-              selected={quickSelections.confidence}
-              onSelect={(opt) => handleQuickSelect('confidence', opt)}
-              options={[
-                { value: 'low', label: 'Shaky', icon: Cloud, color: 'text-muted-foreground' },
-                { value: 'mid', label: 'Okay', icon: CloudSun, color: 'text-primary' },
-                { value: 'high', label: 'Strong', icon: Sun, color: 'text-amber-400' },
-              ]}
-            />
-
-            {/* Stress - 3 options */}
+            {/* Quick Stress */}
             <QuickSelect
               label="Stress"
               selected={quickSelections.stress}
               onSelect={(opt) => handleQuickSelect('stress', opt)}
               options={[
-                { value: 'low', label: 'Relaxed', icon: Battery, color: 'text-success' },
-                { value: 'mid', label: 'Some', icon: Zap, color: 'text-amber-400' },
-                { value: 'high', label: 'High', icon: BatteryLow, color: 'text-destructive' },
+                { value: 'low', label: 'Low', color: 'border-accent/50 bg-accent/10 text-accent' },
+                { value: 'mid', label: 'Moderate', color: 'border-chart-3/50 bg-chart-3/10 text-chart-3' },
+                { value: 'high', label: 'High', color: 'border-destructive/50 bg-destructive/10 text-destructive' },
               ]}
             />
 
-            {/* Significant change prompt - only appears when detected */}
+            {/* Context tags — quick select */}
+            <ContextTagPicker
+              selected={selectedTags}
+              onToggle={toggleTag}
+            />
+
+            {/* Significant change prompt */}
             {significantChange && (
-              <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">{significantChange}</p>
-                <input
-                  type="text"
-                  value={contextNote}
-                  onChange={(e) => setContextNote(e.target.value)}
-                  placeholder="What's going on? (optional)"
-                  className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
+              <p className="text-xs text-muted-foreground p-3 bg-primary/5 border border-primary/10 rounded-lg">
+                {significantChange}
+              </p>
             )}
 
             {/* Submit */}
@@ -275,7 +271,7 @@ export function EnhancedMoodLogger() {
               className={cn(
                 'w-full py-3 rounded-lg font-medium transition-all',
                 isQuickComplete
-                  ? 'bg-primary text-white hover:opacity-90'
+                  ? 'bg-primary text-primary-foreground hover:opacity-90'
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
               )}
             >
@@ -289,13 +285,15 @@ export function EnhancedMoodLogger() {
               className="w-full flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ChevronDown className="w-4 h-4" />
-              Want to be more specific?
+              More detail
             </button>
           </div>
         ) : (
           <DetailedMode
             data={detailedData}
-            onChange={(data) => setDetailedData(data)}
+            onChange={setDetailedData}
+            selectedTags={selectedTags}
+            onToggleTag={toggleTag}
             onSubmit={handleSubmit}
             onBack={() => setMode('quick')}
             isSubmitting={isSubmitting}
@@ -306,20 +304,13 @@ export function EnhancedMoodLogger() {
   );
 }
 
-// ============================================================================
-// QUICK SELECT COMPONENT
-// ============================================================================
+// ─── Quick Select ────────────────────────────────────────────────
 
 interface QuickSelectProps {
   label: string;
   selected: QuickOption | null;
   onSelect: (option: QuickOption) => void;
-  options: Array<{
-    value: QuickOption;
-    label: string;
-    icon: React.ElementType;
-    color: string;
-  }>;
+  options: Array<{ value: QuickOption; label: string; color: string }>;
 }
 
 function QuickSelect({ label, selected, onSelect, options }: QuickSelectProps) {
@@ -328,7 +319,6 @@ function QuickSelect({ label, selected, onSelect, options }: QuickSelectProps) {
       <label className="block text-sm font-medium text-foreground mb-3">{label}</label>
       <div className="grid grid-cols-3 gap-2">
         {options.map((opt) => {
-          const Icon = opt.icon;
           const isSelected = selected === opt.value;
           return (
             <button
@@ -336,16 +326,11 @@ function QuickSelect({ label, selected, onSelect, options }: QuickSelectProps) {
               type="button"
               onClick={() => onSelect(opt.value)}
               className={cn(
-                'flex flex-col items-center gap-1 p-3 rounded-xl border transition-all',
-                isSelected
-                  ? 'bg-primary/20 border-primary/50'
-                  : 'bg-muted/30 border-border hover:bg-muted/50'
+                'p-3 rounded-xl border text-sm font-medium transition-all min-h-[48px]',
+                isSelected ? opt.color : 'bg-muted/30 border-border text-muted-foreground hover:bg-muted/50'
               )}
             >
-              <Icon className={cn('w-6 h-6', isSelected ? opt.color : 'text-muted-foreground')} />
-              <span className={cn('text-xs', isSelected ? 'text-foreground' : 'text-muted-foreground')}>
-                {opt.label}
-              </span>
+              {opt.label}
             </button>
           );
         })}
@@ -354,27 +339,68 @@ function QuickSelect({ label, selected, onSelect, options }: QuickSelectProps) {
   );
 }
 
-// ============================================================================
-// DETAILED MODE COMPONENT
-// ============================================================================
+// ─── Context Tag Picker ──────────────────────────────────────────
+
+function ContextTagPicker({
+  selected,
+  onToggle,
+}: {
+  selected: string[];
+  onToggle: (tag: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-2">
+        What&apos;s going on? <span className="text-muted-foreground font-normal">(optional)</span>
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {CONTEXT_TAGS.map((tag) => {
+          const isSelected = selected.includes(tag);
+          return (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => onToggle(tag)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-medium transition-all min-h-[32px]',
+                isSelected
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border'
+              )}
+            >
+              {tag}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Detailed Mode ───────────────────────────────────────────────
+
+interface DetailedData {
+  mood: number;
+  stress: number;
+  confidence: number;
+  sleepQuality: number;
+  sleepHours: number | undefined;
+  soreness: number;
+  rpe: number | undefined;
+}
 
 interface DetailedModeProps {
-  data: {
-    mood: number;
-    confidence: number;
-    stress: number;
-    energy: number;
-    sleep: number | undefined;
-    notes: string;
-  };
-  onChange: (data: DetailedModeProps['data']) => void;
+  data: DetailedData;
+  onChange: (data: DetailedData) => void;
+  selectedTags: string[];
+  onToggleTag: (tag: string) => void;
   onSubmit: () => void;
   onBack: () => void;
   isSubmitting: boolean;
 }
 
-function DetailedMode({ data, onChange, onSubmit, onBack, isSubmitting }: DetailedModeProps) {
-  const update = (field: keyof typeof data, value: number | string | undefined) => {
+function DetailedMode({ data, onChange, selectedTags, onToggleTag, onSubmit, onBack, isSubmitting }: DetailedModeProps) {
+  const update = <K extends keyof DetailedData>(field: K, value: DetailedData[K]) => {
     onChange({ ...data, [field]: value });
   };
 
@@ -383,48 +409,119 @@ function DetailedMode({ data, onChange, onSubmit, onBack, isSubmitting }: Detail
       <button
         type="button"
         onClick={onBack}
-        className="text-sm text-muted-foreground hover:text-foreground mb-2"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        ← Back to quick mode
+        <ChevronUp className="w-4 h-4" />
+        Quick mode
       </button>
 
-      {/* Sliders */}
-      <Slider label="Mood" value={data.mood} onChange={(v) => update('mood', v)} low="Low" high="Great" />
-      <Slider label="Confidence" value={data.confidence} onChange={(v) => update('confidence', v)} low="Shaky" high="Strong" />
-      <Slider label="Stress" value={data.stress} onChange={(v) => update('stress', v)} low="Relaxed" high="Stressed" />
-      <Slider label="Energy" value={data.energy} onChange={(v) => update('energy', v)} low="Tired" high="Energized" />
+      {/* Core metrics */}
+      <GradientSlider
+        label="Mood"
+        value={data.mood}
+        onChange={(v) => update('mood', v)}
+        lowLabel="Low"
+        highLabel="Excellent"
+        gradient="from-destructive via-chart-3 to-accent"
+      />
+
+      <GradientSlider
+        label="Stress"
+        value={data.stress}
+        onChange={(v) => update('stress', v)}
+        lowLabel="Relaxed"
+        highLabel="Very Stressed"
+        gradient="from-accent via-chart-3 to-destructive"
+      />
+
+      <GradientSlider
+        label="Confidence"
+        value={data.confidence}
+        onChange={(v) => update('confidence', v)}
+        lowLabel="Shaky"
+        highLabel="Strong"
+        gradient="from-muted-foreground via-primary to-accent"
+      />
 
       {/* Sleep */}
+      <GradientSlider
+        label="Sleep Quality"
+        value={data.sleepQuality}
+        onChange={(v) => update('sleepQuality', v)}
+        lowLabel="Poor"
+        highLabel="Great"
+        gradient="from-destructive via-chart-3 to-accent"
+      />
+
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">Hours of sleep</label>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Hours of Sleep <span className="text-muted-foreground font-normal">(optional)</span>
+        </label>
         <input
           type="number"
           min={0}
           max={16}
           step={0.5}
-          value={data.sleep || ''}
-          onChange={(e) => update('sleep', e.target.value ? parseFloat(e.target.value) : undefined)}
+          value={data.sleepHours ?? ''}
+          onChange={(e) => update('sleepHours', e.target.value ? parseFloat(e.target.value) : undefined)}
           className="w-full bg-input border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="7.5"
         />
       </div>
 
-      {/* Notes */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-2">Notes (optional)</label>
-        <textarea
-          value={data.notes}
-          onChange={(e) => update('notes', e.target.value)}
-          className="w-full bg-input border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          rows={2}
-          placeholder="Anything on your mind?"
+      {/* Physical readiness */}
+      <div className="pt-2 border-t border-border">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">Physical</p>
+
+        <GradientSlider
+          label="Body Soreness"
+          value={data.soreness}
+          onChange={(v) => update('soreness', v)}
+          lowLabel="None"
+          highLabel="Very Sore"
+          gradient="from-accent via-chart-3 to-destructive"
         />
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-foreground mb-2">
+            RPE (Perceived Exertion) <span className="text-muted-foreground font-normal">(post-session)</span>
+          </label>
+          <div className="flex gap-1">
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((val) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => update('rpe', val)}
+                className={cn(
+                  'flex-1 py-2 rounded text-xs font-medium transition-all min-h-[36px]',
+                  data.rpe === val
+                    ? val <= 3 ? 'bg-accent text-accent-foreground'
+                      : val <= 6 ? 'bg-chart-3 text-foreground'
+                      : 'bg-destructive text-destructive-foreground'
+                    : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+                )}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+            <span>Easy</span>
+            <span>Moderate</span>
+            <span>Max Effort</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Context tags */}
+      <div className="pt-2 border-t border-border">
+        <ContextTagPicker selected={selectedTags} onToggle={onToggleTag} />
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50"
+        className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50"
       >
         {isSubmitting ? 'Saving...' : 'Save Check-In'}
       </button>
@@ -432,40 +529,48 @@ function DetailedMode({ data, onChange, onSubmit, onBack, isSubmitting }: Detail
   );
 }
 
-// ============================================================================
-// SLIDER COMPONENT
-// ============================================================================
+// ─── Gradient Slider ─────────────────────────────────────────────
 
-function Slider({
+function GradientSlider({
   label,
   value,
   onChange,
-  low,
-  high,
+  lowLabel,
+  highLabel,
+  gradient,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
-  low: string;
-  high: string;
+  lowLabel: string;
+  highLabel: string;
+  gradient: string;
 }) {
+  const pct = ((value - 1) / 9) * 100;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
         <label className="text-sm font-medium text-foreground">{label}</label>
-        <span className="text-lg font-bold text-primary">{value}</span>
+        <span className="text-lg font-bold text-foreground tabular-nums">{value}</span>
       </div>
-      <input
-        type="range"
-        min={1}
-        max={10}
-        value={value}
-        onChange={(e) => onChange(parseInt(e.target.value))}
-        className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-muted"
-      />
-      <div className="flex justify-between text-xs text-muted-foreground mt-1">
-        <span>{low}</span>
-        <span>{high}</span>
+      <div className="relative">
+        <div className={cn('absolute inset-0 h-2 rounded-full bg-gradient-to-r opacity-30', gradient)} />
+        <input
+          type="range"
+          min={1}
+          max={10}
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value))}
+          className="relative w-full h-2 rounded-lg appearance-none cursor-pointer bg-transparent z-10"
+          style={{
+            background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${pct}%, hsl(var(--muted)) ${pct}%, hsl(var(--muted)) 100%)`,
+          }}
+        />
+      </div>
+      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+        <span>{lowLabel}</span>
+        <span>{highLabel}</span>
       </div>
     </div>
   );
