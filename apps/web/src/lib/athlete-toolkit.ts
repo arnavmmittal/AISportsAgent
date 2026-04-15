@@ -125,11 +125,20 @@ function generateReason(chunk: { content: string; title: string }, state: Curren
   return 'This technique builds core mental performance skills used by elite athletes.';
 }
 
-function generatePersonalNote(logs: RecentLog[], _targetState: TechniqueRecommendation['targetState']): string | null {
+function generatePersonalNote(logs: RecentLog[], targetState: TechniqueRecommendation['targetState']): string | null {
   if (logs.length < 3) return null;
-  // Simple: check if mood improved after similar context
+
   const avgMood = logs.reduce((s, l) => s + l.mood, 0) / logs.length;
+  const avgStress = logs.reduce((s, l) => s + l.stress, 0) / logs.length;
+  const recentTrend = logs.length >= 5
+    ? (logs.slice(0, 3).reduce((s, l) => s + l.mood, 0) / 3) - (logs.slice(3, 6).reduce((s, l) => s + l.mood, 0) / Math.min(logs.length - 3, 3))
+    : 0;
+
   if (avgMood >= 7) return 'Your recent mood scores suggest this approach aligns well with what works for you.';
+  if (recentTrend > 1) return 'Your mood has been improving — this technique can help maintain that momentum.';
+  if (targetState === 'high_stress' && avgStress >= 6) return `Your average stress is ${avgStress.toFixed(0)}/10 this period — athletes in similar situations found this technique especially effective.`;
+  if (targetState === 'low_confidence') return 'Building confidence takes consistent practice. Athletes who use this technique regularly see measurable improvement.';
+  if (logs.length >= 7) return `Based on ${logs.length} check-ins, this technique targets your current pattern.`;
   return null;
 }
 

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     const athlete = await prisma.athlete.findUnique({
       where: { userId: user!.id },
-      select: { id: true, userId: true, teamId: true },
+      select: { userId: true },
     });
     if (!athlete) {
       return NextResponse.json(
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       prisma.message.findMany({
         where: {
           role: 'assistant',
-          session: { athleteId: athlete.userId },
+          ChatSession: { athleteId: athlete.userId },
         },
         orderBy: { createdAt: 'desc' },
         take: 1,

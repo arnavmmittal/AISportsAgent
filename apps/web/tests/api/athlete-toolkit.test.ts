@@ -46,20 +46,26 @@ describe('generateToolkitRecommendations', () => {
   });
 
   it('includes personal effectiveness when history exists', async () => {
-    const pastLogs = [
-      { mood: 8, stress: 3, confidence: 8, contextTags: ['Pre-Game'], createdAt: new Date(Date.now() - 86400000) },
-      { mood: 7, stress: 4, confidence: 7, contextTags: ['Pre-Game'], createdAt: new Date(Date.now() - 3 * 86400000) },
-    ];
+    const pastLogs = Array.from({ length: 8 }, (_, i) => ({
+      mood: 6,
+      stress: 6,
+      confidence: 4,
+      contextTags: ['Pre-Game'],
+      createdAt: new Date(Date.now() - (i + 1) * 86400000),
+    }));
 
     const result = await generateToolkitRecommendations({
-      currentState: { mood: 5, stress: 6, confidence: 5, sleep: 7 },
+      currentState: { mood: 5, stress: 7, confidence: 4, sleep: 7 },
       recentLogs: pastLogs,
       contextTags: ['Pre-Game'],
       maxRecommendations: 3,
     });
 
-    // Should have some personalization text
     expect(result.techniques.length).toBeGreaterThan(0);
+    expect(result.isNewAthlete).toBe(false);
+    // With 8+ logs and stress/confidence triggers, at least one technique should have a personal note
+    const withPersonalNote = result.techniques.filter(t => t.personalNote !== null);
+    expect(withPersonalNote.length).toBeGreaterThan(0);
   });
 
   it('returns fallback for new athletes', async () => {

@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireAuth } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { generateToolkitRecommendations } from '@/lib/athlete-toolkit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+const querySchema = z.object({
+  maxRecommendations: z.coerce.number().int().min(1).max(5).optional().default(3),
+});
 
 /**
  * GET /api/athlete/toolkit
@@ -17,9 +22,19 @@ export async function GET(req: NextRequest) {
     const { authorized, user, response } = await requireAuth(req);
     if (!authorized) return response;
 
+    const params = Object.fromEntries(req.nextUrl.searchParams);
+    const parsed = querySchema.safeParse(params);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid parameters', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { maxRecommendations } = parsed.data;
+
     const athlete = await prisma.athlete.findUnique({
       where: { userId: user!.id },
-      select: { id: true, userId: true },
+      select: { userId: true },
     });
     if (!athlete) {
       return NextResponse.json(
@@ -75,7 +90,7 @@ export async function GET(req: NextRequest) {
         createdAt: l.createdAt,
       })),
       contextTags,
-      maxRecommendations: 3,
+      maxRecommendations,
     });
 
     return NextResponse.json({ success: true, data: result });
