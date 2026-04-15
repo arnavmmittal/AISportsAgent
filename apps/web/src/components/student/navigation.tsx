@@ -4,27 +4,20 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
-  LayoutDashboard,
   MessageSquare,
   Heart,
-  Target,
   ClipboardList,
-  Settings,
   LogOut,
   Menu,
   X,
-  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase-client';
 
 const navItems = [
-  { href: '/student/home', label: 'Home', icon: LayoutDashboard },
-  { href: '/student/schedule', label: 'My Schedule', icon: Calendar },
-  { href: '/student/assignments', label: 'My Assignments', icon: ClipboardList },
   { href: '/student/ai-coach', label: 'Coach', icon: MessageSquare },
-  { href: '/student/progress', label: 'My Progress', icon: Target },
-  { href: '/student/settings', label: 'Settings', icon: Settings },
+  { href: '/student/wellness', label: 'Check-in', icon: Heart },
+  { href: '/student/assignments', label: 'Assignments', icon: ClipboardList },
 ];
 
 export function StudentNavigation() {
@@ -40,16 +33,16 @@ export function StudentNavigation() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/student/home" className="flex items-center gap-2">
+          <Link href="/student/ai-coach" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">AI</span>
             </div>
-            <span className="font-bold text-xl text-gray-900 hidden sm:inline">Flow Sports Coach</span>
-            <span className="font-bold text-lg text-gray-900 sm:hidden">AI SA</span>
+            <span className="font-bold text-xl text-foreground hidden sm:inline">Flow Sports Coach</span>
+            <span className="font-bold text-lg text-foreground sm:hidden">AI SA</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -66,7 +59,7 @@ export function StudentNavigation() {
                     'flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      : 'text-foreground hover:bg-muted'
                   )}
                 >
                   <Icon className="w-4 h-4" />
@@ -76,7 +69,7 @@ export function StudentNavigation() {
             })}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all text-gray-700 hover:bg-muted-foreground/10 hover:text-muted-foreground"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all text-muted-foreground hover:bg-muted-foreground/10 hover:text-muted-foreground"
             >
               <LogOut className="w-4 h-4" />
               <span className="text-sm">Sign Out</span>
@@ -86,7 +79,7 @@ export function StudentNavigation() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+            className="lg:hidden p-2 text-muted-foreground hover:bg-muted rounded-lg"
           >
             {isMobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -112,7 +105,7 @@ export function StudentNavigation() {
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-all',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      : 'text-foreground hover:bg-muted'
                   )}
                 >
                   <Icon className="w-5 h-5" />
@@ -122,7 +115,7 @@ export function StudentNavigation() {
             })}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-700 hover:bg-muted-foreground/10 hover:text-muted-foreground w-full"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-muted-foreground hover:bg-muted-foreground/10 hover:text-muted-foreground w-full"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Sign Out</span>

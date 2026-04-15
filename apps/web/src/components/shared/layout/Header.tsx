@@ -135,7 +135,7 @@ export function Header() {
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 hover:bg-muted transition-colors"
+                className="inline-flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
               >
                 {isMobileMenuOpen ? (
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -221,13 +221,13 @@ export function Header() {
               <>
                 <Link
                   href="/auth/signin"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-foreground transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="px-4 py-2 text-sm font-medium text-white gradient-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
                 >
                   Get Started
                 </Link>
@@ -236,13 +236,13 @@ export function Header() {
               <>
                 <Link
                   href="/"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-foreground transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   ← Back
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="px-4 py-2 text-sm font-medium text-white gradient-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
                 >
                   Sign Up
                 </Link>
@@ -251,13 +251,13 @@ export function Header() {
               <>
                 <Link
                   href="/"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-foreground transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   ← Back
                 </Link>
                 <Link
                   href="/auth/signin"
-                  className="px-4 py-2 text-sm font-medium text-white gradient-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:opacity-90 transition-colors shadow-sm"
                 >
                   Sign In
                 </Link>

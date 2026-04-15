@@ -67,13 +67,13 @@ export async function GET(request: NextRequest) {
         // Redirect based on role
         const roleRedirect = userData?.role === 'COACH'
           ? '/coach/dashboard'
-          : '/student/home'
+          : '/student/ai-coach'
 
         return NextResponse.redirect(`${origin}${roleRedirect}`)
       } catch (error) {
         console.error('Error fetching user role:', error)
         // Default to athlete dashboard if role fetch fails
-        return NextResponse.redirect(`${origin}/student/home`)
+        return NextResponse.redirect(`${origin}/student/ai-coach`)
       }
     }
   }

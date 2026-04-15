@@ -221,7 +221,7 @@ export default function StudentAssignmentsPage() {
 
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
           {/* Back Button */}
           <button
             onClick={handleBack}
@@ -232,7 +232,7 @@ export default function StudentAssignmentsPage() {
           </button>
 
           {/* Assignment Details Card */}
-          <div className="card-elevated p-6 space-y-4">
+          <div className="rounded-xl border bg-card p-6 space-y-4">
             <h2 className="text-xl font-semibold text-foreground">{selectedAssignment.title}</h2>
 
             <div className="flex items-center gap-3 flex-wrap">
@@ -266,7 +266,7 @@ export default function StudentAssignmentsPage() {
           </div>
 
           {/* Response Card */}
-          <div className="card-elevated overflow-hidden">
+          <div className="rounded-xl border bg-card overflow-hidden">
             <div className="p-4 border-b border-border">
               <h3 className="font-medium text-foreground">Your Response</h3>
               {isSubmitted && (
@@ -321,7 +321,7 @@ export default function StudentAssignmentsPage() {
   // Assignment List View
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         {/* Header */}
         <header className="animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
@@ -334,7 +334,7 @@ export default function StudentAssignmentsPage() {
         </header>
 
         {assignments.length === 0 ? (
-          <div className="card-elevated p-8 text-center animate-slide-up">
+          <div className="rounded-xl border bg-card p-8 text-center animate-slide-up">
             <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
             <h3 className="font-medium text-foreground mb-1">No tasks yet</h3>
             <p className="text-sm text-muted-foreground">Tasks from your coach will appear here</p>
@@ -447,7 +447,7 @@ function AssignmentCard({
   return (
     <button
       onClick={onPress}
-      className="w-full card-interactive p-4 text-left"
+      className="w-full rounded-xl border bg-card hover:bg-muted/50 transition-colors p-4 text-left"
     >
       <div className="flex items-start gap-4">
         <div

@@ -107,7 +107,7 @@ export function PracticeDrillCard({ drill, onStartDrill, onTrackProgress }: Prac
                 className="text-xs bg-white/10 border-0 rounded px-2 py-1 text-white focus:ring-1 focus:ring-white/30"
               >
                 {[1, 2, 3, 4].map((week) => (
-                  <option key={week} value={week} className="bg-gray-800">
+                  <option key={week} value={week} className="bg-card">
                     Week {week}
                   </option>
                 ))}

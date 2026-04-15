@@ -225,7 +225,7 @@ export default function StudentSettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         {/* Header */}
         <header className="animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
@@ -236,7 +236,7 @@ export default function StudentSettingsPage() {
         </header>
 
         {/* Profile Information */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <User className="w-5 h-5 text-primary" />
@@ -373,7 +373,7 @@ export default function StudentSettingsPage() {
         </section>
 
         {/* Notification Preferences */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
               <Bell className="w-5 h-5 text-info" />
@@ -486,7 +486,7 @@ export default function StudentSettingsPage() {
         </section>
 
         {/* Privacy & Data Sharing */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
               <Shield className="w-5 h-5 text-success" />
@@ -602,7 +602,7 @@ export default function StudentSettingsPage() {
         </section>
 
         {/* Appearance & Theme */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
               {isDarkMode ? <Moon className="w-5 h-5 text-warning" /> : <Sun className="w-5 h-5 text-warning" />}
@@ -629,7 +629,7 @@ export default function StudentSettingsPage() {
         </section>
 
         {/* Account Actions */}
-        <section className="card-elevated overflow-hidden animate-slide-up border-destructive/20">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up border-destructive/20">
           <div className="p-4 border-b border-border">
             <h2 className="font-medium text-foreground">Account Actions</h2>
             <p className="text-sm text-muted-foreground mt-1">Manage your account</p>

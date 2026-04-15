@@ -494,7 +494,7 @@ function WellnessPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         {/* Demo Mode Banner */}
         {demoMode && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
@@ -562,7 +562,7 @@ function WellnessPageContent() {
             {upcomingGame && countdown && (
               <section
                 className={cn(
-                  'card-elevated p-6',
+                  'rounded-xl border bg-card p-6',
                   isGameDay && 'border-2 border-primary ring-4 ring-primary/10'
                 )}
               >
@@ -615,7 +615,7 @@ function WellnessPageContent() {
             )}
 
             {/* Readiness Gauge */}
-            <section className="card-elevated p-8" aria-labelledby="readiness-heading">
+            <section className="rounded-xl border bg-card p-8" aria-labelledby="readiness-heading">
               <h2 id="readiness-heading" className="sr-only">Current Readiness Score</h2>
 
               <div className="flex flex-col items-center">
@@ -701,7 +701,7 @@ function WellnessPageContent() {
               {/* Breathing Exercise */}
               <div
                 className={cn(
-                  'card-elevated p-5',
+                  'rounded-xl border bg-card p-5',
                   breathingActive && 'border-2 border-primary'
                 )}
               >
@@ -758,7 +758,7 @@ function WellnessPageContent() {
 
               {/* Visualization */}
               <Link href="/student/visualization" className="block group">
-                <div className="card-interactive p-5 flex items-center gap-4">
+                <div className="rounded-xl border bg-card hover:bg-muted/50 transition-colors p-5 flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <Eye size={20} className="text-primary" />
                   </div>
@@ -774,7 +774,7 @@ function WellnessPageContent() {
 
               {/* Pre-Game Journal */}
               <Link href="/student/ai-coach?topic=pregame" className="block group">
-                <div className="card-interactive p-5 flex items-center gap-4">
+                <div className="rounded-xl border bg-card hover:bg-muted/50 transition-colors p-5 flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center group-hover:bg-success/20 transition-colors">
                     <PenLine size={20} className="text-success" />
                   </div>
@@ -790,7 +790,7 @@ function WellnessPageContent() {
             </section>
 
             {/* 7-Day History */}
-            <section className="card-elevated p-6">
+            <section className="rounded-xl border bg-card p-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">7-Day History</h2>
 
               {history.length > 0 ? (
@@ -887,7 +887,7 @@ function WellnessPageContent() {
         {activeTab === 'checkin' && (
           <div className="space-y-6 animate-fade-in">
             {/* Week Overview */}
-            <section className="card-elevated p-4">
+            <section className="rounded-xl border bg-card p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-medium text-foreground">This Week</h2>
                 {moodTrend && (
@@ -998,7 +998,7 @@ function WellnessPageContent() {
             </div>
 
             {/* Check-In Form */}
-            <section className="card-elevated p-5 space-y-6">
+            <section className="rounded-xl border bg-card p-5 space-y-6">
               {checkInMode === 'quick' ? (
                 /* Quick Mode - Emoji Selection */
                 <div className="space-y-4">
@@ -1036,7 +1036,7 @@ function WellnessPageContent() {
                   {/* Confidence */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-2">
-                      <Zap className="w-4 h-4 text-yellow-500" />
+                      <Zap className="w-4 h-4 text-warning" />
                       <span className="text-sm font-medium text-foreground">Confidence</span>
                     </div>
                     <MoodSlider
@@ -1064,7 +1064,7 @@ function WellnessPageContent() {
                   {/* Energy */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-2">
-                      <Battery className="w-4 h-4 text-green-500" />
+                      <Battery className="w-4 h-4 text-success" />
                       <span className="text-sm font-medium text-foreground">Energy Level</span>
                     </div>
                     <MoodSlider
@@ -1078,7 +1078,7 @@ function WellnessPageContent() {
                   {/* Sleep */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-2">
-                      <Moon className="w-4 h-4 text-indigo-500" />
+                      <Moon className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium text-foreground">Hours of Sleep</span>
                     </div>
                     <MoodSlider
@@ -1134,7 +1134,7 @@ function WellnessPageContent() {
             {/* Talk to Coach CTA */}
             <button
               onClick={() => router.push('/student/ai-coach')}
-              className="w-full card-interactive p-4 flex items-center gap-4"
+              className="w-full rounded-xl border bg-card hover:bg-muted/50 transition-colors p-4 flex items-center gap-4"
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <MessageSquare className="w-5 h-5 text-primary" />

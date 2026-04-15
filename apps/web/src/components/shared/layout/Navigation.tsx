@@ -26,13 +26,13 @@ export function Navigation() {
   if (!user) return null;
 
   return (
-    <nav className="bg-card border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-card border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and Desktop Navigation */}
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-blue-600">
+              <Link href="/" className="text-xl font-bold text-primary">
                 Flow Sports Coach
               </Link>
             </div>
@@ -48,10 +48,10 @@ export function Navigation() {
                     className={cn(
                       'inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors gap-2',
                       active
-                        ? 'bg-blue-100 text-blue-700'
+                        ? 'bg-primary/10 text-primary'
                         : item.highlight
                         ? 'text-accent hover:bg-accent/10'
-                        : 'text-gray-700 hover:bg-muted'
+                        : 'text-muted-foreground hover:bg-muted'
                     )}
                   >
                     <Icon className="w-4 h-4" />
@@ -72,12 +72,12 @@ export function Navigation() {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <div className="flex items-center gap-4">
               <div className="text-sm text-right">
-                <p className="font-medium text-gray-900">{user.name}</p>
-                <p className="text-gray-500 capitalize">{user.role?.toLowerCase()}</p>
+                <p className="font-medium text-foreground">{user.name}</p>
+                <p className="text-muted-foreground capitalize">{user.role?.toLowerCase()}</p>
               </div>
               <button
                 onClick={() => signOut()}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 transition-colors"
               >
                 Sign Out
               </button>
@@ -88,7 +88,7 @@ export function Navigation() {
           <div className="flex items-center sm:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-muted"
+              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-muted"
             >
               <span className="sr-only">Open main menu</span>
               {isMobileMenuOpen ? (
@@ -107,7 +107,7 @@ export function Navigation() {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="sm:hidden border-t border-gray-200">
+        <div className="sm:hidden border-t border-border">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -121,10 +121,10 @@ export function Navigation() {
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium',
                     active
-                      ? 'bg-blue-100 text-blue-700'
+                      ? 'bg-primary/10 text-primary'
                       : item.highlight
                       ? 'text-accent'
-                      : 'text-gray-700 hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-muted'
                   )}
                 >
                   <Icon className="w-5 h-5" />
@@ -139,10 +139,10 @@ export function Navigation() {
               );
             })}
           </div>
-          <div className="pt-4 pb-3 border-t border-gray-200">
+          <div className="pt-4 pb-3 border-t border-border">
             <div className="px-4 mb-3">
-              <p className="text-sm font-medium text-gray-900">{user.name}</p>
-              <p className="text-sm text-gray-500 capitalize">{user.role?.toLowerCase()}</p>
+              <p className="text-sm font-medium text-foreground">{user.name}</p>
+              <p className="text-sm text-muted-foreground capitalize">{user.role?.toLowerCase()}</p>
             </div>
             <button
               onClick={() => signOut()}

@@ -102,9 +102,9 @@ export function MobileVoiceWidget({
           className={cn(
             'fixed bottom-24 right-6 z-40 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-colors',
             disabled
-              ? 'bg-gray-400 cursor-not-allowed'
+              ? 'bg-muted cursor-not-allowed'
               : isListening
-              ? 'bg-red-500 animate-pulse'
+              ? 'bg-destructive animate-pulse'
               : 'bg-primary',
             className
           )}
@@ -189,11 +189,11 @@ export function MobileVoiceWidget({
                   className={cn(
                     'w-28 h-28 rounded-full flex items-center justify-center shadow-2xl transition-all',
                     voiceState === 'listening'
-                      ? 'bg-red-500'
+                      ? 'bg-destructive'
                       : voiceState === 'processing' || voiceState === 'speaking'
                       ? 'bg-primary'
                       : voiceState === 'error'
-                      ? 'bg-red-600'
+                      ? 'bg-destructive'
                       : 'bg-white'
                   )}
                 >

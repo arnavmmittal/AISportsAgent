@@ -102,7 +102,7 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
       case 'MEDIUM':
         return 'bg-muted/20 border-muted-foreground';
       default:
-        return 'bg-blue-100 border-blue-500';
+        return 'bg-primary/10 border-primary';
     }
   };
 
@@ -141,7 +141,7 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
                           <p className="text-2xl font-bold text-muted-foreground my-1">
                             {resource.contact}
                           </p>
-                          <p className="text-sm text-gray-600">{resource.description}</p>
+                          <p className="text-sm text-muted-foreground">{resource.description}</p>
                           {resource.type === 'phone' && (
                             <Button
                               variant="outline"
@@ -174,13 +174,13 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
                   <Card key={index}>
                     <CardContent className="pt-4">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-full bg-blue-100">
-                          <Icon className="w-5 h-5 text-blue-600" />
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <Icon className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                           <h4 className="font-semibold">{resource.name}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{resource.contact}</p>
-                          <p className="text-xs text-gray-500 mt-1">{resource.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{resource.contact}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{resource.description}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -205,7 +205,7 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
                         </div>
                         <div className="flex-1">
                           <h4 className="font-semibold">{resource.name}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
                           <Button
                             variant="outline"
                             size="sm"
@@ -228,7 +228,7 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
           <Card className={`border-2 ${getSeverityColor()}`}>
             <CardContent className="pt-4">
               <p className="font-semibold mb-2">Remember:</p>
-              <ul className="text-sm space-y-1 list-disc list-inside text-gray-700">
+              <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
                 <li>It's okay to ask for help - it's a sign of strength, not weakness</li>
                 <li>You are not alone - many people care about your well-being</li>
                 <li>Crisis situations are temporary - things can and do get better</li>
@@ -248,7 +248,7 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
               <Phone className="w-4 h-4 mr-2" />
               Call 988 Now
             </Button>
-            <Button onClick={handleAcknowledge} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleAcknowledge} className="bg-primary hover:bg-primary/90">
               I Understand
             </Button>
           </div>

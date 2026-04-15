@@ -13,7 +13,7 @@ import { Button } from '@/components/shared/ui/button';
  *
  * Features:
  * - Clean, modern design with proper spacing
- * - Role-based redirect (Coach → /coach/dashboard, Athlete → /student/home)
+ * - Role-based redirect (Coach → /coach/dashboard, Athlete → /student/ai-coach)
  * - Success/error messaging
  * - Loading states
  */
@@ -73,7 +73,7 @@ function SignInForm() {
       if (roleData.role === 'COACH' || roleData.role === 'ADMIN') {
         router.push('/coach/dashboard');
       } else {
-        router.push('/student/home');
+        router.push('/student/ai-coach');
       }
 
       router.refresh();

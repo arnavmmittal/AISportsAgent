@@ -54,7 +54,7 @@ export function StatCard({
             <span
               className={cn(
                 'flex items-center gap-1 text-sm font-medium',
-                isTrendPositive ? 'text-emerald-500' : 'text-red-500'
+                isTrendPositive ? 'text-emerald-500' : 'text-destructive'
               )}
             >
               {isTrendPositive ? (

@@ -48,7 +48,7 @@ export function MetricTrackerWidget({
   }
 
   return (
-    <div className="bg-card border-2 border-blue-300 rounded-2xl p-6 mt-6 shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-500">
+    <div className="bg-card border-2 border-primary rounded-2xl p-6 mt-6 shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-md">
           <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,7 +63,7 @@ export function MetricTrackerWidget({
       <div className="space-y-6">
         {metrics.map((metric, idx) => (
           <div key={idx} className="bg-muted/50 rounded-xl p-5 border border-border">
-            <label className="block text-base font-bold text-gray-800 mb-3">
+            <label className="block text-base font-bold text-foreground mb-3">
               {metric.name}
             </label>
 
@@ -79,7 +79,7 @@ export function MetricTrackerWidget({
                     [metric.name]: parseInt(e.target.value),
                   })
                 }
-                className="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="flex-1 h-3 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
               />
               <div className="flex items-center justify-center min-w-[60px] h-14 bg-primary text-primary-foreground rounded-xl shadow-md">
                 <span className="font-black text-3xl">
@@ -89,17 +89,17 @@ export function MetricTrackerWidget({
             </div>
 
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm text-gray-600 font-medium">
+              <p className="text-sm text-muted-foreground font-medium">
                 {metric.scale}
               </p>
               {metric.target && (
-                <p className="text-sm font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                <p className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
                   Target: {metric.target}
                 </p>
               )}
             </div>
 
-            <p className="text-xs text-gray-500 italic mb-4">
+            <p className="text-xs text-muted-foreground italic mb-4">
               📝 {metric.when_to_log}
             </p>
 

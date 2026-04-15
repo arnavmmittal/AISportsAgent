@@ -184,8 +184,8 @@ export function EnhancedMoodLogger() {
     return (
       <div className="max-w-md mx-auto p-6">
         <div className="bg-card rounded-xl border border-green-500/30 p-8 text-center">
-          <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="w-8 h-8 text-green-400" />
+          <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-success" />
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">All set!</h2>
           <p className="text-muted-foreground text-sm">Your check-in has been saved.</p>
@@ -225,8 +225,8 @@ export function EnhancedMoodLogger() {
               onSelect={(opt) => handleQuickSelect('mood', opt)}
               options={[
                 { value: 'low', label: 'Not great', icon: Frown, color: 'text-orange-400' },
-                { value: 'mid', label: 'Okay', icon: Meh, color: 'text-slate-400' },
-                { value: 'high', label: 'Good', icon: Smile, color: 'text-green-400' },
+                { value: 'mid', label: 'Okay', icon: Meh, color: 'text-muted-foreground' },
+                { value: 'high', label: 'Good', icon: Smile, color: 'text-success' },
               ]}
             />
 
@@ -236,8 +236,8 @@ export function EnhancedMoodLogger() {
               selected={quickSelections.confidence}
               onSelect={(opt) => handleQuickSelect('confidence', opt)}
               options={[
-                { value: 'low', label: 'Shaky', icon: Cloud, color: 'text-slate-400' },
-                { value: 'mid', label: 'Okay', icon: CloudSun, color: 'text-blue-400' },
+                { value: 'low', label: 'Shaky', icon: Cloud, color: 'text-muted-foreground' },
+                { value: 'mid', label: 'Okay', icon: CloudSun, color: 'text-primary' },
                 { value: 'high', label: 'Strong', icon: Sun, color: 'text-amber-400' },
               ]}
             />
@@ -248,9 +248,9 @@ export function EnhancedMoodLogger() {
               selected={quickSelections.stress}
               onSelect={(opt) => handleQuickSelect('stress', opt)}
               options={[
-                { value: 'low', label: 'Relaxed', icon: Battery, color: 'text-green-400' },
+                { value: 'low', label: 'Relaxed', icon: Battery, color: 'text-success' },
                 { value: 'mid', label: 'Some', icon: Zap, color: 'text-amber-400' },
-                { value: 'high', label: 'High', icon: BatteryLow, color: 'text-red-400' },
+                { value: 'high', label: 'High', icon: BatteryLow, color: 'text-destructive' },
               ]}
             />
 
@@ -275,7 +275,7 @@ export function EnhancedMoodLogger() {
               className={cn(
                 'w-full py-3 rounded-lg font-medium transition-all',
                 isQuickComplete
-                  ? 'gradient-primary text-white hover:opacity-90'
+                  ? 'bg-primary text-white hover:opacity-90'
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
               )}
             >
@@ -424,7 +424,7 @@ function DetailedMode({ data, onChange, onSubmit, onBack, isSubmitting }: Detail
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full gradient-primary text-white py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50"
+        className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:opacity-90 disabled:opacity-50"
       >
         {isSubmitting ? 'Saving...' : 'Save Check-In'}
       </button>

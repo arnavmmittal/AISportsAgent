@@ -65,12 +65,12 @@ export default function ConsentSettingsModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="border-b border-gray-200 p-6">
+        <div className="border-b border-border p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Weekly Chat Summary Privacy Settings</h2>
+            <h2 className="text-xl font-bold text-foreground">Weekly Chat Summary Privacy Settings</h2>
             <button
               onClick={onClose}
-              className="text-muted-foreground hover:text-gray-600 transition-colors"
+              className="text-muted-foreground hover:text-muted-foreground transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -83,8 +83,8 @@ export default function ConsentSettingsModal({
         <div className="p-6 space-y-6">
           {/* What This Does */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">What are Weekly Chat Summaries?</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-sm font-semibold text-foreground mb-2">What are Weekly Chat Summaries?</h3>
+            <p className="text-sm text-muted-foreground">
               Every week, we create a summary of your coaching conversations. This summary helps your coaching staff understand how you're doing and provide better support.
             </p>
           </div>
@@ -146,24 +146,24 @@ export default function ConsentSettingsModal({
           </div>
 
           {/* Data Retention */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
+          <div className="bg-primary/5 border border-primary rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-primary mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Data Retention:
             </h3>
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-primary">
               Summaries are kept for 12 weeks and can be revoked at any time. If you turn off consent, all existing summaries are immediately deleted.
             </p>
           </div>
 
           {/* Toggle */}
-          <div className="border-t border-gray-200 pt-6">
+          <div className="border-t border-border pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Enable Weekly Chat Summaries</h3>
-                <p className="text-xs text-gray-600 mt-1">
+                <h3 className="text-sm font-semibold text-foreground">Enable Weekly Chat Summaries</h3>
+                <p className="text-xs text-muted-foreground mt-1">
                   Allow coaches to see weekly summaries of your conversations
                 </p>
               </div>
@@ -171,7 +171,7 @@ export default function ConsentSettingsModal({
                 onClick={() => handleToggle(!consent)}
                 disabled={saving}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  consent ? 'bg-blue-600' : 'bg-gray-200'
+                  consent ? 'bg-primary' : 'bg-muted'
                 } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <span
@@ -205,14 +205,14 @@ export default function ConsentSettingsModal({
                 <button
                   onClick={confirmChange}
                   disabled={saving}
-                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {saving ? 'Saving...' : 'Confirm'}
                 </button>
                 <button
                   onClick={cancelChange}
                   disabled={saving}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
                 >
                   Cancel
                 </button>
@@ -222,8 +222,8 @@ export default function ConsentSettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50">
-          <p className="text-xs text-gray-600">
+        <div className="border-t border-border p-6 bg-muted/50">
+          <p className="text-xs text-muted-foreground">
             Your privacy is important to us. You can change this setting at any time from your dashboard privacy settings.
           </p>
         </div>
