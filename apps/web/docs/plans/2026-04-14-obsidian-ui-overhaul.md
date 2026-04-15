@@ -765,3 +765,377 @@ Tasks 5-16 can be parallelized after Tasks 1-4 are complete.
 ## Critical Constraint
 
 **Zero gradients in the final output.** If you find yourself writing `linear-gradient`, `bg-gradient-to-*`, `.gradient-*`, or any gradient class — stop. Use a flat color token instead. The SpotlightCard radial glow is the ONLY gradient in the entire system, and it's programmatic (mouse-following), not decorative.
+
+---
+
+## Phase 6: Visual Engagement Layer — "Data as Spectacle"
+
+### The Problem
+
+The platform currently tells coaches about their athletes through tables and numbers. Platforms like Whoop, Strava, and Apple Health **show** it — through rings, heatmaps, sparklines, and density visualizations that create instant comprehension and emotional pull. A coach should open this dashboard and *feel* the state of their team before reading a single word.
+
+This phase adds five visual components that transform data from "read this table" into "see the pattern instantly." All follow Obsidian rules: ember accent, no decorative gradients, data is the spectacle.
+
+### Design Reference Points
+
+| Platform | Visual | What Makes It Work |
+|----------|--------|-------------------|
+| Whoop | Recovery ring (0-100%) | Single glanceable metric. Ring fill = immediate comprehension. Red/yellow/green without reading. |
+| Strava | Activity heatmap | Density = habit. You see consistency before numbers. Missing days are obvious. |
+| Apple Health | Triple ring (Move/Exercise/Stand) | Multiple metrics in one glyph. Completion is satisfying. Comparison across days is instant. |
+| Oura | Readiness score + contributors | Big number anchors, small contributors explain. Hierarchy of information. |
+| Garmin | Body Battery sparkline | 24-hour trajectory in 80px width. Trend direction in a glance. |
+
+### Component Inventory
+
+---
+
+### Task 18: Readiness Ring Component
+
+**Files:**
+- Create: `apps/web/src/components/shared/viz/ReadinessRing.tsx`
+
+**What it is:** A single SVG ring (think Apple Watch) that fills proportionally to an athlete's readiness score (0-100). The ring stroke color shifts from destructive → warning → accent based on score thresholds. Used inline in tables, athlete cards, and the pre-game roster view.
+
+**Design spec:**
+- SVG `<circle>` with `strokeDasharray` / `strokeDashoffset` for fill animation
+- Default size: 48px (table inline), 96px (card hero), 160px (detail page hero)
+- Three sizes via prop: `size="sm" | "md" | "lg"`
+- Stroke colors:
+  - 0-49: `hsl(var(--destructive))` (red)
+  - 50-69: `hsl(var(--chart-3))` (amber/warning)
+  - 70-84: `hsl(var(--primary))` (ember)
+  - 85-100: `hsl(var(--accent))` (emerald)
+- Background track: `hsl(var(--muted))` at 20% opacity
+- Score number centered inside ring (large: `text-2xl font-bold`, small: `text-xs`)
+- Animate on mount with framer-motion `useSpring` driving `strokeDashoffset`
+- NO gradient fills. Solid stroke color only.
+
+**Props interface:**
+```tsx
+interface ReadinessRingProps {
+  score: number;          // 0-100
+  size?: 'sm' | 'md' | 'lg';
+  showLabel?: boolean;    // Show score number in center
+  label?: string;         // Optional label below score (e.g., athlete name)
+  animate?: boolean;      // Default true
+  className?: string;
+}
+```
+
+**Where it gets used (in later tasks):**
+- `TeamReadinessTable` — replaces text readiness values with inline rings (`sm`)
+- `ReadinessScoreCard` — hero ring (`md`)
+- `ReadinessDashboard` — team average ring (`lg`)
+- `AthleteDetailView` — current readiness hero (`lg`)
+- Pre-game roster view — grid of rings (`md`)
+
+**Commit:**
+```bash
+git add src/components/shared/viz/ReadinessRing.tsx
+git commit -m "feat: ReadinessRing — animated SVG ring for readiness scores"
+```
+
+---
+
+### Task 19: Activity Heatmap Component
+
+**Files:**
+- Create: `apps/web/src/components/shared/viz/ActivityHeatmap.tsx`
+
+**What it is:** A GitHub-style contribution grid showing check-in activity density over time. Each cell represents one day, color intensity maps to engagement level (check-ins completed, mood logs submitted, chat sessions). Gives coaches an instant view of athlete engagement patterns — who's consistent, who's dropping off, who just started.
+
+**Design spec:**
+- Grid layout: 52 columns (weeks) × 7 rows (days), right-aligned to current date
+- Each cell: 12×12px square with 2px gap, `rounded-sm`
+- Cell color intensity (5 levels, all ember-based — no green GitHub style):
+  - Level 0 (no activity): `hsl(var(--muted))` at 15% opacity
+  - Level 1 (light): `hsl(var(--primary) / 0.15)`
+  - Level 2 (moderate): `hsl(var(--primary) / 0.35)`
+  - Level 3 (active): `hsl(var(--primary) / 0.60)`
+  - Level 4 (high): `hsl(var(--primary) / 0.90)`
+- Tooltip on hover: date, number of check-ins, mood score if available
+- Month labels along top edge
+- Day labels (Mon/Wed/Fri) along left edge
+- Summary stats below: "X active days in last 90 days" with streak count
+- Scrollable horizontally on mobile, full width on desktop
+
+**Props interface:**
+```tsx
+interface ActivityHeatmapProps {
+  data: { date: string; count: number; mood?: number }[];
+  days?: number;          // Default 365
+  colorScheme?: 'ember' | 'accent';  // ember = primary, accent = emerald
+  showMonthLabels?: boolean;
+  showDayLabels?: boolean;
+  onCellClick?: (date: string) => void;
+  className?: string;
+}
+```
+
+**Where it gets used:**
+- Coach dashboard — team-level engagement heatmap (aggregated)
+- Athlete detail page — individual activity heatmap
+- AI insights — highlight engagement patterns
+
+**Commit:**
+```bash
+git add src/components/shared/viz/ActivityHeatmap.tsx
+git commit -m "feat: ActivityHeatmap — GitHub-style engagement density grid"
+```
+
+---
+
+### Task 20: Sparkline Component
+
+**Files:**
+- Create: `apps/web/src/components/shared/viz/Sparkline.tsx`
+
+**What it is:** A tiny inline SVG line chart (no axes, no labels, no grid) that shows 7-day or 14-day trajectory for any metric. Think Garmin Body Battery or stock ticker mini-charts. Fits inside table cells, beside athlete names, or in card headers. The line itself tells the story — is this athlete trending up or down?
+
+**Design spec:**
+- SVG with `viewBox`, responsive width, fixed 24-32px height
+- Single `<polyline>` or `<path>` — no Recharts dependency for this
+- Stroke: `hsl(var(--primary))` default, `hsl(var(--destructive))` if trending down, `hsl(var(--accent))` if trending up
+- Stroke width: 1.5px
+- Optional: thin filled area below line at 5% opacity for visual weight
+- Optional: dot on last data point (current value)
+- Animate path drawing on mount via CSS `stroke-dasharray` animation (no framer-motion needed for this)
+- Hover: show tooltip with exact value at cursor position (optional, can be prop-controlled)
+
+**Props interface:**
+```tsx
+interface SparklineProps {
+  data: number[];           // Array of values (7-14 points typically)
+  width?: number;           // Default 80
+  height?: number;          // Default 28
+  color?: string;           // CSS color string, defaults to primary
+  autoColor?: boolean;      // Auto-color based on trend direction
+  showDot?: boolean;        // Show dot on last point
+  showArea?: boolean;       // Show filled area below line
+  animate?: boolean;        // Draw animation, default true
+  className?: string;
+}
+```
+
+**Where it gets used:**
+- `TeamReadinessTable` — 7-day readiness trend next to each athlete
+- `ReadinessDashboard` — sparklines in the overview cards
+- `AthleteCard` — inline mood trajectory
+- `InterventionQueue` — metric trend context
+
+**Commit:**
+```bash
+git add src/components/shared/viz/Sparkline.tsx
+git commit -m "feat: Sparkline — inline trend micro-chart for tables and cards"
+```
+
+---
+
+### Task 21: Weekly Pulse Card Component
+
+**Files:**
+- Create: `apps/web/src/components/coach/dashboard/WeeklyPulseCard.tsx`
+
+**What it is:** A single card that appears Monday morning at the top of the coach dashboard summarizing the past week. Think of it as the coach's "morning briefing." It's the visual equivalent of a coach's assistant walking in and saying "here's what happened this week." This is a key engagement driver — coaches open the app Monday specifically to see this.
+
+**Design spec:**
+- Full-width `<SpotlightCard>` at top of dashboard (shown Mon-Tue, collapsible after)
+- Content layout (3-column on desktop, stacked on mobile):
+
+  **Column 1 — Team Pulse:**
+  - Team average readiness ring (`ReadinessRing` `size="lg"`)
+  - Week-over-week delta: `+3` or `-5` with trend arrow
+  - "72% of team checked in this week" engagement stat
+
+  **Column 2 — Movers:**
+  - "Top Improver": athlete name + `Sparkline` showing upward trajectory
+  - "Needs Attention": athlete name + `Sparkline` showing downward trajectory + `ReadinessRing` `size="sm"`
+  - "Most Consistent": athlete name + streak count badge
+
+  **Column 3 — Actions:**
+  - Count of pending interventions (link to intervention queue)
+  - Count of athletes who haven't checked in >3 days
+  - "Prepare for [Next Game Date]" link to pre-game view
+
+- Data fetched from: `/api/coach/weekly-pulse` (new endpoint, defined in Task 22)
+- Auto-dismiss: becomes secondary card after Tuesday; fully collapsible
+
+**Props interface:**
+```tsx
+interface WeeklyPulseCardProps {
+  coachId: string;
+  teamId: string;
+  className?: string;
+}
+```
+
+**Commit:**
+```bash
+git add src/components/coach/dashboard/WeeklyPulseCard.tsx
+git commit -m "feat: WeeklyPulseCard — Monday morning team briefing"
+```
+
+---
+
+### Task 22: Weekly Pulse API Endpoint
+
+**Files:**
+- Create: `apps/web/src/app/api/coach/weekly-pulse/route.ts`
+
+**What it does:** Aggregates the past 7 days of team data into the structure needed by `WeeklyPulseCard`. Computes:
+- Team average readiness (current + delta from prior week)
+- Top improver (largest positive readiness delta)
+- Needs attention (largest negative readiness delta)
+- Most consistent (longest daily check-in streak)
+- Check-in rate (athletes who logged ≥1 mood this week / total)
+- Pending intervention count
+- Athletes inactive >3 days
+- Next game date from schedule
+
+**Response shape:**
+```ts
+interface WeeklyPulseData {
+  teamReadiness: { current: number; delta: number; weekAgo: number };
+  checkInRate: { active: number; total: number; percentage: number };
+  topImprover: { athleteId: string; name: string; trend: number[]; delta: number } | null;
+  needsAttention: { athleteId: string; name: string; trend: number[]; readiness: number } | null;
+  mostConsistent: { athleteId: string; name: string; streak: number } | null;
+  pendingInterventions: number;
+  inactiveAthletes: number;
+  nextGameDate: string | null;
+}
+```
+
+**Commit:**
+```bash
+git add src/app/api/coach/weekly-pulse/route.ts
+git commit -m "feat: weekly-pulse API — aggregated team briefing data"
+```
+
+---
+
+### Task 23: Pre-Game Roster View
+
+**Files:**
+- Create: `apps/web/src/components/coach/game-day/PreGameRoster.tsx`
+
+**What it is:** A focused single-screen view designed for 24-48 hours before competition. Instead of tables and charts, it's a visual roster grid — every athlete represented as a `ReadinessRing` with their name, arranged by position group or readiness tier. The coach walks into the locker room, pulls this up on a tablet, and instantly sees who's green, who's red, who needs a conversation.
+
+**Design spec:**
+- Header: Game name/opponent + date + countdown ("in 26 hours")
+- View toggle: "By Readiness" (default) | "By Position" | "By Name"
+- Grid of athlete tiles, each tile contains:
+  - `ReadinessRing` `size="md"` (96px)
+  - Athlete first name below ring
+  - `Sparkline` `height={20}` showing 7-day trajectory
+  - Tap/click → expand to show key metrics (mood, stress, sleep, confidence) + last check-in time
+- Tier grouping when "By Readiness" is selected:
+  - Green tier (85+): normal card surface
+  - Yellow tier (50-84): subtle `border-l-4 border-chart-3` (amber)
+  - Red tier (<50): subtle `border-l-4 border-destructive`
+- Summary bar at top: `X ready / Y monitor / Z intervention` with proportional segment bar (flat, not gradient)
+- Print-friendly: `@media print` styles for locker room posting
+- Responsive: 2-col grid on mobile, 4-col tablet, 6-col desktop
+
+**Props interface:**
+```tsx
+interface PreGameRosterProps {
+  sport: string;
+  schoolId: string;
+  gameDate: string;
+  gameName?: string;
+  opponent?: string;
+}
+```
+
+**Where it lives in navigation:**
+- Accessible from `ReadinessDashboard` via "Pre-Game View" button
+- Direct route: `/coach/readiness/game-day?date=YYYY-MM-DD`
+- Also linked from `WeeklyPulseCard` when a game is upcoming
+
+**Commit:**
+```bash
+git add src/components/coach/game-day/PreGameRoster.tsx
+git commit -m "feat: PreGameRoster — visual roster grid for game day preparation"
+```
+
+---
+
+### Task 24: Integrate Visual Components into Existing Pages
+
+**Files to modify:**
+- `apps/web/src/components/coach/team-analytics/TeamReadinessTable.tsx` — Add `ReadinessRing` (sm) + `Sparkline` per row
+- `apps/web/src/components/coach/team-analytics/ReadinessDashboard.tsx` — Add `ReadinessRing` (lg) for team average in overview card, add link to PreGameRoster
+- `apps/web/src/components/coach/EnhancedDashboard.tsx` — Add `WeeklyPulseCard` at top (conditional on day), add team `ActivityHeatmap` in analytics section
+- `apps/web/src/components/coach/insights/InterventionQueue.tsx` — Add `Sparkline` for each intervention's related athlete metrics
+- `apps/web/src/components/coach/readiness/ReadinessBreakdown.tsx` — Add `ReadinessRing` as header visualization
+- `apps/web/src/components/coach/analytics/ReadinessForecast.tsx` — Use `Sparkline` for compact forecast summaries
+
+**Integration principles:**
+- Visual components SUPPLEMENT existing data, they don't replace it
+- Rings/sparklines go in table cells alongside text values (not instead of)
+- Heatmap is an additive section, not replacing any existing content
+- WeeklyPulseCard is a new section at dashboard top, existing content stays
+- All new visuals respect the Obsidian palette and zero-gradient rule
+
+**Commit:**
+```bash
+git commit -m "feat: integrate ReadinessRing, Sparkline, Heatmap, WeeklyPulse into coach pages"
+```
+
+---
+
+### Task 25: Pre-Game Roster Route & Navigation
+
+**Files:**
+- Create: `apps/web/src/app/coach/readiness/game-day/page.tsx`
+- Modify: `apps/web/src/config/navigation.ts` — Add game-day sub-nav item under Readiness
+
+**What it does:** Creates the route that renders `PreGameRoster` with query params for game date/opponent. Adds navigation entry so coaches can find it.
+
+**Commit:**
+```bash
+git add src/app/coach/readiness/game-day/page.tsx src/config/navigation.ts
+git commit -m "feat: pre-game roster route and navigation entry"
+```
+
+---
+
+### Phase 6 Implementation Sequence
+
+```
+Task 18 (ReadinessRing) ─┐
+Task 19 (ActivityHeatmap) ├──→ Task 24 (Integration into existing pages)
+Task 20 (Sparkline) ──────┘              ↓
+                                    Task 25 (Routes & Nav)
+Task 21 (WeeklyPulseCard) ──→ Task 22 (Weekly Pulse API)
+                                         ↓
+                                    Task 24 (Integration)
+
+Task 23 (PreGameRoster) ──→ Task 25 (Route & Nav)
+```
+
+Tasks 18, 19, 20 are fully independent — build in parallel.
+Task 21 depends on 18 + 20 (uses ReadinessRing and Sparkline).
+Task 23 depends on 18 + 20 (uses ReadinessRing and Sparkline).
+Task 24 depends on all component tasks (18-23).
+Task 25 depends on 23.
+
+---
+
+### Phase 6 Design Philosophy
+
+**What Whoop/Strava get right that we're adopting:**
+1. **Glanceable metrics** — Rings and sparklines replace tables as the first thing you see. Tables are still there for drill-down, but the visual tells the story first.
+2. **Density = engagement** — The heatmap shows consistency without a single number. A full grid is satisfying; gaps are obvious.
+3. **Time context** — Sparklines show WHERE an athlete is going, not just where they are. A score of 65 trending up feels different than 65 trending down.
+4. **Ritual moments** — WeeklyPulseCard creates a reason to open the app Monday. PreGameRoster creates a reason to open it before games. These are designed engagement hooks, not just data displays.
+
+**What we're NOT doing (avoiding visual bloat):**
+- No 3D charts or isometric views
+- No animated transitions between views (page transitions stay instant)
+- No decorative illustrations or mascots
+- No color-coded everything — the ring colors are semantic (red/amber/ember/green), not decorative
+- No dashboard widgets you can drag/resize/customize (that's enterprise SaaS bloat)
+- Sparklines and rings are minimal — they don't have legends, axes, or labels beyond what's needed
