@@ -17,11 +17,15 @@ import { apiClient, getStoredUserId } from '../../lib/auth';
 import { sendChatMessage } from '../../lib/apiWithFallback';
 import { LoadingScreen, ErrorView } from '../../components/ui';
 import { Colors, Spacing, Typography, BorderRadius } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { VoiceWebSocketClient } from '../../lib/voice';
 import config from '../../config';
 import { CrisisResourcesModal } from '../../components/chat/CrisisResourcesModal';
+import { SmartEmptyState } from '../../components/chat/SmartEmptyState';
+import { WellnessContextBanner } from '../../components/chat/WellnessContextBanner';
 
 export default function ChatScreen() {
+  const { colors, isDarkMode } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -268,7 +272,7 @@ export default function ChatScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <CrisisResourcesModal crisis={crisisAlert} onClose={() => setCrisisAlert(null)} />
 
       <KeyboardAvoidingView
@@ -277,49 +281,30 @@ export default function ChatScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <View style={styles.aiIcon}>
-                <Ionicons name="chatbubble-ellipses" size={22} color="#fff" />
+              <View style={[styles.aiIcon, { backgroundColor: colors.backgroundSecondary }]}>
+                <Ionicons name="chatbubble-ellipses" size={22} color={colors.accent} />
               </View>
               <View>
-                <Text style={styles.headerTitle}>Flow Coach</Text>
-                <Text style={styles.headerSubtitle}>Your mental edge</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Flow Coach</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Your mental edge</Text>
               </View>
             </View>
-            <TouchableOpacity onPress={startNewChat} style={styles.newChatButton}>
-              <Ionicons name="add" size={22} color="#fff" />
+            <TouchableOpacity onPress={startNewChat} style={[styles.newChatButton, { backgroundColor: colors.backgroundSecondary }]}>
+              <Ionicons name="add" size={22} color={colors.accent} />
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* Wellness Banner */}
+        {messages.length > 0 && <WellnessContextBanner />}
+
         {/* Messages */}
         <View style={styles.messagesContainer}>
           {messages.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="chatbubble-ellipses" size={48} color={Colors.accent} />
-              <Text style={styles.emptyTitle}>Ready to talk?</Text>
-              <Text style={styles.emptyMessage}>
-                Share what's on your mind — let's get to work.
-              </Text>
-              <View style={styles.suggestionsGrid}>
-                {[
-                  { text: 'Pre-game anxiety tips', prompt: "I get anxious before games..." },
-                  { text: 'Build confidence', prompt: "How do I believe in myself more?" },
-                  { text: 'Stress management', prompt: "I'm feeling overwhelmed..." },
-                  { text: 'Get in the zone', prompt: "Help me find my flow state..." },
-                ].map((suggestion, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.suggestionCard}
-                    onPress={() => setInputValue(suggestion.prompt)}
-                  >
-                    <Text style={styles.suggestionText}>{suggestion.text}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+            <SmartEmptyState onSelectPrompt={setInputValue} />
           ) : (
             <FlatList
               ref={flatListRef}
@@ -335,21 +320,21 @@ export default function ChatScreen() {
                   <View
                     style={[
                       styles.messageBubble,
-                      item.role === 'user' ? styles.userBubble : styles.assistantBubble,
+                      item.role === 'user' ? [styles.userBubble, { backgroundColor: colors.gray700 }] : [styles.assistantBubble, { backgroundColor: colors.primary }],
                     ]}
                   >
                     {item.content ? (
                       <Text
                         style={[
                           styles.messageText,
-                          item.role === 'user' && styles.userMessageText,
+                          item.role === 'user' && [styles.userMessageText, { color: colors.gray100 }],
                         ]}
                       >
                         {item.content}
                       </Text>
                     ) : (
                       <View style={styles.typingIndicator}>
-                        <Text style={styles.typingText}>...</Text>
+                        <Text style={[styles.typingText, { color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)' }]}>...</Text>
                       </View>
                     )}
                   </View>
@@ -362,14 +347,14 @@ export default function ChatScreen() {
         </View>
 
         {/* Input Area */}
-        <View style={styles.inputWrapper}>
-          <View style={styles.inputContainer}>
+        <View style={[styles.inputWrapper, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+          <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.textPrimary }]}
               value={inputValue}
               onChangeText={setInputValue}
               placeholder="What's on your mind..."
-              placeholderTextColor={Colors.gray400}
+              placeholderTextColor={colors.gray400}
               multiline
               maxLength={2000}
               editable={!isLoading && !isProcessingVoice}
@@ -386,12 +371,12 @@ export default function ChatScreen() {
                 disabled={isLoading || isProcessingVoice}
               >
                 {isProcessingVoice ? (
-                  <ActivityIndicator color={Colors.accent} size="small" />
+                  <ActivityIndicator color={colors.accent} size="small" />
                 ) : (
                   <Ionicons
                     name={isRecording ? 'stop-circle' : 'mic'}
                     size={22}
-                    color={isRecording ? Colors.error : Colors.accent}
+                    color={isRecording ? colors.error : colors.accent}
                   />
                 )}
               </TouchableOpacity>
@@ -400,6 +385,7 @@ export default function ChatScreen() {
               <TouchableOpacity
                 style={[
                   styles.sendButton,
+                  { backgroundColor: colors.accent },
                   !inputValue.trim() && styles.sendButtonDisabled,
                 ]}
                 onPress={sendMessage}
@@ -430,7 +416,6 @@ const styles = StyleSheet.create({
   // Header
   header: {
     paddingTop: 60,
-    backgroundColor: Colors.primary,
     paddingBottom: Spacing.lg,
   },
   headerContent: {
@@ -448,24 +433,20 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: Typography.xl,
     fontWeight: '700',
-    color: '#fff',
   },
   headerSubtitle: {
     fontSize: Typography.sm,
-    color: 'rgba(255,255,255,0.7)',
   },
   newChatButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -476,48 +457,6 @@ const styles = StyleSheet.create({
   messagesList: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
-    textAlign: 'center',
-  },
-  emptyMessage: {
-    fontSize: Typography.base,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: Spacing.xxxl,
-  },
-  suggestionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.md,
-    width: '100%',
-  },
-  suggestionCard: {
-    width: '48%',
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-  },
-  suggestionText: {
-    fontSize: Typography.sm,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-    textAlign: 'center',
   },
   messageRow: {
     flexDirection: 'row',
