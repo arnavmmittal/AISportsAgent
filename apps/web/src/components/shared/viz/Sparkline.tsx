@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SparklineProps {
@@ -39,8 +39,20 @@ export function Sparkline({
   className,
 }: SparklineProps) {
   const pathRef = useRef<SVGPathElement>(null);
+  const [pathLength, setPathLength] = useState(0);
+  const [animated, setAnimated] = useState(false);
 
   const resolvedColor = autoColor ? getTrendColor(data) : (color || 'hsl(var(--primary))');
+
+  // Get actual path length after mount for reliable animation
+  useEffect(() => {
+    if (pathRef.current && animate) {
+      const len = pathRef.current.getTotalLength();
+      setPathLength(len);
+      // Trigger animation on next frame
+      requestAnimationFrame(() => setAnimated(true));
+    }
+  }, [animate, data]);
 
   const { linePath, areaPath, lastPoint } = useMemo(() => {
     if (!data.length) return { linePath: '', areaPath: '', lastPoint: null };
@@ -94,7 +106,11 @@ export function Sparkline({
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={animate ? 'sparkline-animate' : ''}
+        {...(animate && pathLength > 0 ? {
+          strokeDasharray: pathLength,
+          strokeDashoffset: animated ? 0 : pathLength,
+          style: { transition: 'stroke-dashoffset 0.6s ease-out' },
+        } : {})}
       />
       {showDot && lastPoint && (
         <circle

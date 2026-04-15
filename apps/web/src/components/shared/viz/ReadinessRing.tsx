@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { motion, useSpring, useTransform, useInView } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ReadinessRingProps {
@@ -34,56 +33,84 @@ export function ReadinessRing({
   animate = true,
   className,
 }: ReadinessRingProps) {
-  const ref = useRef<SVGSVGElement>(null);
-  const isInView = useInView(ref as React.RefObject<Element>, { once: true, margin: '-20px' });
+  const ref = useRef<HTMLDivElement>(null);
+  const [triggered, setTriggered] = useState(!animate);
+  const [displayScore, setDisplayScore] = useState(animate ? 0 : score);
 
   const config = SIZE_CONFIG[size];
   const radius = (config.px - config.stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-
   const clamped = Math.max(0, Math.min(100, score));
   const targetOffset = circumference - (clamped / 100) * circumference;
 
-  const spring = useSpring(circumference, {
-    mass: 1,
-    stiffness: 60,
-    damping: 18,
-  });
-
-  const dashOffset = useTransform(spring, (v) => v);
-
-  const scoreSpring = useSpring(0, {
-    mass: 1,
-    stiffness: 60,
-    damping: 18,
-  });
-
-  const displayScore = useTransform(scoreSpring, (v) => Math.round(v));
-
-  useEffect(() => {
-    if (!animate || !isInView) return;
-    spring.set(targetOffset);
-    scoreSpring.set(clamped);
-  }, [animate, isInView, targetOffset, clamped, spring, scoreSpring]);
-
+  // Trigger animation when element enters viewport
   useEffect(() => {
     if (!animate) {
-      spring.jump(targetOffset);
-      scoreSpring.jump(clamped);
+      setTriggered(true);
+      setDisplayScore(clamped);
+      return;
     }
-  }, [animate, targetOffset, clamped, spring, scoreSpring]);
+
+    const el = ref.current;
+    if (!el) return;
+
+    // Use IntersectionObserver with fallback
+    if (typeof IntersectionObserver === 'undefined') {
+      setTriggered(true);
+      setDisplayScore(clamped);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTriggered(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [animate, clamped]);
+
+  // Animate the displayed number
+  useEffect(() => {
+    if (!triggered) return;
+    if (!animate) {
+      setDisplayScore(clamped);
+      return;
+    }
+
+    const duration = 800;
+    const start = performance.now();
+    const from = 0;
+    const to = clamped;
+
+    function tick(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayScore(Math.round(from + (to - from) * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }, [triggered, clamped, animate]);
 
   const color = getScoreColor(clamped);
   const center = config.px / 2;
+  const currentOffset = triggered ? targetOffset : circumference;
 
   return (
-    <div className={cn('relative inline-flex flex-col items-center', className)}>
+    <div ref={ref} className={cn('relative inline-flex flex-col items-center', className)}>
       <svg
-        ref={ref}
         width={config.px}
         height={config.px}
         viewBox={`0 0 ${config.px} ${config.px}`}
-        className="transform -rotate-90"
+        style={{ transform: 'rotate(-90deg)' }}
       >
         {/* Background track */}
         <circle
@@ -95,8 +122,8 @@ export function ReadinessRing({
           strokeOpacity={0.2}
           strokeWidth={config.stroke}
         />
-        {/* Score arc */}
-        <motion.circle
+        {/* Score arc — CSS transition instead of framer-motion */}
+        <circle
           cx={center}
           cy={center}
           r={radius}
@@ -105,18 +132,21 @@ export function ReadinessRing({
           strokeWidth={config.stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
-          style={{ strokeDashoffset: dashOffset }}
+          strokeDashoffset={currentOffset}
+          style={{
+            transition: animate ? 'stroke-dashoffset 0.8s cubic-bezier(0.33, 1, 0.68, 1)' : 'none',
+          }}
         />
       </svg>
       {/* Score label centered over the SVG */}
       {showLabel && (
         <div
-          className="absolute flex flex-col items-center justify-center"
+          className="absolute inset-0 flex items-center justify-center"
           style={{ width: config.px, height: config.px }}
         >
-          <motion.span className={cn('font-bold tabular-nums', config.fontSize)}>
+          <span className={cn('font-bold tabular-nums', config.fontSize)}>
             {displayScore}
-          </motion.span>
+          </span>
         </div>
       )}
       {label && (

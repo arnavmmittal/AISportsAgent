@@ -53,7 +53,7 @@ export function ActivityHeatmap({
   onCellClick,
   className,
 }: ActivityHeatmapProps) {
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; data: HeatmapDataPoint & { level: number } } | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{ week: number; day: number; date: string; count: number; mood?: number } | null>(null);
 
   const { grid, monthPositions, maxCount, stats } = useMemo(() => {
     // Build a lookup map
@@ -151,7 +151,7 @@ export function ActivityHeatmap({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative">
         <svg
           width={svgWidth}
           height={svgHeight}
@@ -202,35 +202,30 @@ export function ActivityHeatmap({
               fill={`hsl(${colorVar})`}
               fillOpacity={OPACITY_MAP[cell.level]}
               className={onCellClick ? 'cursor-pointer' : ''}
-              onMouseEnter={(e) => {
-                const rect = (e.target as SVGRectElement).getBoundingClientRect();
-                setTooltip({
-                  x: rect.left + rect.width / 2,
-                  y: rect.top,
-                  data: { date: cell.date, count: cell.count, mood: cell.mood, level: cell.level },
-                });
-              }}
-              onMouseLeave={() => setTooltip(null)}
+              onMouseEnter={() => setHoveredCell({ week: cell.week, day: cell.day, date: cell.date, count: cell.count, mood: cell.mood })}
+              onMouseLeave={() => setHoveredCell(null)}
               onClick={() => onCellClick?.(cell.date)}
             />
           ))}
         </svg>
       </div>
 
-      {/* Tooltip (rendered as overlay) */}
-      {tooltip && (
+      {/* Tooltip (positioned relative to grid) */}
+      {hoveredCell && (
         <div
-          className="fixed z-50 pointer-events-none bg-card border border-border rounded-md shadow-lg px-3 py-2 text-xs"
+          className="absolute z-50 pointer-events-none bg-card border border-border rounded-md shadow-lg px-3 py-2 text-xs"
           style={{
-            left: tooltip.x,
-            top: tooltip.y - 8,
+            left: labelWidth + hoveredCell.week * step + cellSize / 2,
+            top: headerHeight + hoveredCell.day * step - 4,
             transform: 'translate(-50%, -100%)',
           }}
         >
-          <p className="font-medium text-foreground">{new Date(tooltip.data.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+          <p className="font-medium text-foreground">
+            {new Date(hoveredCell.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </p>
           <p className="text-muted-foreground">
-            {tooltip.data.count} check-in{tooltip.data.count !== 1 ? 's' : ''}
-            {tooltip.data.mood !== undefined && ` • Mood: ${tooltip.data.mood.toFixed(1)}`}
+            {hoveredCell.count} check-in{hoveredCell.count !== 1 ? 's' : ''}
+            {hoveredCell.mood !== undefined && ` \u00b7 Mood: ${hoveredCell.mood.toFixed(1)}`}
           </p>
         </div>
       )}

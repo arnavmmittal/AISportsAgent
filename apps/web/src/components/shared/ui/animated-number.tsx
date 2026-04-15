@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { motion, useSpring, useTransform, useInView } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface AnimatedNumberProps {
@@ -22,26 +21,53 @@ export function AnimatedNumber({
   duration = 1.2,
 }: AnimatedNumberProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref as React.RefObject<Element>, { once: true, margin: '-50px' });
-  const spring = useSpring(0, {
-    mass: 1,
-    stiffness: 75,
-    damping: 15,
-    duration: duration * 1000,
-  });
-  const display = useTransform(spring, (v) =>
-    `${prefix}${v.toFixed(decimals)}${suffix}`
-  );
+  const [display, setDisplay] = useState(`${prefix}${(0).toFixed(decimals)}${suffix}`);
+  const triggered = useRef(false);
 
   useEffect(() => {
-    if (isInView) {
-      spring.set(value);
+    const el = ref.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setDisplay(`${prefix}${value.toFixed(decimals)}${suffix}`);
+      return;
     }
-  }, [isInView, value, spring]);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !triggered.current) {
+          triggered.current = true;
+          observer.disconnect();
+          animateTo(value);
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [value, decimals, suffix, prefix, duration]);
+
+  function animateTo(target: number) {
+    const start = performance.now();
+    const durationMs = duration * 1000;
+
+    function tick(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / durationMs, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = eased * target;
+      setDisplay(`${prefix}${current.toFixed(decimals)}${suffix}`);
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
 
   return (
-    <motion.span ref={ref} className={cn('stat-value tabular-nums', className)}>
+    <span ref={ref} className={cn('stat-value tabular-nums', className)}>
       {display}
-    </motion.span>
+    </span>
   );
 }
