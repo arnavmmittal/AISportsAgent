@@ -1,23 +1,50 @@
 /**
- * Enhanced Readiness Score Algorithm
+ * Enhanced Readiness Score Algorithm — Dual-Source Model
  *
- * Blends daily MoodLog (short-term state) with WeeklySummary (long-term trend)
- * to provide a comprehensive athlete readiness assessment.
+ * Three-layer blending:
+ * 1. Daily MoodLog (self-report, explicit athlete input)
+ * 2. ChatSummary (AI-extracted from conversation, passive signal)
+ * 3. WeeklySummary (long-term trend aggregation)
  *
- * Strategy:
- * - MoodLog (if exists): 70% weight (today's state)
- * - WeeklySummary (if consented): 30% weight (past week trend)
- * - If only one source: 100% weight
- * - Risk flags from weekly summaries apply penalties
+ * Formula:
+ *   READINESS = (0.7 × DailySignal) + (0.3 × WeeklyTrend) - RiskPenalty
+ *
+ * DailySignal blends MoodLog + ChatSummary:
+ *   - Both exist: 60% self-report + 40% chat (intentional reflection weighted higher)
+ *   - Only one: 100% of available source
+ *   - Neither: decay previous score by 5%
+ *
+ * Dimension weights (sum = 1.0):
+ *   Mood:             25%
+ *   Stress (inverted): 20%
+ *   Sleep Quality:     20%
+ *   Confidence:        15%
+ *   Physical:          10% (soreness inverted + RPE inverted)
+ *   Engagement:        10%
  */
 
 export interface ReadinessInputs {
   // Daily snapshot (from MoodLog)
   moodLog?: {
-    mood: number;          // 1-10
-    stress: number;        // 1-10
-    confidence: number;    // 1-10
-    sleepQuality: number;  // 1-10
+    mood: number;            // 1-10
+    stress: number;          // 1-10
+    confidence?: number;     // 1-10, nullable (game-week only)
+    sleepQuality?: number;   // 1-10 subjective quality
+    sleepHours?: number;     // hours (legacy, converted to quality)
+    soreness?: number;       // 1-10
+    rpe?: number;            // 1-10
+  };
+
+  // Per-session chat signal (from most recent ChatSummary)
+  chatSummary?: {
+    moodScore: number;
+    stressScore: number;
+    confidenceScore: number;
+    sleepQualityScore: number;
+    sorenessScore: number;
+    engagementScore: number;
+    riskFlags: string[];
+    sentiment: string;       // "positive" | "neutral" | "negative"
   };
 
   // Weekly trend (from WeeklySummary, if consent granted)
@@ -37,6 +64,9 @@ export interface ReadinessInputs {
     sessionCount: number;      // Last 7 days
     goalCompletionRate: number; // 0.0-1.0
   };
+
+  // Previous day's score (for decay when no data)
+  previousDayScore?: number;
 }
 
 export enum ReadinessLevel {
@@ -47,9 +77,11 @@ export enum ReadinessLevel {
   POOR = 'POOR',             // 0-44: Rest day
 }
 
+export type SignalSourceType = 'self_report' | 'chat' | 'weekly' | 'activity' | 'blended' | 'default';
+
 export interface SignalSource {
   value: number;
-  source: 'daily' | 'weekly' | 'activity' | 'blended';
+  source: SignalSourceType;
   weight: number;
 }
 
@@ -58,10 +90,12 @@ export interface SignalBreakdown {
   stress: SignalSource;
   confidence: SignalSource;
   sleep: SignalSource;
+  physical: SignalSource;
   engagement: SignalSource;
   riskPenalty: number;
   rawScore: number;
   finalScore: number;
+  dataSources: SignalSourceType[];
 }
 
 export interface ReadinessOutput {
@@ -71,24 +105,67 @@ export interface ReadinessOutput {
   signals: SignalBreakdown;  // Details of what contributed
 }
 
-/**
- * Blend two values with weighted average
- * @param current - Current value (e.g., from MoodLog)
- * @param weekly - Weekly average (e.g., from WeeklySummary)
- * @param weeklyWeight - Weight for weekly value (0-1)
- */
-function blend(current: number, weekly: number, weeklyWeight: number): number {
-  return current * (1 - weeklyWeight) + weekly * weeklyWeight;
+// ─── Dimension Weights ───────────────────────────────────────────
+const WEIGHTS = {
+  mood: 0.25,
+  stress: 0.20,       // inverted: 10 - stress
+  sleep: 0.20,
+  confidence: 0.15,
+  physical: 0.10,     // inverted: 10 - avg(soreness, rpe)
+  engagement: 0.10,
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────
+
+function blend(a: number, b: number, bWeight: number): number {
+  return a * (1 - bWeight) + b * bWeight;
 }
 
 /**
- * Calculate risk penalty from weekly summary risk flags
- * @param riskFlags - Array of risk flag strings
- * @returns Total penalty points (0-50)
+ * Normalize sleep hours to a 1-10 quality scale.
+ * Based on NCAA sleep research: 7-9 hours optimal for D1 athletes.
  */
-function calculateRiskPenalty(riskFlags: string[]): number {
-  // Risk flag severity mapping
+function normalizeSleepHoursToQuality(hours: number): number {
+  if (hours >= 7 && hours <= 9) return 8 + (hours - 7) * 0.5;
+  if (hours >= 6) return 5 + (hours - 6) * 3;
+  if (hours >= 5) return 3 + (hours - 5) * 2;
+  return Math.max(1, hours);
+}
+
+/**
+ * Merge a dimension from multiple sources with weighted blending.
+ */
+function mergeDimension(
+  selfReport: number | undefined,
+  chatValue: number | undefined,
+  selfReportWeight: number,
+  chatWeight: number,
+  defaultValue: number = 5,
+): { value: number; source: SignalSourceType } {
+  if (selfReport !== undefined && chatValue !== undefined) {
+    return {
+      value: selfReport * selfReportWeight + chatValue * chatWeight,
+      source: 'blended',
+    };
+  }
+  if (selfReport !== undefined) return { value: selfReport, source: 'self_report' };
+  if (chatValue !== undefined) return { value: chatValue, source: 'chat' };
+  return { value: defaultValue, source: 'default' };
+}
+
+/**
+ * Calculate risk penalty from chat and weekly risk flags.
+ */
+function calculateRiskPenalty(
+  chatFlags: string[] = [],
+  weeklyFlags: string[] = [],
+  chatSentiment?: string,
+): number {
   const severityMap: Record<string, number> = {
+    'crisis': 30,
+    'self_harm': 30,
+    'self-harm': 30,
+    'suicidal': 30,
     'elevated stress': 5,
     'sleep disruption': 8,
     'injury concern': 10,
@@ -102,50 +179,38 @@ function calculateRiskPenalty(riskFlags: string[]): number {
     'chronic stress': 8,
     'mood decline': 7,
     'engagement drop': 5,
+    'avoidance': 10,
   };
 
-  return riskFlags.reduce((penalty, flag) => {
-    const normalizedFlag = flag.toLowerCase().trim();
-    
-    // Check for exact match
-    if (severityMap[normalizedFlag]) {
-      return penalty + severityMap[normalizedFlag];
-    }
-
-    // Check for partial matches (contains keywords)
+  const allFlags = [...new Set([...chatFlags, ...weeklyFlags])];
+  let penalty = allFlags.reduce((total, flag) => {
+    const normalized = flag.toLowerCase().trim();
+    if (severityMap[normalized]) return total + severityMap[normalized];
     for (const [key, value] of Object.entries(severityMap)) {
-      if (normalizedFlag.includes(key) || key.includes(normalizedFlag)) {
-        return penalty + value;
+      if (normalized.includes(key) || key.includes(normalized)) {
+        return total + value;
       }
     }
-
-    // Default penalty for unrecognized flags
-    return penalty + 3;
+    return total + 3;
   }, 0);
+
+  // Negative sentiment trend penalty
+  if (chatSentiment === 'negative') penalty += 10;
+
+  return Math.min(50, penalty);
 }
 
 /**
- * Calculate engagement score from platform activity
- * @param activity - Recent activity metrics
- * @returns Engagement score (1-10)
+ * Calculate engagement score from platform activity.
  */
 function calculateEngagement(activity: ReadinessInputs['recentActivity']): number {
   const { messageCount, sessionCount, goalCompletionRate } = activity;
-
-  // Normalize to 1-10 scale
-  const messageScore = Math.min(10, messageCount / 5); // 50 messages = 10
-  const sessionScore = Math.min(10, sessionCount * 2); // 5 sessions = 10
+  const messageScore = Math.min(10, messageCount / 5);
+  const sessionScore = Math.min(10, sessionCount * 2);
   const goalScore = goalCompletionRate * 10;
-
-  // Weighted average: messages (30%), sessions (30%), goals (40%)
   return messageScore * 0.3 + sessionScore * 0.3 + goalScore * 0.4;
 }
 
-/**
- * Convert numeric score to readiness level
- * @param score - Readiness score (0-100)
- * @returns ReadinessLevel enum
- */
 function getReadinessLevel(score: number): ReadinessLevel {
   if (score >= 90) return ReadinessLevel.OPTIMAL;
   if (score >= 75) return ReadinessLevel.GOOD;
@@ -154,165 +219,154 @@ function getReadinessLevel(score: number): ReadinessLevel {
   return ReadinessLevel.POOR;
 }
 
-/**
- * Calculate enhanced readiness score with weekly summary integration
- *
- * @param inputs - Readiness calculation inputs
- * @returns Comprehensive readiness assessment
- */
+// ─── Main Calculator ─────────────────────────────────────────────
+
 export function calculateReadinessScore(inputs: ReadinessInputs): ReadinessOutput {
-  const { moodLog, weeklySummary, recentActivity } = inputs;
+  const { moodLog, chatSummary, weeklySummary, recentActivity, previousDayScore } = inputs;
 
-  // Initialize with neutral defaults
-  let mood = 5, stress = 5, confidence = 5, sleep = 5, engagement = 5;
-  let confidenceLevel = 0.3; // Low confidence with defaults
-  let source: 'daily' | 'weekly' | 'blended' = 'daily';
+  const dataSources: SignalSourceType[] = [];
+  let dataConfidence = 0.2; // Base confidence
 
-  // STRATEGY: Blend daily MoodLog (short-term) + WeeklySummary (long-term trend)
+  // Determine daily source blending weights
+  const hasSelfReport = !!moodLog;
+  const hasChat = !!chatSummary;
+  const selfW = hasSelfReport && hasChat ? 0.60 : (hasSelfReport ? 1.0 : 0);
+  const chatW = hasSelfReport && hasChat ? 0.40 : (hasChat ? 1.0 : 0);
 
-  // Phase 1: Use MoodLog if available (today's state)
-  if (moodLog) {
-    mood = moodLog.mood;
-    stress = moodLog.stress;
-    confidence = moodLog.confidence;
-    sleep = moodLog.sleepQuality;
-    confidenceLevel += 0.4; // High confidence (explicit athlete input)
-    source = 'daily';
+  if (hasSelfReport) { dataSources.push('self_report'); dataConfidence += 0.35; }
+  if (hasChat) { dataSources.push('chat'); dataConfidence += 0.25; }
+  if (weeklySummary) { dataSources.push('weekly'); dataConfidence += 0.15; }
+
+  // ── Resolve each dimension ──
+
+  // Mood
+  const mood = mergeDimension(moodLog?.mood, chatSummary?.moodScore, selfW, chatW);
+
+  // Stress
+  const stress = mergeDimension(moodLog?.stress, chatSummary?.stressScore, selfW, chatW);
+
+  // Confidence
+  const confidence = mergeDimension(
+    moodLog?.confidence ?? undefined,
+    chatSummary?.confidenceScore,
+    selfW, chatW,
+  );
+
+  // Sleep — prefer sleepQuality, fall back to normalized sleepHours
+  const selfSleep = moodLog?.sleepQuality
+    ?? (moodLog?.sleepHours ? normalizeSleepHoursToQuality(moodLog.sleepHours) : undefined);
+  const sleep = mergeDimension(selfSleep, chatSummary?.sleepQualityScore, selfW, chatW);
+
+  // Physical readiness (soreness + RPE, both inverted)
+  const selfPhysical = moodLog?.soreness !== undefined || moodLog?.rpe !== undefined
+    ? (() => {
+        const vals: number[] = [];
+        if (moodLog!.soreness !== undefined) vals.push(10 - moodLog!.soreness);
+        if (moodLog!.rpe !== undefined) vals.push(10 - moodLog!.rpe);
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+      })()
+    : undefined;
+  const chatPhysical = chatSummary?.sorenessScore !== undefined
+    ? 10 - chatSummary.sorenessScore
+    : undefined;
+  const physical = mergeDimension(selfPhysical, chatPhysical, selfW, chatW, 5);
+
+  // Engagement
+  let engagementValue = calculateEngagement(recentActivity);
+  let engagementSource: SignalSourceType = 'activity';
+  if (chatSummary?.engagementScore) {
+    engagementValue = blend(engagementValue, chatSummary.engagementScore, 0.5);
+    engagementSource = 'blended';
+  }
+  if (weeklySummary?.engagementScore) {
+    engagementValue = blend(engagementValue, weeklySummary.engagementScore, 0.3);
+    engagementSource = 'blended';
   }
 
-  // Phase 2: Blend with WeeklySummary (past week trend)
-  if (weeklySummary) {
-    const weeklyWeight = moodLog ? 0.3 : 1.0; // 30% if MoodLog exists, 100% if not
-
-    if (moodLog) {
-      // Blend scores using weighted average
-      mood = blend(mood, weeklySummary.moodScore, weeklyWeight);
-      stress = blend(stress, weeklySummary.stressScore, weeklyWeight);
-      confidence = blend(confidence, weeklySummary.confidenceScore, weeklyWeight);
-      sleep = blend(sleep, weeklySummary.sleepQualityScore, weeklyWeight);
-      source = 'blended';
-    } else {
-      // Use weekly summary as primary source
-      mood = weeklySummary.moodScore;
-      stress = weeklySummary.stressScore;
-      confidence = weeklySummary.confidenceScore;
-      sleep = weeklySummary.sleepQualityScore;
-      source = 'weekly';
-    }
-
-    engagement = weeklySummary.engagementScore;
-    confidenceLevel += 0.3; // Moderate confidence (AI-derived)
-  }
-
-  // Phase 3: Incorporate platform activity (if no weekly summary)
-  if (!weeklySummary) {
-    engagement = calculateEngagement(recentActivity);
-  }
-
-  // Calculate base score (same formula as original)
-  const rawScore = (
-    0.30 * mood +
-    0.25 * (10 - stress) +  // Stress is inverted (lower stress = higher readiness)
-    0.20 * confidence +
-    0.15 * sleep +
-    0.10 * engagement
+  // ── Compute daily signal ──
+  let dailySignal = (
+    WEIGHTS.mood * mood.value +
+    WEIGHTS.stress * (10 - stress.value) +
+    WEIGHTS.sleep * sleep.value +
+    WEIGHTS.confidence * confidence.value +
+    WEIGHTS.physical * physical.value +
+    WEIGHTS.engagement * engagementValue
   ) * 10;
 
-  // Phase 4: Apply risk flag penalties
-  let riskPenalty = 0;
-  if (weeklySummary?.riskFlags && weeklySummary.riskFlags.length > 0) {
-    riskPenalty = calculateRiskPenalty(weeklySummary.riskFlags);
-    confidenceLevel += 0.1; // Risk detection adds signal
+  // If no daily data at all, decay from previous score
+  if (!hasSelfReport && !hasChat) {
+    if (previousDayScore !== undefined) {
+      dailySignal = previousDayScore * 0.95; // 5% daily decay
+    }
+    // else dailySignal stays at neutral (~50 from defaults)
   }
 
-  // Cap penalty at 50 points max
-  riskPenalty = Math.min(50, riskPenalty);
+  // ── Blend with weekly trend ──
+  let rawScore = dailySignal;
+  if (weeklySummary) {
+    const weeklySignal = (
+      WEIGHTS.mood * weeklySummary.moodScore +
+      WEIGHTS.stress * (10 - weeklySummary.stressScore) +
+      WEIGHTS.sleep * weeklySummary.sleepQualityScore +
+      WEIGHTS.confidence * weeklySummary.confidenceScore +
+      WEIGHTS.physical * (10 - (weeklySummary.sorenessScore || 5)) +
+      WEIGHTS.engagement * weeklySummary.engagementScore
+    ) * 10;
+
+    rawScore = dailySignal * 0.70 + weeklySignal * 0.30;
+  }
+
+  // ── Risk penalties ──
+  const riskPenalty = calculateRiskPenalty(
+    chatSummary?.riskFlags,
+    weeklySummary?.riskFlags,
+    chatSummary?.sentiment,
+  );
+  if (riskPenalty > 0) dataConfidence += 0.05;
 
   const finalScore = Math.max(0, Math.min(100, rawScore - riskPenalty));
 
   return {
     score: Math.round(finalScore),
     level: getReadinessLevel(finalScore),
-    confidence: Math.min(1.0, confidenceLevel),
+    confidence: Math.min(1.0, dataConfidence),
     signals: {
-      mood: { 
-        value: mood, 
-        source, 
-        weight: 0.30 
-      },
-      stress: { 
-        value: stress, 
-        source, 
-        weight: 0.25 
-      },
-      confidence: { 
-        value: confidence, 
-        source, 
-        weight: 0.20 
-      },
-      sleep: { 
-        value: sleep, 
-        source, 
-        weight: 0.15 
-      },
-      engagement: { 
-        value: engagement, 
-        source: weeklySummary ? 'weekly' : 'activity', 
-        weight: 0.10 
-      },
+      mood: { value: mood.value, source: mood.source, weight: WEIGHTS.mood },
+      stress: { value: stress.value, source: stress.source, weight: WEIGHTS.stress },
+      confidence: { value: confidence.value, source: confidence.source, weight: WEIGHTS.confidence },
+      sleep: { value: sleep.value, source: sleep.source, weight: WEIGHTS.sleep },
+      physical: { value: physical.value, source: physical.source, weight: WEIGHTS.physical },
+      engagement: { value: engagementValue, source: engagementSource, weight: WEIGHTS.engagement },
       riskPenalty,
       rawScore: Math.round(rawScore),
       finalScore: Math.round(finalScore),
+      dataSources,
     },
   };
 }
 
-/**
- * Calculate readiness score trend (improvement/decline)
- * @param previousScore - Previous readiness score
- * @param currentScore - Current readiness score
- * @returns Trend direction and magnitude
- */
+// ─── Utilities ───────────────────────────────────────────────────
+
 export function calculateReadinessTrend(
   previousScore: number,
   currentScore: number
 ): { direction: 'IMPROVING' | 'STABLE' | 'DECLINING'; delta: number } {
   const delta = currentScore - previousScore;
-  const absDelta = Math.abs(delta);
-
-  if (absDelta < 3) {
-    return { direction: 'STABLE', delta };
-  }
-
-  return {
-    direction: delta > 0 ? 'IMPROVING' : 'DECLINING',
-    delta,
-  };
+  if (Math.abs(delta) < 3) return { direction: 'STABLE', delta };
+  return { direction: delta > 0 ? 'IMPROVING' : 'DECLINING', delta };
 }
 
-/**
- * Format readiness score for display
- * @param score - Readiness score (0-100)
- * @param level - Readiness level
- * @returns Formatted display string
- */
 export function formatReadinessDisplay(score: number, level: ReadinessLevel): string {
-  const emoji = {
-    OPTIMAL: '🟢',
-    GOOD: '🟢',
-    MODERATE: '🟡',
-    LOW: '🟠',
-    POOR: '🔴',
+  const label = {
+    OPTIMAL: 'Peak',
+    GOOD: 'Ready',
+    MODERATE: 'Monitor',
+    LOW: 'Recovery',
+    POOR: 'Rest',
   }[level];
-
-  return `${score} (${level}) ${emoji}`;
+  return `${score} (${label})`;
 }
 
-/**
- * Get color class for readiness level (Tailwind CSS)
- * @param level - Readiness level
- * @returns Tailwind color class
- */
 export function getReadinessColorClass(level: ReadinessLevel): string {
   return {
     OPTIMAL: 'text-secondary bg-secondary/10',
@@ -322,3 +376,5 @@ export function getReadinessColorClass(level: ReadinessLevel): string {
     POOR: 'text-muted-foreground bg-muted-foreground/10',
   }[level];
 }
+
+export { normalizeSleepHoursToQuality };

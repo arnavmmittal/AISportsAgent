@@ -38,7 +38,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { athleteId, mood, confidence, stress, energy, sleep, notes, tags } = validatedData;
+    const {
+      athleteId, mood, confidence, stress, energy, sleep,
+      sleepQuality, soreness, sorenessMap, rpe,
+      notes, tags, contextTags,
+    } = validatedData;
 
     // Verify user can create mood logs for this athlete
     if (user!.id !== athleteId && user!.role !== 'ADMIN') {
@@ -53,12 +57,17 @@ export async function POST(req: NextRequest) {
       data: {
         athleteId,
         mood,
-        confidence,
+        confidence: confidence ?? null,
         stress,
         energy: energy || null,
         sleep: sleep || null,
+        sleepQuality: sleepQuality || null,
+        soreness: soreness || null,
+        sorenessMap: sorenessMap || undefined,
+        rpe: rpe || null,
         notes: notes || null,
         tags: tags || '',
+        contextTags: contextTags || [],
       },
     });
 

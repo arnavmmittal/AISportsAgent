@@ -537,14 +537,18 @@ model MoodLog {
   id           String   @id @default(cuid())
   athleteId    String
   mood         Int
-  confidence   Int
+  confidence   Int?
   stress       Int
   energy       Int?
-  sleep        Int?
+  sleep        Int?     // Legacy: hours of sleep (kept for backward compat)
+  sleepQuality Float?   // 1-10 subjective sleep quality
+  soreness     Float?   // 1-10 overall body soreness
+  sorenessMap  Json?    // e.g. { "shoulder": 7, "knee": 4, "hamstring": 8 }
+  rpe          Float?   // 1-10 Rate of Perceived Exertion (post-session)
   notes        String?
   tags         String
   createdAt    DateTime @default(now())
-  // New: Pre-game context tracking
+  // Pre-game context tracking
   isPreGame    Boolean  @default(false)
   gameDate     DateTime?
   contextTags  String[] @default([])

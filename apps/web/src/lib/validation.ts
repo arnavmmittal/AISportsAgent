@@ -148,11 +148,16 @@ export const moodLogCreateSchema = z.object({
   athleteId: uuidSchema,
   mood: z.number().int().min(1).max(10, 'Mood must be between 1-10'),
   stress: z.number().int().min(1).max(10, 'Stress must be between 1-10'),
-  confidence: z.number().int().min(1).max(10, 'Confidence must be between 1-10'),
+  confidence: z.number().int().min(1).max(10, 'Confidence must be between 1-10').optional(),
   energy: z.number().int().min(1).max(10, 'Energy must be between 1-10').optional(),
   sleep: z.number().min(0).max(24, 'Sleep hours must be between 0-24').optional(),
+  sleepQuality: z.number().min(1).max(10, 'Sleep quality must be between 1-10').optional(),
+  soreness: z.number().min(1).max(10, 'Soreness must be between 1-10').optional(),
+  sorenessMap: z.record(z.string(), z.number().min(1).max(10)).optional(),
+  rpe: z.number().min(1).max(10, 'RPE must be between 1-10').optional(),
   notes: z.string().max(500, 'Notes too long').optional().transform((val) => val ? sanitizeHtml(val) : undefined),
   tags: z.string().max(200, 'Tags too long').optional().transform((val) => val ? sanitizeHtml(val) : undefined),
+  contextTags: z.array(z.string().max(50)).max(10).optional(),
 });
 
 export type MoodLogCreateRequest = z.infer<typeof moodLogCreateSchema>;
