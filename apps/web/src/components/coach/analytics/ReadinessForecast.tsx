@@ -26,6 +26,7 @@ import {
   AreaChart,
 } from 'recharts';
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, Info } from 'lucide-react';
+import { Sparkline } from '@/components/shared/viz/Sparkline';
 interface ReadinessForecast {
   historicalData: { date: string; score: number }[];
   forecast: { date: string; predictedScore: number; lowerBound: number; upperBound: number; confidence: string }[];
@@ -171,6 +172,13 @@ export function ReadinessForecastChart({ athleteId, days = 30 }: ReadinessForeca
           <span>7-Day Readiness Forecast</span>
           <div className="flex items-center gap-2">
             <span className="text-sm font-normal text-muted-foreground">Current: {currentScore}</span>
+            <Sparkline
+              data={historicalData.slice(-7).map(d => d.score)}
+              autoColor
+              showDot
+              width={64}
+              height={24}
+            />
             <TrendIcon className={`h-5 w-5 ${trendColor}`} />
             <span className={`text-sm font-medium ${trendColor}`}>{trend}</span>
           </div>

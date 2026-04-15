@@ -11,6 +11,7 @@
  */
 
 import { ReadinessOutput, ReadinessLevel, getReadinessColorClass } from '@/lib/readiness-score';
+import { ReadinessRing } from '@/components/shared/viz/ReadinessRing';
 
 interface ReadinessBreakdownProps {
   readiness: ReadinessOutput;
@@ -61,9 +62,7 @@ export default function ReadinessBreakdown({
     // Compact view
     return (
       <div className="flex items-center space-x-3">
-        <div className={`px-3 py-1 rounded-lg font-bold text-lg ${getReadinessColorClass(level)}`}>
-          {score}
-        </div>
+        <ReadinessRing score={score} size="sm" />
         <div className="flex-1">
           <div className="text-sm font-semibold text-foreground">{level}</div>
           <div className="text-xs text-muted-foreground">

@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/shared/ui/button';
 import { SpotlightCard } from '@/components/shared/ui/spotlight-card';
 import { AnimatedNumber } from '@/components/shared/ui/animated-number';
+import { WeeklyPulseCard } from '@/components/coach/dashboard/WeeklyPulseCard';
 import { cn } from '@/lib/utils';
 
 /**
@@ -302,6 +303,11 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
           </p>
         </div>
       )}
+
+      {/* ═════════════════════════════════════════════════════════
+         WEEKLY PULSE — Monday morning team briefing
+         ═════════════════════════════════════════════════════════ */}
+      <WeeklyPulseCard coachId={userId} teamId="default" />
 
       {/* ═════════════════════════════════════════════════════════
          HERO STAT CARDS — SpotlightCard + AnimatedNumber

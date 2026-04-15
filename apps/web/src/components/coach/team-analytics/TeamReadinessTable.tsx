@@ -30,6 +30,8 @@ import {
   Filter,
   X
 } from 'lucide-react';
+import { ReadinessRing } from '@/components/shared/viz/ReadinessRing';
+import { Sparkline } from '@/components/shared/viz/Sparkline';
 import type { ReadinessScoreData } from './ReadinessScoreCard';
 
 interface TeamReadinessTableProps {
@@ -283,6 +285,9 @@ export function TeamReadinessTable({
                   {getSortIcon('level')}
                 </div>
               </TableHead>
+              <TableHead className="text-center">
+                <span className="font-semibold">Trend</span>
+              </TableHead>
               <TableHead>
                 <span className="font-semibold">Top Factors</span>
               </TableHead>
@@ -291,7 +296,7 @@ export function TeamReadinessTable({
           <TableBody>
             {sortedAndFilteredAthletes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No athletes match the selected filter
                 </TableCell>
               </TableRow>
@@ -309,31 +314,35 @@ export function TeamReadinessTable({
                     onClick={() => onAthleteClick?.(athlete.athleteId)}
                   >
                     <TableCell className="font-medium">
-                      <div>
-                        <div className="font-semibold text-foreground">
-                          {athlete.athleteName}
-                        </div>
-                        {athlete.trend && (
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {athlete.trend === 'improving' && '↑ Improving'}
-                            {athlete.trend === 'declining' && '↓ Declining'}
-                            {athlete.trend === 'stable' && '→ Stable'}
-                          </div>
-                        )}
+                      <div className="font-semibold text-foreground">
+                        {athlete.athleteName}
                       </div>
                     </TableCell>
                     <TableCell>
                       <span className="text-foreground">{athlete.position || 'N/A'}</span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="text-2xl font-bold text-foreground">
-                        {athlete.score}
-                      </span>
+                      <div className="flex items-center justify-center">
+                        <ReadinessRing score={athlete.score} size="sm" />
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge className={`${config.badgeBg} ${config.badgeText}`}>
                         {athlete.level}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {athlete.factors.length >= 2 ? (
+                        <Sparkline
+                          data={athlete.factors.map(f => f.value)}
+                          autoColor
+                          showDot
+                          width={72}
+                          height={24}
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">

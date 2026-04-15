@@ -23,8 +23,10 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Crosshair,
 } from 'lucide-react';
+import { ReadinessRing } from '@/components/shared/viz/ReadinessRing';
 import { format, addDays } from 'date-fns';
 
 interface TeamReadinessResponse {
@@ -193,6 +195,16 @@ export function ReadinessDashboard({
             Refresh
           </Button>
 
+          {/* Pre-Game View */}
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = `/coach/readiness/game-day?date=${gameDate}`}
+            className="flex items-center gap-2"
+          >
+            <Crosshair className="w-4 h-4" />
+            Pre-Game View
+          </Button>
+
           {/* Auto-refresh toggle */}
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
@@ -213,6 +225,25 @@ export function ReadinessDashboard({
         <Clock className="w-3 h-3" />
         Last updated: {lastUpdated.toLocaleTimeString()}
       </div>
+
+      {/* Team Readiness Ring */}
+      {data.totalAthletes > 0 && (
+        <div className="flex items-center gap-6">
+          <ReadinessRing
+            score={Math.round((data.greenCount / data.totalAthletes) * 100)}
+            size="lg"
+            label="Team Readiness"
+          />
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">
+              {data.greenCount} of {data.totalAthletes} athletes ready to compete
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {data.yellowCount} monitoring · {data.redCount} intervention needed
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Team Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
