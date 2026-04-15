@@ -334,6 +334,64 @@ async function tryInvokeModel(
 }
 
 /**
+ * Sanitize message history to remove orphaned tool_use blocks.
+ *
+ * Anthropic requires every AI message with tool_use to be followed by
+ * a matching tool_result. If the tool execution was skipped (e.g. due
+ * to the AIMessageChunk routing bug), the checkpointer persists a
+ * dangling tool_use that breaks subsequent requests.
+ *
+ * This function walks messages backwards and strips any trailing AI
+ * message that has tool_calls without a following ToolMessage.
+ */
+function sanitizeMessages(messages: BaseMessage[]): BaseMessage[] {
+  if (messages.length === 0) return messages;
+
+  const sanitized = [...messages];
+
+  // Walk backwards: if the last AI message has tool_calls but is NOT
+  // followed by a tool result message, strip the tool_calls from it
+  // (or remove it entirely if it has no text content).
+  for (let i = sanitized.length - 1; i >= 0; i--) {
+    const msg = sanitized[i];
+    const msgType = msg._getType?.();
+
+    if (msgType === 'ai') {
+      const toolCalls = (msg as AIMessage).tool_calls;
+      if (toolCalls && toolCalls.length > 0) {
+        // Check if the next message is a tool result
+        const nextMsg = sanitized[i + 1];
+        const nextType = nextMsg?._getType?.();
+        if (nextType !== 'tool') {
+          // Orphaned tool_use — check if there's text content to keep
+          const content = msg.content;
+          const hasTextContent = typeof content === 'string'
+            ? content.trim().length > 0
+            : Array.isArray(content)
+              ? content.some((c: any) => c.type === 'text' && c.text?.trim())
+              : false;
+
+          if (hasTextContent) {
+            // Keep the text but strip tool_calls by creating a clean AIMessage
+            const textContent = typeof content === 'string'
+              ? content
+              : (content as any[]).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+            sanitized[i] = new AIMessage({ content: textContent });
+            console.log(`[LANGGRAPH:SANITIZE] Stripped orphaned tool_calls from message ${i}, kept text`);
+          } else {
+            // No text content — remove entirely
+            sanitized.splice(i, 1);
+            console.log(`[LANGGRAPH:SANITIZE] Removed orphaned tool_use message at index ${i}`);
+          }
+        }
+      }
+    }
+  }
+
+  return sanitized;
+}
+
+/**
  * Call model node - invokes LLM with tools
  * Uses Anthropic as primary, falls back to OpenAI if Anthropic fails
  */
@@ -342,10 +400,13 @@ export async function callModelNode(
 ): Promise<Partial<ConversationState>> {
   const systemPrompt = buildSystemPrompt(state);
 
+  // Sanitize messages to remove orphaned tool_use blocks from prior sessions
+  const cleanMessages = sanitizeMessages(state.messages);
+
   // Build messages array with system prompt
   const messagesForModel = [
     new SystemMessage({ content: systemPrompt }),
-    ...state.messages,
+    ...cleanMessages,
   ];
 
   // Log key availability for debugging
