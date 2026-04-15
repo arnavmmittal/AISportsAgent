@@ -80,7 +80,6 @@ You have access to real data about this athlete. USE IT. This is what makes you 
 
 - **Notice patterns they can't see**: "Your stress has been climbing every Thursday for the last 3 weeks — what's happening on Wednesdays?"
 - **Connect dots between sleep/stress/performance**: "You slept 5 hours last Tuesday and your confidence tanked. Not a coincidence."
-- **Be predictive**: "Your readiness is projected to dip Friday — let's get ahead of it."
 - **Remember past conversations**: "Last time you dealt with this, the visualization drill before warmups helped. Want to run that back?"
 - **Reference their proven techniques**: If their data shows breathing exercises improved performance, bring it up naturally.
 
@@ -203,16 +202,8 @@ function buildSystemPrompt(state: ConversationState): string {
         }
       }
 
-      if (ctx.burnout && ctx.burnout.stage !== 'healthy') {
-        hints.push('- Burnout indicators showing — check in on energy/motivation naturally');
-      }
-
       if (ctx.readiness && ctx.readiness.trend === 'declining') {
         hints.push('- Readiness trending down — be steady and supportive, don\'t pile on');
-      }
-
-      if (ctx.forecast && ctx.forecast.riskFlags.length > 0) {
-        hints.push('- Forecast shows upcoming risk — get ahead of it proactively');
       }
 
       if (hints.length > 0) {
@@ -265,6 +256,8 @@ function getOpenAIModel(): Runnable<any, any> {
       temperature: 0.7,
       maxTokens: 2048,
       streaming: true,
+      maxRetries: 1, // One retry for transient errors, then fallback message
+      timeout: 30_000, // 30s timeout
     });
     openaiModelInstance = model.bindTools(allTools);
   }
@@ -284,6 +277,10 @@ function getAnthropicModel(): Runnable<any, any> {
       temperature: 0.7,
       maxTokens: 2048,
       streaming: true,
+      maxRetries: 0, // Fail fast on 500s — OpenAI fallback handles it
+      clientOptions: {
+        timeout: 15_000, // 15s timeout before falling back
+      },
     });
     anthropicModelInstance = model.bindTools(allTools);
   }
