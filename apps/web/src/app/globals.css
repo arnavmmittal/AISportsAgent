@@ -548,6 +548,16 @@
   animation: pulseSubtle 2s ease-in-out infinite;
 }
 
+.sparkline-animate {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: sparklineDraw 1s ease-out forwards;
+}
+
+@keyframes sparklineDraw {
+  to { stroke-dashoffset: 0; }
+}
+
 .skeleton-shimmer {
   @apply bg-gradient-to-r from-muted via-muted/50 to-muted bg-[length:200%_100%];
   animation: shimmer 1.5s ease-in-out infinite;

@@ -10,11 +10,10 @@ import {
   Users,
   Activity,
   Settings,
-  Home,
   MessageCircle,
   Heart,
   ClipboardList,
-  BarChart3,
+  Crosshair,
   LucideIcon,
 } from 'lucide-react';
 
@@ -47,10 +46,10 @@ export const COACH_NAV: NavItem[] = [
     description: 'Team readiness heatmap',
   },
   {
-    label: 'Performance',
-    href: '/coach/data',
-    icon: BarChart3,
-    description: 'Game outcomes and correlations',
+    label: 'Game Day',
+    href: '/coach/readiness/game-day',
+    icon: Crosshair,
+    description: 'Pre-game readiness roster',
   },
   {
     label: 'Assignments',
@@ -67,12 +66,6 @@ export const COACH_NAV: NavItem[] = [
 ];
 
 export const ATHLETE_NAV: NavItem[] = [
-  {
-    label: 'Home',
-    href: '/student/home',
-    icon: Home,
-    description: 'Your daily overview',
-  },
   {
     label: 'Coach',
     href: '/student/ai-coach',
@@ -117,20 +110,20 @@ export const COACH_REDIRECTS: Record<string, string> = {
   '/coach/command-center': '/coach/dashboard',
   '/coach/roster': '/coach/athletes',
   '/coach/roi': '/coach/dashboard',
-  '/coach/outcomes': '/coach/data',
-  '/coach/performance/import': '/coach/data',
+  '/coach/outcomes': '/coach/dashboard',
+  '/coach/performance/import': '/coach/dashboard',
 };
 
 /**
  * Athlete page redirects - maps old URLs to new locations
  */
 export const ATHLETE_REDIRECTS: Record<string, string> = {
-  '/student/dashboard': '/student/home',
+  '/student/dashboard': '/student/ai-coach',
   '/student/chat': '/student/ai-coach',
   '/student/mood': '/student/wellness',
   '/student/readiness': '/student/wellness',
-  '/student/progress': '/student/home',
-  '/student/goals': '/student/home',
-  '/student/visualization': '/student/home',
-  '/student/schedule': '/student/home',
+  '/student/progress': '/student/ai-coach',
+  '/student/goals': '/student/ai-coach',
+  '/student/visualization': '/student/ai-coach',
+  '/student/schedule': '/student/ai-coach',
 };
