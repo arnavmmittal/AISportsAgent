@@ -157,9 +157,20 @@ export function ChatBubble({
               isAssistant && 'prose prose-sm dark:prose-invert max-w-none'
             )}
           >
-            {content}
-            {isStreaming && (
-              <span className="typing-cursor" aria-hidden="true" />
+            {isStreaming && !content ? (
+              /* Typing indicator — pulsing dots while waiting for first token */
+              <div className="flex gap-1.5 py-1" role="status" aria-label="Coach is thinking">
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/60" style={{ animation: 'typingBounce 1.4s ease-in-out infinite', animationDelay: '0ms' }} />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/60" style={{ animation: 'typingBounce 1.4s ease-in-out infinite', animationDelay: '200ms' }} />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/60" style={{ animation: 'typingBounce 1.4s ease-in-out infinite', animationDelay: '400ms' }} />
+              </div>
+            ) : (
+              <>
+                {content}
+                {isStreaming && (
+                  <span className="typing-cursor" aria-hidden="true" />
+                )}
+              </>
             )}
           </div>
 

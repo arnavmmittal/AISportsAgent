@@ -345,23 +345,28 @@ export async function* streamConversationGraph(
         }
       }
     } else if (event.event === 'on_chat_model_stream') {
-      // Alternative event name for chat model streaming
+      // Chat model streaming — handles both OpenAI and Anthropic chunk formats
       const chunk = event.data?.chunk;
-      // Handle different chunk structures
       let content = '';
+
       if (chunk?.content) {
-        content = typeof chunk.content === 'string'
-          ? chunk.content
-          : Array.isArray(chunk.content)
-            ? chunk.content.map((c: { text?: string }) => c.text || '').join('')
-            : '';
+        if (typeof chunk.content === 'string') {
+          content = chunk.content;
+        } else if (Array.isArray(chunk.content)) {
+          // Anthropic sends content as array of blocks: [{type:'text', text:'...'}, {type:'tool_use',...}]
+          content = chunk.content
+            .filter((c: { type?: string }) => !c.type || c.type === 'text' || c.type === 'text_delta')
+            .map((c: { text?: string }) => c.text || '')
+            .join('');
+        }
       } else if (chunk?.text) {
         content = chunk.text;
-      } else if (chunk?.message?.content) {
-        content = typeof chunk.message.content === 'string'
-          ? chunk.message.content
-          : '';
+      } else if (chunk?.kwargs?.content) {
+        // Some LangChain versions put content in kwargs
+        const kc = chunk.kwargs.content;
+        content = typeof kc === 'string' ? kc : '';
       }
+
       if (content) {
         tokenCount++;
         yield {
