@@ -24,22 +24,28 @@ export default function ReadinessBreakdown({
 }: ReadinessBreakdownProps) {
   const { score, level, confidence, signals } = readiness;
 
-  const getSourceIcon = (source: 'daily' | 'weekly' | 'activity' | 'blended') => {
+  const getSourceIcon = (source: string) => {
     switch (source) {
       case 'daily':
-        return '📅'; // Daily snapshot
+      case 'self_report':
+        return '📅'; // Daily snapshot / self-report
       case 'weekly':
         return '📊'; // Weekly trend
       case 'blended':
         return '🔀'; // Blended data
       case 'activity':
         return '💬'; // Activity metrics
+      case 'chat':
+        return '💬'; // Chat-derived
+      default:
+        return '📋'; // Default/unknown source
     }
   };
 
-  const getSourceLabel = (source: 'daily' | 'weekly' | 'activity' | 'blended') => {
+  const getSourceLabel = (source: string) => {
     switch (source) {
       case 'daily':
+      case 'self_report':
         return 'Daily Log';
       case 'weekly':
         return 'Weekly Trend';
@@ -47,6 +53,10 @@ export default function ReadinessBreakdown({
         return 'Blended (70% daily + 30% weekly)';
       case 'activity':
         return 'Platform Activity';
+      case 'chat':
+        return 'Chat Analysis';
+      default:
+        return 'Default';
     }
   };
 

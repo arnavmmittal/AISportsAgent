@@ -226,7 +226,7 @@ export async function calculateTeamCorrelations(
     if (!moodLog) continue;
 
     // Simple readiness estimate from mood + confidence
-    const readiness = ((moodLog.mood + moodLog.confidence) / 2) * 10;
+    const readiness = ((moodLog.mood + (moodLog.confidence ?? 5)) / 2) * 10;
     const isWin =
       outcome.overallRating !== null && outcome.overallRating >= 7;
 

@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         if (athlete.MoodLog.length > 0) {
           const latestMood = athlete.MoodLog[0];
           avgMood += latestMood.mood;
-          avgConfidence += latestMood.confidence;
+          avgConfidence += latestMood.confidence ?? 5;
           avgStress += latestMood.stress;
           totalLogs += athlete.MoodLog.length;
         }
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
         const dayAvgMood =
           dayMoodLogs.reduce((sum, log) => sum + log.mood, 0) / dayMoodLogs.length;
         const dayAvgConfidence =
-          dayMoodLogs.reduce((sum, log) => sum + log.confidence, 0) / dayMoodLogs.length;
+          dayMoodLogs.reduce((sum, log) => sum + (log.confidence ?? 5), 0) / dayMoodLogs.length;
         const dayAvgStress =
           dayMoodLogs.reduce((sum, log) => sum + log.stress, 0) / dayMoodLogs.length;
 
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
         year: athlete.year,
         recentMood: {
           mood: athlete.MoodLog[0].mood,
-          confidence: athlete.MoodLog[0].confidence,
+          confidence: athlete.MoodLog[0].confidence ?? 5,
           stress: athlete.MoodLog[0].stress,
         },
       }));
@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
         const latestMood = athlete.MoodLog[0];
         // Readiness formula: (mood + confidence + (11 - stress)) / 3 * 10
         const readiness = Math.round(
-          ((latestMood.mood + latestMood.confidence + (11 - latestMood.stress)) / 3) * 10
+          ((latestMood.mood + (latestMood.confidence ?? 5) + (11 - latestMood.stress)) / 3) * 10
         );
 
         let status: 'excellent' | 'good' | 'fair' | 'at-risk' = 'good';

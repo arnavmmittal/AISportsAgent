@@ -147,7 +147,7 @@ async function checkBaselineDeviation(
   if (recentLogs.length < 3) return null;
 
   const avgMood = recentLogs.reduce((s, l) => s + l.mood, 0) / recentLogs.length;
-  const avgConfidence = recentLogs.reduce((s, l) => s + l.confidence, 0) / recentLogs.length;
+  const avgConfidence = recentLogs.reduce((s, l) => s + (l.confidence ?? 5), 0) / recentLogs.length;
 
   // Calculate how many standard deviations from baseline
   // Use a rough SD estimate of 1.5 (typical for 1-10 mood scales)
@@ -332,8 +332,8 @@ async function checkBurnoutPattern(
 
   // 3. Declining confidence trend
   if (logs.length >= 5) {
-    const recentConf = logs.slice(0, 3).reduce((s, l) => s + l.confidence, 0) / 3;
-    const olderConf = logs.slice(-3).reduce((s, l) => s + l.confidence, 0) / 3;
+    const recentConf = logs.slice(0, 3).reduce((s, l) => s + (l.confidence ?? 5), 0) / 3;
+    const olderConf = logs.slice(-3).reduce((s, l) => s + (l.confidence ?? 5), 0) / 3;
     if (recentConf < olderConf - 1.5) {
       indicators.push(`Confidence declining (${olderConf.toFixed(1)} → ${recentConf.toFixed(1)})`);
       burnoutScore += 1;

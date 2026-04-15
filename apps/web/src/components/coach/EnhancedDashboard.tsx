@@ -22,6 +22,11 @@ import { Button } from '@/components/shared/ui/button';
 import { SpotlightCard } from '@/components/shared/ui/spotlight-card';
 import { AnimatedNumber } from '@/components/shared/ui/animated-number';
 import { WeeklyPulseCard } from '@/components/coach/dashboard/WeeklyPulseCard';
+import { AlertInsightCard } from '@/components/coach/insights/AlertInsightCard';
+import { TrendInsightCard } from '@/components/coach/insights/TrendInsightCard';
+import { InterventionTracker } from '@/components/coach/insights/InterventionTracker';
+import { CorrelationScatter } from '@/components/shared/viz/CorrelationScatter';
+import { TeamPulseHeatmap } from '@/components/shared/viz/TeamPulseHeatmap';
 import { cn } from '@/lib/utils';
 
 /**
@@ -93,6 +98,199 @@ interface InviteCodeData {
   coachName: string;
   sport: string;
   athleteCount: number;
+}
+
+// ─── Intelligence Section ────────────────────────────────────────
+// Shows alerts, correlations, team heatmap ABOVE athlete list
+
+function IntelligenceSection({
+  athleteReadiness,
+  atRiskAthletes,
+  nudges,
+  router,
+}: {
+  athleteReadiness: DashboardData['athleteReadiness'];
+  atRiskAthletes: DashboardData['atRiskAthletes'];
+  nudges?: Nudge[];
+  router: ReturnType<typeof useRouter>;
+}) {
+  // Build alert cards from at-risk athletes
+  const alerts = atRiskAthletes
+    .filter(a => a.recentMood && a.recentMood.stress >= 7)
+    .slice(0, 3)
+    .map(a => ({
+      name: a.name,
+      metric: 'Stress',
+      value: a.recentMood!.stress,
+      recommendation: `${a.name}'s stress has been elevated. Consider a check-in conversation or workload adjustment.`,
+      id: a.id,
+    }));
+
+  // Build trend cards from nudges
+  const trends = (nudges || [])
+    .filter(n => n.type === 'trend' || n.type === 'readiness')
+    .slice(0, 3)
+    .map((n, i) => ({
+      headline: n.message,
+      detail: n.athleteNames?.length
+        ? `Affecting: ${n.athleteNames.join(', ')}`
+        : 'Team-wide pattern detected',
+      direction: (n.priority === 'high' ? 'down' : 'up') as 'up' | 'down',
+      affectedCount: n.athleteNames?.length || 0,
+    }));
+
+  // Build scatterplot data from athlete readiness (mood vs readiness)
+  const scatterPoints = athleteReadiness
+    .filter(a => a.mood > 0 && a.readiness > 0)
+    .map(a => ({
+      x: a.mood,
+      y: a.readiness,
+      name: a.athlete.name,
+      tier: (a.readiness >= 80 ? 'GREEN' : a.readiness >= 50 ? 'YELLOW' : 'RED') as 'GREEN' | 'YELLOW' | 'RED',
+    }));
+
+  // Compute Pearson correlation for mood vs readiness
+  const correlation = (() => {
+    if (scatterPoints.length < 3) return 0;
+    const n = scatterPoints.length;
+    const sumX = scatterPoints.reduce((s, p) => s + p.x, 0);
+    const sumY = scatterPoints.reduce((s, p) => s + p.y, 0);
+    const sumXY = scatterPoints.reduce((s, p) => s + p.x * p.y, 0);
+    const sumX2 = scatterPoints.reduce((s, p) => s + p.x * p.x, 0);
+    const sumY2 = scatterPoints.reduce((s, p) => s + p.y * p.y, 0);
+    const denom = Math.sqrt((n * sumX2 - sumX ** 2) * (n * sumY2 - sumY ** 2));
+    if (denom === 0) return 0;
+    return (n * sumXY - sumX * sumY) / denom;
+  })();
+
+  // Build stress vs confidence scatter
+  const stressConfPoints = athleteReadiness
+    .filter(a => a.stress > 0 && a.confidence > 0)
+    .map(a => ({
+      x: a.stress,
+      y: a.confidence,
+      name: a.athlete.name,
+      tier: (a.readiness >= 80 ? 'GREEN' : a.readiness >= 50 ? 'YELLOW' : 'RED') as 'GREEN' | 'YELLOW' | 'RED',
+    }));
+
+  const stressConfCorr = (() => {
+    if (stressConfPoints.length < 3) return 0;
+    const n = stressConfPoints.length;
+    const sumX = stressConfPoints.reduce((s, p) => s + p.x, 0);
+    const sumY = stressConfPoints.reduce((s, p) => s + p.y, 0);
+    const sumXY = stressConfPoints.reduce((s, p) => s + p.x * p.y, 0);
+    const sumX2 = stressConfPoints.reduce((s, p) => s + p.x * p.x, 0);
+    const sumY2 = stressConfPoints.reduce((s, p) => s + p.y * p.y, 0);
+    const denom = Math.sqrt((n * sumX2 - sumX ** 2) * (n * sumY2 - sumY ** 2));
+    if (denom === 0) return 0;
+    return (n * sumXY - sumX * sumY) / denom;
+  })();
+
+  // Build heatmap from readiness data (simplified — real version would fetch daily data)
+  const heatmapAthletes = athleteReadiness.slice(0, 12).map(a => ({
+    id: a.athlete.id,
+    name: a.athlete.name,
+    dailyScores: [{
+      date: new Date().toISOString().split('T')[0]!,
+      score: a.readiness,
+      level: (a.readiness >= 80 ? 'GREEN' : a.readiness >= 50 ? 'YELLOW' : 'RED') as 'GREEN' | 'YELLOW' | 'RED',
+    }],
+    trend: [a.mood, a.confidence, 10 - a.stress, a.readiness].filter(v => v > 0),
+  }));
+
+  const hasAlerts = alerts.length > 0;
+  const hasTrends = trends.length > 0;
+  const hasScatter = scatterPoints.length >= 3;
+  const hasHeatmap = heatmapAthletes.length > 0;
+
+  if (!hasAlerts && !hasTrends && !hasScatter && !hasHeatmap) return null;
+
+  return (
+    <div className="space-y-4">
+      {/* Alert Cards — highest priority, needs action today */}
+      {hasAlerts && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-destructive uppercase tracking-wide flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Needs Attention
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {alerts.map((alert) => (
+              <AlertInsightCard
+                key={alert.id}
+                athleteName={alert.name}
+                metric={alert.metric}
+                currentValue={`${alert.value}/10`}
+                recommendation={alert.recommendation}
+                onIntervene={() => router.push(`/coach/athletes/${alert.id}`)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Correlation Spotlight — top correlations as scatterplots */}
+      {hasScatter && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            Performance Correlations
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CorrelationScatter
+              xLabel="Mood"
+              yLabel="Readiness"
+              points={scatterPoints}
+              correlation={correlation}
+              insight={
+                Math.abs(correlation) >= 0.5
+                  ? `Mood and readiness show a ${correlation > 0 ? 'positive' : 'negative'} correlation (r=${correlation.toFixed(2)}). ${correlation > 0 ? 'Athletes with higher mood tend to have higher readiness scores.' : 'Higher mood associates with lower readiness — investigate.'}`
+                  : undefined
+              }
+            />
+            {stressConfPoints.length >= 3 && (
+              <CorrelationScatter
+                xLabel="Stress"
+                yLabel="Confidence"
+                points={stressConfPoints}
+                correlation={stressConfCorr}
+                insight={
+                  Math.abs(stressConfCorr) >= 0.3
+                    ? `Stress and confidence show ${stressConfCorr < 0 ? 'an inverse' : 'a positive'} relationship. ${stressConfCorr < 0 ? 'Higher stress correlates with lower confidence — stress management may boost performance.' : ''}`
+                    : undefined
+                }
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Trend Cards — emerging patterns */}
+      {hasTrends && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {trends.map((trend, i) => (
+            <TrendInsightCard
+              key={i}
+              headline={trend.headline}
+              detail={trend.detail}
+              trend={[5, 6, 4, 5, 3, 4]} // Placeholder — real data would come from analytics API
+              direction={trend.direction}
+              affectedCount={trend.affectedCount}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Team Pulse Heatmap */}
+      {hasHeatmap && (
+        <TeamPulseHeatmap
+          athletes={heatmapAthletes}
+          weeks={1}
+          onAthleteClick={(id) => router.push(`/coach/athletes/${id}`)}
+        />
+      )}
+    </div>
+  );
 }
 
 // --- Helpers ---
@@ -308,6 +506,17 @@ export default function EnhancedDashboard({ userId }: { userId: string }) {
          WEEKLY PULSE — Monday morning team briefing
          ═════════════════════════════════════════════════════════ */}
       <WeeklyPulseCard coachId={userId} teamId="default" />
+
+      {/* ═════════════════════════════════════════════════════════
+         INTELLIGENCE LAYER — Alerts, Correlations, Heatmap
+         Coaches see actionable insights BEFORE athlete lists
+         ═════════════════════════════════════════════════════════ */}
+      <IntelligenceSection
+        athleteReadiness={athleteReadiness}
+        atRiskAthletes={atRiskAthletes}
+        nudges={nudges}
+        router={router}
+      />
 
       {/* ═════════════════════════════════════════════════════════
          HERO STAT CARDS — SpotlightCard + AnimatedNumber

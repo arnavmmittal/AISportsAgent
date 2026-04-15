@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       if (!entry) continue;
 
       // Simple readiness: average of mood and confidence, scaled to 0-100
-      const score = ((log.mood + log.confidence) / 2) * 10;
+      const score = ((log.mood + (log.confidence ?? 5)) / 2) * 10;
       const logDate = new Date(log.createdAt);
       entry.allDates.push(logDate.toISOString().split('T')[0]);
 

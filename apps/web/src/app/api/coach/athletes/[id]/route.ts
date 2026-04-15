@@ -131,7 +131,7 @@ export async function GET(
       ? recentMoodLogs.reduce((sum, m) => sum + m.mood, 0) / recentMoodLogs.length
       : 0;
     const avgConfidence = recentMoodLogs.length > 0
-      ? recentMoodLogs.reduce((sum, m) => sum + m.confidence, 0) / recentMoodLogs.length
+      ? recentMoodLogs.reduce((sum, m) => sum + (m.confidence ?? 5), 0) / recentMoodLogs.length
       : 0;
     const avgStress = recentMoodLogs.length > 0
       ? recentMoodLogs.reduce((sum, m) => sum + m.stress, 0) / recentMoodLogs.length

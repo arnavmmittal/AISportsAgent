@@ -43,7 +43,7 @@ export const getMoodHistoryTool = tool(
 
     const avgMood = logs.reduce((s, l) => s + l.mood, 0) / logs.length;
     const avgStress = logs.reduce((s, l) => s + l.stress, 0) / logs.length;
-    const avgConfidence = logs.reduce((s, l) => s + l.confidence, 0) / logs.length;
+    const avgConfidence = logs.reduce((s, l) => s + (l.confidence ?? 5), 0) / logs.length;
     const avgEnergy = logs.filter((l) => l.energy).reduce((s, l) => s + (l.energy || 0), 0) / logs.filter((l) => l.energy).length || null;
     const avgSleep = logs.filter((l) => l.sleep).reduce((s, l) => s + (l.sleep || 0), 0) / logs.filter((l) => l.sleep).length || null;
 

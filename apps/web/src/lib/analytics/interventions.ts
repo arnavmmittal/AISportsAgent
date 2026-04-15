@@ -123,7 +123,7 @@ export async function generateInterventionRecommendations(
   // Calculate avg metrics
   const avgMood = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.mood, 0) / recentMoods.length : null;
   const avgStress = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.stress, 0) / recentMoods.length : null;
-  const avgConfidence = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.confidence, 0) / recentMoods.length : null;
+  const avgConfidence = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + (m.confidence ?? 5), 0) / recentMoods.length : null;
 
   // Fetch recent chat engagement (last 7 days)
   const chatSessions = await prisma.chatSession.findMany({
@@ -420,7 +420,7 @@ export async function getCoachInterventionQueue(coachId: string): Promise<Interv
 
     const avgMood = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.mood, 0) / recentMoods.length : null;
     const avgStress = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.stress, 0) / recentMoods.length : null;
-    const avgConfidence = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + m.confidence, 0) / recentMoods.length : null;
+    const avgConfidence = recentMoods.length > 0 ? recentMoods.reduce((sum, m) => sum + (m.confidence ?? 5), 0) / recentMoods.length : null;
     const chatEngagement = chatSessions.length;
 
     // === RULE-BASED INTERVENTION LOGIC (same rules, no DB calls) ===

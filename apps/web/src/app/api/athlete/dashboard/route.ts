@@ -246,7 +246,7 @@ export async function GET(req: NextRequest) {
 
 interface MoodLog {
   mood: number;
-  confidence: number;
+  confidence: number | null;
   stress: number;
   energy: number | null;
   sleep: number | null;
@@ -278,7 +278,7 @@ function calculateReadiness(
   const moodNorm = (latest.mood / 10) * 100;
   const sleepNorm = latest.sleep ? (latest.sleep / 10) * 100 : 50;
   const stressNorm = (latest.stress / 10) * 100; // Higher stress = lower readiness
-  const engagementNorm = (latest.confidence / 10) * 100;
+  const engagementNorm = ((latest.confidence ?? 5) / 10) * 100;
 
   // Calculate composite score (stress is inverted)
   const score = Math.round(

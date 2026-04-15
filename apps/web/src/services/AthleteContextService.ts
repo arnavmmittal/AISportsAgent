@@ -3,12 +3,9 @@
  *
  * Provides real-time, enriched context for the AI agent by integrating:
  * - Current readiness (mood, sleep, stress)
- * - ML predictions (risk, slump detection)
+ * - Rule-based risk assessment (low/medium/high)
  * - Athlete's personal model (baselines, effective interventions)
  * - Recent patterns and themes
- * - 7-day readiness forecasting (NEW)
- * - 30-day burnout prediction (NEW)
- * - Pattern detection (anomalies, cycles, correlations) (NEW)
  *
  * This enables proactive, personalized conversations where the agent
  * can anticipate needs rather than just react.
@@ -53,9 +50,6 @@ export interface MLPrediction {
     direction: 'positive' | 'negative';
     description: string;
   }>;
-  slumpDetected: boolean;
-  slumpProbability: number;
-  slumpIndicators: string[];
   recommendations: string[];
 }
 
@@ -86,50 +80,6 @@ export interface AthleteProfile {
   communicationStyle: string;
 }
 
-// NEW: Forecasting data for proactive agent
-export interface ForecastData {
-  trend: 'improving' | 'declining' | 'stable';
-  next7Days: Array<{ date: string; score: number; confidence: 'high' | 'medium' | 'low' }>;
-  riskFlags: string[];
-  recommendations: string[];
-  currentScore: number;
-}
-
-// NEW: Burnout prediction data
-export interface BurnoutData {
-  stage: 'healthy' | 'early-warning' | 'developing' | 'advanced' | 'critical';
-  probability: number;
-  daysUntilRisk: number;
-  warningNow: Array<{ indicator: string; severity: string; description: string }>;
-  preventionStrategies: string[];
-}
-
-// NEW: Pattern detection data
-export interface PatternData {
-  anomalies: Array<{ date: string; metric: string; severity: string; context: string }>;
-  trends: Array<{ metric: string; direction: string; strength: string; description: string }>;
-  cycles: Array<{ metric: string; period: string; peakDays?: string[]; lowDays?: string[] }>;
-  correlations: Array<{ metric1: string; metric2: string; correlation: number; insights: string[] }>;
-  summary: string;
-}
-
-// NEW: Technique → Performance correlations from deep insights
-export interface TechniqueEffectiveness {
-  technique: string;
-  sportMetric?: string;
-  improvement: string; // e.g., "+10.5 points" or "+18%"
-  confidence: 'high' | 'medium';
-  evidence: string;
-  recommendation: string;
-}
-
-// NEW: Mood trend insights for agent context
-export interface MoodTrendData {
-  weeklyPattern?: { bestDay: string; worstDay: string; difference: number };
-  sessionImpact?: { moodChange: number; direction: 'improves' | 'decreases' };
-  recoveryTime?: { avgDays: number; resilience: 'high' | 'medium' | 'low' };
-}
-
 export interface EnrichedAthleteContext {
   athleteId: string;
   athleteName: string;
@@ -156,21 +106,6 @@ export interface EnrichedAthleteContext {
   // Session context
   lastSessionTopics: string[];
   daysSinceLastChat: number | null;
-
-  // NEW: 7-day readiness forecast
-  forecast: ForecastData | null;
-
-  // NEW: 30-day burnout prediction
-  burnout: BurnoutData | null;
-
-  // NEW: Behavioral pattern detection
-  patterns: PatternData | null;
-
-  // NEW: Technique → performance correlations (what works for this athlete)
-  techniqueEffectiveness: TechniqueEffectiveness[];
-
-  // NEW: Mood trend insights
-  moodTrends: MoodTrendData | null;
 
   // Timestamp
   generatedAt: Date;
@@ -203,7 +138,6 @@ class AthleteContextService {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Fetch all data in parallel for performance
     const [
@@ -215,9 +149,6 @@ class AthleteContextService {
       recentChatSessions,
       recentInsights,
       goals,
-      // NEW: Additional data for ML algorithms
-      readinessScores,
-      extendedMoodLogs,
     ] = await Promise.all([
       // Athlete profile with user data
       prisma.athlete.findUnique({
@@ -296,24 +227,6 @@ class AthleteContextService {
         take: 5,
       }),
 
-      // NEW: Readiness scores for forecasting (need 14+ days)
-      prisma.readinessScore.findMany({
-        where: {
-          athleteId,
-          calculatedAt: { gte: thirtyDaysAgo },
-        },
-        orderBy: { calculatedAt: 'asc' },
-      }),
-
-      // NEW: Extended mood logs for burnout/patterns (30 days)
-      prisma.moodLog.findMany({
-        where: {
-          athleteId,
-          createdAt: { gte: thirtyDaysAgo },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 60, // Up to 2 per day for 30 days
-      }),
     ]);
 
     if (!athleteData) {
@@ -353,13 +266,6 @@ class AthleteContextService {
       ? Math.floor((now.getTime() - new Date(recentChatSessions[0].updatedAt).getTime()) / (24 * 60 * 60 * 1000))
       : null;
 
-    // Forecast, burnout, patterns, and deep insights modules removed
-    const forecast = null;
-    const burnout = null;
-    const patterns = null;
-    const techniqueEffectiveness: TechniqueEffectiveness[] = [];
-    const moodTrends = null;
-
     const enrichedContext: EnrichedAthleteContext = {
       athleteId,
       athleteName: athleteData.User.name,
@@ -377,11 +283,6 @@ class AthleteContextService {
         .filter((t): t is string => t !== null)
         .slice(0, 3),
       daysSinceLastChat,
-      forecast,
-      burnout,
-      patterns,
-      techniqueEffectiveness,
-      moodTrends,
       generatedAt: now,
     };
 
@@ -397,7 +298,7 @@ class AthleteContextService {
   private calculateReadiness(
     moodLogs: Array<{
       mood: number;
-      confidence: number;
+      confidence: number | null;
       stress: number;
       energy: number | null;
       sleep: number | null;
@@ -424,7 +325,7 @@ class AthleteContextService {
     const sleepNorm = latest.sleep ? (latest.sleep / 10) * 100 : 50;
     const stressNorm = (latest.stress / 10) * 100;
     const energyNorm = latest.energy ? (latest.energy / 10) * 100 : 50;
-    const confidenceNorm = (latest.confidence / 10) * 100;
+    const confidenceNorm = ((latest.confidence ?? 5) / 10) * 100;
 
     // Composite score (stress inverted - lower stress = higher readiness)
     const score = Math.round(
@@ -464,7 +365,7 @@ class AthleteContextService {
     const comparedToBaseline = {
       mood: athleteModel?.baselineMood ? Math.round((latest.mood - athleteModel.baselineMood) * 10) : 0,
       stress: athleteModel?.baselineStress ? Math.round((latest.stress - athleteModel.baselineStress) * 10) : 0,
-      confidence: athleteModel?.baselineConfidence ? Math.round((latest.confidence - athleteModel.baselineConfidence) * 10) : 0,
+      confidence: athleteModel?.baselineConfidence ? Math.round(((latest.confidence ?? 5) - athleteModel.baselineConfidence) * 10) : 0,
     };
 
     return {
@@ -521,7 +422,7 @@ class AthleteContextService {
     athleteId: string,
     moodLogs: Array<{
       mood: number;
-      confidence: number;
+      confidence: number | null;
       stress: number;
       energy: number | null;
       sleep: number | null;
@@ -538,7 +439,7 @@ class AthleteContextService {
   private calculateLocalPrediction(
     moodLogs: Array<{
       mood: number;
-      confidence: number;
+      confidence: number | null;
       stress: number;
       energy: number | null;
       sleep: number | null;
@@ -549,7 +450,7 @@ class AthleteContextService {
     // Calculate averages
     const avgMood = recentLogs.reduce((sum, l) => sum + l.mood, 0) / recentLogs.length;
     const avgStress = recentLogs.reduce((sum, l) => sum + l.stress, 0) / recentLogs.length;
-    const avgConfidence = recentLogs.reduce((sum, l) => sum + l.confidence, 0) / recentLogs.length;
+    const avgConfidence = recentLogs.reduce((sum, l) => sum + (l.confidence ?? 5), 0) / recentLogs.length;
     const avgSleep = recentLogs.filter(l => l.sleep).length > 0
       ? recentLogs.filter(l => l.sleep).reduce((sum, l) => sum + (l.sleep || 0), 0) / recentLogs.filter(l => l.sleep).length
       : 5;
@@ -612,13 +513,6 @@ class AthleteContextService {
     else if (riskScore < 75) riskLevel = 'high';
     else riskLevel = 'critical';
 
-    // Simple slump detection (declining trend)
-    const slumpDetected = moodLogs.length >= 5 &&
-      moodLogs.slice(0, 3).every((log, i) => {
-        if (i === 0) return true;
-        return log.mood <= moodLogs[i - 1].mood;
-      });
-
     const recommendations: string[] = [];
     if (avgStress > 7) recommendations.push('Consider stress management techniques like 4-7-8 breathing');
     if (avgSleep < 6) recommendations.push('Focus on sleep hygiene - aim for consistent bedtime');
@@ -630,9 +524,6 @@ class AthleteContextService {
       riskLevel,
       confidence: 70, // Lower confidence for rule-based
       topFactors: factors.slice(0, 3),
-      slumpDetected,
-      slumpProbability: slumpDetected ? 65 : 20,
-      slumpIndicators: slumpDetected ? ['Declining mood trend', 'Consistent downward pattern'] : [],
       recommendations,
     };
   }
@@ -761,16 +652,6 @@ class AthleteContextService {
       });
     }
 
-    // Slump detection
-    if (prediction?.slumpDetected) {
-      insights.push({
-        type: 'pattern',
-        priority: 'high',
-        message: `Potential slump pattern detected (${prediction.slumpProbability}% probability). Indicators: ${prediction.slumpIndicators.join(', ')}`,
-        data: { probability: prediction.slumpProbability, indicators: prediction.slumpIndicators },
-      });
-    }
-
     // Declining readiness
     if (readiness.trend === 'declining' && readiness.change > 10) {
       insights.push({
@@ -864,73 +745,6 @@ class AthleteContextService {
   }
 
   /**
-   * Get 7-day readiness forecast using double exponential smoothing
-   * Requires at least 14 days of historical readiness scores
-   */
-  private async getForecast(
-    _athleteId: string,
-    _readinessScores: Array<{ score: number; calculatedAt: Date }>
-  ): Promise<ForecastData | null> {
-    // Forecasting module removed
-    return null;
-  }
-
-  /**
-   * Get 30-day burnout prediction using multi-factor analysis
-   * Analyzes progressive decline, chronic stress, recovery capacity, emotional exhaustion
-   */
-  private async getBurnoutPrediction(
-    _moodLogs: Array<{
-      mood: number;
-      confidence: number;
-      stress: number;
-      energy: number | null;
-      sleep: number | null;
-      createdAt: Date;
-    }>,
-    _readinessScores: Array<{ score: number; calculatedAt: Date }>
-  ): Promise<BurnoutData | null> {
-    // Burnout prediction module removed
-    return null;
-  }
-
-  /**
-   * Detect behavioral patterns: anomalies, trends, cycles, correlations
-   * Uses statistical methods (Z-score, Mann-Kendall, autocorrelation, Pearson)
-   */
-  private getPatterns(
-    _moodLogs: Array<{
-      mood: number;
-      confidence: number;
-      stress: number;
-      energy: number | null;
-      sleep: number | null;
-      createdAt: Date;
-    }>,
-    _readinessScores: Array<{ score: number; calculatedAt: Date }>
-  ): PatternData | null {
-    // Pattern detection module removed
-    return null;
-  }
-
-  /**
-   * Get technique effectiveness and mood trends from deep insights engine
-   * Connects chat topics, interventions, and KB techniques to sport outcomes
-   */
-  private async getDeepInsightsData(
-    athleteId: string,
-    athleteName: string,
-    startDate: Date
-  ): Promise<{ techniqueEffectiveness: TechniqueEffectiveness[]; moodTrends: MoodTrendData | null }> {
-    try {
-      // Deep insights module removed
-      return { techniqueEffectiveness: [], moodTrends: null };
-    } catch (error) {
-      return { techniqueEffectiveness: [], moodTrends: null };
-    }
-  }
-
-  /**
    * Generate a system prompt enhancement based on the enriched context
    */
   generatePromptEnhancement(context: EnrichedAthleteContext): string {
@@ -972,13 +786,6 @@ ${mediumPriority.map(i => `- ${i.message}`).join('\n')}`);
 - Top Factors: ${context.prediction.topFactors.map(f => f.description).join('; ')}
 - Recommended: ${context.prediction.recommendations.slice(0, 2).join('; ')}`);
       }
-
-      if (context.prediction.slumpDetected) {
-        sections.push(`🚨 SLUMP PATTERN DETECTED:
-- Probability: ${context.prediction.slumpProbability}%
-- Indicators: ${context.prediction.slumpIndicators.join(', ')}
-- Approach with extra care and validation. Explore what's been happening.`);
-      }
     }
 
     // Effective interventions
@@ -1006,46 +813,6 @@ Previously discussed: ${context.lastSessionTopics.join(', ')}`);
     if (context.profile.recurringThemes.length > 0) {
       sections.push(`RECURRING THEMES FOR THIS ATHLETE:
 ${context.profile.recurringThemes.join(', ')}`);
-    }
-
-    // NEW: Technique → Performance correlations (the most valuable insight type)
-    if (context.techniqueEffectiveness.length > 0) {
-      const techniqueLines = context.techniqueEffectiveness.map((t) => {
-        if (t.sportMetric) {
-          return `- ${t.technique} → ${t.improvement} ${t.sportMetric} (${t.confidence} confidence)`;
-        }
-        return `- ${t.technique} → ${t.improvement} improvement (${t.confidence} confidence)`;
-      });
-
-      sections.push(`🎯 PROVEN TECHNIQUES FOR THIS ATHLETE:
-${techniqueLines.join('\n')}
-
-Use this data proactively! Example: "Last time you used visualization before a game, you scored 10 more points. Want to try that technique for your upcoming game?"`);
-    }
-
-    // NEW: Mood trend patterns for personalized timing
-    if (context.moodTrends) {
-      const trendLines: string[] = [];
-
-      if (context.moodTrends.weeklyPattern) {
-        const p = context.moodTrends.weeklyPattern;
-        trendLines.push(`- Best mood on ${p.bestDay}s, lowest on ${p.worstDay}s (${p.difference.toFixed(1)} point difference)`);
-      }
-
-      if (context.moodTrends.sessionImpact) {
-        const s = context.moodTrends.sessionImpact;
-        trendLines.push(`- Chat sessions ${s.direction === 'improves' ? 'improve' : 'decrease'} mood by ${s.moodChange.toFixed(1)} points`);
-      }
-
-      if (context.moodTrends.recoveryTime) {
-        const r = context.moodTrends.recoveryTime;
-        trendLines.push(`- Recovery from setbacks: ${r.avgDays.toFixed(1)} days (${r.resilience} resilience)`);
-      }
-
-      if (trendLines.length > 0) {
-        sections.push(`📊 MOOD PATTERNS:
-${trendLines.join('\n')}`);
-      }
     }
 
     return sections.join('\n\n');

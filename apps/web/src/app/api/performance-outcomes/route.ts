@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
       if (moodLog) {
         preEventMood = preEventMood ?? moodLog.mood;
-        preEventConfidence = preEventConfidence ?? moodLog.confidence;
+        preEventConfidence = preEventConfidence ?? (moodLog.confidence ?? undefined);
         preEventStress = preEventStress ?? moodLog.stress;
         preEventSleep = preEventSleep ?? (moodLog.sleep ?? undefined);
       }

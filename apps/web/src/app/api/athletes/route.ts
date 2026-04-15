@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
           const result = calculateReadiness(
             {
               mood: latestMood.mood,
-              confidence: latestMood.confidence,
+              confidence: latestMood.confidence ?? 5,
               stress: latestMood.stress,
               energy: latestMood.energy || undefined,
               sleep: latestMood.sleep || undefined,
