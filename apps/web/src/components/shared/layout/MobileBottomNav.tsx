@@ -25,7 +25,10 @@ export function MobileBottomNav({ items, maxItems = 5 }: MobileBottomNavProps) {
       <div className="flex items-stretch justify-around h-full px-1">
         {visibleItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+          const exactMatch = pathname === item.href;
+          const prefixMatch = pathname?.startsWith(item.href + '/');
+          const betterMatch = prefixMatch && visibleItems.some(other => other.href !== item.href && pathname?.startsWith(other.href) && other.href.length > item.href.length);
+          const isActive = exactMatch || (prefixMatch && !betterMatch);
 
           return (
             <button

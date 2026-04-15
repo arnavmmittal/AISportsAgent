@@ -82,23 +82,33 @@ export function PreGameRoster({
           school_id: schoolId,
           game_date: gameDate,
         });
-        const res = await fetch(`/api/coach/dashboard?${params}`);
+        const res = await fetch('/api/coach/dashboard');
         if (!res.ok) throw new Error('Failed to fetch roster data');
         const result = await res.json();
 
-        const mapped: RosterAthlete[] = (result.athletes || []).map((a: any) => ({
-          athleteId: a.athleteId || a.id,
-          name: a.name || a.athleteName || 'Unknown',
-          position: a.position,
-          readiness: a.readinessScore || a.readiness || 0,
-          level: a.level || (a.readinessScore >= 85 ? 'GREEN' : a.readinessScore >= 50 ? 'YELLOW' : 'RED'),
-          trend: a.trend || a.recentScores || [],
-          mood: a.mood,
-          stress: a.stress,
-          sleep: a.sleep,
-          confidence: a.confidence,
-          lastCheckIn: a.lastCheckIn,
-        }));
+        // Dashboard API returns { data: { athleteReadiness: [...] } }
+        const athleteData = result.data?.athleteReadiness || result.athletes || [];
+
+        const mapped: RosterAthlete[] = athleteData.map((a: any) => {
+          const readiness = a.readiness || a.readinessScore || 0;
+          let level: 'GREEN' | 'YELLOW' | 'RED' = 'YELLOW';
+          if (readiness >= 85) level = 'GREEN';
+          else if (readiness < 50) level = 'RED';
+
+          return {
+            athleteId: a.athlete?.id || a.athleteId || a.id,
+            name: a.athlete?.name || a.name || a.athleteName || 'Unknown',
+            position: a.athlete?.teamPosition || a.position,
+            readiness,
+            level: a.level || level,
+            trend: a.trend || a.recentScores || [],
+            mood: a.mood,
+            stress: a.stress,
+            sleep: a.sleep,
+            confidence: a.confidence,
+            lastCheckIn: a.lastCheckIn,
+          };
+        });
 
         setAthletes(mapped);
       } catch (err) {

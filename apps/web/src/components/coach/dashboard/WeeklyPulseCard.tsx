@@ -118,48 +118,51 @@ export function WeeklyPulseCard({ coachId, teamId, className }: WeeklyPulseCardP
           </div>
 
           {/* Column 2: Movers */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {data.topImprover && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-h-[40px]">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Top Improver</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Top Improver</p>
                   <p className="text-sm font-medium text-foreground truncate">{data.topImprover.name}</p>
                 </div>
-                <Sparkline data={data.topImprover.trend} autoColor showDot width={64} height={24} />
+                <div className="flex-shrink-0 w-16">
+                  <Sparkline data={data.topImprover.trend} autoColor showDot width={64} height={24} />
+                </div>
               </div>
             )}
 
             {data.needsAttention && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-h-[40px]">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
                   <AlertTriangle className="w-4 h-4 text-destructive" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Needs Attention</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Needs Attention</p>
                   <p className="text-sm font-medium text-foreground truncate">{data.needsAttention.name}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Sparkline data={data.needsAttention.trend} autoColor showDot width={48} height={24} />
-                  <ReadinessRing score={data.needsAttention.readiness} size="sm" showLabel={false} />
+                <div className="flex-shrink-0 w-16">
+                  <Sparkline data={data.needsAttention.trend} autoColor showDot width={64} height={24} />
                 </div>
               </div>
             )}
 
             {data.mostConsistent && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-h-[40px]">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Flame className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Most Consistent</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Most Consistent</p>
                   <p className="text-sm font-medium text-foreground truncate">{data.mostConsistent.name}</p>
                 </div>
-                <Badge variant="outline" className="text-xs tabular-nums">
-                  {data.mostConsistent.streak}d streak
-                </Badge>
+                <div className="flex-shrink-0 w-16 flex justify-end">
+                  <Badge variant="outline" className="text-xs tabular-nums">
+                    {data.mostConsistent.streak}d streak
+                  </Badge>
+                </div>
               </div>
             )}
           </div>

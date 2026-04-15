@@ -72,7 +72,15 @@ export default function CoachLayout({
   const isActive = (href: string) => {
     if (href === '/coach/dashboard')
       return pathname === '/coach/dashboard' || pathname === '/coach';
-    return pathname.startsWith(href);
+    // Exact match first, then prefix match only if no other nav item is a better match
+    if (pathname === href) return true;
+    // For nested routes, only match if no other nav item has a longer matching prefix
+    if (pathname.startsWith(href + '/')) {
+      const allHrefs = [...COACH_NAV.map(n => n.href), '/coach/settings'];
+      const betterMatch = allHrefs.some(other => other !== href && pathname.startsWith(other) && other.length > href.length);
+      return !betterMatch;
+    }
+    return false;
   };
 
   const getInitials = (name: string) =>
