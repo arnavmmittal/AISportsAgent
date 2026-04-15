@@ -8,7 +8,7 @@
 
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
-import { SystemMessage, AIMessage, type BaseMessage } from '@langchain/core/messages';
+import { SystemMessage, AIMessage, AIMessageChunk, type BaseMessage } from '@langchain/core/messages';
 import type { ConversationState, ProtocolPhase } from '../state';
 import { allTools } from '../tools';
 import { buildContextPromptSection } from './context';
@@ -417,9 +417,10 @@ export function shouldContinueToTools(
   const messages = state.messages;
   const lastMessage = messages[messages.length - 1];
 
-  // Check if last message is an AIMessage with tool calls
-  if (lastMessage instanceof AIMessage) {
-    const toolCalls = lastMessage.tool_calls;
+  // Check if last message is an AI message with tool calls
+  // Note: ChatAnthropic with streaming: true returns AIMessageChunk, not AIMessage
+  if (lastMessage instanceof AIMessage || lastMessage instanceof AIMessageChunk) {
+    const toolCalls = (lastMessage as AIMessage).tool_calls;
     if (toolCalls && toolCalls.length > 0) {
       return 'tools';
     }
