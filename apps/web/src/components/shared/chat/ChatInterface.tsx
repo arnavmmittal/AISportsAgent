@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import type { User } from '@supabase/supabase-js';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { useStreamBuffer } from '@/hooks/useStreamBuffer';
 import { useChatPersistence, useAthleteActivity } from '@/hooks/useChatPersistence';
 import { MobileVoiceWidget } from '@/components/shared/voice/MobileVoiceWidget';
 import { ActionPlanWidget } from '@/components/shared/chat/ActionPlanWidget';
@@ -109,6 +110,7 @@ export function ChatInterface() {
   const [crisisAlert, setCrisisAlert] = useState<CrisisAlert | null>(null);
   const [voiceMode, setVoiceMode] = useState(false);
   const [currentMetadata, setCurrentMetadata] = useState<StructuredMetadata | null>(null);
+  const streamBuffer = useStreamBuffer(18);
 
   // Chat state persistence
   const {
@@ -164,6 +166,7 @@ export function ChatInterface() {
       setMessages((prev) => [...prev, userMessage]);
       setInputValue('');
       setIsLoading(true);
+      streamBuffer.reset();
       recordActivity();
 
       try {
@@ -208,14 +211,7 @@ export function ChatInterface() {
                 const parsed = JSON.parse(data);
                 if (parsed.type === 'token') {
                   fullResponse += parsed.data.content || '';
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    const lastIndex = updated.length - 1;
-                    if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
-                      updated[lastIndex] = { ...updated[lastIndex], content: fullResponse };
-                    }
-                    return updated;
-                  });
+                  streamBuffer.append(parsed.data.content || '');
                 } else if (parsed.type === 'crisis_alert' || parsed.type === 'crisis_check') {
                   setCrisisAlert({
                     final_risk_level: parsed.data.severity || parsed.data.final_risk_level || 'HIGH',
@@ -233,6 +229,7 @@ export function ChatInterface() {
       } catch (error) {
         console.error('Voice chat error:', error);
       } finally {
+        streamBuffer.flush();
         setIsLoading(false);
       }
     },
@@ -288,6 +285,23 @@ export function ChatInterface() {
     }
   }, [inputValue, isHydrated]);
 
+  // Sync stream buffer display text to the last assistant message
+  useEffect(() => {
+    if (isLoading && streamBuffer.displayText) {
+      setMessages((prev) => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            content: streamBuffer.displayText,
+          };
+        }
+        return updated;
+      });
+    }
+  }, [streamBuffer.displayText, isLoading]);
+
   // Load message history
   useEffect(() => {
     if (!sessionId || !user?.id) return;
@@ -330,17 +344,7 @@ export function ChatInterface() {
           message: 'We noticed your message may indicate distress. Professional support is available 24/7 at the National Suicide Prevention Lifeline: 988',
         });
       } else if (parsed.type === 'token') {
-        setMessages((prev) => {
-          const updated = [...prev];
-          const lastIndex = updated.length - 1;
-          if (lastIndex >= 0 && updated[lastIndex].role === 'assistant') {
-            updated[lastIndex] = {
-              ...updated[lastIndex],
-              content: updated[lastIndex].content + parsed.data.content,
-            };
-          }
-          return updated;
-        });
+        streamBuffer.append(parsed.data.content || '');
       } else if (parsed.type === 'content') {
         setMessages((prev) => {
           const updated = [...prev];
@@ -398,6 +402,7 @@ export function ChatInterface() {
     setDraftMessage('');
     setIsLoading(true);
     setCrisisAlert(null);
+    streamBuffer.reset();
     recordActivity();
 
     try {
@@ -447,6 +452,7 @@ export function ChatInterface() {
         return updated;
       });
     } finally {
+      streamBuffer.flush();
       setIsLoading(false);
     }
   };
@@ -518,7 +524,7 @@ export function ChatInterface() {
         <ChatMessageList smooth className="flex-1">
           {messages.map((message, index) => {
             const isUser = message.role === 'user';
-            const isStreaming = isLoading && index === messages.length - 1 && !isUser;
+            const isStreaming = (isLoading || streamBuffer.isBuffering) && index === messages.length - 1 && !isUser;
 
             return (
               <ChatBubble
