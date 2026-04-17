@@ -17,6 +17,7 @@ import Animated, {
 import { useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/ThemeContext';
 import type { VoiceState } from '../../../hooks/useVoiceChat';
 
 interface VoiceButtonProps {
@@ -108,19 +109,21 @@ export function VoiceButton({
     opacity: voiceState === 'listening' ? 0.3 : 0,
   }));
 
+  const { colors } = useTheme();
+
   // Get button color based on state
   const getButtonColor = (): string => {
     switch (voiceState) {
       case 'listening':
-        return Colors.error; // Red when recording
+        return colors.error; // Red when recording
       case 'processing':
-        return Colors.warning; // Orange when processing
+        return colors.warning; // Orange when processing
       case 'speaking':
-        return Colors.success; // Green when speaking
+        return colors.success; // Green when speaking
       case 'error':
-        return Colors.error;
+        return colors.error;
       default:
-        return Colors.primary; // Blue when idle
+        return colors.primary; // Blue when idle
     }
   };
 
@@ -188,9 +191,9 @@ export function VoiceButton({
       {/* Volume bars for speaking state */}
       {voiceState === 'speaking' && (
         <View style={styles.volumeBars}>
-          <View style={[styles.volumeBar, { height: volume * 20 + 4 }]} />
-          <View style={[styles.volumeBar, { height: volume * 25 + 4 }]} />
-          <View style={[styles.volumeBar, { height: volume * 20 + 4 }]} />
+          <View style={[styles.volumeBar, { height: volume * 20 + 4, backgroundColor: colors.success }]} />
+          <View style={[styles.volumeBar, { height: volume * 25 + 4, backgroundColor: colors.success }]} />
+          <View style={[styles.volumeBar, { height: volume * 20 + 4, backgroundColor: colors.success }]} />
         </View>
       )}
     </View>

@@ -14,8 +14,10 @@ import { CoachSignupData } from '../../../types/auth';
 import { signupCoach, getRoleBasedRoute } from '../../../lib/auth';
 import config from '../../../config';
 import { Colors } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 export default function CoachSignup() {
+  const { colors } = useTheme();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<CoachSignupData>>({
@@ -230,7 +232,7 @@ export default function CoachSignup() {
         </View>
 
         {/* Form Content */}
-        <View style={styles.formContainer}>
+        <View style={[styles.formContainer, { backgroundColor: colors.card }]}>
           {currentStep === 1 && (
             <Step1
               formData={formData}

@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { config } from '../../config';
 
 /**
@@ -12,6 +13,7 @@ import { config } from '../../config';
  * Allows users to request a password reset email
  */
 export default function ForgotPasswordScreen() {
+  const { colors, isDarkMode } = useTheme();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -111,11 +113,11 @@ export default function ForgotPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary, Colors.accent]}
+        colors={[colors.primary, colors.secondary, colors.accent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientHeader}
@@ -147,6 +149,7 @@ export default function ForgotPasswordScreen() {
       <Animated.View
         style={[
           styles.formContainer,
+          { backgroundColor: colors.card },
           {
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }, { translateX: shakeAnim }],
@@ -157,25 +160,25 @@ export default function ForgotPasswordScreen() {
           // Success State
           <View style={styles.successContainer}>
             <View style={styles.successIconContainer}>
-              <Ionicons name="checkmark-circle" size={64} color={Colors.success} />
+              <Ionicons name="checkmark-circle" size={64} color={colors.success} />
             </View>
-            <Text style={styles.successTitle}>Check your email</Text>
-            <Text style={styles.successText}>
+            <Text style={[styles.successTitle, { color: colors.textPrimary }]}>Check your email</Text>
+            <Text style={[styles.successText, { color: colors.textSecondary }]}>
               If an account exists with{'\n'}
-              <Text style={styles.emailHighlight}>{email}</Text>
+              <Text style={[styles.emailHighlight, { color: colors.textPrimary }]}>{email}</Text>
               {'\n'}you'll receive a password reset link shortly.
             </Text>
 
             <TouchableOpacity
-              style={styles.secondaryButton}
+              style={[styles.secondaryButton, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]}
               onPress={() => {
                 setSuccess(false);
                 setEmail('');
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               }}
             >
-              <Ionicons name="refresh" size={20} color={Colors.primary} />
-              <Text style={styles.secondaryButtonText}>Try another email</Text>
+              <Ionicons name="refresh" size={20} color={colors.primary} />
+              <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>Try another email</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -200,24 +203,24 @@ export default function ForgotPasswordScreen() {
         ) : (
           // Form State
           <>
-            <Text style={styles.welcomeText}>Reset your password</Text>
-            <Text style={styles.welcomeSubtext}>
+            <Text style={[styles.welcomeText, { color: colors.textPrimary }]}>Reset your password</Text>
+            <Text style={[styles.welcomeSubtext, { color: colors.textSecondary }]}>
               Enter your email address and we'll send you a link to reset your password
             </Text>
 
             {error ? (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color={Colors.error} />
-                <Text style={styles.errorText}>{error}</Text>
+              <View style={[styles.errorContainer, { backgroundColor: colors.errorLight }]}>
+                <Ionicons name="alert-circle" size={20} color={colors.error} />
+                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
               </View>
             ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={Colors.gray400} style={styles.inputIcon} />
+            <View style={[styles.inputContainer, { borderColor: colors.borderLight, backgroundColor: colors.cardElevated }]}>
+              <Ionicons name="mail-outline" size={20} color={colors.gray400} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.textPrimary }]}
                 placeholder="Email address"
-                placeholderTextColor={Colors.gray400}
+                placeholderTextColor={colors.gray400}
                 value={email}
                 onChangeText={(text) => {
                   setEmail(text);
@@ -236,7 +239,7 @@ export default function ForgotPasswordScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={isLoading ? [Colors.gray400, Colors.gray500] : ['#2563eb', '#3b82f6']}
+                colors={isLoading ? [colors.gray400, colors.gray500] : ['#2563eb', '#3b82f6']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.button}
@@ -262,8 +265,8 @@ export default function ForgotPasswordScreen() {
               }}
               disabled={isLoading}
             >
-              <Ionicons name="arrow-back" size={16} color={Colors.textSecondary} />
-              <Text style={styles.linkText}>Back to sign in</Text>
+              <Ionicons name="arrow-back" size={16} color={colors.textSecondary} />
+              <Text style={[styles.linkText, { color: colors.textSecondary }]}>Back to sign in</Text>
             </TouchableOpacity>
           </>
         )}

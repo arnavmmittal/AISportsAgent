@@ -115,6 +115,19 @@ export async function generateInterventionRecommendations(
       createdAt: 'desc',
     },
     take: 7,
+    select: {
+      id: true,
+      athleteId: true,
+      mood: true,
+      confidence: true,
+      stress: true,
+      energy: true,
+      sleep: true,
+      notes: true,
+      tags: true,
+      contextTags: true,
+      createdAt: true,
+    },
   });
 
   // Calculate mood trend (improving/declining/stable)

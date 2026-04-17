@@ -93,6 +93,19 @@ export async function calculateAthleteCorrelations(
             lte: endOfDay(o.date),
           },
         },
+        select: {
+          id: true,
+          athleteId: true,
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          notes: true,
+          tags: true,
+          contextTags: true,
+          createdAt: true,
+        },
       });
       return {
         performance: o.overallRating!,
@@ -221,6 +234,19 @@ export async function calculateTeamCorrelations(
           gte: startOfDay(outcome.date),
           lte: endOfDay(outcome.date),
         },
+      },
+      select: {
+        id: true,
+        athleteId: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        energy: true,
+        sleep: true,
+        notes: true,
+        tags: true,
+        contextTags: true,
+        createdAt: true,
       },
     });
     if (!moodLog) continue;

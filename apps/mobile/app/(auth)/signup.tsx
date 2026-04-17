@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient, login } from '../../lib/auth';
 import { Colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const SPORTS = [
   'Basketball', 'Football', 'Soccer', 'Baseball', 'Softball',
@@ -15,6 +16,7 @@ const SPORTS = [
 const YEARS = ['FRESHMAN', 'SOPHOMORE', 'JUNIOR', 'SENIOR', 'GRADUATE'];
 
 export default function SignupScreen() {
+  const { colors } = useTheme();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,28 +69,28 @@ export default function SignupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.card }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Flow Sports Coach</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Create Account</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Join Flow Sports Coach</Text>
 
           <View style={styles.roleContainer}>
             <TouchableOpacity
-              style={[styles.roleButton, role === 'ATHLETE' && styles.roleButtonActive]}
+              style={[styles.roleButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }, role === 'ATHLETE' && styles.roleButtonActive]}
               onPress={() => setRole('ATHLETE')}
             >
-              <Text style={[styles.roleText, role === 'ATHLETE' && styles.roleTextActive]}>
+              <Text style={[styles.roleText, { color: colors.textSecondary }, role === 'ATHLETE' && styles.roleTextActive]}>
                 Athlete
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.roleButton, role === 'COACH' && styles.roleButtonActive]}
+              style={[styles.roleButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }, role === 'COACH' && styles.roleButtonActive]}
               onPress={() => setRole('COACH')}
             >
-              <Text style={[styles.roleText, role === 'COACH' && styles.roleTextActive]}>
+              <Text style={[styles.roleText, { color: colors.textSecondary }, role === 'COACH' && styles.roleTextActive]}>
                 Coach
               </Text>
             </TouchableOpacity>
@@ -101,8 +103,9 @@ export default function SignupScreen() {
           ) : null}
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.backgroundSecondary, color: colors.textPrimary, borderColor: colors.border }]}
             placeholder="Full Name"
+            placeholderTextColor={colors.gray400}
             value={name}
             onChangeText={(text) => {
               setName(text);
@@ -112,8 +115,9 @@ export default function SignupScreen() {
           />
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.backgroundSecondary, color: colors.textPrimary, borderColor: colors.border }]}
             placeholder="Email"
+            placeholderTextColor={colors.gray400}
             value={email}
             onChangeText={(text) => {
               setEmail(text);
@@ -125,8 +129,9 @@ export default function SignupScreen() {
           />
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.backgroundSecondary, color: colors.textPrimary, borderColor: colors.border }]}
             placeholder="Password"
+            placeholderTextColor={colors.gray400}
             value={password}
             onChangeText={(text) => {
               setPassword(text);
@@ -139,25 +144,25 @@ export default function SignupScreen() {
           {role === 'ATHLETE' && (
             <>
               <TouchableOpacity
-                style={styles.pickerButton}
+                style={[styles.pickerButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}
                 onPress={() => setShowSportPicker(true)}
                 disabled={isLoading}
               >
-                <Text style={sport ? styles.pickerButtonTextSelected : styles.pickerButtonText}>
+                <Text style={sport ? [styles.pickerButtonTextSelected, { color: colors.textPrimary }] : [styles.pickerButtonText, { color: colors.gray400 }]}>
                   {sport || 'Select Sport'}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                <Ionicons name="chevron-down" size={20} color={colors.gray400} />
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.pickerButton}
+                style={[styles.pickerButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}
                 onPress={() => setShowYearPicker(true)}
                 disabled={isLoading}
               >
-                <Text style={year ? styles.pickerButtonTextSelected : styles.pickerButtonText}>
+                <Text style={year ? [styles.pickerButtonTextSelected, { color: colors.textPrimary }] : [styles.pickerButtonText, { color: colors.gray400 }]}>
                   {year ? year.charAt(0) + year.slice(1).toLowerCase() : 'Select Year'}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                <Ionicons name="chevron-down" size={20} color={colors.gray400} />
               </TouchableOpacity>
             </>
           )}
@@ -188,11 +193,11 @@ export default function SignupScreen() {
         onRequestClose={() => setShowSportPicker(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Sport</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Sport</Text>
               <TouchableOpacity onPress={() => setShowSportPicker(false)}>
-                <Ionicons name="close" size={24} color="#1f2937" />
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalScroll}>
@@ -201,6 +206,7 @@ export default function SignupScreen() {
                   key={sportOption}
                   style={[
                     styles.modalOption,
+                    { backgroundColor: colors.backgroundSecondary },
                     sport === sportOption && styles.modalOptionSelected,
                   ]}
                   onPress={() => {
@@ -212,6 +218,7 @@ export default function SignupScreen() {
                   <Text
                     style={[
                       styles.modalOptionText,
+                      { color: colors.textPrimary },
                       sport === sportOption && styles.modalOptionTextSelected,
                     ]}
                   >
@@ -235,11 +242,11 @@ export default function SignupScreen() {
         onRequestClose={() => setShowYearPicker(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Class Year</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Class Year</Text>
               <TouchableOpacity onPress={() => setShowYearPicker(false)}>
-                <Ionicons name="close" size={24} color="#1f2937" />
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalScroll}>
@@ -248,6 +255,7 @@ export default function SignupScreen() {
                   key={yearOption}
                   style={[
                     styles.modalOption,
+                    { backgroundColor: colors.backgroundSecondary },
                     year === yearOption && styles.modalOptionSelected,
                   ]}
                   onPress={() => {
@@ -259,6 +267,7 @@ export default function SignupScreen() {
                   <Text
                     style={[
                       styles.modalOptionText,
+                      { color: colors.textPrimary },
                       year === yearOption && styles.modalOptionTextSelected,
                     ]}
                   >

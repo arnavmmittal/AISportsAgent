@@ -31,6 +31,19 @@ export const getMoodHistoryTool = tool(
       },
       orderBy: { createdAt: 'desc' },
       take: 14,
+      select: {
+        id: true,
+        athleteId: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        energy: true,
+        sleep: true,
+        notes: true,
+        tags: true,
+        contextTags: true,
+        createdAt: true,
+      },
     });
 
     if (logs.length === 0) {

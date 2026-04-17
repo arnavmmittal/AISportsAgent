@@ -1,113 +1,118 @@
 /**
  * Centralized theme constants for consistent styling
- * Flow Sports Coach - Premium Athletic Design System (Lovable)
+ * Flow Sports Coach — Obsidian Design System v5.0 (Mobile)
+ *
+ * Adapted from web globals.css for mobile context:
+ * - Muted primary/accent (large surfaces stay neutral, color used sparingly)
+ * - Warmer neutrals for a calming, wellness-appropriate feel
+ * - Same semantic colors as web for brand consistency
  */
 
-// Dark theme colors (default) — synced with web globals.css dark mode
+// Dark theme colors (default for athletes) — Obsidian v5.0 mobile dark
 const darkColors = {
-  // Primary - Deep Navy (Trust, Stability, Performance)
-  primary: '#1A3A6B',
-  primaryLight: '#2A5A9B',
-  primaryDark: '#0F2647',
+  // Primary — Soft Ember (used for buttons, CTAs, interactive elements only)
+  primary: '#D4732E',
+  primaryLight: '#E8914D',
+  primaryDark: '#B85E1F',
 
-  // Secondary/Accent - Electric Teal (Growth, Progress, Energy)
-  secondary: '#2A5A9B',
-  accent: '#14B8A6',
+  // Accent — Muted Emerald (health, growth, wellness indicators)
+  secondary: '#1A1A1A',
+  accent: '#34B87A',
 
-  // Chrome Silver
-  chrome: '#BFBFBF',
-  chromeDark: '#8F8F8F',
+  // Chrome
+  chrome: '#737373',
+  chromeDark: '#525252',
 
-  // Grayscale
-  gray50: '#F8FAFC',
-  gray100: '#F1F5F9',
-  gray200: '#E2E8F0',
-  gray300: '#CBD5E1',
-  gray400: '#94A3B8',
-  gray500: '#64748B',
-  gray600: '#475569',
-  gray700: '#334155',
-  gray800: '#1E293B',
-  gray900: '#0F1419',
+  // Grayscale — warm neutral (no blue undertones)
+  gray50: '#F5F5F4',
+  gray100: '#E7E5E4',
+  gray200: '#D6D3D1',
+  gray300: '#A8A29E',
+  gray400: '#78716C',
+  gray500: '#57534E',
+  gray600: '#3D3936',
+  gray700: '#292524',
+  gray800: '#1C1917',
+  gray900: '#0C0A09',
 
-  // Semantic - Proper status colors matching web
-  success: '#22C55E',
-  successLight: '#052E16',
-  warning: '#EAB308',
-  warningLight: '#422006',
-  error: '#EF4444',
-  errorLight: '#450A0A',
-  info: '#38BDF8',
-  infoLight: '#082F49',
+  // Semantic — visible on dark surfaces, not neon
+  success: '#34B87A',
+  successLight: '#0D2818',
+  warning: '#E5A828',
+  warningLight: '#231D0D',
+  error: '#DC5454',
+  errorLight: '#230D0D',
+  info: '#3B8FE3',
+  infoLight: '#0D1823',
 
-  // Backgrounds - Dark
-  background: '#0F1419',
-  backgroundSecondary: '#1E293B',
-  card: '#1E293B',
-  cardElevated: '#334155',
+  // Backgrounds — Deep charcoal (warmer than true black)
+  background: '#0C0A09',
+  backgroundSecondary: '#1C1917',
+  card: '#1C1917',
+  cardElevated: '#292524',
 
-  // Borders
-  border: '#2D3E50',
-  borderLight: '#334155',
+  // Borders — Warm, subtle
+  border: '#292524',
+  borderLight: '#3D3936',
 
-  // Text - Light on dark
-  textPrimary: '#FFFFFF',
-  textSecondary: '#94A3B8',
-  textTertiary: '#64748B',
-  textInverse: '#0F1419',
+  // Text — Warm light
+  textPrimary: '#F5F5F4',
+  textSecondary: '#A8A29E',
+  textTertiary: '#78716C',
+  textInverse: '#0C0A09',
 };
 
-// Light theme colors — synced with web globals.css light mode
+// Light theme colors (for coaches) — Obsidian v5.0 mobile light
 const lightColors = {
-  // Primary - Deep Navy
-  primary: '#1A3A6B',
-  primaryLight: '#2A5A9B',
-  primaryDark: '#0F2647',
+  // Primary — Warm Ember (softer than web for mobile readability)
+  primary: '#C95D12',
+  primaryLight: '#D4732E',
+  primaryDark: '#A84D0E',
 
-  // Secondary/Accent - Electric Teal
-  secondary: '#2A5A9B',
-  accent: '#14B8A6',
+  // Accent — Emerald
+  secondary: '#F5F5F4',
+  accent: '#1D9A5B',
 
-  // Chrome Silver
-  chrome: '#BFBFBF',
-  chromeDark: '#8F8F8F',
+  // Chrome
+  chrome: '#A8A29E',
+  chromeDark: '#78716C',
 
-  // Grayscale
-  gray50: '#F8FAFC',
-  gray100: '#F1F5F9',
-  gray200: '#E2E8F0',
-  gray300: '#CBD5E1',
-  gray400: '#94A3B8',
-  gray500: '#64748B',
-  gray600: '#475569',
-  gray700: '#334155',
-  gray800: '#1E293B',
-  gray900: '#0F1419',
+  // Grayscale — warm Stone palette
+  gray50: '#FAFAF9',
+  gray100: '#F5F5F4',
+  gray200: '#E7E5E4',
+  gray300: '#D6D3D1',
+  gray400: '#A8A29E',
+  gray500: '#78716C',
+  gray600: '#57534E',
+  gray700: '#44403C',
+  gray800: '#292524',
+  gray900: '#1C1917',
 
-  // Semantic - Proper status colors matching web
-  success: '#16A34A',
-  successLight: '#DCFCE7',
-  warning: '#CA8A04',
-  warningLight: '#FEF9C3',
-  error: '#DC2626',
-  errorLight: '#FEE2E2',
-  info: '#0284C7',
-  infoLight: '#E0F2FE',
+  // Semantic — WCAG AA compliant
+  success: '#1D9A5B',
+  successLight: '#ECFDF5',
+  warning: '#D4930A',
+  warningLight: '#FEFCE8',
+  error: '#C53030',
+  errorLight: '#FEF2F2',
+  info: '#2B7BD5',
+  infoLight: '#EFF6FF',
 
-  // Backgrounds - Light
-  background: '#FFFFFF',
-  backgroundSecondary: '#F8FAFC',
+  // Backgrounds — Warm snow
+  background: '#FAFAF9',
+  backgroundSecondary: '#F5F5F4',
   card: '#FFFFFF',
-  cardElevated: '#F1F5F9',
+  cardElevated: '#F5F5F4',
 
-  // Borders
-  border: '#E2E8F0',
-  borderLight: '#F1F5F9',
+  // Borders — Warm neutral
+  border: '#E7E5E4',
+  borderLight: '#F5F5F4',
 
-  // Text - Dark on light
-  textPrimary: '#0F1419',
-  textSecondary: '#64748B',
-  textTertiary: '#94A3B8',
+  // Text — Warm dark
+  textPrimary: '#1C1917',
+  textSecondary: '#57534E',
+  textTertiary: '#A8A29E',
   textInverse: '#FFFFFF',
 };
 
@@ -177,27 +182,20 @@ export const Shadows = {
     shadowRadius: 16,
     elevation: 4,
   },
-  // Blue glow effects for Lovable design
-  blueGlow: {
-    shadowColor: '#1A3A6B', // Primary navy
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
-    elevation: 8,
-  },
-  blueGlowSmall: {
-    shadowColor: '#1A3A6B', // Primary navy
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+  // Warm glow for primary actions
+  primaryGlow: {
+    shadowColor: '#D4732E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
     elevation: 6,
   },
-  // Chrome glow effect
-  chromeGlow: {
-    shadowColor: '#BFBFBF', // Chrome silver
-    shadowOffset: { width: 0, height: 0 },
+  // Subtle accent glow for health indicators
+  accentGlow: {
+    shadowColor: '#34B87A',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 4,
   },
 };

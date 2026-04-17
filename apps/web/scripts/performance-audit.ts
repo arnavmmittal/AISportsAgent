@@ -153,6 +153,19 @@ async function testQueryPerformance() {
       where: { athleteId: 'test-athlete' },
       orderBy: { createdAt: 'desc' },
       take: 30,
+      select: {
+        id: true,
+        athleteId: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        energy: true,
+        sleep: true,
+        notes: true,
+        tags: true,
+        contextTags: true,
+        createdAt: true,
+      },
     });
     const duration = performance.now() - start;
 

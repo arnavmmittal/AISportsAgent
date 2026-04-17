@@ -425,6 +425,46 @@ async function main() {
     }
   }
 
+  // ── Crisis alerts (a few for realism) ──
+  console.log('🚨 Creating crisis alerts...');
+  let crisisCount = 0;
+  const crisisReasons = [
+    'Athlete expressed feeling overwhelmed and unable to cope with pressure',
+    'Detected high stress language and mentions of wanting to quit',
+    'Athlete mentioned sleep difficulties and persistent anxiety before games',
+    'Concerning drop in mood scores combined with social withdrawal indicators',
+    'Athlete expressed frustration with injury recovery and loss of identity',
+  ];
+  // Pick 3-4 athletes to have crisis alerts (from first coach's athletes)
+  const crisisAthletes = createdAthletes.slice(0, 4);
+  for (const athlete of crisisAthletes) {
+    // Find a session and message for this athlete
+    const session = await prisma.chatSession.findFirst({
+      where: { athleteId: athlete.id },
+      include: { Message: { take: 1 } },
+    });
+    if (!session || !session.Message[0]) continue;
+
+    const daysAgo = Math.floor(Math.random() * 5);
+    const detectedDate = new Date(now);
+    detectedDate.setDate(detectedDate.getDate() - daysAgo);
+    const isReviewed = Math.random() > 0.6; // ~40% reviewed
+
+    await prisma.crisisAlert.create({
+      data: {
+        athleteId: athlete.id,
+        sessionId: session.id,
+        messageId: session.Message[0].id,
+        severity: crisisCount === 0 ? 'CRITICAL' : (crisisCount === 1 ? 'HIGH' : 'MEDIUM'),
+        detectedAt: detectedDate,
+        reviewed: isReviewed,
+        reviewedAt: isReviewed ? new Date(detectedDate.getTime() + 3600000) : null,
+        notes: isReviewed ? 'Reviewed and followed up with athlete' : null,
+      },
+    });
+    crisisCount++;
+  }
+
   // ── Performance metrics & game results (10 games, first 10 athletes) ──
   console.log('🏀 Creating game performance data...');
   for (let gameIdx = 0; gameIdx < 10; gameIdx++) {
@@ -437,6 +477,19 @@ async function main() {
       const gameDayEnd = new Date(gameDate); gameDayEnd.setHours(23, 59, 59, 999);
       const moodLog = await prisma.moodLog.findFirst({
         where: { athleteId: athlete.id, createdAt: { gte: gameDayStart, lte: gameDayEnd } },
+        select: {
+          id: true,
+          athleteId: true,
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          notes: true,
+          tags: true,
+          contextTags: true,
+          createdAt: true,
+        },
       });
       if (!moodLog) continue;
 
@@ -476,6 +529,114 @@ async function main() {
           scrapedFrom: 'seed-script', scrapedAt: new Date(),
         },
       });
+    }
+  }
+
+  // ── Readiness scores (14 days per athlete) ──
+  console.log('📈 Creating readiness scores...');
+  let readinessCount = 0;
+  for (const athlete of createdAthletes) {
+    for (let day = 0; day < 14; day++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - day);
+      const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+
+      // Get mood log for this day to derive readiness
+      const moodLog = await prisma.moodLog.findFirst({
+        where: { athleteId: athlete.id, createdAt: { gte: dayStart, lte: dayEnd } },
+        select: {
+          id: true,
+          athleteId: true,
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          notes: true,
+          tags: true,
+          contextTags: true,
+          createdAt: true,
+        },
+      });
+      if (!moodLog) continue;
+
+      const breakdown = calculateReadiness({
+        mood: moodLog.mood, confidence: moodLog.confidence, stress: moodLog.stress,
+        energy: moodLog.energy || undefined, sleep: moodLog.sleep || undefined,
+        createdAt: moodLog.createdAt,
+      }, athlete.Athlete?.sport || 'Basketball');
+
+      const score = breakdown.overall;
+      const level = score >= 80 ? 'READY' : score >= 65 ? 'MODERATE' : score >= 50 ? 'LOW' : 'CRITICAL';
+
+      await prisma.readinessScore.create({
+        data: {
+          id: `rs-${athlete.id.slice(-8)}-${day}`,
+          athleteId: athlete.id,
+          gameDate: date,
+          calculatedAt: date,
+          score,
+          level,
+          factors: breakdown,
+          moodAvg7d: moodLog.mood,
+          stressAvg7d: moodLog.stress,
+          sleepAvg3d: moodLog.sleep ? parseFloat(moodLog.sleep.toString()) : 7,
+          chatEngagement: Math.floor(Math.random() * 5),
+        },
+      });
+      readinessCount++;
+    }
+  }
+
+  // ── Assignments (2-3 per coach) ──
+  console.log('📝 Creating assignments...');
+  const assignmentTemplates = [
+    { title: 'Pre-Game Visualization Routine', description: 'Complete a 10-minute visualization exercise before your next game. Focus on seeing yourself executing key plays with confidence. Record what you visualized and how it felt.', sport: null },
+    { title: 'Daily Mood Check-In', description: 'Log your mood, stress, and sleep for 7 consecutive days using the app. Reflect on any patterns you notice between your mental state and practice quality.', sport: null },
+    { title: 'Breathing Exercise Practice', description: 'Practice box breathing (4-4-4-4) for 5 minutes before each practice this week. Note if it impacts your focus or performance during practice.', sport: null },
+    { title: 'Goal Setting Workshop', description: 'Write down 3 specific, measurable goals for the rest of this season. Include 1 performance goal, 1 mental skills goal, and 1 personal growth goal.', sport: null },
+    { title: 'Self-Talk Awareness Journal', description: 'For the next 3 days, keep a brief journal of negative self-talk during practice or competition. Then reframe each negative thought into a constructive one.', sport: null },
+    { title: 'Post-Game Reflection', description: 'After your next game, write a brief reflection covering: What went well mentally? What was challenging? What would you do differently? Rate your mental performance 1-10.', sport: null },
+  ];
+  let assignmentCount = 0;
+  for (const coach of createdCoaches) {
+    const numAssignments = 2 + Math.floor(Math.random() * 2);
+    const selected = pickN(assignmentTemplates, numAssignments);
+    for (let i = 0; i < selected.length; i++) {
+      const tmpl = selected[i];
+      const daysAgo = Math.floor(Math.random() * 14);
+      const dueInDays = 7 + Math.floor(Math.random() * 14) - daysAgo;
+      const createdDate = new Date(now); createdDate.setDate(createdDate.getDate() - daysAgo);
+      const dueDate = new Date(now); dueDate.setDate(dueDate.getDate() + dueInDays);
+
+      const assignment = await prisma.assignment.create({
+        data: {
+          coachId: coach.id,
+          title: tmpl.title,
+          description: tmpl.description,
+          dueDate,
+          targetSport: tmpl.sport,
+          createdAt: createdDate,
+          updatedAt: createdDate,
+        },
+      });
+
+      // Create some submissions from this coach's athletes
+      const coachAthletes = createdAthletes.filter(a => a.coachIdx === createdCoaches.indexOf(coach));
+      for (const athlete of coachAthletes) {
+        const hasSubmitted = Math.random() > 0.4;
+        await prisma.assignmentSubmission.create({
+          data: {
+            assignmentId: assignment.id,
+            athleteId: athlete.id,
+            status: hasSubmitted ? 'SUBMITTED' : 'PENDING',
+            response: hasSubmitted ? `Completed the ${tmpl.title.toLowerCase()}. Found it helpful for focusing before practice.` : null,
+            submittedAt: hasSubmitted ? new Date(createdDate.getTime() + (1 + Math.random() * 5) * 86400000) : null,
+          },
+        });
+      }
+      assignmentCount++;
     }
   }
 
@@ -634,6 +795,9 @@ async function main() {
   console.log(`\n👥 1 School (University of Washington)`);
   console.log(`   3 Coaches, ${createdAthletes.length} Athletes (10 per coach)`);
   console.log(`📈 ${createdAthletes.length * 30} Mood Logs (30 days each)`);
+  console.log(`📊 ${readinessCount} Readiness Scores (14 days each)`);
+  console.log(`🚨 ${crisisCount} Crisis Alerts`);
+  console.log(`📝 ${assignmentCount} Assignments with submissions`);
   console.log(`💬 ${totalSessions} Chat Sessions with insights`);
   console.log(`📋 ${summaryCount} Weekly Summaries`);
   console.log(`🧘 ${interventionCount} Interventions, ${outcomeCount} Outcomes`);

@@ -76,6 +76,19 @@ export async function GET(
         MoodLog: {
           orderBy: { createdAt: 'desc' },
           take: 30, // Last 30 mood logs
+          select: {
+            id: true,
+            athleteId: true,
+            mood: true,
+            confidence: true,
+            stress: true,
+            energy: true,
+            sleep: true,
+            notes: true,
+            tags: true,
+            contextTags: true,
+            createdAt: true,
+          },
         },
         Goal: {
           orderBy: { createdAt: 'desc' },

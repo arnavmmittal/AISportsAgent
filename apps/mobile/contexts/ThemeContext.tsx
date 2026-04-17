@@ -1,20 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { Appearance } from 'react-native';
+import { getThemeColors } from '@/constants/theme';
 
 type Theme = 'light' | 'dark';
+type ThemeColors = ReturnType<typeof getThemeColors>;
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   isDarkMode: boolean;
+  colors: ThemeColors;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
-  const [mounted, setMounted] = useState(false);
 
   // Load theme from AsyncStorage on mount
   useEffect(() => {
@@ -27,15 +30,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (savedTheme) {
         setTheme(savedTheme);
       } else {
-        // Check system preference
-        const colorScheme = Appearance.getColorScheme();
-        const initialTheme = colorScheme === 'dark' ? 'dark' : 'light';
-        setTheme(initialTheme);
+        // Role-based default: coaches get light, athletes get dark
+        const userRole = await SecureStore.getItemAsync('user_role');
+        if (userRole === 'COACH') {
+          setTheme('light');
+        } else if (userRole === 'ATHLETE') {
+          setTheme('dark');
+        } else {
+          // Fallback to system preference
+          const colorScheme = Appearance.getColorScheme();
+          setTheme(colorScheme === 'dark' ? 'dark' : 'light');
+        }
       }
     } catch (error) {
       console.error('Error loading theme:', error);
-    } finally {
-      setMounted(true);
     }
   };
 
@@ -49,13 +57,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Always render the provider — use default 'dark' until preferences load
+  // (returning <>{children}</> without provider causes useTheme to crash)
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isDarkMode: theme === 'dark' }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isDarkMode: theme === 'dark', colors: getThemeColors(theme === 'dark') }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -1,6 +1,9 @@
 /**
  * Entry point for the mobile app
  * Handles initial routing based on authentication state
+ *
+ * NOTE: This screen renders before ThemeProvider is available,
+ * so we use static Colors instead of useTheme().
  */
 
 import { Redirect } from 'expo-router';

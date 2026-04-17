@@ -142,6 +142,19 @@ async function checkBaselineDeviation(
     where: { athleteId, createdAt: { gte: since } },
     orderBy: { createdAt: 'desc' },
     take: 7,
+    select: {
+      id: true,
+      athleteId: true,
+      mood: true,
+      confidence: true,
+      stress: true,
+      energy: true,
+      sleep: true,
+      notes: true,
+      tags: true,
+      contextTags: true,
+      createdAt: true,
+    },
   });
 
   if (recentLogs.length < 3) return null;
@@ -244,6 +257,19 @@ async function checkDeclineTrajectory(
   const logs = await prisma.moodLog.findMany({
     where: { athleteId, createdAt: { gte: since } },
     orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      athleteId: true,
+      mood: true,
+      confidence: true,
+      stress: true,
+      energy: true,
+      sleep: true,
+      notes: true,
+      tags: true,
+      contextTags: true,
+      createdAt: true,
+    },
   });
 
   if (logs.length < 5) return null;
@@ -304,6 +330,19 @@ async function checkBurnoutPattern(
     where: { athleteId, createdAt: { gte: since } },
     orderBy: { createdAt: 'desc' },
     take: 14,
+    select: {
+      id: true,
+      athleteId: true,
+      mood: true,
+      confidence: true,
+      stress: true,
+      energy: true,
+      sleep: true,
+      notes: true,
+      tags: true,
+      contextTags: true,
+      createdAt: true,
+    },
   });
 
   if (logs.length < 7) return null;

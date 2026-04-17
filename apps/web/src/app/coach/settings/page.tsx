@@ -73,25 +73,38 @@ export default function CoachSettingsPage() {
       try {
         setIsLoading(true);
 
-        // Fetch invite code (which includes coach info)
+        // Fetch profile data
+        const profileRes = await fetch('/api/coach/profile');
+        if (profileRes.ok) {
+          const profileJson = await profileRes.json();
+          if (profileJson.data) {
+            setProfile({
+              name: profileJson.data.name || '',
+              email: profileJson.data.email || '',
+              sport: profileJson.data.sport || '',
+              teamName: profileJson.data.teamName || '',
+            });
+          }
+        }
+
+        // Fetch invite code
         const inviteRes = await fetch('/api/coach/invite-code');
         if (inviteRes.ok) {
           const inviteJson = await inviteRes.json();
           if (inviteJson.data) {
             setInviteCodeData(inviteJson.data);
-            // Pre-populate profile from invite code data
-            setProfile(prev => ({
-              ...prev,
-              name: inviteJson.data.coachName || '',
-              sport: inviteJson.data.sport || '',
-            }));
           }
         }
 
-        // Note: Coach notification preferences API doesn't exist yet.
-        // The /api/coach/notifications endpoint returns crisis alerts, not preferences.
-        // Notification preferences are currently stored in local state only.
-        // TODO: Create /api/coach/notification-preferences endpoint when needed.
+        // Load saved privacy settings from localStorage
+        const savedPrivacy = localStorage.getItem('coach-privacy-settings');
+        if (savedPrivacy) {
+          try {
+            setPrivacy(JSON.parse(savedPrivacy));
+          } catch {
+            // ignore parse errors
+          }
+        }
       } catch (error) {
         console.error('Error fetching settings:', error);
       } finally {
@@ -105,17 +118,31 @@ export default function CoachSettingsPage() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      // TODO: Implement profile update API
-      // const response = await fetch('/api/coach/profile', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(profile),
-      // });
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch('/api/coach/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      const result = await response.json();
+      if (result.data) {
+        setProfile({
+          name: result.data.name || '',
+          email: result.data.email || '',
+          sport: result.data.sport || '',
+          teamName: result.data.teamName || '',
+        });
+      }
       toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast.error('Failed to update profile. Please try again.');
+      const message = error instanceof Error ? error.message : 'Failed to update profile. Please try again.';
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -123,10 +150,13 @@ export default function CoachSettingsPage() {
 
 
   const handleSavePrivacy = async () => {
-    // Note: No API endpoint for coach privacy settings yet.
-    // These are stored locally for demonstration purposes only.
-    // TODO: Create /api/coach/privacy-settings endpoint for persistence
-    toast.info('Privacy settings updated locally (not persisted to server yet)');
+    try {
+      localStorage.setItem('coach-privacy-settings', JSON.stringify(privacy));
+      toast.success('Privacy settings saved successfully!');
+    } catch (error) {
+      console.error('Error saving privacy settings:', error);
+      toast.error('Failed to save privacy settings.');
+    }
   };
 
   const handleCopyInviteCode = () => {
@@ -171,18 +201,21 @@ export default function CoachSettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         {/* Header */}
         <header className="animate-fade-in">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
-            <Settings className="w-7 h-7 text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Settings className="w-6 h-6 text-primary" />
             Settings
           </h1>
-          <p className="text-muted-foreground mt-1">Manage your profile and preferences</p>
         </header>
 
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+        {/* LEFT COLUMN: Settings sections */}
+        <div className="space-y-6">
+
         {/* Profile Information */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <User className="w-5 h-5 text-primary" />
@@ -266,7 +299,7 @@ export default function CoachSettingsPage() {
         </section>
 
         {/* Privacy & Data Access */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
               <Shield className="w-5 h-5 text-success" />
@@ -339,7 +372,7 @@ export default function CoachSettingsPage() {
         </section>
 
         {/* Team Invite Code */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
               <Key className="w-5 h-5 text-warning" />
@@ -382,7 +415,7 @@ export default function CoachSettingsPage() {
         </section>
 
         {/* Appearance */}
-        <section className="card-elevated overflow-hidden animate-slide-up">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
               {isDarkMode ? <Moon className="w-5 h-5 text-foreground" /> : <Sun className="w-5 h-5 text-foreground" />}
@@ -406,7 +439,7 @@ export default function CoachSettingsPage() {
         </section>
 
         {/* Danger Zone */}
-        <section className="card-elevated overflow-hidden animate-slide-up border-destructive/20">
+        <section className="rounded-xl border bg-card overflow-hidden animate-slide-up border-destructive/20">
           <div className="p-4 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
@@ -435,6 +468,68 @@ export default function CoachSettingsPage() {
             </Button>
           </div>
         </section>
+        </div>{/* END LEFT COLUMN */}
+
+        {/* RIGHT SIDEBAR */}
+        <aside className="space-y-6">
+          {/* Profile Summary */}
+          <div className="rounded-xl border bg-card p-5">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+                <User className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-foreground">{profile.name || 'Coach'}</h3>
+              <p className="text-sm text-muted-foreground">{profile.email}</p>
+              {profile.sport && (
+                <span className="mt-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  {profile.sport}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Invite Code Quick View */}
+          {inviteCodeData && (
+            <div className="rounded-xl border bg-card p-5">
+              <h3 className="font-semibold text-foreground text-sm mb-3 flex items-center gap-2">
+                <Key className="w-4 h-4 text-warning" />
+                Invite Code
+              </h3>
+              <code className="block px-3 py-2 rounded-lg bg-muted border border-border font-mono text-sm font-bold text-foreground tracking-widest text-center">
+                {inviteCodeData.inviteCode}
+              </code>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-xs text-muted-foreground">
+                  {inviteCodeData.athleteCount} athletes
+                </span>
+                <button
+                  onClick={handleCopyInviteCode}
+                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  Copy Code
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Links */}
+          <div className="rounded-xl border bg-card p-5">
+            <h3 className="font-semibold text-foreground text-sm mb-3">Quick Links</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => isDarkMode ? toggleTheme() : toggleTheme()}
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              >
+                <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                  {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                  {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                </span>
+                <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
+              </button>
+            </div>
+          </div>
+        </aside>
+        </div>{/* END GRID */}
       </div>
     </div>
   );

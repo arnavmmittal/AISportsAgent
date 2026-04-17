@@ -59,11 +59,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate and sanitize input with Zod
+    console.log('[Chat Stream] Auth result:', { userId: user?.id, role: user?.role, isVoiceService });
     let validatedData;
     try {
       validatedData = await validateRequest(req, chatStreamRequestSchema);
     } catch (error) {
       if (error instanceof ValidationError) {
+        console.error('[Chat Stream] Validation failed:', JSON.stringify(error.errors));
         return new Response(
           encoder.encode('data: ' + JSON.stringify({
             type: 'error',

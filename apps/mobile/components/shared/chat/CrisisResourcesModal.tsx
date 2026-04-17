@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface CrisisAlert {
   final_risk_level: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -82,6 +83,7 @@ const CRISIS_RESOURCES = {
 };
 
 export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalProps) {
+  const { colors, isDarkMode } = useTheme();
   const [acknowledged, setAcknowledged] = useState(false);
   const isVisible = crisis !== null && !acknowledged;
 
@@ -116,13 +118,13 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
   const getSeverityColor = () => {
     switch (crisis?.final_risk_level) {
       case 'CRITICAL':
-        return Colors.error;
+        return colors.error;
       case 'HIGH':
         return '#FF6B00';
       case 'MEDIUM':
         return '#FFA500';
       default:
-        return Colors.primary;
+        return colors.primary;
     }
   };
 
@@ -133,14 +135,14 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
       presentationStyle="pageSheet"
       onRequestClose={handleAcknowledge}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.card }]}>
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: getSeverityColor() }]}>
+        <View style={[styles.header, { borderBottomColor: getSeverityColor(), backgroundColor: colors.card }]}>
           <View style={styles.headerTitleContainer}>
-            <Ionicons name="warning" size={28} color={Colors.error} />
-            <Text style={styles.headerTitle}>We're Here to Help</Text>
+            <Ionicons name="warning" size={28} color={colors.error} />
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>We're Here to Help</Text>
           </View>
-          <Text style={styles.headerDescription}>
+          <Text style={[styles.headerDescription, { color: colors.textSecondary }]}>
             {crisis?.message ||
               "We noticed your message may indicate you're going through a difficult time. You don't have to face this alone - help is available 24/7."}
           </Text>
@@ -149,21 +151,21 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Immediate Crisis Resources */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Immediate Crisis Support (24/7)</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Immediate Crisis Support (24/7)</Text>
             {CRISIS_RESOURCES.immediate.map((resource, index) => (
               <View key={index} style={[styles.card, styles.emergencyCard]}>
                 <View style={styles.cardHeader}>
                   <View style={styles.iconContainer}>
-                    <Ionicons name={resource.icon as any} size={24} color={Colors.error} />
+                    <Ionicons name={resource.icon as any} size={24} color={colors.error} />
                   </View>
                   <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle}>{resource.name}</Text>
-                    <Text style={styles.cardContact}>
+                    <Text style={[styles.cardTitle, { color: isDarkMode ? '#fff' : '#000' }]}>{resource.name}</Text>
+                    <Text style={[styles.cardContact, { color: colors.error }]}>
                       {resource.type === 'text'
                         ? `Text ${resource.textCommand} to ${resource.contact}`
                         : resource.display || resource.contact}
                     </Text>
-                    <Text style={styles.cardDescription}>{resource.description}</Text>
+                    <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>{resource.description}</Text>
                   </View>
                 </View>
                 {resource.type === 'phone' && (
@@ -190,16 +192,16 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
 
           {/* Campus Resources */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Campus Support</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Campus Support</Text>
             {CRISIS_RESOURCES.campus.map((resource, index) => (
-              <View key={index} style={styles.card}>
+              <View key={index} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardHeader}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#E3F2FD' }]}>
-                    <Ionicons name={resource.icon as any} size={24} color={Colors.primary} />
+                  <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? 'rgba(59,130,246,0.2)' : '#E3F2FD' }]}>
+                    <Ionicons name={resource.icon as any} size={24} color={colors.primary} />
                   </View>
                   <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle}>{resource.name}</Text>
-                    <Text style={styles.cardDescription}>{resource.description}</Text>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{resource.name}</Text>
+                    <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>{resource.description}</Text>
                   </View>
                 </View>
               </View>
@@ -208,16 +210,16 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
 
           {/* Online Resources */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Online Support</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Online Support</Text>
             {CRISIS_RESOURCES.online.map((resource, index) => (
-              <View key={index} style={styles.card}>
+              <View key={index} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardHeader}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#E8F5E9' }]}>
+                  <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? 'rgba(76,175,80,0.2)' : '#E8F5E9' }]}>
                     <Ionicons name={resource.icon as any} size={24} color="#4CAF50" />
                   </View>
                   <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle}>{resource.name}</Text>
-                    <Text style={styles.cardDescription}>{resource.description}</Text>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{resource.name}</Text>
+                    <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>{resource.description}</Text>
                   </View>
                 </View>
                 <TouchableOpacity
@@ -232,19 +234,19 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
           </View>
 
           {/* Important Message */}
-          <View style={[styles.reminderCard, { borderLeftColor: getSeverityColor() }]}>
-            <Text style={styles.reminderTitle}>Remember:</Text>
+          <View style={[styles.reminderCard, { borderLeftColor: getSeverityColor(), backgroundColor: colors.backgroundSecondary }]}>
+            <Text style={[styles.reminderTitle, { color: colors.textPrimary }]}>Remember:</Text>
             <View style={styles.reminderList}>
-              <Text style={styles.reminderItem}>
+              <Text style={[styles.reminderItem, { color: colors.textSecondary }]}>
                 • It's okay to ask for help - it's a sign of strength, not weakness
               </Text>
-              <Text style={styles.reminderItem}>
+              <Text style={[styles.reminderItem, { color: colors.textSecondary }]}>
                 • You are not alone - many people care about your well-being
               </Text>
-              <Text style={styles.reminderItem}>
+              <Text style={[styles.reminderItem, { color: colors.textSecondary }]}>
                 • Crisis situations are temporary - things can and do get better
               </Text>
-              <Text style={styles.reminderItem}>
+              <Text style={[styles.reminderItem, { color: colors.textSecondary }]}>
                 • Professional support is available 24/7 at the numbers above
               </Text>
             </View>
@@ -252,15 +254,15 @@ export function CrisisResourcesModal({ crisis, onClose }: CrisisResourcesModalPr
         </ScrollView>
 
         {/* Footer Actions */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.card }]}>
           <TouchableOpacity
-            style={styles.emergencyCallButton}
+            style={[styles.emergencyCallButton, { backgroundColor: colors.error }]}
             onPress={() => handleCall('988', '988 Lifeline')}
           >
             <Ionicons name="call" size={20} color="#fff" />
             <Text style={styles.emergencyCallButtonText}>Call 988 Now</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.acknowledgeButton} onPress={handleAcknowledge}>
+          <TouchableOpacity style={[styles.acknowledgeButton, { backgroundColor: colors.primary }]} onPress={handleAcknowledge}>
             <Text style={styles.acknowledgeButtonText}>I Understand</Text>
           </TouchableOpacity>
         </View>

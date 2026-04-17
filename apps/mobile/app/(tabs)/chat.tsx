@@ -320,14 +320,15 @@ export default function ChatScreen() {
                   <View
                     style={[
                       styles.messageBubble,
-                      item.role === 'user' ? [styles.userBubble, { backgroundColor: colors.gray700 }] : [styles.assistantBubble, { backgroundColor: colors.primary }],
+                      item.role === 'user' ? [styles.userBubble, { backgroundColor: colors.gray700 }] : [styles.assistantBubble, { backgroundColor: colors.cardElevated }],
                     ]}
                   >
                     {item.content ? (
                       <Text
                         style={[
                           styles.messageText,
-                          item.role === 'user' && [styles.userMessageText, { color: colors.gray100 }],
+                          { color: colors.textPrimary },
+                          item.role === 'user' && { color: colors.gray100 },
                         ]}
                       >
                         {item.content}

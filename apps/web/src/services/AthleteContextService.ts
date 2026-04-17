@@ -164,6 +164,19 @@ class AthleteContextService {
         },
         orderBy: { createdAt: 'desc' },
         take: 28, // Up to 2 per day
+        select: {
+          id: true,
+          athleteId: true,
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          notes: true,
+          tags: true,
+          contextTags: true,
+          createdAt: true,
+        },
       }),
 
       // Today's mood log
@@ -171,6 +184,19 @@ class AthleteContextService {
         where: {
           athleteId,
           createdAt: { gte: today },
+        },
+        select: {
+          id: true,
+          athleteId: true,
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          notes: true,
+          tags: true,
+          contextTags: true,
+          createdAt: true,
         },
       }),
 

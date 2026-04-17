@@ -29,6 +29,19 @@ export const assessWellbeingRiskTool = tool(
         prisma.moodLog.findMany({
           where: { athleteId, createdAt: { gte: sevenDaysAgo } },
           orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            athleteId: true,
+            mood: true,
+            confidence: true,
+            stress: true,
+            energy: true,
+            sleep: true,
+            notes: true,
+            tags: true,
+            contextTags: true,
+            createdAt: true,
+          },
         }),
         prisma.readinessScore.findMany({
           where: { athleteId, calculatedAt: { gte: sevenDaysAgo } },

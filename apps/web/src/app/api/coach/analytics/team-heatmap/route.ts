@@ -56,12 +56,8 @@ export async function GET(req: NextRequest) {
 
     if (athleteRelations.length === 0) {
       return NextResponse.json({
-        success: true,
-        data: {
-          athletes: [],
-          dates: [],
-          data: [],
-        },
+        athletes: [],
+        dates: [],
       });
     }
 
@@ -119,36 +115,50 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Build heatmap grid
-    const athletes = athleteRelations.map((rel) => ({
-      id: rel.athleteId,
-      name: rel.Athlete.User.name || rel.Athlete.User.email,
-    }));
-
-    const heatmapData = athleteRelations.map((rel) => {
+    // Build athlete-centric heatmap data matching HeatmapAthlete interface
+    const athleteHeatmap = athleteRelations.map((rel) => {
       const athleteId = rel.athleteId;
       const athleteName = rel.Athlete.User.name || rel.Athlete.User.email;
+      const sport = rel.Athlete.sport || 'Unknown';
 
-      return dates.map((date) => {
-        const scoreData = scoresByAthleteDate[athleteId]?.[date];
-
-        return {
-          athleteId,
-          athleteName,
-          date,
-          score: scoreData?.score || null,
-          level: scoreData?.level || 'NO_DATA',
-        };
+      // Build readiness history array (one score per day, in chronological order)
+      const readinessHistory = dates.map((date) => {
+        return scoresByAthleteDate[athleteId]?.[date]?.score ?? 0;
       });
+
+      // Calculate trend from last 7 days
+      const recent = readinessHistory.slice(-7).filter(s => s > 0);
+      const older = readinessHistory.slice(-14, -7).filter(s => s > 0);
+      let trend: 'improving' | 'declining' | 'stable' = 'stable';
+      if (recent.length >= 3 && older.length >= 3) {
+        const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+        const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+        if (recentAvg - olderAvg > 5) trend = 'improving';
+        else if (olderAvg - recentAvg > 5) trend = 'declining';
+      }
+
+      // Simple forecast: project last 3 days average with slight regression to mean
+      const last3 = readinessHistory.slice(-3).filter(s => s > 0);
+      const last3Avg = last3.length > 0 ? last3.reduce((a, b) => a + b, 0) / last3.length : 70;
+      const forecast = Array.from({ length: 7 }, (_, i) => {
+        const regression = (70 - last3Avg) * 0.05 * (i + 1); // slight pull toward 70
+        return Math.round(Math.max(20, Math.min(100, last3Avg + regression + (Math.random() * 6 - 3))));
+      });
+
+      return {
+        athleteId,
+        athleteName,
+        sport,
+        readinessHistory,
+        trend,
+        forecast,
+      };
     });
 
+    // Return in the flat shape the readiness page expects
     return NextResponse.json({
-      success: true,
-      data: {
-        athletes,
-        dates,
-        data: heatmapData,
-      },
+      athletes: athleteHeatmap,
+      dates,
     });
   } catch (error) {
     console.error('[API] Error fetching team heatmap:', error);

@@ -18,18 +18,29 @@ import {
   Loader2,
   RefreshCw,
   Settings,
+  Users,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/shared/ui/button';
 import { cn } from '@/lib/utils';
 import AlertRulesPanel from '@/components/coach/alerts/AlertRulesPanel';
+import dynamic from 'next/dynamic';
+
+// Lazy-load analytics components (they fetch their own data)
+const TeamPulse = dynamic(() => import('@/components/coach/analytics/TeamPulse'), {
+  loading: () => <div className="h-96 bg-muted animate-pulse rounded-lg" />,
+});
+const PerformanceIntelligence = dynamic(() => import('@/components/coach/analytics/PerformanceIntelligence'), {
+  loading: () => <div className="h-96 bg-muted animate-pulse rounded-lg" />,
+});
 
 /**
- * Readiness Page (v2.1 Navigation Consolidation)
+ * Readiness Page (v3.0 Two-Column Layout)
  *
- * Combines Team Readiness + Alerts into a unified view:
- * - Readiness tab: Team metrics, intervention queue, heatmap
- * - Alerts tab: Critical wellness alerts with severity levels
+ * Combines Team Readiness + Alerts into a unified view with sidebar:
+ * - Left: Tab content (Readiness, Alerts, Rules, Analytics)
+ * - Right: Summary metrics, active alerts, intervention queue, quick links
  *
  * Data is fetched from APIs - no mock data.
  */
@@ -70,8 +81,8 @@ interface Alert {
 function ReadinessPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'readiness' | 'alerts' | 'rules'>(
-    (searchParams.get('tab') as 'readiness' | 'alerts' | 'rules') || 'readiness'
+  const [activeTab, setActiveTab] = useState<'readiness' | 'alerts' | 'rules' | 'analytics'>(
+    (searchParams.get('tab') as 'readiness' | 'alerts' | 'rules' | 'analytics') || 'readiness'
   );
 
   // Data states
@@ -136,7 +147,7 @@ function ReadinessPageContent() {
   }, []);
 
   // Handle tab changes with URL sync
-  const handleTabChange = (tab: 'readiness' | 'alerts' | 'rules') => {
+  const handleTabChange = (tab: 'readiness' | 'alerts' | 'rules' | 'analytics') => {
     setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
     if (tab === 'readiness') {
@@ -148,6 +159,22 @@ function ReadinessPageContent() {
   };
 
   const activeAlertCount = alerts.filter(a => a.status !== 'resolved').length;
+
+  // Compute sidebar metrics from data
+  const latestScores = heatmapData.map(a => {
+    const history = a.readinessHistory || [];
+    return history[history.length - 1] || 0;
+  });
+  const teamAvg = latestScores.length > 0
+    ? Math.round(latestScores.reduce((sum, s) => sum + s, 0) / latestScores.length)
+    : 0;
+  const highRiskCount = latestScores.filter(s => s < 70).length;
+  const decliningCount = heatmapData.filter(a => a.trend === 'declining').length;
+
+  const activeAlerts = alerts.filter(a => a.status !== 'resolved');
+  const criticalCount = activeAlerts.filter(a => a.severity === 'critical').length;
+  const highCount = activeAlerts.filter(a => a.severity === 'high').length;
+  const mediumCount = activeAlerts.filter(a => a.severity === 'medium').length;
 
   if (isLoading) {
     return (
@@ -162,81 +189,241 @@ function ReadinessPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
         {/* Header */}
         <header className="animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground flex items-center gap-2">
             <Activity className="w-7 h-7 text-primary" />
             Readiness
           </h1>
-          <p className="text-muted-foreground mt-1">Team wellness monitoring and intervention management</p>
         </header>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit animate-slide-up">
-          <button
-            onClick={() => handleTabChange('readiness')}
-            className={cn(
-              'px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2',
+        {/* Two-Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {/* LEFT COLUMN — Tabs + Content */}
+          <div className="min-w-0 space-y-6">
+            {/* Sub-Tab Navigation */}
+            <div className="flex gap-1 p-1 bg-muted/50 rounded-xl w-fit animate-slide-up">
+              <button
+                onClick={() => handleTabChange('readiness')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2',
+                  activeTab === 'readiness'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Activity className="w-4 h-4" />
+                Team Readiness
+              </button>
+              <button
+                onClick={() => handleTabChange('alerts')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2',
+                  activeTab === 'alerts'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Bell className="w-4 h-4" />
+                Alerts
+                {activeAlertCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-risk-red text-white text-xs font-bold min-w-[20px] text-center">
+                    {activeAlertCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => handleTabChange('rules')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2',
+                  activeTab === 'rules'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Settings className="w-4 h-4" />
+                Alert Rules
+              </button>
+              <button
+                onClick={() => handleTabChange('analytics')}
+                className={cn(
+                  'px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2',
+                  activeTab === 'analytics'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <TrendingUp className="w-4 h-4" />
+                Trends & Correlations
+              </button>
+            </div>
+
+            {/* Error State */}
+            {error && (
+              <div className="rounded-xl border bg-card p-6 border-risk-red/30 bg-risk-red-bg text-center">
+                <AlertCircle className="w-8 h-8 text-risk-red mx-auto mb-2" />
+                <p className="text-foreground font-medium">{error}</p>
+                <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            )}
+
+            {/* Tab Content */}
+            {!error && (
               activeTab === 'readiness'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? <ReadinessTab athletes={heatmapData} interventions={interventions} />
+                : activeTab === 'alerts'
+                  ? <AlertsTab alerts={alerts} setAlerts={setAlerts} />
+                  : activeTab === 'analytics'
+                    ? <AnalyticsTab />
+                    : <AlertRulesTab />
             )}
-          >
-            <Activity className="w-4 h-4" />
-            Team Readiness
-          </button>
-          <button
-            onClick={() => handleTabChange('alerts')}
-            className={cn(
-              'px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2',
-              activeTab === 'alerts'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Bell className="w-4 h-4" />
-            Alerts
-            {activeAlertCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-risk-red text-white text-xs font-bold min-w-[20px] text-center">
-                {activeAlertCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => handleTabChange('rules')}
-            className={cn(
-              'px-4 py-2 rounded-md font-medium text-sm transition-all flex items-center gap-2',
-              activeTab === 'rules'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Settings className="w-4 h-4" />
-            Alert Rules
-          </button>
-        </div>
-
-        {/* Error State */}
-        {error && (
-          <div className="card-elevated p-6 border-risk-red/30 bg-risk-red-bg text-center">
-            <AlertCircle className="w-8 h-8 text-risk-red mx-auto mb-2" />
-            <p className="text-foreground font-medium">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
           </div>
-        )}
 
-        {/* Tab Content */}
-        {!error && (
-          activeTab === 'readiness'
-            ? <ReadinessTab athletes={heatmapData} interventions={interventions} />
-            : activeTab === 'alerts'
-              ? <AlertsTab alerts={alerts} setAlerts={setAlerts} />
-              : <AlertRulesTab />
-        )}
+          {/* RIGHT SIDEBAR */}
+          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
+            {/* Summary Metrics */}
+            <div className="rounded-xl border bg-card p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Summary</h3>
+              <div className="text-center pb-4">
+                <p className="text-xs text-muted-foreground font-medium">Team Avg</p>
+                <p className="text-4xl font-bold text-foreground mt-1">
+                  {teamAvg}<span className="text-lg text-muted-foreground">/100</span>
+                </p>
+              </div>
+              <div className="border-t border-border pt-4 grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground font-medium">High Risk</p>
+                  <p className={cn(
+                    'text-2xl font-bold mt-0.5',
+                    highRiskCount > 0 ? 'text-risk-red' : 'text-foreground'
+                  )}>
+                    {highRiskCount}
+                  </p>
+                </div>
+                <div className="text-center border-l border-border">
+                  <p className="text-xs text-muted-foreground font-medium">Declining</p>
+                  <p className={cn(
+                    'text-2xl font-bold mt-0.5',
+                    decliningCount > 0 ? 'text-risk-yellow' : 'text-foreground'
+                  )}>
+                    {decliningCount}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Alerts Summary */}
+            <div className="rounded-xl border bg-card p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Active Alerts</h3>
+              <p className={cn(
+                'text-3xl font-bold',
+                activeAlertCount > 0 ? 'text-risk-red' : 'text-foreground'
+              )}>
+                {activeAlertCount}
+              </p>
+              {activeAlertCount > 0 && (
+                <div className="mt-3 space-y-1.5">
+                  {criticalCount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-risk-red" />
+                        Critical
+                      </span>
+                      <span className="font-semibold text-risk-red">{criticalCount}</span>
+                    </div>
+                  )}
+                  {highCount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-warning" />
+                        High
+                      </span>
+                      <span className="font-semibold text-warning">{highCount}</span>
+                    </div>
+                  )}
+                  {mediumCount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-risk-yellow" />
+                        Medium
+                      </span>
+                      <span className="font-semibold text-risk-yellow">{mediumCount}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-4"
+                onClick={() => handleTabChange('alerts')}
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                View Alerts
+              </Button>
+            </div>
+
+            {/* Intervention Queue Summary */}
+            <div className="rounded-xl border bg-card p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Intervention Queue</h3>
+              {interventions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No pending interventions</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {interventions.slice(0, 3).map((int) => (
+                    <div key={int.id} className="flex items-center gap-2.5">
+                      <div className={cn(
+                        'w-7 h-7 rounded-md flex items-center justify-center text-white text-xs font-bold shrink-0',
+                        int.priority === 1 ? 'bg-risk-red' : int.priority === 2 ? 'bg-warning' : 'bg-risk-yellow'
+                      )}>
+                        P{int.priority}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{int.athleteName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{int.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {interventions.length > 3 && (
+                    <p className="text-xs text-muted-foreground">+{interventions.length - 3} more</p>
+                  )}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-4"
+                onClick={() => handleTabChange('readiness')}
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                View All
+              </Button>
+            </div>
+
+            {/* Quick Links */}
+            <div className="rounded-xl border bg-card p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Links</h3>
+              <div className="space-y-2">
+                <Link href="/coach/athletes" className="block">
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Users className="w-4 h-4 mr-2" />
+                    View Athletes
+                  </Button>
+                </Link>
+                <Link href="/coach/assignments" className="block">
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <ClipboardList className="w-4 h-4 mr-2" />
+                    View Assignments
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
@@ -252,6 +439,8 @@ function ReadinessTab({
   athletes: HeatmapAthlete[];
   interventions: Intervention[];
 }) {
+  const [selectedSport, setSelectedSport] = useState<string>('all');
+
   const getReadinessColor = (score: number) => {
     if (score >= 85) return { bg: 'bg-risk-green', text: 'text-risk-green', border: 'border-risk-green' };
     if (score >= 70) return { bg: 'bg-risk-yellow', text: 'text-risk-yellow', border: 'border-risk-yellow' };
@@ -259,8 +448,18 @@ function ReadinessTab({
     return { bg: 'bg-risk-red', text: 'text-risk-red', border: 'border-risk-red' };
   };
 
-  // Calculate metrics from actual data
-  const latestScores = athletes.map(a => {
+  // Available sports for filter
+  const availableSports = Array.from(
+    new Set(athletes.map(a => a.sport).filter(Boolean))
+  ).sort();
+
+  // Filter athletes by sport
+  const filteredAthletes = selectedSport === 'all'
+    ? athletes
+    : athletes.filter(a => a.sport === selectedSport);
+
+  // Calculate metrics from filtered data
+  const latestScores = filteredAthletes.map(a => {
     const history = a.readinessHistory || [];
     return history[history.length - 1] || 0;
   });
@@ -268,12 +467,12 @@ function ReadinessTab({
     ? Math.round(latestScores.reduce((sum, s) => sum + s, 0) / latestScores.length)
     : 0;
   const highRisk = latestScores.filter(s => s < 70).length;
-  const declining = athletes.filter(a => a.trend === 'declining').length;
+  const declining = filteredAthletes.filter(a => a.trend === 'declining').length;
 
   // Empty state
   if (athletes.length === 0) {
     return (
-      <div className="card-elevated p-12 text-center animate-slide-up">
+      <div className="rounded-xl border bg-card p-12 text-center animate-slide-up">
         <Activity className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
         <h3 className="font-medium text-foreground mb-2">No Readiness Data Yet</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
@@ -286,9 +485,44 @@ function ReadinessTab({
 
   return (
     <>
+      {/* Sport Filter */}
+      {availableSports.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap animate-slide-up">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sport:</span>
+          <button
+            onClick={() => setSelectedSport('all')}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+              selectedSport === 'all'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            )}
+          >
+            All ({athletes.length})
+          </button>
+          {availableSports.map((sport) => {
+            const count = athletes.filter(a => a.sport === sport).length;
+            return (
+              <button
+                key={sport}
+                onClick={() => setSelectedSport(selectedSport === sport ? 'all' : sport)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                  selectedSport === sport
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {sport} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-slide-up">
-        <div className="card-elevated p-5">
+        <div className="rounded-xl border bg-card p-5">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Team Avg</p>
@@ -303,7 +537,7 @@ function ReadinessTab({
           </div>
         </div>
 
-        <div className="card-elevated p-5">
+        <div className="rounded-xl border bg-card p-5">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">High Risk</p>
@@ -327,7 +561,7 @@ function ReadinessTab({
           </div>
         </div>
 
-        <div className="card-elevated p-5">
+        <div className="rounded-xl border bg-card p-5">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Declining</p>
@@ -354,7 +588,7 @@ function ReadinessTab({
 
       {/* Intervention Queue */}
       {interventions.length > 0 && (
-        <div className="card-elevated overflow-hidden animate-slide-up">
+        <div className="rounded-xl border bg-card overflow-hidden animate-slide-up">
           <div className="p-4 border-b border-border flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-risk-red" />
@@ -405,7 +639,7 @@ function ReadinessTab({
       )}
 
       {/* Heatmap */}
-      <div className="card-elevated overflow-hidden animate-slide-up">
+      <div className="rounded-xl border bg-card overflow-hidden animate-slide-up">
         <div className="p-4 border-b border-border flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Activity className="w-5 h-5 text-primary" />
@@ -428,7 +662,7 @@ function ReadinessTab({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {athletes.map((athlete) => {
+              {filteredAthletes.map((athlete) => {
                 const history = athlete.readinessHistory || [];
                 const paddedHistory = [...Array(Math.max(0, 14 - history.length)).fill(null), ...history.slice(-14)];
 
@@ -609,7 +843,7 @@ function AlertsTab({
     <>
       {/* Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
-        <div className="card-elevated p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-risk-red/10 flex items-center justify-center">
               <AlertCircle className="w-5 h-5 text-risk-red" />
@@ -621,7 +855,7 @@ function AlertsTab({
           </div>
         </div>
 
-        <div className="card-elevated p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-warning" />
@@ -633,7 +867,7 @@ function AlertsTab({
           </div>
         </div>
 
-        <div className="card-elevated p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-risk-yellow/10 flex items-center justify-center">
               <Clock className="w-5 h-5 text-risk-yellow" />
@@ -645,7 +879,7 @@ function AlertsTab({
           </div>
         </div>
 
-        <div className="card-elevated p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-risk-green/10 flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5 text-risk-green" />
@@ -659,7 +893,7 @@ function AlertsTab({
       </div>
 
       {/* Filter Tabs */}
-      <div className="card-elevated overflow-hidden animate-slide-up">
+      <div className="rounded-xl border bg-card overflow-hidden animate-slide-up">
         <div className="flex items-center gap-2 p-4 border-b border-border overflow-x-auto">
           <button
             onClick={() => setFilter('all')}
@@ -818,6 +1052,33 @@ function AlertsTab({
         </ul>
       </div>
     </>
+  );
+}
+
+// ============================================
+// ANALYTICS TAB
+// ============================================
+function AnalyticsTab() {
+  return (
+    <div className="space-y-8 animate-slide-up">
+      {/* Team Pulse — trends, cohorts, correlations */}
+      <section>
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-primary" />
+          Team Pulse
+        </h2>
+        <TeamPulse />
+      </section>
+
+      {/* Performance Intelligence — readiness<->performance correlations */}
+      <section>
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Target className="w-5 h-5 text-primary" />
+          Performance Correlations
+        </h2>
+        <PerformanceIntelligence />
+      </section>
+    </div>
   );
 }
 

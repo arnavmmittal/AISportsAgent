@@ -6,8 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { login, getRoleBasedRoute } from '../../lib/auth';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function LoginScreen() {
+  const { colors, isDarkMode } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -93,11 +95,11 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary, Colors.accent]}
+        colors={[colors.primary, colors.secondary, colors.accent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientHeader}
@@ -129,28 +131,29 @@ export default function LoginScreen() {
       <Animated.View
         style={[
           styles.formContainer,
+          { backgroundColor: colors.card },
           {
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }, { translateX: shakeAnim }],
           },
         ]}
       >
-        <Text style={styles.welcomeText}>Welcome back!</Text>
-        <Text style={styles.welcomeSubtext}>Sign in to continue your journey</Text>
+        <Text style={[styles.welcomeText, { color: colors.textPrimary }]}>Welcome back!</Text>
+        <Text style={[styles.welcomeSubtext, { color: colors.textSecondary }]}>Sign in to continue your journey</Text>
 
         {error ? (
-          <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={20} color={Colors.error} />
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[styles.errorContainer, { backgroundColor: colors.errorLight }]}>
+            <Ionicons name="alert-circle" size={20} color={colors.error} />
+            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
           </View>
         ) : null}
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color={Colors.gray400} style={styles.inputIcon} />
+        <View style={[styles.inputContainer, { borderColor: colors.borderLight, backgroundColor: colors.cardElevated }]}>
+          <Ionicons name="mail-outline" size={20} color={colors.gray400} style={styles.inputIcon} />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: colors.textPrimary }]}
             placeholder="Email"
-            placeholderTextColor={Colors.gray400}
+            placeholderTextColor={colors.gray400}
             value={email}
             onChangeText={(text) => {
               setEmail(text);
@@ -162,12 +165,12 @@ export default function LoginScreen() {
           />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color={Colors.gray400} style={styles.inputIcon} />
+        <View style={[styles.inputContainer, { borderColor: colors.borderLight, backgroundColor: colors.cardElevated }]}>
+          <Ionicons name="lock-closed-outline" size={20} color={colors.gray400} style={styles.inputIcon} />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: colors.textPrimary }]}
             placeholder="Password"
-            placeholderTextColor={Colors.gray400}
+            placeholderTextColor={colors.gray400}
             value={password}
             onChangeText={(text) => {
               setPassword(text);
@@ -191,7 +194,7 @@ export default function LoginScreen() {
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color={Colors.gray400}
+              color={colors.gray400}
             />
           </TouchableOpacity>
         </View>
@@ -204,7 +207,7 @@ export default function LoginScreen() {
           }}
           disabled={isLoading}
         >
-          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+          <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot password?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -213,7 +216,7 @@ export default function LoginScreen() {
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={isLoading ? [Colors.gray400, Colors.gray500] : ['#2563eb', '#3b82f6']}
+            colors={isLoading ? [colors.gray400, colors.gray500] : ['#2563eb', '#3b82f6']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.button}
@@ -232,13 +235,13 @@ export default function LoginScreen() {
         </TouchableOpacity>
 
         <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+          <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+          <Text style={[styles.dividerText, { color: colors.textSecondary }]}>or</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
         </View>
 
         <TouchableOpacity
-          style={styles.demoButton}
+          style={[styles.demoButton, { borderColor: colors.accent, backgroundColor: colors.cardElevated }]}
           onPress={() => {
             setEmail('demo@athlete.com');
             setPassword('demo123');
@@ -246,8 +249,8 @@ export default function LoginScreen() {
           }}
           disabled={isLoading}
         >
-          <Ionicons name="flash" size={20} color={Colors.primary} />
-          <Text style={styles.demoButtonText}>Try Demo Account</Text>
+          <Ionicons name="flash" size={20} color={colors.primary} />
+          <Text style={[styles.demoButtonText, { color: colors.primary }]}>Try Demo Account</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -258,8 +261,8 @@ export default function LoginScreen() {
           }}
           disabled={isLoading}
         >
-          <Text style={styles.linkText}>
-            Don't have an account? <Text style={styles.linkTextBold}>Sign up</Text>
+          <Text style={[styles.linkText, { color: colors.textSecondary }]}>
+            Don't have an account? <Text style={[styles.linkTextBold, { color: colors.primary }]}>Sign up</Text>
           </Text>
         </TouchableOpacity>
       </Animated.View>

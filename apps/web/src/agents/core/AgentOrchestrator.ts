@@ -154,7 +154,6 @@ export class AgentOrchestrator {
             athleteId: context.athleteId,
             readinessScore: enrichedContext.readiness.score,
             riskLevel: enrichedContext.prediction?.riskLevel,
-            slumpDetected: enrichedContext.prediction?.slumpDetected,
           });
         } catch (error) {
           this.log('warn', 'Failed to fetch enriched context for streaming', {

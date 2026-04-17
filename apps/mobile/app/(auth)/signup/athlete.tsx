@@ -13,8 +13,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { AthleteSignupData } from '../../../types/auth';
 import { signupAthlete, getRoleBasedRoute } from '../../../lib/auth';
 import { Colors } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 export default function AthleteSignup() {
+  const { colors } = useTheme();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<AthleteSignupData>>({
@@ -218,7 +220,7 @@ export default function AthleteSignup() {
         </View>
 
         {/* Form Content */}
-        <View style={styles.formContainer}>
+        <View style={[styles.formContainer, { backgroundColor: colors.card }]}>
           {currentStep === 1 && (
             <Step1
               formData={formData}

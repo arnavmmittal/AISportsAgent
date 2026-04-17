@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { config } from '../../config';
 
 /**
@@ -13,6 +14,7 @@ import { config } from '../../config';
  * Accessed via deep link: flowsportscoach://reset-password?token=xxx&email=xxx
  */
 export default function ResetPasswordScreen() {
+  const { colors, isDarkMode } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ token?: string; email?: string }>();
   const token = params.token;
@@ -136,9 +138,9 @@ export default function ResetPasswordScreen() {
   // Invalid token state
   if (!token) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
         <LinearGradient
-          colors={[Colors.error, '#ef4444', Colors.warning]}
+          colors={[colors.error, '#ef4444', colors.warning]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradientHeader}
@@ -152,8 +154,8 @@ export default function ResetPasswordScreen() {
           </View>
         </LinearGradient>
 
-        <View style={[styles.formContainer, styles.centeredContent]}>
-          <Text style={styles.invalidText}>
+        <View style={[styles.formContainer, styles.centeredContent, { backgroundColor: colors.card }]}>
+          <Text style={[styles.invalidText, { color: colors.textSecondary }]}>
             This password reset link is invalid or has expired. Please request a new one.
           </Text>
 
@@ -183,8 +185,8 @@ export default function ResetPasswordScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
           >
-            <Ionicons name="arrow-back" size={16} color={Colors.textSecondary} />
-            <Text style={styles.linkText}>Back to sign in</Text>
+            <Ionicons name="arrow-back" size={16} color={colors.textSecondary} />
+            <Text style={[styles.linkText, { color: colors.textSecondary }]}>Back to sign in</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -193,11 +195,11 @@ export default function ResetPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={[Colors.primary, Colors.secondary, Colors.accent]}
+        colors={[colors.primary, colors.secondary, colors.accent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientHeader}
@@ -227,7 +229,7 @@ export default function ResetPasswordScreen() {
       </LinearGradient>
 
       <ScrollView
-        style={styles.scrollView}
+        style={[styles.scrollView, { backgroundColor: colors.card }]}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
@@ -244,10 +246,10 @@ export default function ResetPasswordScreen() {
             // Success State
             <View style={styles.successContainer}>
               <View style={styles.successIconContainer}>
-                <Ionicons name="checkmark-circle" size={64} color={Colors.success} />
+                <Ionicons name="checkmark-circle" size={64} color={colors.success} />
               </View>
-              <Text style={styles.successTitle}>Password Reset!</Text>
-              <Text style={styles.successText}>
+              <Text style={[styles.successTitle, { color: colors.textPrimary }]}>Password Reset!</Text>
+              <Text style={[styles.successText, { color: colors.textSecondary }]}>
                 Your password has been changed successfully. You can now sign in with your new password.
               </Text>
 
@@ -273,27 +275,27 @@ export default function ResetPasswordScreen() {
           ) : (
             // Form State
             <>
-              <Text style={styles.welcomeText}>Set your new password</Text>
+              <Text style={[styles.welcomeText, { color: colors.textPrimary }]}>Set your new password</Text>
               {email && (
-                <Text style={styles.welcomeSubtext}>
-                  for <Text style={styles.emailHighlight}>{email}</Text>
+                <Text style={[styles.welcomeSubtext, { color: colors.textSecondary }]}>
+                  for <Text style={[styles.emailHighlight, { color: colors.textPrimary }]}>{email}</Text>
                 </Text>
               )}
 
               {error ? (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={20} color={Colors.error} />
-                  <Text style={styles.errorText}>{error}</Text>
+                <View style={[styles.errorContainer, { backgroundColor: colors.errorLight }]}>
+                  <Ionicons name="alert-circle" size={20} color={colors.error} />
+                  <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                 </View>
               ) : null}
 
               {/* New Password Input */}
-              <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color={Colors.gray400} style={styles.inputIcon} />
+              <View style={[styles.inputContainer, { borderColor: colors.borderLight, backgroundColor: colors.cardElevated }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.gray400} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="New password"
-                  placeholderTextColor={Colors.gray400}
+                  placeholderTextColor={colors.gray400}
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text);
@@ -314,7 +316,7 @@ export default function ResetPasswordScreen() {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color={Colors.gray400}
+                    color={colors.gray400}
                   />
                 </TouchableOpacity>
               </View>
@@ -328,10 +330,10 @@ export default function ResetPasswordScreen() {
                   { check: passwordChecks.hasNumber, label: 'One number' },
                 ].map(({ check, label }) => (
                   <View key={label} style={styles.requirementRow}>
-                    <View style={[styles.requirementDot, check && styles.requirementDotActive]}>
+                    <View style={[styles.requirementDot, { backgroundColor: colors.gray200 }, check && [styles.requirementDotActive, { backgroundColor: colors.success }]]}>
                       {check && <Ionicons name="checkmark" size={10} color="#fff" />}
                     </View>
-                    <Text style={[styles.requirementText, check && styles.requirementTextActive]}>
+                    <Text style={[styles.requirementText, { color: colors.textSecondary }, check && [styles.requirementTextActive, { color: colors.success }]]}>
                       {label}
                     </Text>
                   </View>
@@ -339,12 +341,12 @@ export default function ResetPasswordScreen() {
               </View>
 
               {/* Confirm Password Input */}
-              <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color={Colors.gray400} style={styles.inputIcon} />
+              <View style={[styles.inputContainer, { borderColor: colors.borderLight, backgroundColor: colors.cardElevated }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.gray400} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="Confirm password"
-                  placeholderTextColor={Colors.gray400}
+                  placeholderTextColor={colors.gray400}
                   value={confirmPassword}
                   onChangeText={(text) => {
                     setConfirmPassword(text);
@@ -365,7 +367,7 @@ export default function ResetPasswordScreen() {
                   <Ionicons
                     name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color={Colors.gray400}
+                    color={colors.gray400}
                   />
                 </TouchableOpacity>
               </View>
@@ -375,9 +377,9 @@ export default function ResetPasswordScreen() {
                   <Ionicons
                     name={passwordsMatch ? 'checkmark-circle' : 'close-circle'}
                     size={16}
-                    color={passwordsMatch ? Colors.success : Colors.error}
+                    color={passwordsMatch ? colors.success : colors.error}
                   />
-                  <Text style={[styles.matchText, passwordsMatch ? styles.matchTextSuccess : styles.matchTextError]}>
+                  <Text style={[styles.matchText, passwordsMatch ? [styles.matchTextSuccess, { color: colors.success }] : [styles.matchTextError, { color: colors.error }]]}>
                     {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
                   </Text>
                 </View>
@@ -391,7 +393,7 @@ export default function ResetPasswordScreen() {
                 <LinearGradient
                   colors={
                     isLoading || !isPasswordValid || !passwordsMatch
-                      ? [Colors.gray400, Colors.gray500]
+                      ? [colors.gray400, colors.gray500]
                       : ['#2563eb', '#3b82f6']
                   }
                   start={{ x: 0, y: 0 }}
@@ -419,8 +421,8 @@ export default function ResetPasswordScreen() {
                 }}
                 disabled={isLoading}
               >
-                <Ionicons name="arrow-back" size={16} color={Colors.textSecondary} />
-                <Text style={styles.linkText}>Back to sign in</Text>
+                <Ionicons name="arrow-back" size={16} color={colors.textSecondary} />
+                <Text style={[styles.linkText, { color: colors.textSecondary }]}>Back to sign in</Text>
               </TouchableOpacity>
             </>
           )}

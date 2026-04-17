@@ -4,7 +4,7 @@
  * Central export for all tools available to the agent graph.
  * Tools are organized into three categories:
  * - Athlete Tools: Core CRUD operations (mood, goals, games, knowledge)
- * - Analytics Tools: ML-powered predictions (forecast, burnout, patterns)
+ * - Analytics Tools: Readiness assessment and risk detection
  * - Structured Output Tools: Widget generation (action plans, drills, routines)
  */
 

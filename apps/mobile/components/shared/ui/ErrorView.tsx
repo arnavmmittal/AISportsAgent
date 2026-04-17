@@ -6,6 +6,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface ErrorViewProps {
   title?: string;
@@ -22,6 +23,7 @@ export function ErrorView({
   actionLabel = 'Try Again',
   onAction
 }: ErrorViewProps) {
+  const { colors } = useTheme();
   // Icon selection based on error type
   const iconName = {
     network: 'cloud-offline-outline' as const,
@@ -30,14 +32,14 @@ export function ErrorView({
   }[icon];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.iconContainer}>
-        <Ionicons name={iconName} size={64} color={Colors.error} />
+        <Ionicons name={iconName} size={64} color={colors.error} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+      <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
       {onAction && (
-        <TouchableOpacity style={styles.actionButton} onPress={onAction} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.primary }]} onPress={onAction} activeOpacity={0.8}>
           <Ionicons name="refresh" size={20} color="#fff" style={styles.actionIcon} />
           <Text style={styles.actionText}>{actionLabel}</Text>
         </TouchableOpacity>

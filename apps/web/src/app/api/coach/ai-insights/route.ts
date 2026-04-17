@@ -237,9 +237,20 @@ export async function GET(req: NextRequest) {
         createdAt: { gte: sevenDaysAgo },
       },
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        athleteId: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        energy: true,
+        sleep: true,
+        notes: true,
+        tags: true,
+        contextTags: true,
+        createdAt: true,
         Athlete: {
-          include: {
+          select: {
             User: { select: { name: true } },
           },
         },

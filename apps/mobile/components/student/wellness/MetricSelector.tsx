@@ -18,8 +18,9 @@ interface MetricSelectorProps {
   colorScale: 'positive' | 'negative';
 }
 
-const POSITIVE_COLORS = ['#EF4444', '#F97316', '#EAB308', '#84CC16', '#22C55E'];
-const NEGATIVE_COLORS = ['#22C55E', '#84CC16', '#EAB308', '#F97316', '#EF4444'];
+// Muted readiness traffic-light palette (softer on dark backgrounds)
+const POSITIVE_COLORS = ['#DC5454', '#D4732E', '#E5A828', '#6DA544', '#34B87A'];
+const NEGATIVE_COLORS = ['#34B87A', '#6DA544', '#E5A828', '#D4732E', '#DC5454'];
 
 export default function MetricSelector({
   label,

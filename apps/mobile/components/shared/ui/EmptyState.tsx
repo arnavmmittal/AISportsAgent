@@ -5,6 +5,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface ActionButton {
   label: string;
@@ -19,24 +20,25 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, message, actionButtons }: EmptyStateProps) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.iconContainer}>
-        <Ionicons name={icon} size={64} color={Colors.gray400} />
+        <Ionicons name={icon} size={64} color={colors.gray400} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+      <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
 
       {actionButtons && actionButtons.length > 0 && (
         <View style={styles.actionsContainer}>
           {actionButtons.map((button, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.actionButton}
+              style={[styles.actionButton, { backgroundColor: colors.card, borderColor: colors.gray200 }]}
               onPress={button.onPress}
               activeOpacity={0.7}
             >
-              <Text style={styles.actionButtonText}>{button.label}</Text>
+              <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>{button.label}</Text>
             </TouchableOpacity>
           ))}
         </View>

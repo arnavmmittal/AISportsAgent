@@ -11,10 +11,8 @@ interface MoodLogInput {
   mood: number;
   confidence: number | null;
   stress: number;
+  energy: number | null;
   sleep: number | null;
-  sleepQuality: number | null;
-  soreness: number | null;
-  rpe: number | null;
   contextTags: string[];
   createdAt: Date;
   notes: string | null;
@@ -155,7 +153,7 @@ function calculateGrowthMetric(
     const recent = logs.slice(0, 7);
     const withNotes = recent.filter(l => l.notes && l.notes.trim().length > 10).length;
     const withTags = recent.filter(l => l.contextTags.length > 0).length;
-    const withDetails = recent.filter(l => l.sleepQuality != null || l.soreness != null || l.rpe != null).length;
+    const withDetails = recent.filter(l => l.energy != null || l.sleep != null).length;
     return ((withNotes + withTags + withDetails) / (recent.length * 3)) * 100;
   })();
 

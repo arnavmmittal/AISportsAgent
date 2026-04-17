@@ -132,6 +132,15 @@ module.exports = {
           lost: 'hsl(var(--archetype-lost))',
           perfectionist: 'hsl(var(--archetype-perfectionist))',
         },
+        /* Shorthand aliases for legacy risk color usage */
+        'risk-green': 'hsl(var(--risk-low))',
+        'risk-yellow': 'hsl(var(--risk-moderate))',
+        'risk-red': 'hsl(var(--risk-critical))',
+        'risk-green-bg': 'hsl(var(--risk-low-bg))',
+        'risk-yellow-bg': 'hsl(var(--risk-moderate-bg))',
+        'risk-red-bg': 'hsl(var(--risk-critical-bg))',
+        /* Chrome = muted foreground alias */
+        chrome: 'hsl(var(--muted-foreground))',
         /* Sidebar */
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar))',

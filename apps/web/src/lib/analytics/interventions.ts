@@ -108,6 +108,19 @@ export async function generateInterventionRecommendations(
       createdAt: 'desc',
     },
     take: 7,
+    select: {
+      id: true,
+      athleteId: true,
+      mood: true,
+      confidence: true,
+      stress: true,
+      energy: true,
+      sleep: true,
+      notes: true,
+      tags: true,
+      contextTags: true,
+      createdAt: true,
+    },
   });
 
   // Calculate mood trend (improving/declining/stable)
@@ -346,6 +359,19 @@ export async function getCoachInterventionQueue(coachId: string): Promise<Interv
         createdAt: { gte: sevenDaysAgo },
       },
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        athleteId: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        energy: true,
+        sleep: true,
+        notes: true,
+        tags: true,
+        contextTags: true,
+        createdAt: true,
+      },
     }),
     // All chat sessions with message counts
     prisma.chatSession.findMany({

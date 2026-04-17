@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 import { getSchedule, GameSchedule } from '../../lib/services/schedule';
 import { PreGameSession } from './PreGameSession';
 
@@ -31,6 +32,7 @@ interface PreGameCardProps {
 }
 
 export function PreGameCard({ onSessionComplete }: PreGameCardProps) {
+  const { colors } = useTheme();
   const router = useRouter();
   const [upcomingGame, setUpcomingGame] = useState<GameSchedule | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export function PreGameCard({ onSessionComplete }: PreGameCardProps) {
           colors={['rgba(99, 102, 241, 0.2)', 'rgba(139, 92, 246, 0.2)']}
           style={styles.loadingGradient}
         >
-          <ActivityIndicator color={Colors.primary} />
+          <ActivityIndicator color={colors.primary} />
         </LinearGradient>
       </View>
     );
@@ -90,15 +92,15 @@ export function PreGameCard({ onSessionComplete }: PreGameCardProps) {
         }}
         activeOpacity={0.8}
       >
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIconContainer}>
-            <Ionicons name="calendar-outline" size={24} color={Colors.gray400} />
+        <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.emptyIconContainer, { backgroundColor: colors.cardElevated }]}>
+            <Ionicons name="calendar-outline" size={24} color={colors.gray400} />
           </View>
           <View style={styles.emptyContent}>
-            <Text style={styles.emptyTitle}>No Upcoming Games</Text>
-            <Text style={styles.emptySubtitle}>Tap to add your schedule</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No Upcoming Games</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textTertiary }]}>Tap to add your schedule</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+          <Ionicons name="chevron-forward" size={20} color={colors.gray400} />
         </View>
       </TouchableOpacity>
     );
@@ -159,7 +161,7 @@ export function PreGameCard({ onSessionComplete }: PreGameCardProps) {
             </LinearGradient>
 
             <View style={styles.headerInfo}>
-              <Text style={styles.opponent}>vs {upcomingGame.opponent}</Text>
+              <Text style={[styles.opponent, { color: colors.textPrimary }]}>vs {upcomingGame.opponent}</Text>
               <View style={styles.badges}>
                 <View
                   style={[
@@ -192,8 +194,8 @@ export function PreGameCard({ onSessionComplete }: PreGameCardProps) {
           {/* Game Details */}
           <View style={styles.details}>
             <View style={styles.detailItem}>
-              <Ionicons name="calendar" size={14} color={Colors.gray400} />
-              <Text style={styles.detailText}>
+              <Ionicons name="calendar" size={14} color={colors.gray400} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {gameDate.toLocaleDateString('en-US', {
                   weekday: 'short',
                   month: 'short',
@@ -202,15 +204,15 @@ export function PreGameCard({ onSessionComplete }: PreGameCardProps) {
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons name="time" size={14} color={Colors.gray400} />
-              <Text style={styles.detailText}>
+              <Ionicons name="time" size={14} color={colors.gray400} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {gameDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
               </Text>
             </View>
             {upcomingGame.location && (
               <View style={styles.detailItem}>
-                <Ionicons name="location" size={14} color={Colors.gray400} />
-                <Text style={styles.detailText} numberOfLines={1}>
+                <Ionicons name="location" size={14} color={colors.gray400} />
+                <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={1}>
                   {upcomingGame.location}
                 </Text>
               </View>
@@ -241,7 +243,7 @@ export function PreGameCard({ onSessionComplete }: PreGameCardProps) {
             ) : (
               <View style={styles.statusRow}>
                 <Ionicons name="sparkles" size={18} color="#818cf8" />
-                <Text style={styles.statusText}>
+                <Text style={[styles.statusText, { color: colors.textSecondary }]}>
                   {daysUntilGame > 0
                     ? `${daysUntilGame} day${daysUntilGame !== 1 ? 's' : ''} until game day`
                     : `${hoursUntilGame} hours until game time`}

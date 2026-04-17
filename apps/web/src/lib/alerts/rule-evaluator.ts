@@ -128,6 +128,19 @@ async function evaluateRule(
         const latestMoodLog = await prisma.moodLog.findFirst({
           where: { athleteId: athlete.userId },
           orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            athleteId: true,
+            mood: true,
+            confidence: true,
+            stress: true,
+            energy: true,
+            sleep: true,
+            notes: true,
+            tags: true,
+            contextTags: true,
+            createdAt: true,
+          },
         });
 
         const daysSinceLog = latestMoodLog

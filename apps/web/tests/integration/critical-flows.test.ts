@@ -210,6 +210,19 @@ describe('Integration: Multi-Tenant Isolation', () => {
           User: { schoolId: school2Id },
         },
       },
+      select: {
+        id: true,
+        athleteId: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        energy: true,
+        sleep: true,
+        notes: true,
+        tags: true,
+        contextTags: true,
+        createdAt: true,
+      },
     });
 
     expect(crossTenantLogs).toHaveLength(0);

@@ -7,13 +7,15 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function Welcome() {
+  const { colors } = useTheme();
   const router = useRouter();
 
   return (
     <LinearGradient
-      colors={[Colors.primary, Colors.secondary, Colors.accent]}
+      colors={[colors.primary, colors.secondary, colors.accent]}
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -31,23 +33,23 @@ export default function Welcome() {
 
           <View style={styles.roleCardsContainer}>
             <TouchableOpacity
-              style={styles.roleCard}
+              style={[styles.roleCard, { backgroundColor: colors.card, borderColor: colors.chrome + '40' }]}
               onPress={() => router.push('/(auth)/signup/athlete')}
             >
               <Text style={styles.roleIcon}>🏀</Text>
-              <Text style={styles.roleTitle}>ATHLETE</Text>
-              <Text style={styles.roleDescription}>
+              <Text style={[styles.roleTitle, { color: colors.secondary }]}>ATHLETE</Text>
+              <Text style={[styles.roleDescription, { color: colors.textSecondary }]}>
                 Get 24/7 mental performance support
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.roleCard}
+              style={[styles.roleCard, { backgroundColor: colors.card, borderColor: colors.chrome + '40' }]}
               onPress={() => router.push('/(auth)/signup/coach')}
             >
               <Text style={styles.roleIcon}>🎓</Text>
-              <Text style={styles.roleTitle}>COACH</Text>
-              <Text style={styles.roleDescription}>
+              <Text style={[styles.roleTitle, { color: colors.secondary }]}>COACH</Text>
+              <Text style={[styles.roleDescription, { color: colors.textSecondary }]}>
                 Monitor your athletes' mental health and team insights
               </Text>
             </TouchableOpacity>

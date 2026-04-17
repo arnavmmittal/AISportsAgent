@@ -24,7 +24,23 @@ export async function generateCoachNudges(coachId: string): Promise<Nudge[]> {
         Athlete: {
           include: {
             User: { select: { name: true } },
-            MoodLog: { orderBy: { createdAt: 'desc' }, take: 14 },
+            MoodLog: {
+              orderBy: { createdAt: 'desc' },
+              take: 14,
+              select: {
+                id: true,
+                athleteId: true,
+                mood: true,
+                confidence: true,
+                stress: true,
+                energy: true,
+                sleep: true,
+                notes: true,
+                tags: true,
+                contextTags: true,
+                createdAt: true,
+              },
+            },
           },
         },
       },

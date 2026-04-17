@@ -23,9 +23,8 @@ import { apiClient, getStoredUserRole } from '../../lib/auth';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export default function SettingsScreen() {
-  const { theme, toggleTheme, isDarkMode } = useTheme();
-  const [consentChatSummaries, setConsentChatSummaries] = useState(false);
-  const [consentCoachView, setConsentCoachView] = useState(false);
+  const { theme, toggleTheme, isDarkMode, colors } = useTheme();
+  const [consentChatSummaries, setConsentChatSummaries] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<'ATHLETE' | 'COACH' | 'ADMIN' | null>(null);
 
@@ -94,8 +93,7 @@ export default function SettingsScreen() {
       const response = await apiClient.getConsentSettings();
       const consent = response?.consent;
       if (consent) {
-        setConsentChatSummaries(consent.consentChatSummaries ?? false);
-        setConsentCoachView(consent.consentCoachView ?? true);
+        setConsentChatSummaries(consent.consentChatSummaries ?? true);
       }
     } catch (error) {
       console.error('Failed to load consent settings:', error);
@@ -104,15 +102,13 @@ export default function SettingsScreen() {
     }
   };
 
-  const updateConsent = async (field: 'consentChatSummaries' | 'consentCoachView', value: boolean) => {
+  const updateConsent = async (field: 'consentChatSummaries', value: boolean) => {
     try {
       const response = await apiClient.updateConsentSettings({
         [field]: value,
       });
 
-      // Update local state with response
       setConsentChatSummaries(response.consent.consentChatSummaries);
-      setConsentCoachView(response.consent.consentCoachView);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
@@ -148,37 +144,6 @@ export default function SettingsScreen() {
             text: 'Stop Sharing',
             style: 'destructive',
             onPress: () => updateConsent('consentChatSummaries', false),
-          },
-        ]
-      );
-    }
-  };
-
-  const handleCoachViewToggle = (value: boolean) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    if (value) {
-      Alert.alert(
-        'Allow Coach Analytics',
-        'This allows your coach to view your mood trends, goal progress, and performance metrics in their dashboard. Chat content remains private.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Allow',
-            onPress: () => updateConsent('consentCoachView', true),
-          },
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Hide Analytics from Coach',
-        'Your coach will no longer see your personal metrics and trends.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Hide',
-            style: 'destructive',
-            onPress: () => updateConsent('consentCoachView', false),
           },
         ]
       );
@@ -267,9 +232,14 @@ export default function SettingsScreen() {
     ]);
   };
 
+  // Theme-aware card gradient
+  const cardGradientColors: [string, string] = isDarkMode
+    ? ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']
+    : ['rgba(0,0,0,0.03)', 'rgba(0,0,0,0.01)'];
+
   const SettingItem = ({
     icon,
-    iconColor = 'rgba(255,255,255,0.7)',
+    iconColor = colors.textSecondary,
     title,
     subtitle,
     onPress,
@@ -298,60 +268,41 @@ export default function SettingsScreen() {
       disabled={!onPress}
     >
       <View style={styles.settingLeft}>
-        <Ionicons name={icon} size={24} color={destructive ? '#ef4444' : iconColor} />
+        <Ionicons name={icon} size={24} color={destructive ? colors.error : iconColor} />
         <View style={styles.settingTextContainer}>
-          <Text style={[styles.settingTitle, destructive && styles.settingTitleDestructive]}>
+          <Text style={[styles.settingTitle, { color: colors.textPrimary }, destructive && { color: colors.error }]}>
             {title}
           </Text>
-          {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+          {subtitle && <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
         </View>
       </View>
       {rightComponent}
       {showChevron && !rightComponent && (
-        <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
+        <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
       )}
     </TouchableOpacity>
   );
 
   const SectionHeader = ({ title }: { title: string }) => (
-    <Text style={styles.sectionHeader}>{title}</Text>
+    <Text style={[styles.sectionHeader, { color: colors.textTertiary }]}>{title}</Text>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Dark gradient background */}
-      <LinearGradient
-        colors={[Colors.background, Colors.card, Colors.cardElevated]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-      {/* Header with gradient */}
-      <View style={styles.header}>
-        <LinearGradient
-          colors={[Colors.primary, Colors.secondary, Colors.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.headerGradient}
-        >
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.cardElevated }]}>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <View style={styles.iconContainer}>
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
-                  style={styles.iconGradient}
-                >
-                  <Ionicons name="person-circle" size={28} color="#fff" />
-                </LinearGradient>
+              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? 'rgba(212,115,46,0.12)' : 'rgba(201,93,18,0.08)' }]}>
+                  <Ionicons name="person-circle" size={28} color={colors.primary} />
               </View>
               <View>
-                <Text style={styles.headerTitle}>Settings</Text>
-                <Text style={styles.headerSubtitle}>Manage your preferences</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Settings</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Manage your preferences</Text>
               </View>
             </View>
           </View>
-        </LinearGradient>
       </View>
 
       <ScrollView
@@ -363,50 +314,71 @@ export default function SettingsScreen() {
         {userRole === 'ATHLETE' && (
           <>
             <SectionHeader title="Privacy & Coach Access" />
+            {/* Always Shared */}
             <View style={styles.card}>
               <LinearGradient
-                colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-                style={styles.cardGradient}
+                colors={[`${colors.primary}20`, `${colors.primary}10`]}
+                style={[styles.cardGradient, { borderColor: colors.border }]}
+              >
+                <View style={styles.alwaysSharedHeader}>
+                  <Ionicons name="shield-checkmark" size={18} color={colors.accent} />
+                  <Text style={[styles.alwaysSharedTitle, { color: colors.textPrimary }]}>Always Shared with Coach</Text>
+                </View>
+                <View style={styles.alwaysSharedItem}>
+                  <Ionicons name="checkmark-circle" size={16} color={colors.accent} />
+                  <Text style={[styles.alwaysSharedText, { color: colors.textSecondary }]}>Readiness scores & mood trends</Text>
+                </View>
+                <View style={styles.alwaysSharedItem}>
+                  <Ionicons name="checkmark-circle" size={16} color={colors.accent} />
+                  <Text style={[styles.alwaysSharedText, { color: colors.textSecondary }]}>Goal progress & check-in data</Text>
+                </View>
+                <View style={styles.alwaysSharedItem}>
+                  <Ionicons name="warning" size={16} color={colors.warning} />
+                  <Text style={[styles.alwaysSharedText, { color: colors.textSecondary }]}>Crisis alerts (for your safety)</Text>
+                </View>
+              </LinearGradient>
+            </View>
+            {/* Optional: Chat Summaries */}
+            <View style={styles.card}>
+              <LinearGradient
+                colors={[`${colors.textPrimary}15`, `${colors.textPrimary}08`]}
+                style={[styles.cardGradient, { borderColor: colors.border }]}
               >
                 <SettingItem
                   icon="eye-outline"
-                  iconColor={Colors.accent}
+                  iconColor={colors.accent}
                   title="Share Chat Summaries"
                   subtitle={
                     consentChatSummaries
-                      ? 'Coach can view weekly summaries'
-                      : 'Coach cannot view summaries (recommended)'
+                      ? 'Coach sees weekly topic summaries (not messages)'
+                      : 'Chat topics are private'
                   }
                   rightComponent={
                     <Switch
                       value={consentChatSummaries}
                       onValueChange={handleChatSummaryToggle}
-                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: Colors.accent }}
+                      trackColor={{ false: `${colors.textPrimary}33`, true: colors.accent }}
                       thumbColor={consentChatSummaries ? '#fff' : '#f4f3f4'}
-                      ios_backgroundColor="rgba(255,255,255,0.2)"
+                      ios_backgroundColor={`${colors.textPrimary}33`}
                     />
                   }
                 />
-                <View style={styles.separator} />
-                <SettingItem
-                  icon="analytics-outline"
-                  iconColor="#34d399"
-                  title="Share Analytics"
-                  subtitle={
-                    consentCoachView
-                      ? 'Coach can view mood & goal trends'
-                      : 'Analytics are private'
-                  }
-                  rightComponent={
-                    <Switch
-                      value={consentCoachView}
-                      onValueChange={handleCoachViewToggle}
-                      trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#10b981' }}
-                      thumbColor={consentCoachView ? '#fff' : '#f4f3f4'}
-                      ios_backgroundColor="rgba(255,255,255,0.2)"
-                    />
-                  }
-                />
+              </LinearGradient>
+            </View>
+            {/* Never Shared */}
+            <View style={styles.card}>
+              <LinearGradient
+                colors={[`${colors.error}15`, `${colors.error}08`]}
+                style={[styles.cardGradient, { borderColor: colors.border }]}
+              >
+                <View style={styles.alwaysSharedHeader}>
+                  <Ionicons name="lock-closed" size={18} color={colors.error} />
+                  <Text style={[styles.alwaysSharedTitle, { color: colors.textPrimary }]}>Never Shared</Text>
+                </View>
+                <View style={styles.alwaysSharedItem}>
+                  <Ionicons name="lock-closed" size={16} color={colors.error} />
+                  <Text style={[styles.alwaysSharedText, { color: colors.textSecondary }]}>Your chat messages are private & encrypted</Text>
+                </View>
               </LinearGradient>
             </View>
           </>
@@ -416,12 +388,12 @@ export default function SettingsScreen() {
         <SectionHeader title="Profile" />
         <View style={styles.card}>
           <LinearGradient
-            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-            style={styles.cardGradient}
+            colors={cardGradientColors}
+            style={[styles.cardGradient, { borderColor: colors.border }]}
           >
             <SettingItem
               icon="person-outline"
-              iconColor={Colors.accent}
+              iconColor={colors.accent}
               title="Edit Profile"
               subtitle={profile ? `${profile.name} • ${profile.sport || 'No sport'}` : 'Update your information'}
               onPress={handleProfileEdit}
@@ -433,8 +405,8 @@ export default function SettingsScreen() {
         <SectionHeader title="Notifications" />
         <View style={styles.card}>
           <LinearGradient
-            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-            style={styles.cardGradient}
+            colors={cardGradientColors}
+            style={[styles.cardGradient, { borderColor: colors.border }]}
           >
             <SettingItem
               icon="notifications-outline"
@@ -445,13 +417,13 @@ export default function SettingsScreen() {
                 <Switch
                   value={notifications.pushEnabled}
                   onValueChange={(value) => updateNotification('pushEnabled', value)}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#60a5fa' }}
+                  trackColor={{ false: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', true: '#60a5fa' }}
                   thumbColor={notifications.pushEnabled ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                  ios_backgroundColor={isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}
                 />
               }
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
             <SettingItem
               icon="checkmark-circle-outline"
               iconColor="#10b981"
@@ -461,13 +433,13 @@ export default function SettingsScreen() {
                 <Switch
                   value={notifications.assignmentNotifs}
                   onValueChange={(value) => updateNotification('assignmentNotifs', value)}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#10b981' }}
+                  trackColor={{ false: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', true: '#10b981' }}
                   thumbColor={notifications.assignmentNotifs ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                  ios_backgroundColor={isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}
                 />
               }
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
             <SettingItem
               icon="trophy-outline"
               iconColor="#f59e0b"
@@ -477,25 +449,25 @@ export default function SettingsScreen() {
                 <Switch
                   value={notifications.goalMilestones}
                   onValueChange={(value) => updateNotification('goalMilestones', value)}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#f59e0b' }}
+                  trackColor={{ false: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', true: '#f59e0b' }}
                   thumbColor={notifications.goalMilestones ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                  ios_backgroundColor={isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}
                 />
               }
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
             <SettingItem
               icon="chatbubble-outline"
-              iconColor={Colors.accent}
+              iconColor={colors.accent}
               title="Chat Messages"
               subtitle={notifications.chatMessages ? 'Get notified about messages' : 'No chat notifications'}
               rightComponent={
                 <Switch
                   value={notifications.chatMessages}
                   onValueChange={(value) => updateNotification('chatMessages', value)}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: Colors.accent }}
+                  trackColor={{ false: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', true: colors.accent }}
                   thumbColor={notifications.chatMessages ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                  ios_backgroundColor={isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}
                 />
               }
             />
@@ -506,12 +478,12 @@ export default function SettingsScreen() {
         <SectionHeader title="App Settings" />
         <View style={styles.card}>
           <LinearGradient
-            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-            style={styles.cardGradient}
+            colors={cardGradientColors}
+            style={[styles.cardGradient, { borderColor: colors.border }]}
           >
             <SettingItem
               icon={isDarkMode ? "moon" : "sunny"}
-              iconColor={isDarkMode ? Colors.accent : "#f59e0b"}
+              iconColor={isDarkMode ? colors.accent : "#f59e0b"}
               title="Dark Mode"
               subtitle={isDarkMode ? 'Reduce eye strain in low light' : 'Switch to dark theme'}
               rightComponent={
@@ -521,13 +493,13 @@ export default function SettingsScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     toggleTheme();
                   }}
-                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: Colors.accent }}
+                  trackColor={{ false: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', true: colors.accent }}
                   thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
-                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                  ios_backgroundColor={isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}
                 />
               }
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
             <SettingItem
               icon="language-outline"
               iconColor="#60a5fa"
@@ -542,8 +514,8 @@ export default function SettingsScreen() {
         <SectionHeader title="Support" />
         <View style={styles.card}>
           <LinearGradient
-            colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-            style={styles.cardGradient}
+            colors={cardGradientColors}
+            style={[styles.cardGradient, { borderColor: colors.border }]}
           >
             <SettingItem
               icon="help-circle-outline"
@@ -554,7 +526,7 @@ export default function SettingsScreen() {
                 Alert.alert('Help Center', 'Contact support@flowsportscoach.com for assistance')
               }
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
             <SettingItem
               icon="information-circle-outline"
               iconColor="#60a5fa"
@@ -567,10 +539,10 @@ export default function SettingsScreen() {
                 )
               }
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
             <SettingItem
               icon="shield-outline"
-              iconColor={Colors.accent}
+              iconColor={colors.accent}
               title="Privacy Policy"
               onPress={() => Alert.alert('Coming Soon', 'Privacy policy will be available soon')}
             />
@@ -581,7 +553,7 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <LinearGradient
             colors={['rgba(239, 68, 68, 0.15)', 'rgba(239, 68, 68, 0.1)']}
-            style={styles.cardGradient}
+            style={[styles.cardGradient, { borderColor: colors.border }]}
           >
             <SettingItem
               icon="log-out-outline"
@@ -607,19 +579,18 @@ export default function SettingsScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
         >
-          <LinearGradient
-            colors={[Colors.background, Colors.card, Colors.cardElevated]}
-            style={styles.modalGradient}
+          <View
+            style={[styles.modalGradient, { backgroundColor: colors.background }]}
           >
             {/* Modal Header */}
-            <View style={styles.modalHeader}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
                 onPress={() => setShowProfileModal(false)}
                 style={styles.modalCloseButton}
               >
-                <Ionicons name="close" size={28} color="#fff" />
+                <Ionicons name="close" size={28} color={colors.textPrimary} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Edit Profile</Text>
               <TouchableOpacity
                 onPress={handleSaveProfile}
                 style={styles.modalSaveButton}
@@ -631,13 +602,13 @@ export default function SettingsScreen() {
             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
               {/* Name */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Name</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Name</Text>
                 <TextInput
-                  style={styles.formInput}
+                  style={[styles.formInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.03)' }]}
                   value={editedProfile.name || ''}
                   onChangeText={(text) => setEditedProfile({ ...editedProfile, name: text })}
                   placeholder="Your name"
-                  placeholderTextColor="rgba(255,255,255,0.4)"
+                  placeholderTextColor={colors.textTertiary}
                 />
               </View>
 
@@ -645,25 +616,25 @@ export default function SettingsScreen() {
               {userRole === 'ATHLETE' && (
                 <>
                   <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Sport</Text>
+                    <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Sport</Text>
                     <TextInput
-                      style={styles.formInput}
+                      style={[styles.formInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.03)' }]}
                       value={editedProfile.sport || ''}
                       onChangeText={(text) => setEditedProfile({ ...editedProfile, sport: text })}
                       placeholder="Your sport"
-                      placeholderTextColor="rgba(255,255,255,0.4)"
+                      placeholderTextColor={colors.textTertiary}
                     />
                   </View>
 
                   {/* Year */}
                   <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Year</Text>
-                    <View style={styles.pickerContainer}>
+                    <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Year</Text>
+                    <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.03)' }]}>
                       <Picker
                         selectedValue={editedProfile.year || 'FRESHMAN'}
                         onValueChange={(value) => setEditedProfile({ ...editedProfile, year: value })}
-                        style={styles.picker}
-                        dropdownIconColor="#fff"
+                        style={[styles.picker, { color: colors.textPrimary }]}
+                        dropdownIconColor={colors.textPrimary}
                       >
                         <Picker.Item label="Freshman" value="FRESHMAN" />
                         <Picker.Item label="Sophomore" value="SOPHOMORE" />
@@ -676,19 +647,19 @@ export default function SettingsScreen() {
 
                   {/* Team Position */}
                   <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Position / Role</Text>
+                    <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Position / Role</Text>
                     <TextInput
-                      style={styles.formInput}
+                      style={[styles.formInput, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.03)' }]}
                       value={editedProfile.teamPosition || ''}
                       onChangeText={(text) => setEditedProfile({ ...editedProfile, teamPosition: text })}
                       placeholder="Your position or role"
-                      placeholderTextColor="rgba(255,255,255,0.4)"
+                      placeholderTextColor={colors.textTertiary}
                     />
                   </View>
                 </>
               )}
             </ScrollView>
-          </LinearGradient>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </View>
@@ -761,7 +732,7 @@ const styles = StyleSheet.create({
   },
   cardGradient: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: Colors.border,
     borderRadius: BorderRadius.xl,
   },
   settingItem: {
@@ -875,5 +846,28 @@ const styles = StyleSheet.create({
   picker: {
     color: '#fff',
     backgroundColor: 'transparent',
+  },
+  alwaysSharedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.sm,
+  },
+  alwaysSharedTitle: {
+    fontSize: Typography.sm,
+    fontWeight: '700',
+  },
+  alwaysSharedItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+  },
+  alwaysSharedText: {
+    fontSize: Typography.sm,
+    flex: 1,
   },
 });

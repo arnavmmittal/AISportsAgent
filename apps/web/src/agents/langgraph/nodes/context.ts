@@ -3,14 +3,10 @@
  *
  * Fetches comprehensive athlete context using AthleteContextService:
  * - Real-time readiness scores
- * - ML predictions (risk level, slump detection)
  * - Personal baselines and optimal states
  * - Effective past interventions
  * - Upcoming games
  * - Conversation insights
- * - 7-day readiness forecast (NEW)
- * - 30-day burnout prediction (NEW)
- * - Behavioral pattern detection (NEW)
  *
  * This context allows the agent to be proactive and personalized.
  */
@@ -43,21 +39,8 @@ export async function loadContextNode(
         athleteId: state.athleteId,
         readinessScore: enrichedContext.readiness.score,
         readinessLevel: enrichedContext.readiness.level,
-        riskLevel: enrichedContext.prediction?.riskLevel,
-        slumpDetected: enrichedContext.prediction?.slumpDetected,
         insightsCount: enrichedContext.insights.length,
         hasGameSoon: enrichedContext.hasGameSoon,
-        // Forecast, burnout, patterns
-        forecastTrend: enrichedContext.forecast?.trend ?? 'unavailable',
-        burnoutStage: enrichedContext.burnout?.stage ?? 'unavailable',
-        patternsDetected: enrichedContext.patterns ? {
-          anomalies: enrichedContext.patterns.anomalies.length,
-          trends: enrichedContext.patterns.trends.length,
-          cycles: enrichedContext.patterns.cycles.length,
-        } : 'unavailable',
-        // NEW: Technique effectiveness + mood trends
-        techniquesFound: enrichedContext.techniqueEffectiveness?.length ?? 0,
-        moodTrendsAvailable: !!enrichedContext.moodTrends,
         duration: `${duration}ms`,
       });
     }
@@ -122,22 +105,6 @@ export function buildContextPromptSection(state: ConversationState): string {
     }
   }
 
-  // Risk/prediction info
-  if (ctx.prediction) {
-    sections.push('');
-    sections.push('## Risk Assessment');
-    sections.push(`- **Risk Level**: ${ctx.prediction.riskLevel}`);
-    if (ctx.prediction.slumpDetected) {
-      sections.push(`- ⚠️ **Slump Detected** (${Math.round((ctx.prediction.slumpProbability || 0) * 100)}% probability)`);
-    }
-    if (ctx.prediction.topFactors && ctx.prediction.topFactors.length > 0) {
-      sections.push('- Top factors:');
-      ctx.prediction.topFactors.slice(0, 3).forEach((f: { factor: string; direction: string }) => {
-        sections.push(`  - ${f.factor}: ${f.direction}`);
-      });
-    }
-  }
-
   // Upcoming game context
   if (ctx.hasGameSoon && ctx.daysUntilNextGame !== null) {
     sections.push('');
@@ -189,169 +156,6 @@ export function buildContextPromptSection(state: ConversationState): string {
   if (ctx.daysSinceLastChat !== null && ctx.daysSinceLastChat > 3) {
     sections.push('');
     sections.push(`Note: It's been ${ctx.daysSinceLastChat} days since this athlete last chatted. Consider acknowledging this.`);
-  }
-
-  // NEW: 7-Day Readiness Forecast
-  if (ctx.forecast) {
-    sections.push('');
-    sections.push('## 7-Day Readiness Forecast');
-    sections.push(`- **Trend**: ${ctx.forecast.trend} (current: ${ctx.forecast.currentScore}/100)`);
-
-    // Highlight concerning days
-    const lowDays = ctx.forecast.next7Days.filter(d => d.score < 50);
-    if (lowDays.length > 0) {
-      sections.push('- ⚠️ **Low readiness predicted**:');
-      lowDays.slice(0, 3).forEach(d => {
-        const date = new Date(d.date);
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-        sections.push(`  - ${dayName}: ${d.score}/100 (${d.confidence} confidence)`);
-      });
-    }
-
-    if (ctx.forecast.riskFlags.length > 0) {
-      sections.push(`- Risk flags: ${ctx.forecast.riskFlags.join(', ')}`);
-    }
-
-    if (ctx.forecast.recommendations.length > 0) {
-      sections.push('- Forecast-based recommendations:');
-      ctx.forecast.recommendations.slice(0, 2).forEach(r => {
-        sections.push(`  - ${r}`);
-      });
-    }
-  }
-
-  // NEW: 30-Day Burnout Prediction
-  if (ctx.burnout) {
-    sections.push('');
-    sections.push('## Burnout Risk Assessment');
-
-    const burnoutEmoji = {
-      'healthy': '✅',
-      'early-warning': '⚡',
-      'developing': '⚠️',
-      'advanced': '🔴',
-      'critical': '🚨',
-    }[ctx.burnout.stage] || '❓';
-
-    sections.push(`- **Stage**: ${burnoutEmoji} ${ctx.burnout.stage.replace('-', ' ')} (${Math.round(ctx.burnout.probability * 100)}% probability)`);
-
-    if (ctx.burnout.daysUntilRisk < 14 && ctx.burnout.stage !== 'healthy') {
-      sections.push(`- ⏰ **Risk window**: ${ctx.burnout.daysUntilRisk} days until elevated risk`);
-    }
-
-    if (ctx.burnout.warningNow.length > 0) {
-      sections.push('- Current warning signs:');
-      ctx.burnout.warningNow.slice(0, 3).forEach(w => {
-        sections.push(`  - [${w.severity}] ${w.indicator}: ${w.description}`);
-      });
-    }
-
-    if (ctx.burnout.preventionStrategies.length > 0 && ctx.burnout.stage !== 'healthy') {
-      sections.push('- Prevention strategies to suggest:');
-      ctx.burnout.preventionStrategies.slice(0, 2).forEach(s => {
-        sections.push(`  - ${s}`);
-      });
-    }
-  }
-
-  // NEW: Behavioral Pattern Detection
-  if (ctx.patterns) {
-    sections.push('');
-    sections.push('## Behavioral Patterns Detected');
-
-    // Anomalies are high priority
-    if (ctx.patterns.anomalies.length > 0) {
-      sections.push('- 🔍 **Anomalies detected**:');
-      ctx.patterns.anomalies.slice(0, 2).forEach(a => {
-        sections.push(`  - [${a.severity}] ${a.metric} on ${new Date(a.date).toLocaleDateString()}: ${a.context}`);
-      });
-    }
-
-    // Trends help understand trajectory
-    if (ctx.patterns.trends.length > 0) {
-      sections.push('- Trends:');
-      ctx.patterns.trends.slice(0, 2).forEach(t => {
-        const arrow = t.direction === 'increasing' ? '↗️' : t.direction === 'decreasing' ? '↘️' : '→';
-        sections.push(`  - ${arrow} ${t.metric}: ${t.description} (${t.strength} strength)`);
-      });
-    }
-
-    // Cycles help with timing
-    if (ctx.patterns.cycles.length > 0) {
-      sections.push('- Weekly patterns:');
-      ctx.patterns.cycles.slice(0, 2).forEach(c => {
-        let cycleInfo = `${c.metric} has ${c.period} cycle`;
-        if (c.peakDays && c.peakDays.length > 0) {
-          cycleInfo += ` (peaks: ${c.peakDays.join(', ')})`;
-        }
-        if (c.lowDays && c.lowDays.length > 0) {
-          cycleInfo += ` (lows: ${c.lowDays.join(', ')})`;
-        }
-        sections.push(`  - ${cycleInfo}`);
-      });
-    }
-
-    // Cross-metric correlations
-    if (ctx.patterns.correlations.length > 0) {
-      const strongCorr = ctx.patterns.correlations.filter(c => Math.abs(c.correlation) >= 0.5);
-      if (strongCorr.length > 0) {
-        sections.push('- Strong correlations:');
-        strongCorr.slice(0, 2).forEach(c => {
-          const direction = c.correlation > 0 ? 'positively' : 'negatively';
-          sections.push(`  - ${c.metric1} ↔ ${c.metric2}: ${direction} correlated (${c.insights[0] || ''})`);
-        });
-      }
-    }
-
-    if (ctx.patterns.summary) {
-      sections.push(`- Summary: ${ctx.patterns.summary}`);
-    }
-  }
-
-  // NEW: Technique → Performance Correlations (MOST VALUABLE)
-  if (ctx.techniqueEffectiveness && ctx.techniqueEffectiveness.length > 0) {
-    sections.push('');
-    sections.push('## 🎯 PROVEN TECHNIQUES FOR THIS ATHLETE');
-    sections.push('Use these proactively in conversation!');
-
-    ctx.techniqueEffectiveness.slice(0, 5).forEach(t => {
-      if (t.sportMetric) {
-        sections.push(`- **${t.technique}** → ${t.improvement} ${t.sportMetric}`);
-      } else {
-        sections.push(`- **${t.technique}** → ${t.improvement}`);
-      }
-      sections.push(`  - Confidence: ${t.confidence} | ${t.evidence}`);
-      if (t.recommendation) {
-        sections.push(`  - Suggestion: ${t.recommendation}`);
-      }
-    });
-
-    sections.push('');
-    sections.push('Example usage: "Last time you used visualization before games, your scoring improved significantly. Want to try that approach for the upcoming game?"');
-  }
-
-  // NEW: Mood Trend Patterns
-  if (ctx.moodTrends) {
-    sections.push('');
-    sections.push('## 📊 Mood & Recovery Patterns');
-
-    if (ctx.moodTrends.weeklyPattern) {
-      const p = ctx.moodTrends.weeklyPattern;
-      sections.push(`- **Weekly pattern**: Best on ${p.bestDay}s, lowest on ${p.worstDay}s (${p.difference.toFixed(1)} point difference)`);
-      sections.push(`  - Consider scheduling important discussions on ${p.bestDay}s`);
-    }
-
-    if (ctx.moodTrends.sessionImpact) {
-      const s = ctx.moodTrends.sessionImpact;
-      const emoji = s.direction === 'improves' ? '✅' : '⚠️';
-      sections.push(`- **Chat impact**: ${emoji} Sessions ${s.direction === 'improves' ? 'improve' : 'decrease'} mood by ${s.moodChange.toFixed(1)} points`);
-    }
-
-    if (ctx.moodTrends.recoveryTime) {
-      const r = ctx.moodTrends.recoveryTime;
-      const emoji = r.resilience === 'high' ? '💪' : r.resilience === 'medium' ? '👍' : '⚠️';
-      sections.push(`- **Resilience**: ${emoji} ${r.resilience} - recovers from setbacks in ~${r.avgDays.toFixed(1)} days`);
-    }
   }
 
   return sections.join('\n');
