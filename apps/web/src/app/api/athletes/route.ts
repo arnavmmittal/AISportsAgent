@@ -38,6 +38,14 @@ export async function GET(request: NextRequest) {
             MoodLog: {
               orderBy: { createdAt: 'desc' },
               take: 1,
+              select: {
+                mood: true,
+                confidence: true,
+                stress: true,
+                energy: true,
+                sleep: true,
+                createdAt: true,
+              },
             },
           },
         },

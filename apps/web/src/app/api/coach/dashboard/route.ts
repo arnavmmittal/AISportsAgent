@@ -47,7 +47,13 @@ export async function GET(request: NextRequest) {
             },
             MoodLog: {
               orderBy: { createdAt: 'desc' },
-              take: 7, // Last 7 days for trends
+              take: 7,
+              select: {
+                mood: true,
+                confidence: true,
+                stress: true,
+                createdAt: true,
+              },
             },
           },
         },
@@ -129,6 +135,11 @@ export async function GET(request: NextRequest) {
             gte: date,
             lt: nextDate,
           },
+        },
+        select: {
+          mood: true,
+          confidence: true,
+          stress: true,
         },
       });
 

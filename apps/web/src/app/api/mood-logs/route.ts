@@ -113,6 +113,18 @@ export async function GET(req: NextRequest) {
       where: { athleteId },
       orderBy: { createdAt: 'desc' },
       take: limit,
+      select: {
+        id: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        energy: true,
+        sleep: true,
+        notes: true,
+        tags: true,
+        contextTags: true,
+        createdAt: true,
+      },
     });
 
     // Audit log: User viewed mood logs (especially important for coach access)

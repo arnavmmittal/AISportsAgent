@@ -62,6 +62,13 @@ export async function GET(request: NextRequest) {
         createdAt: { gte: twoWeeksAgo },
       },
       orderBy: { createdAt: 'asc' },
+      select: {
+        athleteId: true,
+        mood: true,
+        confidence: true,
+        stress: true,
+        createdAt: true,
+      },
     });
 
     // Compute per-athlete readiness (simple average of mood + confidence, scaled)

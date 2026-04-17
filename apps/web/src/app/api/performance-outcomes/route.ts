@@ -104,6 +104,12 @@ export async function POST(request: NextRequest) {
           },
         },
         orderBy: { createdAt: 'desc' },
+        select: {
+          mood: true,
+          confidence: true,
+          stress: true,
+          sleep: true,
+        },
       });
 
       if (moodLog) {

@@ -28,9 +28,10 @@ export async function GET(req: NextRequest) {
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Fetch data with individual error handling to identify failures
-    let recentMoodLogs: Awaited<ReturnType<typeof prisma.moodLog.findMany>> = [];
-    let thirtyDayMoodLogs: Awaited<ReturnType<typeof prisma.moodLog.findMany>> = [];
-    let todayMoodLog: Awaited<ReturnType<typeof prisma.moodLog.findFirst>> = null;
+    type MoodLogSelect = { mood: number; confidence: number | null; stress: number; energy: number | null; sleep: number | null; createdAt: Date };
+    let recentMoodLogs: MoodLogSelect[] = [];
+    let thirtyDayMoodLogs: MoodLogSelect[] = [];
+    let todayMoodLog: MoodLogSelect | null = null;
     let goals: Awaited<ReturnType<typeof prisma.goal.findMany>> = [];
     let recentChatSession: { id: string; topic: string | null; focusArea: string | null; updatedAt: Date } | null = null;
     let pendingAssignments: { id: string; title: string; dueDate: Date | null; description: string }[] = [];
@@ -47,7 +48,15 @@ export async function GET(req: NextRequest) {
           createdAt: { gte: sevenDaysAgo },
         },
         orderBy: { createdAt: 'desc' },
-        take: 14, // Up to 2 per day
+        take: 14,
+        select: {
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          createdAt: true,
+        },
       });
     } catch (e) {
       console.error('[Dashboard] moodLog.findMany failed:', e);
@@ -60,6 +69,14 @@ export async function GET(req: NextRequest) {
         where: {
           athleteId,
           createdAt: { gte: today },
+        },
+        select: {
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          createdAt: true,
         },
       });
     } catch (e) {
@@ -149,6 +166,14 @@ export async function GET(req: NextRequest) {
           createdAt: { gte: thirtyDaysAgo },
         },
         orderBy: { createdAt: 'asc' },
+        select: {
+          mood: true,
+          confidence: true,
+          stress: true,
+          energy: true,
+          sleep: true,
+          createdAt: true,
+        },
       });
     } catch (e) {
       console.error('[Dashboard] thirtyDayMoodLogs failed:', e);
