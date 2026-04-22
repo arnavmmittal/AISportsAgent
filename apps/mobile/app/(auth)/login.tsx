@@ -77,9 +77,20 @@ export default function LoginScreen() {
 
     try {
       const user = await login(email, password);
+
+      // Mobile app is for athletes only — coaches use the web portal
+      if (user.role === 'COACH' || user.role === 'ADMIN') {
+        // Clean up the stored session since we're rejecting the login
+        const { logout } = require('../../lib/auth');
+        await logout();
+        setError('The mobile app is for athletes. Coaches can access the dashboard at flowsportscoach.com');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        return;
+      }
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Navigate to role-based dashboard
+      // Navigate to athlete dashboard
       const route = getRoleBasedRoute(user.role);
       setTimeout(() => {
         router.replace(route as any);
